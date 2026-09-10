@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="UnderwriteFlow interactive UI screen designs">
+  <title>UnderwriteFlow — UI Screen Designs</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M4 4h16l2 12v4H2v-4z"/><path d="M2 16h5l2 2h6l2-2h5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.63 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.63 1.7 1.7 0 0 0 10 3.08V3h4v.08A1.7 1.7 0 0 0 15 4.64a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.37 9 1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="m5 17-2-2 1.5-6h15L21 15l-2 2"/><path d="m7 9 2-4h6l2 4M5 17v2M19 17v2M6 14h.01M18 14h.01M7 17h10"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8z"/></symbol>
+    <symbol id="i-health" viewBox="0 0 24 24"><path d="M12 21C7 18 4 14 4 9a4 4 0 0 1 7-2.6L12 8l1-1.6A4 4 0 0 1 20 9c0 5-3 9-8 12z"/><path d="M8 12h2l1-2 2 4 1-2h2"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.7 2.2 18a2 2 0 0 0 1.8 3h16a2 2 0 0 0 1.8-3L13.7 3.7a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16M7 12h10M10 19h4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-log" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  </svg>
+
+  <div class="prototype-bar">
+    <div>
+      <strong>UI Design Preview</strong>
+      <span>9 responsive screens · synthetic data</span>
+    </div>
+    <label class="screen-picker">
+      <span>Screen</span>
+      <select id="screenSelect" aria-label="Choose a screen design">
+        <option value="welcome">01 — Welcome & role entry</option>
+        <option value="applicant-home">02 — Applicant dashboard</option>
+        <option value="product-select">03 — Product selection</option>
+        <option value="application-form">04 — Application form</option>
+        <option value="documents">05 — Document review</option>
+        <option value="tracking">06 — Application tracking</option>
+        <option value="underwriter-queue">07 — Underwriter queue</option>
+        <option value="case-review">08 — Case review checkpoint</option>
+        <option value="admin">09 — Administration & audit</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="app-frame">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="#welcome" data-nav="welcome" aria-label="UnderwriteFlow home">
+        <span class="brand-mark"><svg><use href="#i-shield"/></svg></span>
+        <span><b>Underwrite</b>Flow</span>
+      </a>
+      <nav class="nav-list">
+        <button data-nav="applicant-home"><svg><use href="#i-grid"/></svg><span>Overview</span></button>
+        <button data-nav="product-select"><svg><use href="#i-plus"/></svg><span>New application</span></button>
+        <button data-nav="tracking"><svg><use href="#i-file"/></svg><span>My applications</span></button>
+        <button data-nav="underwriter-queue"><svg><use href="#i-inbox"/></svg><span>Review queue</span><span class="nav-count">12</span></button>
+        <button data-nav="admin"><svg><use href="#i-settings"/></svg><span>Administration</span></button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="eyebrow">Demo environment</span>
+        <p>Fictional rules and synthetic applicant data only.</p>
+      </div>
+      <button class="profile-switch" id="profileSwitch" aria-label="Switch demo role">
+        <span class="avatar">AK</span>
+        <span><b>Asha Kumar</b><small>Applicant</small></span>
+        <svg><use href="#i-chevron"/></svg>
+      </button>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <section class="screen active" data-screen="welcome" aria-labelledby="welcome-title">
+        <div class="welcome-shell">
+          <div class="welcome-copy">
+            <span class="eyebrow">Human-governed insurance triage</span>
+            <h1 id="welcome-title">Clearer applications.<br>Better human review.</h1>
+            <p>UnderwriteFlow organizes motor, life, and health applications, surfaces evidence and uncertainty, then pauses for an underwriter to decide the route.</p>
+            <div class="trust-line"><svg><use href="#i-shield"/></svg><span>AI assists. People remain accountable.</span></div>
+          </div>
+          <div class="role-panel">
+            <p class="overline">Enter the demonstration</p>
+            <h2>Choose your role</h2>
+            <p class="muted">Each role sees only the tools needed for its work.</p>
+            <button class="role-option selected" data-role="Applicant" data-target="applicant-home">
+              <span class="role-icon"><svg><use href="#i-user"/></svg></span>
+              <span><b>Applicant</b><small>Submit and track an application</small></span>
+              <svg class="chevron"><use href="#i-chevron"/></svg>
+            </button>
+            <button class="role-option" data-role="Underwriter" data-target="underwriter-queue">
+              <span class="role-icon"><svg><use href="#i-file"/></svg></span>
+              <span><b>Underwriter</b><small>Review evidence and confirm routing</small></span>
+              <svg class="chevron"><use href="#i-chevron"/></svg>
+            </button>
+            <button class="role-option" data-role="Administrator" data-target="admin">
+              <span class="role-icon"><svg><use href="#i-settings"/></svg></span>
+              <span><b>Administrator</b><small>Configure, monitor and audit</small></span>
+              <svg class="chevron"><use href="#i-chevron"/></svg>
+            </button>
+            <button class="btn btn-primary btn-block" id="enterDemo">Continue as Applicant <svg><use href="#i-arrow"/></svg></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="applicant-home" aria-labelledby="applicant-title">
+        <header class="page-header">
+          <div><span class="eyebrow">Applicant workspace</span><h1 id="applicant-title">Good morning, Asha</h1><p>Continue an application or see what needs your attention.</p></div>
+          <button class="btn btn-primary" data-nav="product-select"><svg><use href="#i-plus"/></svg>New application</button>
+        </header>
+        <div class="attention-banner">
+          <div class="banner-icon"><svg><use href="#i-alert"/></svg></div>
+          <div><b>One application needs information</b><p>Upload the previous health policy for case HLT-2026-0041.</p></div>
+          <button class="text-action" data-nav="documents">Resolve now <svg><use href="#i-arrow"/></svg></button>
+        </div>
+        <div class="metric-grid applicant-metrics">
+          <article class="metric"><span>Active applications</span><strong>3</strong><small>Across all products</small></article>
+          <article class="metric"><span>Awaiting review</span><strong>1</strong><small>No action needed</small></article>
+          <article class="metric"><span>Needs information</span><strong>1</strong><small class="warn-text">Your action required</small></article>
+          <article class="metric"><span>Completed</span><strong>4</strong><small>Triage finished</small></article>
+        </div>
+        <div class="section-heading"><div><h2>Recent applications</h2><p>Latest activity across your submissions.</p></div><button class="btn btn-secondary" data-nav="tracking">View all</button></div>
+        <div class="application-list">
+          <button class="application-row" data-nav="tracking">
+            <span class="product-icon motor"><svg><use href="#i-car"/></svg></span>
+            <span class="app-name"><b>Private car insurance</b><small>MTR-2026-0048 · Updated 12 min ago</small></span>
+            <span class="status status-blue">Under review</span><span class="row-detail"><small>Vehicle</small><b>2023 Tata Nexon</b></span><svg class="chevron"><use href="#i-chevron"/></svg>
+          </button>
+          <button class="application-row" data-nav="documents">
+            <span class="product-icon health"><svg><use href="#i-health"/></svg></span>
+            <span class="app-name"><b>Family health insurance</b><small>HLT-2026-0041 · Updated yesterday</small></span>
+            <span class="status status-amber">Needs information</span><span class="row-detail"><small>Members</small><b>3 people</b></span><svg class="chevron"><use href="#i-chevron"/></svg>
+          </button>
+          <button class="application-row" data-nav="tracking">
+            <span class="product-icon life"><svg><use href="#i-heart"/></svg></span>
+            <span class="app-name"><b>Term life insurance</b><small>LIF-2026-0033 · Completed 03 Sep</small></span>
+            <span class="status status-green">Completed</span><span class="row-detail"><small>Cover requested</small><b>₹50 lakh</b></span><svg class="chevron"><use href="#i-chevron"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="product-select" aria-labelledby="product-title">
+        <header class="page-header compact-header"><div><button class="back-link" data-nav="applicant-home">← Back to overview</button><span class="eyebrow">New application</span><h1 id="product-title">What would you like to insure?</h1><p>Choose a product to see the information and documents you’ll need.</p></div></header>
+        <div class="product-grid">
+          <button class="product-card selected" data-product="Motor">
+            <span class="product-icon motor large"><svg><use href="#i-car"/></svg></span>
+            <span class="recommended">Recommended start</span>
+            <h2>Private car</h2><p>Comprehensive cover for a privately owned car.</p>
+            <span class="meta-line"><svg><use href="#i-clock"/></svg>About 8 minutes</span>
+            <span class="select-line"><span class="radio-mark"></span>Select motor insurance</span>
+          </button>
+          <button class="product-card" data-product="Life">
+            <span class="product-icon life large"><svg><use href="#i-heart"/></svg></span>
+            <h2>Term life</h2><p>Individual protection for a selected policy term.</p>
+            <span class="meta-line"><svg><use href="#i-clock"/></svg>About 12 minutes</span>
+            <span class="select-line"><span class="radio-mark"></span>Select life insurance</span>
+          </button>
+          <button class="product-card" data-product="Health">
+            <span class="product-icon health large"><svg><use href="#i-health"/></svg></span>
+            <h2>Health</h2><p>Individual or family-floater hospitalization cover.</p>
+            <span class="meta-line"><svg><use href="#i-clock"/></svg>About 15 minutes</span>
+            <span class="select-line"><span class="radio-mark"></span>Select health insurance</span>
+          </button>
+        </div>
+        <div class="selection-footer"><div><b id="selectedProduct">Private car selected</b><small>You can save your progress at any time.</small></div><button class="btn btn-primary" data-nav="application-form">Start application <svg><use href="#i-arrow"/></svg></button></div>
+      </section>
+
+      <section class="screen" data-screen="application-form" aria-labelledby="form-title">
+        <header class="page-header compact-header"><div><button class="back-link" data-nav="product-select">← Change product</button><span class="eyebrow">Motor application · Draft</span><h1 id="form-title">Tell us about the vehicle</h1><p>We’ll save your progress as you go.</p></div><button class="btn btn-quiet">Save and exit</button></header>
+        <ol class="stepper" aria-label="Application progress">
+          <li class="done"><span><svg><use href="#i-check"/></svg></span><b>Applicant</b></li>
+          <li class="active"><span>2</span><b>Vehicle</b></li>
+          <li><span>3</span><b>Insurance history</b></li>
+          <li><span>4</span><b>Documents</b></li>
+          <li><span>5</span><b>Review</b></li>
+        </ol>
+        <div class="form-layout">
+          <form class="form-card" id="vehicleForm">
+            <div class="form-section-title"><div><span>Step 2 of 5</span><h2>Vehicle details</h2></div><span class="required-note">* Required</span></div>
+            <div class="form-grid">
+              <label class="field full"><span>Registration number *</span><input value="MH 12 AB 4821" autocomplete="off"><small>Enter it exactly as shown on the registration certificate.</small></label>
+              <label class="field"><span>Manufacturer *</span><select><option>Tata Motors</option><option>Maruti Suzuki</option><option>Mahindra</option></select></label>
+              <label class="field"><span>Model *</span><input value="Nexon"></label>
+              <label class="field"><span>Manufacturing year *</span><select><option>2023</option><option>2022</option><option>2021</option></select></label>
+              <label class="field"><span>Fuel type *</span><select><option>Petrol</option><option>Diesel</option><option>Electric</option></select></label>
+              <fieldset class="field full"><legend>How is the vehicle used? *</legend><div class="choice-grid"><label class="choice selected"><input type="radio" name="use" checked><span><b>Personal use</b><small>Daily travel and private trips</small></span></label><label class="choice"><input type="radio" name="use"><span><b>Commercial use</b><small>Taxi, delivery or paid transport</small></span></label></div></fieldset>
+              <label class="field full"><span>Vehicle modifications</span><textarea placeholder="Describe any changes to the engine, body, suspension or security system."></textarea><small>Leave blank if the vehicle has not been modified.</small></label>
+            </div>
+            <div class="form-actions"><button type="button" class="btn btn-secondary">Previous</button><button type="button" class="btn btn-primary" data-nav="documents">Continue to documents <svg><use href="#i-arrow"/></svg></button></div>
+          </form>
+          <aside class="help-panel"><svg><use href="#i-shield"/></svg><h3>Why we ask</h3><p>Vehicle identity and use help the underwriter place your application in the correct review queue.</p><hr><h3>Your information</h3><p>This prototype uses synthetic data. Do not upload real identity, financial or medical records.</p></aside>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="documents" aria-labelledby="documents-title">
+        <header class="page-header"><div><span class="eyebrow">Application MTR-2026-0048</span><h1 id="documents-title">Documents and evidence</h1><p>Review what was uploaded and resolve anything that needs attention.</p></div><button class="btn btn-primary" id="uploadButton"><svg><use href="#i-upload"/></svg>Upload document</button></header>
+        <div class="document-summary">
+          <div><span class="score-ring">3/4</span><span><b>Three required documents ready</b><small>One document needs a clearer copy.</small></span></div>
+          <div class="legend"><span><i class="dot green"></i>Ready</span><span><i class="dot amber"></i>Needs attention</span></div>
+        </div>
+        <div class="document-layout">
+          <div class="document-list">
+            <article class="document-item selected">
+              <span class="file-tile">PDF</span><span class="doc-copy"><b>Registration certificate</b><small>registration-certificate.pdf · 1.2 MB</small><span class="status status-green">Ready</span></span><button class="icon-button" aria-label="View registration certificate"><svg><use href="#i-eye"/></svg></button>
+            </article>
+            <article class="document-item">
+              <span class="file-tile">PDF</span><span class="doc-copy"><b>Previous policy</b><small>previous-policy.pdf · 840 KB</small><span class="status status-green">Ready</span></span><button class="icon-button" aria-label="View previous policy"><svg><use href="#i-eye"/></svg></button>
+            </article>
+            <article class="document-item warning">
+              <span class="file-tile">JPG</span><span class="doc-copy"><b>Vehicle photograph</b><small>vehicle-front.jpg · 2.4 MB</small><span class="status status-amber">Low clarity</span></span><button class="icon-button" aria-label="View vehicle photograph"><svg><use href="#i-eye"/></svg></button>
+            </article>
+            <article class="document-item">
+              <span class="file-tile">PDF</span><span class="doc-copy"><b>Identity evidence</b><small>synthetic-id.pdf · 620 KB</small><span class="status status-green">Ready</span></span><button class="icon-button" aria-label="View identity evidence"><svg><use href="#i-eye"/></svg></button>
+            </article>
+          </div>
+          <aside class="evidence-panel">
+            <div class="panel-title"><div><span class="overline">Extracted evidence</span><h2>Registration certificate</h2></div><span class="status status-green">96% confidence</span></div>
+            <dl class="evidence-list">
+              <div><dt>Registration number</dt><dd>MH 12 AB 4821 <span class="match">Matches</span></dd></div>
+              <div><dt>Registered owner</dt><dd>Asha Kumar <span class="match">Matches</span></dd></div>
+              <div><dt>Vehicle</dt><dd>Tata Nexon</dd></div>
+              <div class="conflict"><dt>Manufacturing year</dt><dd>2022 <span class="mismatch">Conflict</span></dd><small>Application says 2023 · Page 1</small></div>
+            </dl>
+            <div class="ai-note"><svg><use href="#i-alert"/></svg><p><b>Human check needed</b>The manufacturing year differs from the application. UnderwriteFlow has not changed either value.</p></div>
+            <button class="btn btn-secondary btn-block">Open source document</button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="tracking" aria-labelledby="tracking-title">
+        <header class="page-header"><div><span class="eyebrow">Application MTR-2026-0048</span><h1 id="tracking-title">Your application is under review</h1><p>No action is needed right now. We’ll show any request here.</p></div><span class="status status-blue large-status">Underwriter review</span></header>
+        <div class="tracking-layout">
+          <div class="timeline-card">
+            <h2>Application progress</h2>
+            <ol class="timeline">
+              <li class="complete"><span><svg><use href="#i-check"/></svg></span><div><b>Application submitted</b><small>10 Sep 2026, 10:14</small><p>Your application and four documents were received.</p></div></li>
+              <li class="complete"><span><svg><use href="#i-check"/></svg></span><div><b>Automated checks completed</b><small>10 Sep 2026, 10:15</small><p>Documents were read and evidence was prepared for review.</p></div></li>
+              <li class="current"><span><svg><use href="#i-eye"/></svg></span><div><b>Underwriter review</b><small>In progress</small><p>A human underwriter is reviewing the evidence and suggested route.</p></div></li>
+              <li><span>4</span><div><b>Triage completed</b><small>Pending</small><p>The confirmed review route will appear here.</p></div></li>
+            </ol>
+          </div>
+          <aside class="summary-card">
+            <span class="overline">Application summary</span><h2>Private car insurance</h2>
+            <dl><div><dt>Application</dt><dd>MTR-2026-0048</dd></div><div><dt>Vehicle</dt><dd>2023 Tata Nexon</dd></div><div><dt>Submitted</dt><dd>10 Sep 2026</dd></div><div><dt>Documents</dt><dd>4 uploaded</dd></div></dl>
+            <hr><p class="human-note"><svg><use href="#i-shield"/></svg><span><b>A human stays in control</b>AI prepares evidence, but an underwriter confirms every triage route.</span></p>
+            <button class="btn btn-secondary btn-block" data-nav="documents">View submitted documents</button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="underwriter-queue" aria-labelledby="queue-title">
+        <header class="page-header"><div><span class="eyebrow">Underwriter workspace</span><h1 id="queue-title">Review queue</h1><p>Prioritized applications awaiting human confirmation.</p></div><div class="header-actions"><button class="btn btn-secondary"><svg><use href="#i-log"/></svg>Export view</button><button class="btn btn-primary">Review next case</button></div></header>
+        <div class="metric-grid">
+          <article class="metric"><span>Awaiting review</span><strong>12</strong><small>Across three products</small></article>
+          <article class="metric"><span>Specialist suggested</span><strong>4</strong><small class="warn-text">Needs closer review</small></article>
+          <article class="metric"><span>Oldest waiting</span><strong>42m</strong><small>Within demo target</small></article>
+          <article class="metric"><span>Reviewed today</span><strong>18</strong><small class="good-text">3 overrides recorded</small></article>
+        </div>
+        <div class="table-toolbar">
+          <label class="search-box"><svg><use href="#i-search"/></svg><input id="queueSearch" placeholder="Search case or applicant" aria-label="Search cases"></label>
+          <div class="filter-group" aria-label="Filter by product"><button class="filter active" data-filter="all">All <span>12</span></button><button class="filter" data-filter="Motor">Motor <span>5</span></button><button class="filter" data-filter="Life">Life <span>3</span></button><button class="filter" data-filter="Health">Health <span>4</span></button></div>
+          <button class="btn btn-quiet"><svg><use href="#i-filter"/></svg>More filters</button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Case</th><th>Product</th><th>Applicant</th><th>Suggested route</th><th>Reason</th><th>Waiting</th><th><span class="sr-only">Open</span></th></tr></thead>
+            <tbody>
+              <tr data-product="Health" data-nav="case-review"><td><b>HLT-2026-0052</b><small>Family floater</small></td><td><span class="product-label"><svg><use href="#i-health"/></svg>Health</span></td><td>Meera Shah</td><td><span class="status status-purple">Specialist</span></td><td>Medical evidence conflict</td><td><b>42 min</b></td><td><button class="icon-button" aria-label="Review HLT-2026-0052"><svg><use href="#i-chevron"/></svg></button></td></tr>
+              <tr data-product="Motor" data-nav="case-review"><td><b>MTR-2026-0048</b><small>Private car</small></td><td><span class="product-label"><svg><use href="#i-car"/></svg>Motor</span></td><td>Asha Kumar</td><td><span class="status status-purple">Specialist</span></td><td>Vehicle year conflict</td><td>31 min</td><td><button class="icon-button" aria-label="Review MTR-2026-0048"><svg><use href="#i-chevron"/></svg></button></td></tr>
+              <tr data-product="Life" data-nav="case-review"><td><b>LIF-2026-0046</b><small>Term life</small></td><td><span class="product-label"><svg><use href="#i-heart"/></svg>Life</span></td><td>Rohan Iyer</td><td><span class="status status-blue">Standard</span></td><td>Financial review</td><td>24 min</td><td><button class="icon-button" aria-label="Review LIF-2026-0046"><svg><use href="#i-chevron"/></svg></button></td></tr>
+              <tr data-product="Motor" data-nav="case-review"><td><b>MTR-2026-0055</b><small>Private car</small></td><td><span class="product-label"><svg><use href="#i-car"/></svg>Motor</span></td><td>Neha Verma</td><td><span class="status status-green">Expedited</span></td><td>Complete and consistent</td><td>12 min</td><td><button class="icon-button" aria-label="Review MTR-2026-0055"><svg><use href="#i-chevron"/></svg></button></td></tr>
+              <tr data-product="Health" data-nav="case-review"><td><b>HLT-2026-0053</b><small>Individual</small></td><td><span class="product-label"><svg><use href="#i-health"/></svg>Health</span></td><td>Dev Patel</td><td><span class="status status-blue">Standard</span></td><td>Previous hospitalization</td><td>9 min</td><td><button class="icon-button" aria-label="Review HLT-2026-0053"><svg><use href="#i-chevron"/></svg></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="case-review" aria-labelledby="review-title">
+        <header class="case-header"><div><button class="back-link" data-nav="underwriter-queue">← Back to review queue</button><span class="eyebrow">Motor · MTR-2026-0048</span><h1 id="review-title">Asha Kumar</h1><p>Private car comprehensive insurance · Submitted 10 Sep 2026</p></div><div class="case-header-meta"><span class="status status-purple large-status">Specialist suggested</span><small>Waiting 31 minutes</small></div></header>
+        <div class="review-grid">
+          <div class="review-main">
+            <div class="review-tabs" role="tablist"><button class="active">Overview</button><button>Evidence <span>4</span></button><button>Application</button><button>Audit trail</button></div>
+            <article class="recommendation-card">
+              <div class="rec-kicker"><span class="ai-mark">AI</span><span>Routing recommendation</span><span class="confidence">High confidence</span></div>
+              <div class="rec-content"><div><h2>Specialist review</h2><p>A material conflict should be resolved before normal motor underwriting.</p></div><span class="specialist-tag">Motor document review</span></div>
+              <div class="reason-box"><svg><use href="#i-alert"/></svg><div><b>Manufacturing year conflict</b><p>The application states 2023; the registration certificate states 2022.</p><button class="source-link">Registration certificate · Page 1 <svg><use href="#i-arrow"/></svg></button></div></div>
+              <p class="disclaimer"><svg><use href="#i-shield"/></svg>This recommendation prioritizes human review. It is not a coverage or pricing decision.</p>
+            </article>
+            <article class="content-card"><div class="section-heading"><div><span class="overline">Case summary</span><h2>What the application shows</h2></div><button class="btn btn-quiet"><svg><use href="#i-eye"/></svg>View original</button></div><div class="facts-grid"><div><small>Vehicle</small><b>Tata Nexon, Petrol</b></div><div><small>Registration</small><b>MH 12 AB 4821</b></div><div><small>Declared use</small><b>Personal</b></div><div><small>Previous claims</small><b>One claim in 2025</b></div><div><small>Previous insurer</small><b>Fictional General</b></div><div><small>Documents</small><b>4 submitted</b></div></div></article>
+            <article class="content-card"><div class="section-heading"><div><span class="overline">Evidence quality</span><h2>Checks and uncertainties</h2></div><span class="status status-amber">1 conflict</span></div><div class="check-list"><div><span class="check-icon good"><svg><use href="#i-check"/></svg></span><p><b>Applicant identity matches</b><small>Application and synthetic identity evidence</small></p><span>Verified</span></div><div><span class="check-icon good"><svg><use href="#i-check"/></svg></span><p><b>Registration number matches</b><small>Application and registration certificate</small></p><span>Verified</span></div><div class="warning"><span class="check-icon warn"><svg><use href="#i-alert"/></svg></span><p><b>Manufacturing year conflicts</b><small>Application: 2023 · Certificate: 2022</small></p><button class="source-link">Inspect source</button></div></div></article>
+          </div>
+          <aside class="decision-panel">
+            <div><span class="overline">Required human action</span><h2>Confirm the triage route</h2><p>Review the evidence before making a selection.</p></div>
+            <fieldset class="route-options"><legend class="sr-only">Choose triage route</legend><label><input type="radio" name="route"><span><b>Expedited review</b><small>Complete and straightforward</small></span></label><label><input type="radio" name="route"><span><b>Standard review</b><small>Normal underwriting judgment</small></span></label><label class="selected"><input type="radio" name="route" checked><span><b>Specialist review</b><small>Complexity or material conflict</small></span></label></fieldset>
+            <label class="field"><span>Underwriter note</span><textarea id="underwriterNote" placeholder="Add context for the next reviewer">Confirm vehicle year against source record before continuing.</textarea></label>
+            <label class="check-consent"><input type="checkbox" id="evidenceConfirmed"><span>I reviewed the cited evidence and understand this is a triage action.</span></label>
+            <button class="btn btn-primary btn-block" id="confirmRoute" disabled>Confirm specialist route</button>
+            <button class="btn btn-quiet btn-block" id="overrideRoute">Record a different route</button>
+            <small class="audit-hint"><svg><use href="#i-log"/></svg>Your identity, selection, note and timestamp will be recorded.</small>
+          </aside>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="admin" aria-labelledby="admin-title">
+        <header class="page-header"><div><span class="eyebrow">Administration</span><h1 id="admin-title">Control centre</h1><p>Monitor the demonstration, manage rule versions and inspect human decisions.</p></div><button class="btn btn-primary"><svg><use href="#i-plus"/></svg>New rule version</button></header>
+        <div class="admin-notice"><svg><use href="#i-shield"/></svg><div><b>Fictional rulebook v1.3 is active</b><p>Rules are for software evaluation only and are not real underwriting guidance.</p></div><button class="btn btn-secondary">View rulebook</button></div>
+        <div class="metric-grid">
+          <article class="metric"><span>Cases processed</span><strong>90</strong><small>Synthetic evaluation set</small></article>
+          <article class="metric"><span>Route agreement</span><strong>87%</strong><small>Against reference labels</small></article>
+          <article class="metric"><span>Specialist recall</span><strong>93%</strong><small class="good-text">28 of 30 identified</small></article>
+          <article class="metric"><span>Unsupported claims</span><strong>0</strong><small>Material observations</small></article>
+        </div>
+        <div class="admin-grid">
+          <article class="content-card">
+            <div class="section-heading"><div><span class="overline">System health</span><h2>Docker services</h2></div><span class="status status-green">All healthy</span></div>
+            <div class="service-list"><div><span class="service-status"></span><p><b>API and LangGraph</b><small>Healthy · checked 12 sec ago</small></p><span>api:8000</span></div><div><span class="service-status"></span><p><b>PostgreSQL</b><small>Healthy · checkpoints active</small></p><span>db:5432</span></div><div><span class="service-status"></span><p><b>Web application</b><small>Healthy · checked 8 sec ago</small></p><span>web:5173</span></div><div><span class="service-status idle"></span><p><b>Ollama</b><small>Optional profile not running</small></p><span>Disabled</span></div></div>
+          </article>
+          <article class="content-card">
+            <div class="section-heading"><div><span class="overline">Routing outcomes</span><h2>By product</h2></div><button class="btn btn-quiet">Last 90 cases</button></div>
+            <div class="bar-chart" aria-label="Routing outcomes by product"><div><span>Motor</span><div class="bar"><i style="--w:88%"></i></div><b>88%</b></div><div><span>Life</span><div class="bar"><i style="--w:83%"></i></div><b>83%</b></div><div><span>Health</span><div class="bar"><i style="--w:90%"></i></div><b>90%</b></div></div>
+            <p class="chart-note">Route agreement with fictional reference labels. Agreement is not proof of underwriting correctness.</p>
+          </article>
+        </div>
+        <article class="content-card audit-card"><div class="section-heading"><div><span class="overline">Immutable activity</span><h2>Recent audit events</h2></div><button class="btn btn-secondary">View full audit trail</button></div><div class="audit-list"><div><span class="audit-icon"><svg><use href="#i-check"/></svg></span><p><b>Route confirmed for MTR-2026-0048</b><small>Underwriter Demo · Specialist review · 2 minutes ago</small></p><button class="text-action">Inspect</button></div><div><span class="audit-icon"><svg><use href="#i-settings"/></svg></span><p><b>Rulebook v1.3 activated</b><small>Administrator Demo · 38 minutes ago</small></p><button class="text-action">Inspect</button></div><div><span class="audit-icon"><svg><use href="#i-alert"/></svg></span><p><b>AI recommendation overridden for HLT-2026-0044</b><small>Underwriter Demo · Standard → Specialist · 1 hour ago</small></p><button class="text-action">Inspect</button></div></div></article>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><svg><use href="#i-check"/></svg><span>Route confirmed and audit event recorded.</span></div>
+
+  <dialog id="overrideDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-header"><div><span class="overline">Human override</span><h2>Record a different route</h2></div><button class="icon-button" value="cancel" aria-label="Close dialog"><svg><use href="#i-x"/></svg></button></div>
+      <p>The original AI recommendation remains in the audit trail. Choose a route and explain why you disagree.</p>
+      <label class="field"><span>New route</span><select><option>Standard review</option><option>Expedited review</option><option>Needs information</option></select></label>
+      <label class="field"><span>Reason for override *</span><textarea required placeholder="Explain the evidence or judgment behind this change."></textarea></label>
+      <div class="dialog-actions"><button class="btn btn-secondary" type="button" id="cancelOverride">Cancel</button><button class="btn btn-primary" type="button" id="recordOverride">Record override</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
