@@ -1,0 +1,49 @@
+product_code: life-individual-term
+title: Fictional Individual Term Life
+family: life
+scope: Fictional India-focused demonstration only
+description: Demonstration triage configuration for individual term life.
+version: v1
+status: draft
+fields:
+  - key: requested_cover
+    label: Requested cover
+    type: number
+    required: true
+    help_text: Enter the fictional requested cover amount.
+    validation: {minimum: 1}
+  - key: occupation_type
+    label: Occupation type
+    type: enum
+    required: true
+    help_text: Select the fictional occupation category.
+    options: [office, field, hazardous]
+  - key: health_declaration
+    label: Health declaration
+    type: boolean
+    required: true
+    help_text: Confirm the fictional health declaration is complete.
+documents:
+  - code: identity_record
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: income_record
+    title: Synthetic income record
+    requirement: conditional
+    condition: {field: requested_cover, operator: greater_than, value: 10000000}
+    accepted_types: [application/pdf]
+  - code: health_statement
+    title: Synthetic health statement
+    requirement: conditional
+    condition: {field: health_declaration, operator: equals, value: false}
+    accepted_types: [application/pdf, image/jpeg, image/png]
+routing_rules:
+  - code: hazardous_occupation_specialist
+    condition: {field: occupation_type, operator: equals, value: hazardous}
+    route: specialist
+    specialist_label: life review
+  - code: high_cover_standard
+    condition: {field: requested_cover, operator: greater_than, value: 10000000}
+    route: standard
+specialist_labels: [life review]

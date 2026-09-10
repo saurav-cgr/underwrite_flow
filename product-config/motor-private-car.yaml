@@ -1,0 +1,49 @@
+product_code: motor-private-car
+title: Fictional Private-Car Motor
+family: motor
+scope: Fictional India-focused demonstration only
+description: Demonstration triage configuration for privately owned cars.
+version: v1
+status: draft
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Enter the fictional vehicle age in years.
+    validation: {minimum: 0, maximum: 30}
+  - key: vehicle_use
+    label: Vehicle use
+    type: enum
+    required: true
+    help_text: Select the fictional primary use.
+    options: [personal, commute]
+  - key: prior_claims
+    label: Prior claims
+    type: integer
+    required: true
+    help_text: Enter the number of fictional prior claims.
+    validation: {minimum: 0}
+documents:
+  - code: identity_record
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: vehicle_record
+    title: Synthetic vehicle record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: inspection_photo
+    title: Synthetic inspection photo
+    requirement: conditional
+    condition: {field: vehicle_age, operator: greater_than, value: 12}
+    accepted_types: [image/jpeg, image/png]
+routing_rules:
+  - code: vehicle_age_specialist
+    condition: {field: vehicle_age, operator: greater_than, value: 12}
+    route: specialist
+    specialist_label: motor inspection
+  - code: prior_claims_standard
+    condition: {field: prior_claims, operator: greater_than, value: 1}
+    route: standard
+specialist_labels: [motor inspection]

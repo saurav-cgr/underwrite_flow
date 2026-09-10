@@ -21,7 +21,7 @@ services:
     build:
       context: ./api
     command:
-      ["sh", "-c", "alembic upgrade head && python -m underwriteflow.auth.seed"]
+      ["sh", "-c", "alembic upgrade head && python -m underwriteflow.auth.seed && python -m underwriteflow.products.import_configs"]
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
@@ -31,6 +31,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./product-config:/app/product-config:ro
 
   api:
     build:

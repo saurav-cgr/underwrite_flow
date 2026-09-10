@@ -1,0 +1,1 @@
+"""Versioned fictional product configuration."""
