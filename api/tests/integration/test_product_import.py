@@ -4,7 +4,7 @@ import psycopg
 # Verify Compose bootstrap imports all three fictional product versions.
 def test_bootstrap_imports_builtin_products() -> None:
     connection = psycopg.connect(
-        "postgresql://underwriteflow:synthetic-local-password@db:5432/underwriteflow"
+        "postgresql://underwriteflow:synthetic-local-password@db:5433/underwriteflow"
     )
     with connection, connection.cursor() as cursor:
         cursor.execute("SELECT code FROM products ORDER BY code")

@@ -6,7 +6,7 @@ import pytest
 
 # Prove version pins persist and audit rows reject mutation.
 def test_version_pins_and_audit_events_are_immutable() -> None:
-    connection = psycopg.connect("postgresql://underwriteflow:synthetic-local-password@db:5432/underwriteflow")
+    connection = psycopg.connect("postgresql://underwriteflow:synthetic-local-password@db:5433/underwriteflow")
     cursor = connection.cursor()
     cursor.execute("BEGIN")
     cursor.execute("INSERT INTO users (id, email, display_name, role, password_hash, is_active) VALUES ('00000000-0000-0000-0000-000000000001', 'synthetic@example.test', 'Synthetic User', 'Applicant', 'hash', true)")

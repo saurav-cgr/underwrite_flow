@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = (
-        "postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/"
+        "postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/"
         "underwriteflow"
     )
     generation_provider: Literal["fake", "gemini", "ollama"] = "gemini"

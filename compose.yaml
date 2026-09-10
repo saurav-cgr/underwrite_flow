@@ -3,17 +3,18 @@ name: underwriteflow
 services:
   db:
     image: pgvector/pgvector:pg16
+    command: ["postgres", "-c", "port=5433"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-underwriteflow}
       POSTGRES_USER: ${POSTGRES_USER:-underwriteflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-synthetic-local-password}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -p 5433 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 20
     ports:
-      - "5432:5432"
+      - "5433:5433"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -23,7 +24,7 @@ services:
     command:
       ["sh", "-c", "alembic upgrade head && python -m underwriteflow.auth.seed && python -m underwriteflow.products.import_configs"]
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/underwriteflow}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
       DEMO_APPLICANT_PASSWORD: ${DEMO_APPLICANT_PASSWORD:-underwriteflow-demo-applicant}
       DEMO_UNDERWRITER_PASSWORD: ${DEMO_UNDERWRITER_PASSWORD:-underwriteflow-demo-underwriter}
@@ -40,7 +41,7 @@ services:
     command:
       ["uvicorn", "underwriteflow.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/underwriteflow}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
       SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-900}
       DEMO_APPLICANT_PASSWORD: ${DEMO_APPLICANT_PASSWORD:-underwriteflow-demo-applicant}
