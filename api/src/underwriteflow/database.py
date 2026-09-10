@@ -1,7 +1,15 @@
-"""Database engine lifecycle helpers."""
+"""Database engine and request-session lifecycle helpers."""
 
+from collections.abc import AsyncIterator
+
+from fastapi import Request
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 
 class Database:
@@ -10,6 +18,7 @@ class Database:
     # Create an engine without opening a database connection.
     def __init__(self, database_url: str) -> None:
         self.engine: AsyncEngine = create_async_engine(database_url, pool_pre_ping=True)
+        self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
     # Confirm the configured database accepts a minimal query.
     async def ping(self) -> None:
@@ -19,3 +28,9 @@ class Database:
     # Release pooled connections during application shutdown.
     async def close(self) -> None:
         await self.engine.dispose()
+
+
+# Provide one request-scoped database session to an endpoint.
+async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
+    async with request.app.state.database.session_factory() as session:
+        yield session

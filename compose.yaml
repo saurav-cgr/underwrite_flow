@@ -17,6 +17,21 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  bootstrap:
+    build:
+      context: ./api
+    command:
+      ["sh", "-c", "alembic upgrade head && python -m underwriteflow.auth.seed"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/underwriteflow}
+      SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
+      DEMO_APPLICANT_PASSWORD: ${DEMO_APPLICANT_PASSWORD:-underwriteflow-demo-applicant}
+      DEMO_UNDERWRITER_PASSWORD: ${DEMO_UNDERWRITER_PASSWORD:-underwriteflow-demo-underwriter}
+      DEMO_ADMINISTRATOR_PASSWORD: ${DEMO_ADMINISTRATOR_PASSWORD:-underwriteflow-demo-administrator}
+    depends_on:
+      db:
+        condition: service_healthy
+
   api:
     build:
       context: ./api
@@ -24,6 +39,11 @@ services:
       ["uvicorn", "underwriteflow.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/underwriteflow}
+      SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-900}
+      DEMO_APPLICANT_PASSWORD: ${DEMO_APPLICANT_PASSWORD:-underwriteflow-demo-applicant}
+      DEMO_UNDERWRITER_PASSWORD: ${DEMO_UNDERWRITER_PASSWORD:-underwriteflow-demo-underwriter}
+      DEMO_ADMINISTRATOR_PASSWORD: ${DEMO_ADMINISTRATOR_PASSWORD:-underwriteflow-demo-administrator}
       GENERATION_PROVIDER: ${GENERATION_PROVIDER:-gemini}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
@@ -38,6 +58,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      bootstrap:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 8000), 2).close()"]
       interval: 5s

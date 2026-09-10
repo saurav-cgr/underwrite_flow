@@ -1,9 +1,9 @@
 services:
   api:
     command:
-      - python
+      - sh
       - -c
-      - "import os; assert os.environ['GENERATION_PROVIDER'] == 'fake'"
+      - "test \"$$GENERATION_PROVIDER\" = fake && python -m underwriteflow.auth.seed"
     environment:
       GENERATION_PROVIDER: fake
       LANGSMITH_TRACING: "false"
