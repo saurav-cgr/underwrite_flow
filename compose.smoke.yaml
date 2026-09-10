@@ -1,0 +1,9 @@
+services:
+  api:
+    command:
+      - python
+      - -c
+      - "import os; assert os.environ['GENERATION_PROVIDER'] == 'fake'"
+    environment:
+      GENERATION_PROVIDER: fake
+      LANGSMITH_TRACING: "false"

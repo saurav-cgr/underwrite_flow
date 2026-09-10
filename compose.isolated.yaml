@@ -1,0 +1,11 @@
+services:
+  api:
+    ports: []
+  db:
+    ports: []
+  web:
+    ports: []
+
+networks:
+  default:
+    internal: true
