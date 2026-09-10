@@ -20,7 +20,8 @@ services:
   api:
     build:
       context: ./api
-    command: ["python", "-m", "http.server", "8000"]
+    command:
+      ["uvicorn", "underwriteflow.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5432/underwriteflow}
       GENERATION_PROVIDER: ${GENERATION_PROVIDER:-gemini}
