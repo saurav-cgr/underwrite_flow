@@ -2,7 +2,7 @@
 
 from typing import Annotated, TypedDict
 
-from underwriteflow.workflow.reducers import append_results
+from underwriteflow.workflow.reducers import append_product_results, append_results
 
 
 class DocumentInput(TypedDict):
@@ -39,6 +39,42 @@ class DocumentWorkerState(TypedDict):
 
     document: DocumentInput
     requested_fields: list[str]
+
+
+class ProductRuleInput(TypedDict):
+    """Serializable configured rule delivered to one product branch."""
+
+    code: str
+    condition: dict[str, object]
+    route: str
+    specialist_label: str | None
+
+
+class ProductRuleResult(TypedDict):
+    """Serializable deterministic result for one configured product rule."""
+
+    rule_code: str
+    triggered: bool
+    route: str
+    specialist_label: str | None
+    error_code: str | None
+
+
+class ProductState(TypedDict, total=False):
+    """State for one selected product subgraph."""
+
+    product_code: str
+    payload: dict[str, object]
+    rule_results: Annotated[list[ProductRuleResult], append_product_results]
+    validations: list[dict[str, object]]
+    risk_signals: list[dict[str, object]]
+
+
+class ProductRuleWorkerState(TypedDict):
+    """Payload delivered to one configured product-rule branch."""
+
+    rule: ProductRuleInput
+    payload: dict[str, object]
 
 
 # Return a stable thread configuration for one case workflow run.

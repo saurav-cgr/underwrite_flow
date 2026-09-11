@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from underwriteflow.workflow.state import DocumentResult
+    from underwriteflow.workflow.state import DocumentResult, ProductRuleResult
 
 
 # Append branch updates without mutating the prior graph state.
@@ -16,3 +16,11 @@ def append_results(
 # Sort results by stable document identity before sequential reconciliation.
 def sort_results(results: list["DocumentResult"]) -> list["DocumentResult"]:
     return sorted(results, key=lambda result: (result["document_id"], result["filename"]))
+
+
+# Append independent product-rule updates without changing prior state.
+def append_product_results(
+    current: list["ProductRuleResult"] | None,
+    updates: list["ProductRuleResult"] | None,
+) -> list["ProductRuleResult"]:
+    return [*(current or []), *(updates or [])]

@@ -1,7 +1,6 @@
 """Case intake and document persistence rules."""
 
 from pathlib import Path
-from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
@@ -18,6 +17,7 @@ from underwriteflow.persistence.models import (
     Submission,
 )
 from underwriteflow.persistence.repositories import AuditRepository
+from underwriteflow.products.rules import condition_matches
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.cases.schemas import CaseCreate
 from underwriteflow.cases.storage import UploadStorage
@@ -28,22 +28,6 @@ MAX_DOCUMENT_PAGES = 50
 
 class CaseValidationError(ValueError):
     """Raised when intake data does not satisfy the pinned product."""
-
-
-# Evaluate one simple fictional configuration condition.
-def condition_matches(condition: dict[str, Any], payload: dict[str, Any]) -> bool:
-    field = condition.get("field")
-    actual = payload.get(field)
-    operator = condition.get("operator")
-    expected = condition.get("value")
-    if operator == "equals":
-        return actual == expected
-    if operator == "greater_than":
-        try:
-            return actual is not None and actual > expected
-        except TypeError:
-            return False
-    return False
 
 
 # Validate required fields and documents against the selected product version.
