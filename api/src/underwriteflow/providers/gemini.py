@@ -3,7 +3,13 @@
 import httpx
 
 from underwriteflow.providers.schemas import ExtractionRequest, ExtractionResult
-from underwriteflow.providers.service import ProviderError, build_messages, parse_result
+from underwriteflow.providers.service import (
+    ProviderError,
+    TransientProviderError,
+    build_messages,
+    is_transient_status,
+    parse_result,
+)
 
 
 class GeminiProvider:
@@ -34,6 +40,12 @@ class GeminiProvider:
                 response = await client.post(url, params={"key": self.api_key}, json=payload)
                 response.raise_for_status()
                 raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        except (httpx.TimeoutException, httpx.NetworkError) as error:
+            raise TransientProviderError("Gemini provider is temporarily unavailable") from error
+        except httpx.HTTPStatusError as error:
+            if is_transient_status(error.response.status_code):
+                raise TransientProviderError("Gemini provider is temporarily unavailable") from error
+            raise ProviderError("Gemini provider failed") from error
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
             raise ProviderError("Gemini provider failed") from error
         return parse_result(raw, "gemini")

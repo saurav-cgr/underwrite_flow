@@ -1,13 +1,20 @@
 from pathlib import Path
 
 import pytest
+import httpx
 from PIL import Image
 
 from underwriteflow.providers.extraction import LocalDocumentExtractor
 from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.providers.gemini import GeminiProvider
+from underwriteflow.providers.ollama import OllamaProvider
 from underwriteflow.providers.schemas import ExtractionRequest
-from underwriteflow.providers.service import ProviderError, build_messages, parse_result
+from underwriteflow.providers.service import (
+    ProviderError,
+    TransientProviderError,
+    build_messages,
+    parse_result,
+)
 
 
 # Verify trusted instructions stay separate from untrusted document content.
@@ -59,6 +66,61 @@ async def test_gemini_provider_requires_configuration() -> None:
         )
 
 
+# Build an async HTTP client that returns one synthetic status failure.
+def status_client(status_code: int):
+    class Response:
+        # Raise the configured HTTP status as the adapter would receive it.
+        def raise_for_status(self) -> None:
+            request = httpx.Request("POST", "https://synthetic.test")
+            response = httpx.Response(status_code, request=request)
+            raise httpx.HTTPStatusError("synthetic status", request=request, response=response)
+
+    class Client:
+        # Accept the adapter's timeout configuration.
+        def __init__(self, **kwargs: object) -> None:
+            del kwargs
+
+        # Enter the synthetic async client context.
+        async def __aenter__(self) -> "Client":
+            return self
+
+        # Exit the synthetic async client context.
+        async def __aexit__(self, *args: object) -> None:
+            del args
+
+        # Return the configured synthetic response.
+        async def post(self, *args: object, **kwargs: object) -> Response:
+            del args, kwargs
+            return Response()
+
+    return Client
+
+
+# Verify Gemini treats timeout and rate-limit statuses as retryable.
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [408, 429])
+async def test_gemini_retryable_http_statuses(
+    monkeypatch: pytest.MonkeyPatch, status_code: int
+) -> None:
+    monkeypatch.setattr("underwriteflow.providers.gemini.httpx.AsyncClient", status_client(status_code))
+    with pytest.raises(TransientProviderError):
+        await GeminiProvider("synthetic-key", "synthetic-model").extract(
+            ExtractionRequest(document_name="synthetic.pdf", content="", requested_fields=[])
+        )
+
+
+# Verify Ollama treats timeout and rate-limit statuses as retryable.
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [408, 429])
+async def test_ollama_retryable_http_statuses(
+    monkeypatch: pytest.MonkeyPatch, status_code: int
+) -> None:
+    monkeypatch.setattr("underwriteflow.providers.ollama.httpx.AsyncClient", status_client(status_code))
+    with pytest.raises(TransientProviderError):
+        await OllamaProvider("http://synthetic-ollama", "synthetic-model").extract(
+            ExtractionRequest(document_name="synthetic.pdf", content="", requested_fields=[])
+        )
+
 # Verify digital PDF text is returned with page evidence locators.
 def test_pdf_text_extraction_returns_page_locator(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     class Page:
@@ -106,6 +168,7 @@ def test_scanned_pdf_uses_local_ocr(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     class Reader:
         pages = [BlankPage()]
 
+    # Replace PDF rasterization with a synthetic page image.
     def render_pdf(arguments: list[str], **kwargs: object) -> None:
         del kwargs
         Image.new("RGB", (8, 8), "white").save(Path(arguments[-1]).with_name("page-1.png"))

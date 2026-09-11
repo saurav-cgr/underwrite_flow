@@ -18,6 +18,15 @@ class ProviderError(RuntimeError):
     """Raised when a provider fails or returns unsafe structured output."""
 
 
+class TransientProviderError(ProviderError):
+    """Raised when a provider failure may succeed on a branch-local retry."""
+
+
+# Classify provider statuses that are safe for a bounded branch retry.
+def is_transient_status(status_code: int) -> bool:
+    return status_code in {408, 429} or status_code >= 500
+
+
 # Build separate trusted and untrusted messages for provider adapters.
 def build_messages(request: ExtractionRequest) -> list[dict[str, str]]:
     return [
