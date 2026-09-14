@@ -12,6 +12,8 @@
 - **Escalation:** Ask before schema migrations, new dependencies, authentication or authorization changes, provider changes, enabling external tracing, destructive resets, column drops, or broad architecture rewrites.
 - **Plan approval gate:** Follow `docs/IMPLEMENTATION_PLAN.md` one implementation step at a time. At the end of each step, stop and report changed files, verification, remaining risks, and the proposed commit. Wait for the user to review and explicitly say `continue`. Only then commit that approved step and begin the next one. Never combine steps or pre-build a later step.
 - **File size:** Keep every hand-written project file below 400 lines. Split a file before it reaches 400 lines along a clear responsibility boundary. Generated files, lockfiles, and immutable migration snapshots are exempt; explain any other exception before proceeding.
+- **Line length:** Set the IDE ruler to 80 columns. Keep each hand-written
+  line at or below 80 characters and wrap longer lines for readability.
 - **Method comments:** Put one short intent comment immediately before every hand-written named function or method definition, including Python `def`/`async def` functions and named TypeScript/React functions. Keep the comment about purpose, not syntax. Prefer named handlers over complex inline callbacks. Test functions may use a short Given/When/Then intent comment.
 - **Layering:** Backend Python owns domain rules, workflow state, persistence, provider behavior, evaluation, authorization decisions, and audit logic. React owns presentation, interaction state, accessibility, and typed API consumption; it must not become a second source of underwriting truth.
 
