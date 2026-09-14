@@ -1,0 +1,3026 @@
+[
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-001",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-002",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-003",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-004",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-005",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-006",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-007",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-008",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-009",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-010",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-011",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-012",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-013",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-014",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-015",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-016",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-017",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-018",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-019",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-020",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "vehicle_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 4,
+        "vehicle_use": "personal",
+        "prior_claims": 2
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-021",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": false,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-022",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-023",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-024",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": true,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-025",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-026",
+    "split": "development",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-027",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": false,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-028",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-029",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "motor-private-car-030",
+    "split": "holdout",
+    "product_code": "motor-private-car",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "vehicle_record",
+        "inspection_photo"
+      ],
+      "conflict": true,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "vehicle_age": 13,
+        "vehicle_use": "personal",
+        "prior_claims": 0
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "vehicle_record"
+        },
+        {
+          "code": "inspection_photo"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-001",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-002",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-003",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-004",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-005",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-006",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-007",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-008",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-009",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-010",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-011",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-012",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-013",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-014",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-015",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-016",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-017",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-018",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-019",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-020",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "income_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 10000001,
+        "occupation_type": "office",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "income_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-021",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": false,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-022",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-023",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-024",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": true,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-025",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-026",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-027",
+    "split": "development",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": false,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-028",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-029",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "life-individual-term-030",
+    "split": "holdout",
+    "product_code": "life-individual-term",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "health_statement"
+      ],
+      "conflict": true,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "requested_cover": 1000000,
+        "occupation_type": "hazardous",
+        "health_declaration": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "health_statement"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-001",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-002",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-003",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-004",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-005",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-006",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-007",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-008",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-009",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-010",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "expedited",
+      "evidence": [
+        "identity_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-011",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-012",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-013",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-014",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-015",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-016",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-017",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-018",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-019",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-020",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "standard",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 5,
+        "prior_hospitalization": false
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-021",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": false,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-022",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-023",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-024",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": true,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-025",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-026",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-027",
+    "split": "development",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": false,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-028",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": true,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-029",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": false,
+      "missing": false,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [],
+      "missing_information": []
+    }
+  },
+  {
+    "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    "case_id": "health-individual-family-floater-030",
+    "split": "holdout",
+    "product_code": "health-individual-family-floater",
+    "expected": {
+      "route": "specialist",
+      "evidence": [
+        "identity_record",
+        "member_relationship_record",
+        "hospitalization_record"
+      ],
+      "conflict": true,
+      "missing": true,
+      "unsupported_claims": 0
+    },
+    "workflow_input": {
+      "payload": {
+        "member_count": 1,
+        "prior_hospitalization": true
+      },
+      "evidence": [
+        {
+          "code": "identity_record"
+        },
+        {
+          "code": "member_relationship_record"
+        },
+        {
+          "code": "hospitalization_record"
+        }
+      ],
+      "conflicts": [
+        {
+          "code": "synthetic_conflict"
+        }
+      ],
+      "missing_information": [
+        "synthetic_missing"
+      ]
+    }
+  }
+]

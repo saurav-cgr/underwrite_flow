@@ -78,6 +78,20 @@ export interface AuditEvent {
   occurred_at: string;
 }
 
+export interface EvaluationSummary {
+  case_count: number;
+  development_count: number;
+  holdout_count: number;
+  route_counts: Record<string, number>;
+  route_agreement: number;
+  specialist_recall: number;
+  evidence_accuracy: number;
+  conflict_detection: number;
+  missing_data_detection: number;
+  unsupported_claim_rate: number;
+  workflow_reliability: number;
+}
+
 export interface Recommendation {
   route: string;
   reasons?: string[];

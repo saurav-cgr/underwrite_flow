@@ -3,6 +3,7 @@ import type {
   CaseRecord,
   CompletionResult,
   DocumentRecord,
+  EvaluationSummary,
   ProductCatalogItem,
   QueueItem,
   ReviewResult,
@@ -168,4 +169,11 @@ export async function listAudit(
   caseId: string,
 ): Promise<AuditEvent[]> {
   return request(`/audit/cases/${caseId}`, token);
+}
+
+// Load safe aggregate evaluation metrics for the administrator workspace.
+export async function getEvaluationSummary(
+  token: string,
+): Promise<EvaluationSummary> {
+  return request("/evaluation/summary", token);
 }

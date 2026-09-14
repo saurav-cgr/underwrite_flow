@@ -17,6 +17,7 @@ from underwriteflow.cases.router import router as cases_router
 from underwriteflow.config import Settings, get_settings
 from underwriteflow.database import Database
 from underwriteflow.errors import ApiError, error_response
+from underwriteflow.evaluation.router import router as evaluation_router
 from underwriteflow.products.router import router as products_router
 from underwriteflow.reviews.router import router as reviews_router
 from underwriteflow.queues.router import router as queues_router
@@ -131,4 +132,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(products_router, prefix="/api/v1")
     app.include_router(reviews_router, prefix="/api/v1")
     app.include_router(queues_router, prefix="/api/v1")
+    app.include_router(evaluation_router, prefix="/api/v1")
     return app

@@ -86,6 +86,8 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
+      - ./evaluation:/app/evaluation:ro
+      - ./product-config:/app/product-config:ro
       - uploads_data:/data/uploads
 
   web:
