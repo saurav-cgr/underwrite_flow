@@ -96,7 +96,12 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
     finally:
         with psycopg.connect(DATABASE_URL) as connection:
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM reviews WHERE case_id = %s", (case_id,))
-                cursor.execute("DELETE FROM recommendations WHERE case_id = %s", (case_id,))
-                cursor.execute("DELETE FROM submissions WHERE case_id = %s", (case_id,))
-                cursor.execute("DELETE FROM cases WHERE id = %s", (case_id,))
+                cursor.execute("ALTER TABLE audit_events DISABLE TRIGGER audit_events_append_only")
+                try:
+                    cursor.execute("DELETE FROM audit_events WHERE case_id = %s", (case_id,))
+                    cursor.execute("DELETE FROM reviews WHERE case_id = %s", (case_id,))
+                    cursor.execute("DELETE FROM recommendations WHERE case_id = %s", (case_id,))
+                    cursor.execute("DELETE FROM submissions WHERE case_id = %s", (case_id,))
+                    cursor.execute("DELETE FROM cases WHERE id = %s", (case_id,))
+                finally:
+                    cursor.execute("ALTER TABLE audit_events ENABLE TRIGGER audit_events_append_only")

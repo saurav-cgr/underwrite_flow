@@ -11,6 +11,7 @@ from underwriteflow.auth.dependencies import require_permission, require_role
 from underwriteflow.auth.schemas import Permission, UserRole
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
+    AuditEvent,
     Case,
     Document,
     ExtractedField,
@@ -57,7 +58,7 @@ def review_response_for_record(
 async def start_review(
     case_id: UUID,
     request: Request,
-    _: dict[str, str] = Depends(require_permission(Permission.REVIEW_WRITE)),
+    operator: dict[str, str] = Depends(require_permission(Permission.REVIEW_WRITE)),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewStartResponse:
     case = await session.scalar(select(Case).where(Case.id == case_id))
@@ -141,6 +142,18 @@ async def start_review(
             raise HTTPException(status_code=409, detail="Case review has already started")
         result = await graph.ainvoke(state, config=config)
     case.status = "underwriter_review"
+    session.add(
+        AuditEvent(
+            case_id=case_id,
+            actor_user_id=UUID(operator["sub"]),
+            event_type="workflow_started",
+            details={
+                "product_code": configuration.product_code,
+                "product_version": product_version.version,
+                "recommendation": result["recommendation"]["route"],
+            },
+        )
+    )
     await session.commit()
     return ReviewStartResponse(
         case_id=case_id,
@@ -204,6 +217,19 @@ async def resume_review(
         override_reason=command_to_persist.reason,
     )
     session.add(review)
+    session.add(
+        AuditEvent(
+            case_id=case_id,
+            actor_user_id=UUID(reviewer["sub"]),
+            event_type="underwriter_reviewed",
+            details={
+                "action": command_to_persist.action,
+                "selected_route": result.get("final_route"),
+                "status": result["review_status"],
+                "reason": command_to_persist.reason,
+            },
+        )
+    )
     case.status = result["review_status"]
     await session.commit()
     return review_response_for_record(case_id, review, result["review_status"])
