@@ -18,6 +18,7 @@ from underwriteflow.config import Settings, get_settings
 from underwriteflow.database import Database
 from underwriteflow.errors import ApiError, error_response
 from underwriteflow.products.router import router as products_router
+from underwriteflow.reviews.router import router as reviews_router
 
 
 # Return an existing request ID or create one for an early failure.
@@ -127,4 +128,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(cases_router, prefix="/api/v1")
     app.include_router(products_router, prefix="/api/v1")
+    app.include_router(reviews_router, prefix="/api/v1")
     return app

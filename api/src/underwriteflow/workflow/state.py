@@ -77,6 +77,24 @@ class ProductRuleWorkerState(TypedDict):
     payload: dict[str, object]
 
 
+# State carried from evidence and product checks into human review.
+class TriageState(TypedDict, total=False):
+    case_id: str
+    evidence: list[dict[str, object]]
+    conflicts: list[dict[str, object]]
+    missing_information: list[str]
+    risk_signals: list[dict[str, object]]
+    validations: list[dict[str, object]]
+    low_confidence: bool
+    unsupported_product: bool
+    summary: dict[str, object]
+    recommendation: dict[str, object]
+    review_request: dict[str, object]
+    review_command: dict[str, object]
+    final_route: str | None
+    review_status: str
+
+
 # Return a stable thread configuration for one case workflow run.
 def thread_config(case_id: str) -> dict[str, dict[str, str]]:
     return {"configurable": {"thread_id": f"case-{case_id}"}}
