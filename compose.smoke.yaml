@@ -3,7 +3,7 @@ services:
     command:
       - sh
       - -c
-      - "test \"$$GENERATION_PROVIDER\" = fake && python -m underwriteflow.auth.seed"
+      - "test \"$$GENERATION_PROVIDER\" = fake"
     environment:
       GENERATION_PROVIDER: fake
       LANGSMITH_TRACING: "false"

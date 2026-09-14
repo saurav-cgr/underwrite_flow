@@ -4,7 +4,8 @@ import psycopg
 # Verify Compose bootstrap imports all three fictional product versions.
 def test_bootstrap_imports_builtin_products() -> None:
     connection = psycopg.connect(
-        "postgresql://underwriteflow:synthetic-local-password@db:5433/underwriteflow"
+        "postgresql://underwriteflow:synthetic-local-password@"
+        "db:5433/underwriteflow"
     )
     with connection, connection.cursor() as cursor:
         cursor.execute("SELECT code FROM products ORDER BY code")
@@ -18,3 +19,24 @@ def test_bootstrap_imports_builtin_products() -> None:
         "motor-private-car",
     ]
     assert draft_count == 3
+
+
+# Verify the additive migration inserts all fictional demo identities.
+def test_migration_inserts_demo_accounts() -> None:
+    connection = psycopg.connect(
+        "postgresql://underwriteflow:synthetic-local-password@"
+        "db:5433/underwriteflow"
+    )
+    with connection, connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT email, role, is_active FROM users "
+            "WHERE email LIKE %s ORDER BY email",
+            ("%synthetic.test",),
+        )
+        accounts = cursor.fetchall()
+
+    assert accounts == [
+        ("administrator@synthetic.test", "Administrator", True),
+        ("applicant@synthetic.test", "Applicant", True),
+        ("underwriter@synthetic.test", "Underwriter", True),
+    ]

@@ -1,0 +1,69 @@
+
+@media (max-width: 640px) {
+.topbar {
+  height: auto;
+  padding: 18px 20px;
+}
+.role-label {
+  display: none;
+}
+.content {
+  padding: 32px 18px 56px;
+}
+.page-heading {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.page-heading h1, .entry-story h1 {
+  font-size: 2.75rem;
+}
+.metric-grid, .product-grid, .three-up, .field-grid {
+  grid-template-columns: 1fr;
+}
+.next-step {
+  align-items: flex-start;
+  flex-direction: column;
+}
+.journey {
+  gap: 10px;
+}
+.journey li {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+}
+.journey li strong {
+  font-size: .72rem;
+}
+.detail-grid, .metric-strip {
+  grid-template-columns: 1fr;
+}
+.audit-search {
+  align-items: stretch;
+  flex-direction: column;
+}
+.entry-page {
+  grid-template-columns: 1fr;
+}
+.entry-story {
+  min-height: 500px;
+  padding: 28px;
+}
+.entry-story .eyebrow {
+  margin-top: 100px;
+}
+.entry-card {
+  margin: -48px 0 28px;
+  position: relative;
+  width: calc(100% - 36px);
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+*, *::before, *::after {
+  scroll-behavior: auto !important;
+  transition-duration: .01ms !important;
+}
+}
