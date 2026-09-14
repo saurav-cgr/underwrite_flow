@@ -1,9 +1,8 @@
 services:
   api:
-    command:
-      - sh
-      - -c
-      - "test \"$$GENERATION_PROVIDER\" = fake"
+    command: ["python", "/app/scripts/smoke.py"]
     environment:
       GENERATION_PROVIDER: fake
       LANGSMITH_TRACING: "false"
+    volumes:
+      - ./scripts:/app/scripts:ro

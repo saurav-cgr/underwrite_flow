@@ -88,6 +88,7 @@ services:
       - ./api:/app
       - ./evaluation:/app/evaluation:ro
       - ./product-config:/app/product-config:ro
+      - ./scripts:/app/scripts:ro
       - uploads_data:/data/uploads
 
   web:
