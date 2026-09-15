@@ -61,6 +61,22 @@ export interface ProductVersionHistoryItem {
   activated_at: string | null;
 }
 
+export interface ProductConfigurationPreview {
+  product_code: string;
+  version: string;
+  status: string;
+  field_count: number;
+  document_count: number;
+  routing_rule_count: number;
+  specialist_labels: string[];
+}
+
+export interface ProductConfigurationChange {
+  product_code: string;
+  version: string;
+  status: string;
+}
+
 export interface CaseRecord {
   id: string;
   product_code: string;

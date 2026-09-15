@@ -5,7 +5,9 @@ import type {
   DocumentRecord,
   EvaluationSummary,
   ProductCatalogItem,
+  ProductConfigurationChange,
   ProductConfigurationItem,
+  ProductConfigurationPreview,
   ProductVersionHistoryItem,
   QueueItem,
   ReviewResult,
@@ -90,6 +92,42 @@ export async function listProductVersionHistory(
   productCode: string,
 ): Promise<ProductVersionHistoryItem[]> {
   return request(`/products/${encodeURIComponent(productCode)}/history`, token);
+}
+
+// Validate product YAML without persisting a configuration version.
+export async function validateProductConfiguration(
+  token: string,
+  yamlText: string,
+): Promise<Pick<ProductConfigurationChange, "product_code" | "version">> {
+  return request("/products/validate", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ yaml_text: yamlText }),
+  });
+}
+
+// Preview normalized configuration counts without changing persisted products.
+export async function previewProductConfiguration(
+  token: string,
+  yamlText: string,
+): Promise<ProductConfigurationPreview> {
+  return request("/products/preview", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ yaml_text: yamlText }),
+  });
+}
+
+// Import validated YAML as a draft configuration version.
+export async function importProductConfiguration(
+  token: string,
+  yamlText: string,
+): Promise<ProductConfigurationChange> {
+  return request("/products/import", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ yaml_text: yamlText }),
+  });
 }
 
 // Create an applicant case with all configured document codes.
