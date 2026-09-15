@@ -188,8 +188,10 @@ class SubmissionService:
         return {
             "case_id": str(case.id),
             "evidence": evidence,
-            "conflicts": [],
-            "missing_information": [],
+            "conflicts": list(evidence_result.get("conflicts", [])),
+            "missing_information": list(
+                evidence_result.get("missing_information", [])
+            ),
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
             "low_confidence": any(
@@ -209,6 +211,10 @@ class SubmissionService:
         extraction_failures: list[dict[str, object]],
         event_type: str = "case_submitted",
     ) -> None:
+        conflicting = {
+            str(item["field_name"])
+            for item in evidence_result.get("conflicts", [])
+        }
         for item in evidence_result.get("reconciled_fields", []):
             if not item.get("source_locator"):
                 continue
@@ -221,7 +227,11 @@ class SubmissionService:
                     source_locator=item["source_locator"],
                     extraction_method=item.get("extraction_method", "provider"),
                     confidence=item.get("confidence"),
-                    conflict_status="clear",
+                    conflict_status=(
+                        "conflict"
+                        if item["field_name"] in conflicting
+                        else "clear"
+                    ),
                 )
             )
         for validation in product_result.get("validations", []):

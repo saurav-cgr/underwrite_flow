@@ -48,9 +48,27 @@ class RecordingProvider:
         )
 
 
+# Return the same field value for every document so nothing conflicts.
+class AgreeingProvider:
+    """Deterministic provider returning one shared value for each field."""
+
+    # Return one synthetic field with a value every document agrees on.
+    async def extract(self, request: ExtractionRequest) -> ExtractionResult:
+        del request
+        return ExtractionResult(
+            fields=[
+                ExtractedField(
+                    field_name="synthetic_field",
+                    value="shared",
+                    source_locator="line:1",
+                    confidence=1.0,
+                )
+            ]
+        )
+
+
 # Build serializable synthetic documents for graph tests.
-def documents(count: int) -> list[dict[str, str]]:
-    return [
+def documents(count: int) -> list[dict[str, str]]:    return [
         {
             "document_id": f"doc-{index}",
             "filename": f"doc-{index}",
@@ -271,3 +289,65 @@ async def test_evidence_graph_checkpoint_resume_state() -> None:
 
     assert checkpoint.values["case_id"] == "case-5"
     assert checkpoint.values["ordered_results"][0]["document_id"] == "doc-0"
+
+
+# Verify two documents disagreeing about one field produce a conflict.
+@pytest.mark.asyncio
+async def test_evidence_graph_reports_conflicting_field_values() -> None:
+    provider = RecordingProvider()
+    graph = build_evidence_graph(provider, checkpointer=MemorySaver())
+
+    result = await graph.ainvoke(
+        {
+            "case_id": "case-conflict",
+            "documents": documents(2),
+            "requested_fields": ["synthetic_field"],
+            "results": [],
+        },
+        config=thread_config("case-conflict"),
+    )
+
+    assert [item["field_name"] for item in result["conflicts"]] == [
+        "synthetic_field"
+    ]
+    assert result["conflicts"][0]["values"] == ["doc-0", "doc-1"]
+    assert result["conflicts"][0]["document_ids"] == ["doc-0", "doc-1"]
+
+
+# Verify documents that agree on a field reconcile without a conflict.
+@pytest.mark.asyncio
+async def test_evidence_graph_accepts_agreeing_field_values() -> None:
+    graph = build_evidence_graph(AgreeingProvider(), checkpointer=MemorySaver())
+
+    result = await graph.ainvoke(
+        {
+            "case_id": "case-agree",
+            "documents": documents(3),
+            "requested_fields": ["synthetic_field"],
+            "results": [],
+        },
+        config=thread_config("case-agree"),
+    )
+
+    assert result["conflicts"] == []
+    assert len(result["reconciled_fields"]) == 3
+
+
+# Verify a requested field no document supplied is reported as missing.
+@pytest.mark.asyncio
+async def test_evidence_graph_reports_missing_requested_fields() -> None:
+    graph = build_evidence_graph(
+        RecordingProvider(), checkpointer=MemorySaver()
+    )
+
+    result = await graph.ainvoke(
+        {
+            "case_id": "case-missing",
+            "documents": documents(1),
+            "requested_fields": ["synthetic_field", "absent_field"],
+            "results": [],
+        },
+        config=thread_config("case-missing"),
+    )
+
+    assert result["missing_information"] == ["absent_field"]

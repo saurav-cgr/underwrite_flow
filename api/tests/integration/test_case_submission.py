@@ -1,11 +1,15 @@
 """End-to-end applicant submission into the bounded evidence workflow."""
 
-from io import BytesIO
 from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from pypdf import PdfWriter
+from synthetic_pdf import (
+    IDENTITY_ONLY_LINES,
+    MOTOR_EVIDENCE_LINES,
+    blank_pdf,
+    text_pdf,
+)
 
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
@@ -16,13 +20,12 @@ DATABASE_URL = (
 )
 
 
-# Build a minimal single-page synthetic PDF for submission tests.
-def synthetic_pdf() -> bytes:
-    writer = PdfWriter()
-    writer.add_blank_page(width=72, height=72)
-    buffer = BytesIO()
-    writer.write(buffer)
-    return buffer.getvalue()
+# Build the per-document uploads that carry the fictional motor fields.
+def motor_uploads() -> list[tuple[str, bytes]]:
+    return [
+        ("identity_record", text_pdf(IDENTITY_ONLY_LINES)),
+        ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
+    ]
 
 
 # Set one built-in synthetic product active for the submission test.
@@ -57,7 +60,6 @@ def login(client: TestClient, email: str, password: str) -> dict[str, str]:
 def test_submission_requires_evidence_and_persists_recommendation() -> None:
     set_motor_status("active")
     try:
-        content = synthetic_pdf()
         settings = Settings(generation_provider="fake")
         with TestClient(create_app(settings)) as client:
             headers = login(
@@ -87,7 +89,7 @@ def test_submission_requires_evidence_and_persists_recommendation() -> None:
             )
             assert incomplete.status_code == 422
 
-            for code in ("identity_record", "vehicle_record"):
+            for code, content in motor_uploads():
                 uploaded = client.post(
                     f"/api/v1/cases/{case_id}/documents",
                     files={
@@ -135,7 +137,6 @@ def test_submission_requires_evidence_and_persists_recommendation() -> None:
 def test_resubmission_starts_a_new_review_cycle() -> None:
     set_motor_status("active")
     try:
-        content = synthetic_pdf()
         settings = Settings(generation_provider="fake")
         with TestClient(create_app(settings)) as client:
             applicant = login(
@@ -167,7 +168,7 @@ def test_resubmission_starts_a_new_review_cycle() -> None:
             listing = client.get("/api/v1/cases", headers=applicant)
             assert listing.status_code == 200, listing.text
             assert any(item["id"] == case_id for item in listing.json())
-            for code in ("identity_record", "vehicle_record"):
+            for code, content in motor_uploads():
                 uploaded = client.post(
                     f"/api/v1/cases/{case_id}/documents",
                     files={
@@ -218,5 +219,155 @@ def test_resubmission_starts_a_new_review_cycle() -> None:
                         (case_id, "case_resubmitted"),
                     )
                     assert cursor.fetchone()[0] == 1
+    finally:
+        set_motor_status("draft")
+
+
+# Verify documents that yield no evidence ask for information instead of
+# silently recommending a route the underwriter cannot justify.
+def test_submission_without_extractable_evidence_needs_information() -> None:
+    set_motor_status("active")
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(
+                client,
+                "applicant@synthetic.test",
+                "underwriteflow-demo-applicant",
+            )
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "payload": {
+                        "vehicle_age": 2,
+                        "vehicle_use": "personal",
+                        "prior_claims": 0,
+                    },
+                    "document_codes": ["identity_record", "vehicle_record"],
+                },
+                headers=applicant,
+            )
+            assert created.status_code == 200, created.text
+            case_id = created.json()["id"]
+            for code in ("identity_record", "vehicle_record"):
+                uploaded = client.post(
+                    f"/api/v1/cases/{case_id}/documents",
+                    files={
+                        "document": (
+                            "synthetic.pdf",
+                            blank_pdf(),
+                            "application/pdf",
+                        )
+                    },
+                    data={"document_code": code},
+                    headers=applicant,
+                )
+                assert uploaded.status_code == 200, uploaded.text
+
+            submitted = client.post(
+                f"/api/v1/cases/{case_id}/submit", headers=applicant
+            )
+            assert submitted.status_code == 200, submitted.text
+            assert (
+                submitted.json()["recommendation"]["route"]
+                == "needs_information"
+            )
+
+            underwriter = login(
+                client,
+                "underwriter@synthetic.test",
+                "underwriteflow-demo-underwriter",
+            )
+            start = client.post(
+                f"/api/v1/reviews/{case_id}/start", headers=underwriter
+            )
+            assert start.status_code == 200, start.text
+            assert start.json()["summary"]["missing_information"] == [
+                "prior_claims",
+                "vehicle_age",
+                "vehicle_use",
+            ]
+    finally:
+        set_motor_status("draft")
+
+
+# Verify two documents disagreeing about one field is reported to the
+# underwriter and routed to specialist review.
+def test_conflicting_document_values_route_to_specialist() -> None:
+    set_motor_status("active")
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(
+                client,
+                "applicant@synthetic.test",
+                "underwriteflow-demo-applicant",
+            )
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "payload": {
+                        "vehicle_age": 2,
+                        "vehicle_use": "personal",
+                        "prior_claims": 0,
+                    },
+                    "document_codes": ["identity_record", "vehicle_record"],
+                },
+                headers=applicant,
+            )
+            assert created.status_code == 200, created.text
+            case_id = created.json()["id"]
+            uploads = [
+                (
+                    "identity_record",
+                    text_pdf(IDENTITY_ONLY_LINES + ["vehicle_age: 9"]),
+                ),
+                ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
+            ]
+            for code, content in uploads:
+                uploaded = client.post(
+                    f"/api/v1/cases/{case_id}/documents",
+                    files={
+                        "document": (
+                            "synthetic.pdf",
+                            content,
+                            "application/pdf",
+                        )
+                    },
+                    data={"document_code": code},
+                    headers=applicant,
+                )
+                assert uploaded.status_code == 200, uploaded.text
+
+            submitted = client.post(
+                f"/api/v1/cases/{case_id}/submit", headers=applicant
+            )
+            assert submitted.status_code == 200, submitted.text
+            assert (
+                submitted.json()["recommendation"]["route"] == "specialist"
+            )
+
+            underwriter = login(
+                client,
+                "underwriter@synthetic.test",
+                "underwriteflow-demo-underwriter",
+            )
+            start = client.post(
+                f"/api/v1/reviews/{case_id}/start", headers=underwriter
+            )
+            assert start.status_code == 200, start.text
+            pack = start.json()
+            assert pack["summary"]["missing_information"] == []
+            conflicts = pack["summary"]["conflicts"]
+            assert [item["field_name"] for item in conflicts] == [
+                "vehicle_age"
+            ]
+            assert conflicts[0]["values"] == ["2", "9"]
+            assert len(conflicts[0]["document_ids"]) == 2
+            assert len(conflicts[0]["sources"]) == 2
     finally:
         set_motor_status("draft")

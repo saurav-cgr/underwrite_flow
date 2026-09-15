@@ -104,8 +104,71 @@ def join_evidence(state: EvidenceState) -> dict[str, list[DocumentResult]]:
     return {"ordered_results": sort_results(state.get("results", []))}
 
 
+# Return the comparable form of an extracted value for conflict detection.
+def comparable_value(value: object) -> str:
+    return str(value).strip()
+
+
+# Group reconciled fields that disagree about the same field name.
+def conflicting_fields(
+    reconciled: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    grouped: dict[str, list[dict[str, object]]] = {}
+    for item in reconciled:
+        name = str(item.get("field_name", ""))
+        if not name:
+            continue
+        grouped.setdefault(name, []).append(item)
+    conflicts: list[dict[str, object]] = []
+    for name in sorted(grouped):
+        sources = grouped[name]
+        distinct = sorted(
+            {comparable_value(item.get("value")) for item in sources}
+        )
+        if len(distinct) < 2:
+            continue
+        conflicts.append(
+            {
+                "field_name": name,
+                "values": distinct,
+                "document_ids": sorted(
+                    {str(item.get("document_id")) for item in sources}
+                ),
+                "sources": [
+                    {
+                        "document_id": str(item.get("document_id")),
+                        "source_locator": item.get("source_locator"),
+                        "value": item.get("value"),
+                    }
+                    for item in sorted(
+                        sources,
+                        key=lambda entry: (
+                            str(entry.get("document_id")),
+                            str(entry.get("source_locator")),
+                        ),
+                    )
+                ],
+            }
+        )
+    return conflicts
+
+
+# List requested fields that no document supplied a value for.
+def absent_requested_fields(
+    reconciled: list[dict[str, object]], requested_fields: list[str]
+) -> list[str]:
+    supplied = {
+        str(item.get("field_name"))
+        for item in reconciled
+        if item.get("value") is not None and item.get("value") != ""
+    }
+    return sorted(
+        field for field in set(requested_fields) if field not in supplied
+    )
+
+
 # Reconcile successful fields sequentially after all document branches finish.
-def reconcile_evidence(state: EvidenceState) -> dict[str, list[dict[str, object]]]:
+def reconcile_evidence(state: EvidenceState) -> dict[str, object]:
     reconciled: list[dict[str, object]] = []
     ordered_results = state.get("ordered_results") or sort_results(state.get("results", []))
     for result in ordered_results:
@@ -116,4 +179,10 @@ def reconcile_evidence(state: EvidenceState) -> dict[str, list[dict[str, object]
                     **field,
                 }
             )
-    return {"reconciled_fields": reconciled}
+    return {
+        "reconciled_fields": reconciled,
+        "conflicts": conflicting_fields(reconciled),
+        "missing_information": absent_requested_fields(
+            reconciled, state.get("requested_fields", [])
+        ),
+    }

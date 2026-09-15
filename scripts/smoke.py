@@ -1,9 +1,6 @@
 """Run the deterministic Compose end-to-end demonstration flow."""
 
-from io import BytesIO
-
 from fastapi.testclient import TestClient
-from pypdf import PdfWriter
 
 from underwriteflow.app import create_app
 
@@ -13,14 +10,58 @@ SMOKE_DOCUMENTS = (
     ("vehicle_record", "vehicle.pdf"),
 )
 
+# Field lines the fictional motor configuration requests. Extraction reads the
+# document text layer, so a blank PDF yields no evidence and no final route.
+MOTOR_EVIDENCE_LINES = [
+    "vehicle_age: 4",
+    "vehicle_use: personal",
+    "prior_claims: 0",
+]
 
-# Build a minimal single-page synthetic PDF for the smoke flow.
-def synthetic_pdf() -> bytes:
-    writer = PdfWriter()
-    writer.add_blank_page(width=72, height=72)
-    buffer = BytesIO()
-    writer.write(buffer)
-    return buffer.getvalue()
+
+# Assemble the object table, cross-reference table, and trailer for one page.
+def _assemble(content_stream: bytes) -> bytes:
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length "
+        + str(len(content_stream)).encode()
+        + b" >>\nstream\n"
+        + content_stream
+        + b"\nendstream",
+    ]
+    document = bytearray(b"%PDF-1.4\n")
+    offsets: list[int] = []
+    for index, body in enumerate(objects, 1):
+        offsets.append(len(document))
+        document += f"{index} 0 obj\n".encode() + body + b"\nendobj\n"
+    xref_offset = len(document)
+    document += f"xref\n0 {len(objects) + 1}\n".encode()
+    document += b"0000000000 65535 f \n"
+    for offset in offsets:
+        document += f"{offset:010d} 00000 n \n".encode()
+    document += (
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+        f"startxref\n{xref_offset}\n%%EOF\n"
+    ).encode()
+    return bytes(document)
+
+
+# Build a one-page PDF whose text layer extracts to the supplied lines.
+def text_pdf(lines: list[str]) -> bytes:
+    body = "BT /F1 12 Tf 72 720 Td 16 TL\n"
+    for index, line in enumerate(lines):
+        escaped = (
+            line.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+        )
+        if index:
+            body += "T*\n"
+        body += f"({escaped}) Tj\n"
+    body += "ET"
+    return _assemble(body.encode("latin-1"))
 
 
 # Log in one fictional demo role and return bearer headers.
@@ -40,7 +81,7 @@ def upload_missing_documents(
     response = client.get(f"/api/v1/cases/{case_id}/documents", headers=headers)
     assert response.status_code == 200, response.text
     attached = {document["document_code"] for document in response.json()}
-    content = synthetic_pdf()
+    content = text_pdf(MOTOR_EVIDENCE_LINES)
     for code, filename in SMOKE_DOCUMENTS:
         if code in attached:
             continue

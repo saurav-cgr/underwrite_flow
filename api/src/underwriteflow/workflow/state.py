@@ -33,6 +33,8 @@ class EvidenceState(TypedDict, total=False):
     results: Annotated[list[DocumentResult], append_results]
     ordered_results: list[DocumentResult]
     reconciled_fields: list[dict[str, object]]
+    conflicts: list[dict[str, object]]
+    missing_information: list[str]
 
 
 class DocumentWorkerState(TypedDict):

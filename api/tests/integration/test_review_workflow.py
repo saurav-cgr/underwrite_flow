@@ -2,6 +2,12 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from synthetic_pdf import (
+    IDENTITY_ONLY_LINES,
+    MOTOR_EVIDENCE_LINES,
+    text_pdf,
+    write_upload,
+)
 
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
@@ -74,6 +80,13 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
                         1,
                     ),
                 )
+            # The workflow extracts from the volume, so the referenced files
+            # must exist and carry the configured field lines.
+            for document_code, lines in (
+                ("identity_record", IDENTITY_ONLY_LINES),
+                ("vehicle_record", MOTOR_EVIDENCE_LINES),
+            ):
+                write_upload(case_id, document_code, text_pdf(lines))
 
     try:
         with TestClient(
