@@ -11,7 +11,6 @@ import "./review.css";
 import "./admin.css";
 import "./entry.css";
 import "./responsive.css";
-import "./details.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -104,15 +104,32 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--primary);
+  display: inline-block;
   font-size: .8rem;
   font-weight: 600;
   padding: 9px 12px;
+  position: relative;
   white-space: nowrap;
 }
 .upload-button:hover {
   background: var(--surface-subtle);
   border-color: var(--border-hover);
 }
+/*
+ * The input stays focusable: display:none removed it from the tab order, so
+ * keyboard users could not reach the upload control at all. It is clipped
+ * instead, and the visible label carries the focus ring.
+ */
 .upload-button input {
-  display: none;
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+.upload-button:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }

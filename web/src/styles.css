@@ -28,6 +28,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+summary:focus-visible,
 a:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
