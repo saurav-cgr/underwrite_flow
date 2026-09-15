@@ -12,6 +12,16 @@ export function homeScreenForRole(role: Role): Screen {
   return "admin";
 }
 
+// Return a stable short hash for one YAML document's exact text.
+export function yamlHash(text: string): string {
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) | 0;
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+
 // Report whether a case still needs applicant or underwriter attention.
 export function isOpenCase(status: string): boolean {
   return status !== "completed";

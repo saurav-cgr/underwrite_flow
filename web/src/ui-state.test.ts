@@ -6,6 +6,7 @@ import {
   requiredDocuments,
   validateFields,
   visibleFields,
+  yamlHash,
 } from "./ui-state";
 import type { ProductDocument, ProductField } from "./types";
 
@@ -43,6 +44,12 @@ describe("role workspace routing", () => {
     expect(isOpenCase("completed")).toBe(false);
     expect(isOpenCase("needs_information")).toBe(true);
     expect(isOpenCase("underwriter_review")).toBe(true);
+  });
+
+  it("hashes identical YAML identically and changed YAML differently", () => {
+    expect(yamlHash("version: v1")).toBe(yamlHash("version: v1"));
+    expect(yamlHash("version: v1")).not.toBe(yamlHash("version: v2"));
+    expect(yamlHash("")).toHaveLength(8);
   });
 });
 

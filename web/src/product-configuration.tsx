@@ -10,6 +10,7 @@ import {
   validateProductConfiguration,
 } from "./api";
 import { Badge, Button, EmptyState, PageHeading, Panel } from "./components";
+import { yamlHash } from "./ui-state";
 import type {
   ProductConfigurationItem,
   ProductConfigurationPreview,
@@ -28,9 +29,9 @@ export function ProductConfiguration({ token }: { token: string }) {
   const [preview, setPreview] = useState<ProductConfigurationPreview | null>(
     null,
   );
+  const [previewHash, setPreviewHash] = useState<string | null>(null);
   const [working, setWorking] = useState("");
   const [productRefresh, setProductRefresh] = useState(0);
-  const [historyRefresh, setHistoryRefresh] = useState(0);
 
   // Load every administrator-visible product configuration on entry.
   useEffect(() => {
@@ -53,19 +54,25 @@ export function ProductConfiguration({ token }: { token: string }) {
   // Load immutable history whenever the selected product changes.
   useEffect(() => {
     if (!selectedCode) return;
-    setLoadingHistory(true);
     setHistory([]);
-    listProductVersionHistory(token, selectedCode)
-      .then(setHistory)
-      .catch((error) => {
-        setMessage(
-          error instanceof ApiError
-            ? error.message
+    void refreshHistory(selectedCode);
+  }, [selectedCode, token]);
+
+  // Reload the selected product's history and await the result.
+  async function refreshHistory(code: string) {
+    setLoadingHistory(true);
+    try {
+      setHistory(await listProductVersionHistory(token, code));
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
           : "Product version history could not be loaded.",
-        );
-      })
-      .finally(() => setLoadingHistory(false));
-  }, [historyRefresh, selectedCode, token]);
+      );
+    } finally {
+      setLoadingHistory(false);
+    }
+  }
 
   // Load a selected local YAML file without sending it to the server.
   async function handleFileChange(file: File | undefined) {
@@ -73,6 +80,7 @@ export function ProductConfiguration({ token }: { token: string }) {
     try {
       setYamlText(await file.text());
       setPreview(null);
+      setPreviewHash(null);
       setMessage("YAML loaded locally. Validate it before importing.");
     } catch {
       setMessage("The YAML file could not be read.");
@@ -113,6 +121,7 @@ export function ProductConfiguration({ token }: { token: string }) {
     setMessage("");
     try {
       setPreview(await previewProductConfiguration(token, yamlText));
+      setPreviewHash(yamlHash(yamlText));
     } catch (error) {
       setMessage(
         error instanceof ApiError
@@ -136,7 +145,7 @@ export function ProductConfiguration({ token }: { token: string }) {
       const result = await importProductConfiguration(token, yamlText);
       setSelectedCode(result.product_code);
       setProductRefresh((current) => current + 1);
-      setHistoryRefresh((current) => current + 1);
+      await refreshHistory(result.product_code);
       setMessage(
         `Draft ${result.version} imported for ${result.product_code}.`,
       );
@@ -164,7 +173,7 @@ export function ProductConfiguration({ token }: { token: string }) {
         version,
       );
       setProductRefresh((current) => current + 1);
-      setHistoryRefresh((current) => current + 1);
+      await refreshHistory(selectedCode);
       setMessage(
         `Version ${result.version} is active for ${result.product_code}.`,
       );
@@ -182,6 +191,21 @@ export function ProductConfiguration({ token }: { token: string }) {
   const selectedProduct = products.find(
     (product) => product.product_code === selectedCode,
   );
+  const previewIsCurrent =
+    preview !== null && previewHash === yamlHash(yamlText);
+  const activeVersion = history.find(
+    (item) => item.version === selectedProduct?.active_version,
+  );
+  const activeMetadata = activeVersion
+    ? [
+        activeVersion.content_hash.slice(0, 8),
+        activeVersion.activated_at
+          ? new Date(activeVersion.activated_at).toLocaleString()
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
   return (
     <>
       <PageHeading
@@ -233,6 +257,7 @@ export function ProductConfiguration({ token }: { token: string }) {
             <>
               <p className="muted">
                 Active version: {selectedProduct.active_version ?? "None"}
+                {activeMetadata ? ` · ${activeMetadata}` : ""}
               </p>
               {loadingHistory ? (
                 <p className="muted" role="status">
@@ -321,7 +346,13 @@ export function ProductConfiguration({ token }: { token: string }) {
           </div>
         </Panel>
         <Panel title="Configuration preview">
-          {preview ? (
+          {preview && !previewIsCurrent ? (
+            <p className="muted" role="status">
+              The YAML changed after this preview. Preview again to refresh
+              these counts.
+            </p>
+          ) : null}
+          {previewIsCurrent && preview ? (
             <div className="metric-strip">
               <div>
                 <strong>{preview.field_count}</strong>
