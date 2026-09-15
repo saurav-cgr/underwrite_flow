@@ -8,7 +8,8 @@ export type Screen =
   | "tracking"
   | "queue"
   | "review"
-  | "admin";
+  | "admin"
+  | "product_config";
 
 export interface Session {
   token: string;
@@ -43,6 +44,21 @@ export interface ProductCatalogItem {
   version: string;
   fields: ProductField[];
   documents: ProductDocument[];
+}
+
+export interface ProductConfigurationItem {
+  product_code: string;
+  title: string;
+  family: string;
+  status: string;
+  active_version: string | null;
+}
+
+export interface ProductVersionHistoryItem {
+  version: string;
+  status: string;
+  content_hash: string;
+  activated_at: string | null;
 }
 
 export interface CaseRecord {

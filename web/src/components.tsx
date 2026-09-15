@@ -82,6 +82,7 @@ export function AppShell({
         ? [{ screen: "queue", label: "Review queue" }]
         : [
             { screen: "admin", label: "Audit workspace" },
+            { screen: "product_config", label: "Product configuration" },
             { screen: "queue", label: "All queues" },
           ];
 

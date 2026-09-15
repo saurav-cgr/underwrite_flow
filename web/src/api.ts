@@ -5,6 +5,8 @@ import type {
   DocumentRecord,
   EvaluationSummary,
   ProductCatalogItem,
+  ProductConfigurationItem,
+  ProductVersionHistoryItem,
   QueueItem,
   ReviewResult,
   ReviewStart,
@@ -73,6 +75,21 @@ export async function listCatalog(
   token: string,
 ): Promise<ProductCatalogItem[]> {
   return request("/products/catalog", token);
+}
+
+// Load all product configurations visible to an administrator.
+export async function listProductConfigurations(
+  token: string,
+): Promise<ProductConfigurationItem[]> {
+  return request("/products", token);
+}
+
+// Load immutable version history for one selected product configuration.
+export async function listProductVersionHistory(
+  token: string,
+  productCode: string,
+): Promise<ProductVersionHistoryItem[]> {
+  return request(`/products/${encodeURIComponent(productCode)}/history`, token);
 }
 
 // Create an applicant case with all configured document codes.

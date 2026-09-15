@@ -180,6 +180,31 @@
 .mini-list {
   display: grid;
 }
+.product-config-row {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 14px 0;
+  text-align: left;
+  width: 100%;
+}
+.product-config-row[aria-pressed="true"] {
+  background: #faf6ed;
+  border-left: 3px solid var(--gold);
+  padding-left: 10px;
+}
+.product-config-row span {
+  display: grid;
+  gap: 3px;
+}
+.product-config-row small {
+  color: var(--muted);
+}
 .mini-row {
   font-size: .82rem;
 }

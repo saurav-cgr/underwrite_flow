@@ -3,13 +3,13 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.auth.dependencies import require_permission
 from underwriteflow.auth.schemas import Permission
 from underwriteflow.database import get_session
-from underwriteflow.persistence.models import ProductVersion
+from underwriteflow.persistence.models import Product, ProductVersion
 from underwriteflow.products.schemas import VersionPayload, YamlPayload
 from underwriteflow.products.service import (
     ProductConfigurationError,
@@ -18,6 +18,37 @@ from underwriteflow.products.service import (
 )
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+
+# Return every product and its active version for administrator selection.
+@router.get("")
+async def list_products(
+    _: dict[str, str] = Depends(
+        require_permission(Permission.PRODUCT_CONFIG_READ)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> list[dict[str, str | None]]:
+    rows = await session.execute(
+        select(Product, ProductVersion.version)
+        .outerjoin(
+            ProductVersion,
+            and_(
+                ProductVersion.product_id == Product.id,
+                ProductVersion.status == "active",
+            ),
+        )
+        .order_by(Product.code)
+    )
+    return [
+        {
+            "product_code": product.code,
+            "title": product.title,
+            "family": product.family,
+            "status": product.status,
+            "active_version": active_version,
+        }
+        for product, active_version in rows
+    ]
 
 
 # Return active product fields without exposing routing rules to applicants.
