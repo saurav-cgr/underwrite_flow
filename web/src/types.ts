@@ -15,6 +15,7 @@ export interface Session {
   token: string;
   role: Role;
   sub: string;
+  email: string;
 }
 
 export interface ProductField {

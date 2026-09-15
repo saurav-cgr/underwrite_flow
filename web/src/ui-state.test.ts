@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   allDocumentCodes,
   homeScreenForRole,
+  identityInitials,
   isOpenCase,
   requiredDocuments,
   validateFields,
@@ -44,6 +45,13 @@ describe("role workspace routing", () => {
     expect(isOpenCase("completed")).toBe(false);
     expect(isOpenCase("needs_information")).toBe(true);
     expect(isOpenCase("underwriter_review")).toBe(true);
+  });
+
+  it("derives avatar initials from the demo email", () => {
+    expect(identityInitials("applicant@synthetic.test")).toBe("AP");
+    expect(identityInitials("underwriter@synthetic.test")).toBe("UN");
+    expect(identityInitials("administrator@synthetic.test")).toBe("AD");
+    expect(identityInitials("@")).toBe("??");
   });
 
   it("hashes identical YAML identically and changed YAML differently", () => {

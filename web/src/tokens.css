@@ -41,6 +41,10 @@
   --border-strong: #aeb9c6;
   --border-soft: #e2e8f0;
 
+  /* Informational surface used by the sidebar note */
+  --info-surface: #f7faff;
+  --info-line: #d6e1ee;
+
   /* Elevation */
   --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
   --shadow-md: 0 8px 24px rgb(15 23 42 / 8%);

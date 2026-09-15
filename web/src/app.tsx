@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 import { listCases, listCatalog } from "./api";
 import { AdminWorkspace } from "./admin";
@@ -81,194 +82,136 @@ export function App() {
 
   if (!session) return <RoleEntry onLogin={handleLogin} />;
 
+  let activeScreen: Screen;
+  let content: ReactNode;
+
   if (session.role === "Applicant" && screen === "dashboard") {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
-        onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <ApplicantDashboard
-          caseRecord={caseRecord}
-          onNavigate={navigate}
-        />
-      </AppShell>
+    activeScreen = "dashboard";
+    content = (
+      <ApplicantDashboard caseRecord={caseRecord} onNavigate={navigate} />
     );
-  }
-
-  if (session.role === "Applicant" && screen === "products") {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
+  } else if (session.role === "Applicant" && screen === "products") {
+    activeScreen = "products";
+    content = (
+      <ProductSelection
+        catalog={catalog}
+        error={message}
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <ProductSelection
-          catalog={catalog}
-          error={message}
-          onNavigate={navigate}
-          onSelect={(product) => {
-            setSelectedProduct(product);
-            navigate("application");
-          }}
-        />
-      </AppShell>
+        onSelect={(product) => {
+          setSelectedProduct(product);
+          navigate("application");
+        }}
+      />
     );
-  }
-
-  if (
+  } else if (
     session.role === "Applicant" &&
     screen === "application" &&
     selectedProduct
   ) {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
+    activeScreen = "application";
+    content = (
+      <ApplicationForm
+        onCreated={(created, product) => {
+          setCaseRecord(created);
+          setSelectedProduct(product);
+          navigate("documents");
+        }}
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <ApplicationForm
-          onCreated={(created, product) => {
-            setCaseRecord(created);
-            setSelectedProduct(product);
-            navigate("documents");
-          }}
-          onNavigate={navigate}
-          product={selectedProduct}
-          token={session.token}
-        />
-      </AppShell>
+        product={selectedProduct}
+        token={session.token}
+      />
     );
-  }
-
-  if (
+  } else if (
     session.role === "Applicant" &&
     screen === "documents" &&
     selectedProduct &&
     caseRecord
   ) {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
+    activeScreen = "documents";
+    content = (
+      <DocumentsScreen
+        caseRecord={caseRecord}
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <DocumentsScreen
-          caseRecord={caseRecord}
-          onNavigate={navigate}
-          product={selectedProduct}
-          token={session.token}
-        />
-      </AppShell>
+        product={selectedProduct}
+        token={session.token}
+      />
     );
-  }
-
-  if (session.role === "Applicant") {
-    return (
-      <AppShell
-        role={session.role}
-        screen="tracking"
+  } else if (session.role === "Applicant") {
+    activeScreen = "tracking";
+    content = (
+      <TrackingScreen
+        caseRecord={caseRecord}
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <TrackingScreen
-          caseRecord={caseRecord}
-          onNavigate={navigate}
-          token={session.token}
-        />
-      </AppShell>
+        token={session.token}
+      />
     );
-  }
-
-  if (session.role === "Underwriter" && screen === "review" && queueItem) {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
+  } else if (
+    session.role === "Underwriter" &&
+    screen === "review" &&
+    queueItem
+  ) {
+    activeScreen = "review";
+    content = (
+      <CaseReview
+        item={queueItem}
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <CaseReview
-          item={queueItem}
-          onNavigate={navigate}
-          token={session.token}
-        />
-      </AppShell>
+        token={session.token}
+      />
     );
-  }
-
-  if (session.role === "Underwriter") {
-    return (
-      <AppShell
-        role={session.role}
-        screen="queue"
+  } else if (session.role === "Underwriter") {
+    activeScreen = "queue";
+    content = (
+      <UnderwriterQueue
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <UnderwriterQueue
-          onNavigate={navigate}
-          onSelect={(item) => {
-            setQueueItem(item);
-            navigate("review");
-          }}
-          token={session.token}
-        />
-      </AppShell>
+        onSelect={(item) => {
+          setQueueItem(item);
+          navigate("review");
+        }}
+        token={session.token}
+      />
     );
-  }
-
-  if (session.role === "Administrator" && screen === "queue") {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
+  } else if (session.role === "Administrator" && screen === "queue") {
+    activeScreen = "queue";
+    content = (
+      <UnderwriterQueue
         onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <UnderwriterQueue
-          onNavigate={navigate}
-          onSelect={() =>
-            setMessage(
-              "Administrator queue inspection is read-only; open audit "
-                + "history for case reconstruction.",
-            )
-          }
-          token={session.token}
-        />
-      </AppShell>
+        onSelect={() =>
+          setMessage(
+            "Administrator queue inspection is read-only; open audit "
+              + "history for case reconstruction.",
+          )
+        }
+        token={session.token}
+      />
     );
-  }
-
-  if (session.role === "Administrator" && screen === "product_config") {
-    return (
-      <AppShell
-        role={session.role}
-        screen={screen}
-        onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
-        <ProductConfiguration token={session.token} />
-      </AppShell>
+  } else if (
+    session.role === "Administrator" &&
+    screen === "product_config"
+  ) {
+    activeScreen = "product_config";
+    content = <ProductConfiguration token={session.token} />;
+  } else {
+    activeScreen = "admin";
+    content = (
+      <>
+        <AdminWorkspace onNavigate={navigate} token={session.token} />
+        {message ? (
+          <p className="form-error" role="alert">
+            {message}
+          </p>
+        ) : null}
+      </>
     );
   }
 
   return (
     <AppShell
-      role={session.role}
-      screen="admin"
       onNavigate={navigate}
       onSignOut={handleSignOut}
+      screen={activeScreen}
+      session={session}
     >
-      <AdminWorkspace onNavigate={navigate} token={session.token} />
-      {message ? (
-        <p className="form-error" role="alert">
-          {message}
-        </p>
-      ) : null}
+      {content}
     </AppShell>
   );
 }

@@ -1,0 +1,98 @@
+/*
+ * Role entry screen.
+ *
+ * Split out of responsive.css, which had grown past the 400-line limit while
+ * still holding base styles for several screens.
+ */
+
+.entry-page {
+  align-items: stretch;
+  background: var(--background);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+  min-height: 100vh;
+}
+.entry-story {
+  background: var(--primary);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8vw;
+}
+.entry-brand {
+  color: white;
+  margin-bottom: auto;
+}
+.entry-brand .brand-mark {
+  background: transparent;
+  color: var(--secondary-soft);
+}
+.entry-story .eyebrow {
+  color: var(--secondary-soft);
+  margin-top: auto;
+}
+.entry-story h1 {
+  color: white;
+  max-width: 670px;
+}
+.entry-copy {
+  color: var(--border);
+  font-size: 1.15rem;
+  max-width: 560px;
+}
+.entry-note {
+  align-items: flex-start;
+  border-top: 1px solid rgb(255 255 255 / 25%);
+  color: var(--border);
+  display: flex;
+  gap: 12px;
+  margin-top: 42px;
+  max-width: 560px;
+  padding-top: 20px;
+}
+.entry-card {
+  align-self: center;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  justify-self: center;
+  max-width: 480px;
+  padding: 42px;
+  width: calc(100% - 56px);
+}
+.entry-card h2 {
+  color: var(--primary);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 12px 0 4px;
+}
+.entry-card form {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+}
+.demo-list {
+  border-top: 1px solid var(--border-soft);
+  display: grid;
+  gap: 8px;
+  margin-top: 34px;
+  padding-top: 24px;
+}
+.demo-list button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 12px;
+  text-align: left;
+}
+.demo-list button:hover {
+  border-color: var(--secondary);
+}
+.demo-list small {
+  color: var(--muted);
+}

@@ -27,6 +27,13 @@ export function isOpenCase(status: string): boolean {
   return status !== "completed";
 }
 
+// Return the two-letter avatar initials for a synthetic demo identity.
+export function identityInitials(email: string): string {
+  const local = email.split("@")[0] ?? "";
+  const letters = local.replace(/[^a-z]/gi, "");
+  return (letters.slice(0, 2) || "??").toUpperCase();
+}
+
 
 // Return only fields that are currently visible for the application values.
 export function visibleFields(

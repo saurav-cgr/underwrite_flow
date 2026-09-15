@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 
 import { ApiError, createSession, readSession } from "./api";
-import { Button } from "./components";
+import { BrandMark, Button } from "./components";
 import type { Role, Session } from "./types";
 
 const DEMO_ACCOUNTS: {
@@ -54,6 +54,7 @@ export function RoleEntry({
         token: response.token,
         role: identity.role,
         sub: identity.sub,
+        email,
       });
     } catch (error) {
       setMessage(
@@ -77,19 +78,9 @@ export function RoleEntry({
     <main className="entry-page">
       <section className="entry-story">
         <div className="brand entry-brand">
-          <span className="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32">
-              <path
-                d={
-                  "M16 3 27 8v8c0 6.7-4.2 10.8-11 13C9.2 26.8 "
-                  + "5 22.7 5 16V8l11-5Z"
-                }
-              />
-              <path d="m10 16 4 4 8-9" />
-            </svg>
-          </span>
+          <BrandMark />
           <span>
-            Underwrite<span className="brand-accent">Flow</span>
+            <b>Underwrite</b>Flow
           </span>
         </div>
         <p className="eyebrow">Human-governed insurance triage</p>

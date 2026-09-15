@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
-import type { Role, Screen } from "./types";
+import { Icon, IconSprite } from "./icons";
+import type { IconName } from "./icons";
+import { homeScreenForRole, identityInitials } from "./ui-state";
+import type { Role, Screen, Session } from "./types";
 
 interface ButtonProps {
   children: ReactNode;
@@ -44,106 +47,113 @@ export function Badge({
 export function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 32 32" role="img">
-        <path
-          d={
-            "M16 3 27 8v8c0 6.7-4.2 10.8-11 13C9.2 26.8 "
-            + "5 22.7 5 16V8l11-5Z"
-          }
-        />
-        <path d="m10 16 4 4 8-9" />
-      </svg>
+      <Icon name="shield" />
     </span>
   );
 }
 
+interface ShellLink {
+  screen: Screen;
+  label: string;
+  icon: IconName;
+}
+
+// Describe the navigation each role may reach from the shell.
+function shellLinks(role: Role): ShellLink[] {
+  if (role === "Applicant") {
+    return [
+      { screen: "dashboard", label: "Overview", icon: "grid" },
+      { screen: "products", label: "New application", icon: "plus" },
+      { screen: "tracking", label: "My cases", icon: "file" },
+    ];
+  }
+  if (role === "Underwriter") {
+    return [{ screen: "queue", label: "Review queue", icon: "inbox" }];
+  }
+  return [
+    { screen: "admin", label: "Audit workspace", icon: "log" },
+    {
+      screen: "product_config",
+      label: "Product configuration",
+      icon: "settings",
+    },
+    { screen: "queue", label: "All queues", icon: "inbox" },
+  ];
+}
+
 // Render the persistent application frame and role-aware navigation.
 export function AppShell({
-  role,
+  session,
   screen,
   onNavigate,
   onSignOut,
   children,
 }: {
-  role: Role;
+  session: Session;
   screen: Screen;
   onNavigate: (screen: Screen) => void;
   onSignOut: () => void;
   children: ReactNode;
 }) {
-  const links: { screen: Screen; label: string }[] =
-    role === "Applicant"
-      ? [
-          { screen: "dashboard", label: "Overview" },
-          { screen: "products", label: "New application" },
-          { screen: "tracking", label: "My cases" },
-        ]
-      : role === "Underwriter"
-        ? [{ screen: "queue", label: "Review queue" }]
-        : [
-            { screen: "admin", label: "Audit workspace" },
-            { screen: "product_config", label: "Product configuration" },
-            { screen: "queue", label: "All queues" },
-          ];
-
-  // Return to the role's primary screen from the brand link.
-  function goHome() {
-    onNavigate(
-      role === "Applicant"
-        ? "dashboard"
-        : role === "Underwriter"
-          ? "queue"
-          : "admin",
-    );
-  }
+  const links = shellLinks(session.role);
 
   return (
     <div className="app-frame">
-      <header className="topbar">
-        <button className="brand" onClick={goHome} type="button">
+      <IconSprite />
+      <aside aria-label="Workspace navigation" className="sidebar">
+        <button
+          aria-label="UnderwriteFlow home"
+          className="brand"
+          onClick={() => onNavigate(homeScreenForRole(session.role))}
+          type="button"
+        >
           <BrandMark />
           <span>
-            Underwrite<span className="brand-accent">Flow</span>
+            <b>Underwrite</b>Flow
           </span>
         </button>
-        <div className="topbar-actions">
-          <span className="role-label">{role} workspace</span>
-          <button className="signout" onClick={onSignOut} type="button">
-            Sign out
-          </button>
+        <nav className="nav-list">
+          {links.map((link) => (
+            <button
+              aria-current={screen === link.screen ? "page" : undefined}
+              aria-label={link.label}
+              className="nav-link"
+              key={link.screen}
+              onClick={() => onNavigate(link.screen)}
+              type="button"
+            >
+              <Icon name={link.icon} />
+              <span>{link.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-note">
+          <span className="eyebrow">Human governance</span>
+          <p>
+            Recommendations organize work. An underwriter confirms every
+            final route.
+          </p>
         </div>
-      </header>
-      <div className="workspace">
-        <aside className="sidebar" aria-label="Workspace navigation">
-          <p className="eyebrow">Workspace</p>
-          <nav>
-            {links.map((link) => (
-              <button
-                aria-current={screen === link.screen ? "page" : undefined}
-                className={
-                  `nav-link ${screen === link.screen ? "nav-link-active" : ""}`
-                }
-                key={link.screen}
-                onClick={() => onNavigate(link.screen)}
-                type="button"
-              >
-                <span className="nav-rule" aria-hidden="true" />
-                {link.label}
-              </button>
-            ))}
-          </nav>
-          <div className="sidebar-note">
-            <p className="eyebrow">Human governance</p>
-            <p>
-              Recommendations organize work. An underwriter confirms every
-              final route.
-            </p>
-          </div>
-        </aside>
-        <main className="content" id="top">
-          {children}
-        </main>
-      </div>
+        <div className="profile-switch">
+          <span aria-hidden="true" className="avatar">
+            {identityInitials(session.email)}
+          </span>
+          <span>
+            <b>{session.email}</b>
+            <small>{session.role}</small>
+          </span>
+        </div>
+        <button
+          className="button button-quiet signout"
+          onClick={onSignOut}
+          type="button"
+        >
+          Sign out
+        </button>
+      </aside>
+      <main className="main-content" id="top">
+        <section className="screen">{children}</section>
+      </main>
     </div>
   );
 }
