@@ -1,0 +1,118 @@
+/*
+ * Documents and evidence.
+ *
+ * Split out of components.css. Covers the uploaded-document list, the
+ * requested-document rows, the completion ring and the upload control.
+ */
+
+.document-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+}
+.document-summary {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+}
+.document-summary b,
+.document-summary small {
+  display: block;
+}
+.document-summary b {
+  color: var(--primary);
+}
+.document-summary p {
+  margin: 0;
+}
+.document-summary small {
+  color: var(--muted);
+  margin-top: 3px;
+}
+.score-ring {
+  align-items: center;
+  border: 4px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+  display: grid;
+  flex: 0 0 auto;
+  font-weight: 700;
+  height: 48px;
+  place-items: center;
+  width: 48px;
+}
+.score-ring.complete {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.document-list {
+  min-width: 0;
+}
+.document-item {
+  align-items: center;
+  border-bottom: 1px solid var(--border-soft);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  padding: 15px 0;
+}
+.document-item:last-child {
+  border-bottom: 0;
+}
+.other-documents {
+  border-top: 1px solid var(--border-soft);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.other-documents summary {
+  color: var(--secondary);
+  cursor: pointer;
+  font-weight: 600;
+}
+.other-documents p {
+  margin: 12px 0;
+}
+.file-tile {
+  background: var(--primary-soft);
+  border-radius: 4px;
+  color: var(--primary);
+  display: grid;
+  height: 46px;
+  place-items: center;
+  width: 44px;
+}
+.file-tile.ok {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.doc-copy b,
+.doc-copy small {
+  display: block;
+}
+.doc-copy small {
+  color: var(--muted);
+  margin-top: 2px;
+}
+.upload-button {
+  background: var(--primary-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+.upload-button:hover {
+  background: var(--surface-subtle);
+  border-color: var(--border-hover);
+}
+.upload-button input {
+  display: none;
+}

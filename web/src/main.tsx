@@ -4,6 +4,8 @@ import App from "./app";
 import "./tokens.css";
 import "./styles.css";
 import "./components.css";
+import "./forms.css";
+import "./documents.css";
 import "./entry.css";
 import "./responsive.css";
 import "./details.css";

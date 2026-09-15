@@ -42,21 +42,29 @@
   text-transform: capitalize;
   white-space: nowrap;
 }
-.status-completed, .status-confirmed {
+.status-active, .status-completed, .status-confirmed {
   background: var(--accent-soft);
   color: var(--accent);
 }
-.status-underwriter_review {
+.status-new {
+  background: var(--secondary-soft);
+  color: var(--secondary-strong);
+}
+.status-underwriter_review, .status-manual_review {
   background: var(--amber-soft);
   color: var(--amber);
 }
-.status-specialist {
+.status-specialist, .status-overridden {
   background: var(--purple-soft);
   color: var(--purple);
 }
 .status-needs_information {
   background: var(--danger-soft);
   color: var(--danger);
+}
+.status-draft, .status-retired {
+  background: var(--surface-subtle);
+  color: var(--muted);
 }
 .recommendation strong {
   color: var(--primary);
@@ -239,12 +247,20 @@
 .screen {
   padding-inline: 28px;
 }
-.form-layout, .document-layout, .review-layout, .admin-grid {
+.form-layout,
+.document-layout,
+.review-layout,
+.admin-grid {
   grid-template-columns: 1fr;
 }
-.side-note {
+.form-grid {
+  grid-template-columns: 1fr;
+}
+.form-grid .full {
+  grid-column: auto;
+}
+.help-panel {
   border-left: 0;
-  border-top: 3px solid var(--secondary);
 }
 }
 

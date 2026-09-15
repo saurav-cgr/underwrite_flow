@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { readCase } from "./api";
 import { Badge, Button, Journey, PageHeading, Panel } from "./components";
+import { Icon } from "./icons";
 import type { CaseRecord, Screen } from "./types";
 
 // Show case status, versions, and the human-governance boundary.
@@ -64,33 +65,34 @@ export function TrackingScreen({
       />
       <Journey current={done} />
       <Panel title="Pinned record">
-        <div className="detail-grid">
+        <div className="facts-grid">
           <div>
-            <span className="metric-label">Product</span>
-            <strong>{current.product_code}</strong>
+            <small>Product</small>
+            <b>{current.product_code}</b>
           </div>
           <div>
-            <span className="metric-label">Rulebook</span>
-            <strong>{current.rulebook_version}</strong>
+            <small>Rulebook</small>
+            <b>{current.rulebook_version}</b>
           </div>
           <div>
-            <span className="metric-label">Case ID</span>
-            <strong>{current.id.slice(0, 18)}…</strong>
+            <small>Case ID</small>
+            <b>{current.id.slice(0, 18)}…</b>
           </div>
         </div>
       </Panel>
-      <div className="notice-card">
-        <span className="notice-mark" aria-hidden="true">
-          i
-        </span>
-        <div>
-          <strong>Human confirmation is required.</strong>
-          <p>
-            UnderwriteFlow recommends a triage route only. An authenticated
-            underwriter must confirm the route before completion.
-          </p>
+      <Panel title="Human confirmation">
+        <div className="human-note">
+          <Icon name="shield" />
+          <div>
+            <b>An underwriter must confirm the route.</b>
+            <p>
+              UnderwriteFlow recommends a triage route only. It never
+              approves, declines, binds, prices, issues, renews or cancels
+              coverage.
+            </p>
+          </div>
         </div>
-      </div>
+      </Panel>
     </>
   );
 }

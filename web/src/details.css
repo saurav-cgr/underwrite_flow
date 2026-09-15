@@ -12,7 +12,7 @@
 .page-heading h1 {
   font-size: 2rem;
 }
-.metric-grid, .product-grid, .three-up, .field-grid {
+.metric-grid, .product-grid, .three-up, .form-grid {
   grid-template-columns: 1fr;
 }
 .welcome-shell {
@@ -51,8 +51,11 @@
   left: 36px;
   right: -8px;
 }
-.detail-grid, .metric-strip {
+.facts-grid, .metric-strip {
   grid-template-columns: 1fr;
+}
+.facts-grid > div {
+  border-right: 0;
 }
 .audit-search {
   align-items: stretch;

@@ -181,163 +181,79 @@
   border-color: var(--primary);
   color: white;
 }
-.form-layout, .document-layout, .review-layout, .admin-grid {
+.review-layout, .admin-grid {
+  align-items: start;
   display: grid;
   gap: 24px;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 320px;
 }
-.field-grid {
+.mini-row {
+  font-size: .82rem;
+}
+.facts-grid {
+  border: 1px solid var(--border-soft);
   display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
-.field {
-  display: grid;
-  gap: 7px;
+.facts-grid > div {
+  border-bottom: 1px solid var(--border-soft);
+  border-right: 1px solid var(--border-soft);
+  min-width: 0;
+  padding: 13px;
 }
-.field > span {
-  color: var(--navy);
-  font-weight: 750;
+.facts-grid > div:last-child {
+  border-right: 0;
 }
-.field small,
-.field-hint,
-.document-row span,
-.uploaded-row small,
-.check-row small {
+.facts-grid small,
+.facts-grid b {
+  display: block;
+}
+.facts-grid small {
   color: var(--muted);
-  font-size: .8rem;
+  margin-bottom: 4px;
 }
-.field input, .field select, .field textarea {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+.facts-grid b {
+  color: var(--primary);
+  overflow-wrap: anywhere;
+}
+.human-note {
+  display: flex;
+  gap: 10px;
+}
+.human-note .icon {
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+.human-note b {
   color: var(--text);
-  min-height: 44px;
-  padding: 10px 12px;
-  width: 100%;
+  display: block;
 }
-.field input[type="checkbox"] {
-  accent-color: var(--navy);
-  min-height: 20px;
-  width: 20px;
-}
-.field textarea {
-  min-height: 116px;
-  resize: vertical;
-}
-.field-error, .form-error {
-  color: var(--red);
-  font-size: .85rem;
-  font-style: normal;
-}
-.form-actions {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-.side-note {
-  border-left: 3px solid var(--gold);
-  padding: 18px 20px;
-}
-.side-note h2 {
-  color: var(--primary);
-  font-size: 1.35rem;
-  font-weight: 600;
-}
-.side-note p:last-child {
+.human-note p {
   color: var(--muted);
+  margin: 4px 0 0;
 }
-.error-summary {
-  background: var(--danger-soft);
-  border: 1px solid var(--danger-line);
-  border-left: 4px solid var(--danger);
-  border-radius: var(--radius-sm);
-  margin-bottom: 20px;
-  padding: 16px;
-}
-.error-summary strong {
-  color: var(--red);
-}
-.error-summary a {
-  color: var(--red);
-}
-.document-row, .uploaded-row, .mini-row {
-  align-items: center;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 16px 0;
-}
-.document-row > div, .uploaded-row {
-  display: grid;
-  gap: 4px;
-}
-.upload-button {
-  background: var(--primary-soft);
-  border: 1px solid var(--border);
-  color: var(--primary);
-  font-size: .8rem;
-  font-weight: 750;
-  padding: 9px 12px;
-}
-.upload-button input {
-  display: none;
-}
-.uploaded-row {
-  display: flex;
-  justify-content: flex-start;
-}
-.status-dot {
-  background: var(--green);
-  border-radius: 50%;
-  height: 9px;
-  width: 9px;
-}
-.detail-grid, .metric-strip {
+.metric-strip {
   display: grid;
   gap: 18px;
   grid-template-columns: repeat(3, 1fr);
 }
-.detail-grid div, .metric-strip div {
+.metric-strip div {
   display: grid;
   gap: 5px;
 }
-.detail-grid strong, .metric-strip strong {
-  color: var(--navy);
+.metric-strip strong {
+  color: var(--primary);
   overflow-wrap: anywhere;
 }
-.notice-card, .success-card {
-  align-items: flex-start;
-  background: var(--navy-soft);
-  display: flex;
-  gap: 14px;
-  margin-top: 24px;
-  padding: 18px;
-}
 .success-card {
+  align-items: flex-start;
   background: var(--accent-soft);
   color: var(--accent);
+  display: flex;
+  gap: 14px;
   justify-content: space-between;
-}
-.notice-mark {
-  align-items: center;
-  background: var(--gold);
-  border-radius: 50%;
-  color: white;
-  display: inline-flex;
-  flex: 0 0 22px;
-  font-size: .8rem;
-  font-weight: 800;
-  height: 22px;
-  justify-content: center;
-  width: 22px;
-}
-.notice-card p {
-  color: var(--muted);
-  margin: 4px 0 0;
+  margin-top: 24px;
+  padding: 18px;
 }
 .filter-bar {
   display: flex;

@@ -6,7 +6,8 @@ import {
   removeDocument,
   uploadDocument,
 } from "./api";
-import { Button, Journey, PageHeading, Panel } from "./components";
+import { Button, Journey, PageHeading } from "./components";
+import { Icon } from "./icons";
 import { requiredDocuments } from "./ui-state";
 import type {
   CaseRecord,
@@ -17,7 +18,7 @@ import type {
 } from "./types";
 
 // Render one product-configured document request and its upload control.
-function DocumentUploadRow({
+function DocumentRequestRow({
   document,
   uploading,
   onUpload,
@@ -27,15 +28,18 @@ function DocumentUploadRow({
   onUpload: (documentCode: string, file: File | undefined) => void;
 }) {
   return (
-    <div className="document-row">
-      <div>
-        <strong>{document.title}</strong>
-        <span>
+    <div className="document-item">
+      <span aria-hidden="true" className="file-tile">
+        <Icon name="file" />
+      </span>
+      <span className="doc-copy">
+        <b>{document.title}</b>
+        <small>
           {document.requirement === "required"
             ? "Required"
             : "Optional or conditional"}
-        </span>
-      </div>
+        </small>
+      </span>
       <label className="upload-button">
         <input
           accept={document.accepted_types.join(",")}
@@ -75,6 +79,15 @@ export function DocumentsScreen({
     (document) => document.requirement !== "required"
       && document.requirement !== "not_applicable",
   );
+  const requiredCodes = new Set(required.map((document) => document.code));
+  const receivedCount = documents.filter(
+    (document) =>
+      document.document_code && requiredCodes.has(document.document_code),
+  ).length;
+  const completion =
+    required.length === 0
+      ? 100
+      : Math.round((receivedCount / required.length) * 100);
 
   // Load current document metadata when the screen opens.
   useEffect(() => {
@@ -145,11 +158,36 @@ export function DocumentsScreen({
         }
       />
       <Journey current={1} />
+      <div className="document-summary">
+        <div>
+          <b>Supporting evidence</b>
+          <small>
+            {receivedCount} of {required.length} requested documents received.
+          </small>
+        </div>
+        <div
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={completion}
+          className={
+            completion === 100 ? "score-ring complete" : "score-ring"
+          }
+          role="progressbar"
+        >
+          {completion}%
+        </div>
+      </div>
       <div className="document-layout">
-        <Panel title="Required documents">
+        <div className="card">
+          <div className="card-section">
+            <div>
+              <h2>Required documents</h2>
+              <span>{required.length} requested</span>
+            </div>
+          </div>
           <div className="document-list">
             {required.map((document) => (
-              <DocumentUploadRow
+              <DocumentRequestRow
                 document={document}
                 key={document.code}
                 onUpload={handleUpload}
@@ -158,7 +196,7 @@ export function DocumentsScreen({
             ))}
           </div>
           {otherDocuments.length > 0 ? (
-            <details>
+            <details className="other-documents">
               <summary>Other supporting documents</summary>
               <p className="muted">
                 Optional and conditional documents may provide additional
@@ -166,7 +204,7 @@ export function DocumentsScreen({
               </p>
               <div className="document-list">
                 {otherDocuments.map((document) => (
-                  <DocumentUploadRow
+                  <DocumentRequestRow
                     document={document}
                     key={document.code}
                     onUpload={handleUpload}
@@ -181,20 +219,30 @@ export function DocumentsScreen({
               {message}
             </p>
           ) : null}
-        </Panel>
-        <Panel title="Uploaded metadata">
-          <div className="uploaded-list">
-            {documents.length === 0 ? (
-              <p className="muted">No files uploaded yet.</p>
-            ) : (
-              documents.map((document) => (
-                <div className="uploaded-row" key={document.id}>
-                  <span className="status-dot" aria-hidden="true" />
-                  <span>{document.filename}</span>
-                  <small>
-                    {Math.round(document.byte_size / 1024)} KB ·{" "}
-                    {document.content_type}
-                  </small>
+        </div>
+        <div className="card">
+          <div className="card-section">
+            <div>
+              <h2>Uploaded metadata</h2>
+              <span>{documents.length} files</span>
+            </div>
+          </div>
+          {documents.length === 0 ? (
+            <p className="muted">No files uploaded yet.</p>
+          ) : (
+            <div className="document-list">
+              {documents.map((document) => (
+                <div className="document-item" key={document.id}>
+                  <span aria-hidden="true" className="file-tile ok">
+                    <Icon name="check" />
+                  </span>
+                  <span className="doc-copy">
+                    <b>{document.filename}</b>
+                    <small>
+                      {Math.round(document.byte_size / 1024)} KB ·{" "}
+                      {document.content_type}
+                    </small>
+                  </span>
                   <Button
                     disabled={removingDocumentId === document.id}
                     onClick={() => handleRemove(document)}
@@ -205,15 +253,15 @@ export function DocumentsScreen({
                       : "Remove"}
                   </Button>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="form-actions">
             <Button onClick={() => onNavigate("tracking")}>
               Continue to tracking
             </Button>
           </div>
-        </Panel>
+        </div>
       </div>
     </>
   );
