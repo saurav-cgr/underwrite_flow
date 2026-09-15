@@ -108,16 +108,20 @@ async def run_record(
     }
 
 
-# Evaluate one requested split and optionally emit a redacted trace.
-async def run_evaluation(
-    split: str | None = None, trace: bool = False
-) -> dict[str, Any]:
+# Run every reference case through the pipeline and return produced output.
+async def evaluate_cases(split: str | None = None) -> list[dict[str, Any]]:
     records = load_dataset()
     if split:
         records = [record for record in records if record.get("split") == split]
     configurations = load_configurations()
-    evaluated = [await run_record(record, configurations) for record in records]
-    summary = evaluate_records(evaluated)
+    return [await run_record(record, configurations) for record in records]
+
+
+# Evaluate one requested split and optionally emit a redacted trace.
+async def run_evaluation(
+    split: str | None = None, trace: bool = False
+) -> dict[str, Any]:
+    summary = evaluate_records(await evaluate_cases(split))
     summary["split"] = split or "all"
     summary["trace_sent"] = trace_summary(summary) if trace else False
     return summary
