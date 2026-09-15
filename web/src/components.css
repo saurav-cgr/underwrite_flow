@@ -70,41 +70,59 @@
   margin-top: auto;
   padding-top: 24px;
 }
-.journey {
+.stepper {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   list-style: none;
-  margin: 0 0 36px;
+  margin: 0 0 32px;
   padding: 0;
 }
-.journey li {
+.stepper li {
   align-items: center;
-  border-top: 2px solid var(--line);
   color: var(--muted);
   display: flex;
   gap: 9px;
-  padding-top: 12px;
+  position: relative;
 }
-.journey li span {
+.stepper li::after {
+  background: var(--border);
+  content: "";
+  height: 1px;
+  left: 42px;
+  position: absolute;
+  right: 10px;
+  top: 15px;
+}
+.stepper li:last-child::after {
+  display: none;
+}
+.stepper li > span {
   align-items: center;
-  border: 1px solid var(--line);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 50%;
-  display: inline-flex;
+  display: grid;
+  flex: 0 0 30px;
   font-size: .75rem;
-  height: 25px;
-  justify-content: center;
-  width: 25px;
+  height: 30px;
+  place-items: center;
+  width: 30px;
+  z-index: 1;
 }
-.journey li strong {
+.stepper li strong {
   font-size: .85rem;
 }
-.journey .journey-done {
-  border-color: var(--gold);
-  color: var(--navy);
+.stepper li.done > span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
 }
-.journey .journey-done span {
-  background: var(--gold);
-  border-color: var(--gold);
+.stepper li.active {
+  color: var(--primary);
+}
+.stepper li.active > span {
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 .form-layout, .document-layout, .review-layout, .admin-grid {
@@ -178,6 +196,8 @@
 .error-summary {
   background: var(--danger-soft);
   border: 1px solid var(--danger-line);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-sm);
   margin-bottom: 20px;
   padding: 16px;
 }

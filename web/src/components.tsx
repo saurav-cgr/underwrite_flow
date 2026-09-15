@@ -22,7 +22,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`button button-${variant}`}
+      className={`btn btn-${variant}`}
       disabled={disabled}
       onClick={onClick}
       type={type}
@@ -40,7 +40,7 @@ export function Badge({
   children: ReactNode;
   tone?: string;
 }) {
-  return <span className={`badge badge-${tone}`}>{children}</span>;
+  return <span className={`status status-${tone}`}>{children}</span>;
 }
 
 // Render the product mark as a scalable decorative SVG.
@@ -144,7 +144,7 @@ export function AppShell({
           </span>
         </div>
         <button
-          className="button button-quiet signout"
+          className="btn btn-quiet signout"
           onClick={onSignOut}
           type="button"
         >
@@ -193,22 +193,31 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`panel ${className}`}>
-      {title ? <h2 className="panel-title">{title}</h2> : null}
+    <section className={`card ${className}`}>
+      {title ? <h2 className="card-title">{title}</h2> : null}
       {children}
     </section>
   );
+}
+
+// Return the stepper state class for one step index.
+function stepState(index: number, current: number): string {
+  if (index < current) return "done";
+  if (index === current) return "active";
+  return "";
 }
 
 // Render a simple progress trail for the applicant journey.
 export function Journey({ current }: { current: number }) {
   const steps = ["Application", "Documents", "Review", "Complete"];
   return (
-    <ol className="journey" aria-label="Application progress">
+    <ol className="stepper" aria-label="Application progress">
       {steps.map((step, index) => (
-        <li className={index <= current ? "journey-done" : ""} key={step}>
+        <li className={stepState(index, current)} key={step}>
           <span>{index + 1}</span>
-          <strong>{step}</strong>
+          <strong aria-current={index === current ? "step" : undefined}>
+            {step}
+          </strong>
         </li>
       ))}
     </ol>

@@ -47,21 +47,21 @@ export function ApplicantDashboard({
         }
       />
       <div className="metric-grid">
-        <div className="metric-card">
+        <div className="metric">
           <span className="metric-label">Active cases</span>
           <strong>{caseRecord ? "01" : "00"}</strong>
           <span>
             {caseRecord ? "One case in progress" : "No submissions yet"}
           </span>
         </div>
-        <div className="metric-card">
+        <div className="metric">
           <span className="metric-label">Human review</span>
           <strong>
             {caseRecord?.status === "underwriter_review" ? "Ready" : "—"}
           </strong>
           <span>Every final route is confirmed by an underwriter.</span>
         </div>
-        <div className="metric-card metric-accent">
+        <div className="metric metric-accent">
           <span className="metric-label">Data boundary</span>
           <strong>Gemini</strong>
           <span>

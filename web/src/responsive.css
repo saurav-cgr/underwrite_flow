@@ -32,34 +32,30 @@
   font-family: var(--font-mono);
   font-size: .82rem;
 }
-.badge {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+.status {
+  border-radius: var(--radius-pill);
   display: inline-block;
-  font-size: .7rem;
-  font-weight: 800;
+  font-size: .72rem;
+  font-weight: 700;
   margin-left: 7px;
-  padding: 3px 7px;
+  padding: 3px 9px;
   text-transform: capitalize;
+  white-space: nowrap;
 }
-.badge-underwriter_review, .badge-confirmed {
-  background: var(--amber-soft);
-  border-color: var(--amber-line);
-  color: var(--amber);
-}
-.badge-completed, .badge-confirmed {
+.status-completed, .status-confirmed {
   background: var(--accent-soft);
-  border-color: var(--accent-line);
   color: var(--accent);
 }
-.badge-specialist {
+.status-underwriter_review {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.status-specialist {
   background: var(--purple-soft);
-  border-color: var(--purple-line);
   color: var(--purple);
 }
-.badge-needs_information {
+.status-needs_information {
   background: var(--danger-soft);
-  border-color: var(--danger-line);
   color: var(--danger);
 }
 .recommendation strong {

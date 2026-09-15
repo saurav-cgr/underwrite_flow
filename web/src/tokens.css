@@ -19,14 +19,12 @@
   --secondary-soft: #dbeafe;
   --accent: #15803d;
   --accent-soft: #dcfce7;
-  --accent-line: #86efac;
   --amber: #a16207;
   --amber-soft: #fef3c7;
-  --amber-line: #fcd34d;
   --purple: #6d28d9;
   --purple-soft: #ede9fe;
-  --purple-line: #ddd6fe;
   --danger: #b91c1c;
+  --danger-strong: #991b1b;
   --danger-soft: #fee2e2;
   --danger-line: #fca5a5;
 
@@ -39,6 +37,7 @@
   --muted: #526174;
   --border: #cbd5e1;
   --border-strong: #aeb9c6;
+  --border-hover: #aab7c7;
   --border-soft: #e2e8f0;
 
   /* Informational surface used by the sidebar note */
@@ -49,6 +48,7 @@
   --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
   --shadow-md: 0 8px 24px rgb(15 23 42 / 8%);
   --shadow-lg: 0 24px 80px rgb(15 23 42 / 25%);
+  --shadow-primary: 0 3px 8px rgb(30 58 95 / 18%);
 
   /* Radius */
   --radius-sm: 6px;

@@ -19,16 +19,22 @@
   align-items: flex-start;
   flex-direction: column;
 }
-.journey {
-  gap: 10px;
+.stepper {
+  grid-template-columns: repeat(4, 32px);
+  justify-content: space-between;
 }
-.journey li {
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 5px;
+.stepper li strong {
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
-.journey li strong {
-  font-size: .72rem;
+.stepper li::after {
+  left: 36px;
+  right: -8px;
 }
 .detail-grid, .metric-strip {
   grid-template-columns: 1fr;
