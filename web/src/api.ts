@@ -106,6 +106,17 @@ export async function uploadDocument(
   });
 }
 
+// Remove one pre-review document selected by the applicant.
+export async function removeDocument(
+  token: string,
+  caseId: string,
+  documentId: string,
+): Promise<void> {
+  await request(`/cases/${caseId}/documents/${documentId}`, token, {
+    method: "DELETE",
+  });
+}
+
 // Load one case visible to the current role.
 export async function readCase(
   token: string,

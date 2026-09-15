@@ -6,10 +6,10 @@ import { AdminWorkspace } from "./admin";
 import {
   ApplicantDashboard,
   ApplicationForm,
-  DocumentsScreen,
   ProductSelection,
-  TrackingScreen,
 } from "./applicant";
+import { DocumentsScreen } from "./documents";
+import { TrackingScreen } from "./tracking";
 import { AppShell, Button } from "./components";
 import { CaseReview, UnderwriterQueue } from "./staff";
 import { homeScreenForRole } from "./ui-state";

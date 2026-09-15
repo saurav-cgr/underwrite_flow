@@ -53,3 +53,10 @@ class UploadStorage:
             byte_size=len(content),
             content_hash=hashlib.sha256(content).hexdigest(),
         )
+
+    # Remove one generated upload key without permitting path traversal.
+    def delete(self, storage_key: str) -> None:
+        destination = (self.root / storage_key).resolve()
+        if self.root.resolve() not in destination.parents:
+            raise StorageValidationError("invalid document storage key")
+        destination.unlink(missing_ok=True)

@@ -3,7 +3,16 @@
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,7 +51,9 @@ async def case_response(session: AsyncSession, case: Case) -> CaseResponse:
 async def create_case(
     application: CaseCreate,
     request: Request,
-    current: dict[str, str] = Depends(require_permission(Permission.CASE_WRITE)),
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> CaseResponse:
     try:
@@ -108,3 +119,27 @@ async def upload_document(
     except (CaseValidationError, StorageValidationError):
         raise HTTPException(status_code=422, detail="Invalid document upload") from None
     return DocumentResponse.model_validate(stored, from_attributes=True)
+
+
+# Remove one applicant document before the case enters workflow review.
+@router.delete("/{case_id}/documents/{document_id}", status_code=204)
+async def delete_document(
+    case_id: UUID,
+    document_id: UUID,
+    request: Request,
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    case = await get_authorized_case(case_id, current, session)
+    try:
+        await CaseService(
+            UploadStorage(Path(request.app.state.settings.upload_root))
+        ).remove_document(session, case, document_id, UUID(current["sub"]))
+    except (CaseValidationError, StorageValidationError):
+        raise HTTPException(
+            status_code=422,
+            detail="Document cannot be removed",
+        ) from None
+    return Response(status_code=204)

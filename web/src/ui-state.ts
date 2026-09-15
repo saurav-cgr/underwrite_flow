@@ -46,3 +46,10 @@ export function allDocumentCodes(documents: ProductDocument[]): string[] {
     .filter((document) => document.requirement !== "not_applicable")
     .map((document) => document.code);
 }
+
+// Return only product-configured documents mandatory for an application.
+export function requiredDocuments(
+  documents: ProductDocument[],
+): ProductDocument[] {
+  return documents.filter((document) => document.requirement === "required");
+}

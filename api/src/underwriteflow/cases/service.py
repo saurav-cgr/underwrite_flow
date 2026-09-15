@@ -158,6 +158,10 @@ class CaseService:
         page_count: int | None,
         actor_user_id: UUID,
     ) -> Document:
+        if case.status != "new":
+            raise CaseValidationError(
+                "documents cannot change after review starts"
+            )
         count = await session.scalar(
             select(func.count(Document.id)).where(Document.case_id == case.id)
         )
@@ -187,3 +191,39 @@ class CaseService:
         )
         await session.commit()
         return document
+
+    # Remove a pre-review document and preserve the removal in the audit trail.
+    async def remove_document(
+        self,
+        session: AsyncSession,
+        case: Case,
+        document_id: UUID,
+        actor_user_id: UUID,
+    ) -> None:
+        if case.status != "new":
+            raise CaseValidationError(
+                "documents cannot change after review starts"
+            )
+        document = await session.scalar(
+            select(Document).where(
+                Document.id == document_id,
+                Document.case_id == case.id,
+            )
+        )
+        if document is None:
+            raise CaseValidationError("document not found")
+        self.storage.delete(document.storage_key)
+        await session.delete(document)
+        self.audit.append(
+            session,
+            AuditEvent(
+                case_id=case.id,
+                actor_user_id=actor_user_id,
+                event_type="document_removed",
+                details={
+                    "document_id": str(document.id),
+                    "content_hash": document.content_hash,
+                },
+            ),
+        )
+        await session.commit()

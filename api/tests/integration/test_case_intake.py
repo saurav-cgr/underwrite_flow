@@ -101,6 +101,67 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
             )
             assert document.json()["filename"] == "synthetic.pdf"
 
+            removed = client.delete(
+                f"/api/v1/cases/{created.json()['id']}/documents/"
+                f"{document.json()['id']}",
+                headers=headers,
+            )
+            remaining = client.get(
+                f"/api/v1/cases/{created.json()['id']}/documents",
+                headers=headers,
+            )
+            assert removed.status_code == 204
+            assert remaining.status_code == 200
+            assert remaining.json() == []
+            with psycopg.connect(DATABASE_URL) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT event_type
+                        FROM audit_events
+                        WHERE case_id = %s AND event_type = %s
+                        """,
+                        (created.json()["id"], "document_removed"),
+                    )
+                    assert cursor.fetchone() == ("document_removed",)
+
+            replacement = client.post(
+                f"/api/v1/cases/{created.json()['id']}/documents",
+                files={
+                    "document": (
+                        "replacement.pdf",
+                        content,
+                        "application/pdf",
+                    )
+                },
+                headers=headers,
+            )
+            with psycopg.connect(DATABASE_URL) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE cases SET status = %s WHERE id = %s",
+                        ("underwriter_review", created.json()["id"]),
+                    )
+            locked_removal = client.delete(
+                f"/api/v1/cases/{created.json()['id']}/documents/"
+                f"{replacement.json()['id']}",
+                headers=headers,
+            )
+            locked_upload = client.post(
+                f"/api/v1/cases/{created.json()['id']}/documents",
+                files={
+                    "document": (
+                        "late.pdf",
+                        content,
+                        "application/pdf",
+                    )
+                },
+                headers=headers,
+            )
+            assert replacement.status_code == 200
+            assert locked_removal.status_code == 422
+            assert locked_upload.status_code == 422
+
             rejected = client.post(
                 f"/api/v1/cases/{created.json()['id']}/documents",
                 files={"document": ("synthetic.txt", content, "text/plain")},

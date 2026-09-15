@@ -1,12 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
 import {
   ApiError,
   createCase,
-  listDocuments,
-  readCase,
-  uploadDocument,
 } from "./api";
 import {
   allDocumentCodes,
@@ -15,12 +12,10 @@ import {
 } from "./ui-state";
 import type {
   CaseRecord,
-  DocumentRecord,
   ProductCatalogItem,
   Screen,
 } from "./types";
 import {
-  Badge,
   Button,
   ErrorSummary,
   Journey,
@@ -367,217 +362,6 @@ export function ApplicationForm({
           </p>
         </aside>
       </form>
-    </>
-  );
-}
-
-// Let applicants upload safe document metadata for their created case.
-export function DocumentsScreen({
-  product,
-  caseRecord,
-  token,
-  onNavigate,
-}: {
-  product: ProductCatalogItem;
-  caseRecord: CaseRecord;
-  token: string;
-  onNavigate: (screen: Screen) => void;
-}) {
-  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
-  const [message, setMessage] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  // Load current document metadata when the screen opens.
-  useEffect(() => {
-    listDocuments(token, caseRecord.id)
-      .then(setDocuments)
-      .catch(() => setMessage("Documents could not be loaded."));
-  }, [caseRecord.id, token]);
-
-  // Upload one selected file and refresh the safe metadata list.
-  async function handleUpload(file: File | undefined) {
-    if (!file) return;
-    setUploading(true);
-    setMessage("");
-    try {
-      const document = await uploadDocument(token, caseRecord.id, file);
-      setDocuments((current) => [...current, document]);
-    } catch (error) {
-      setMessage(
-        error instanceof ApiError
-          ? error.message
-          : "The document could not be uploaded.",
-      );
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  return (
-    <>
-      <PageHeading
-        eyebrow="Supporting evidence"
-        title="Add your documents."
-        description={
-          "Upload synthetic files only. The review team sees metadata and "
-          + "evidence links, not hidden browser state."
-        }
-        action={
-          <Button variant="quiet" onClick={() => onNavigate("tracking")}>
-            View tracking
-          </Button>
-        }
-      />
-      <Journey current={1} />
-      <div className="document-layout">
-        <Panel title="Requested documents">
-          <div className="document-list">
-            {product.documents
-              .filter((document) => document.requirement !== "not_applicable")
-              .map((document) => (
-                <div className="document-row" key={document.code}>
-                  <div>
-                    <strong>{document.title}</strong>
-                    <span>
-                      {document.requirement === "required"
-                        ? "Required"
-                        : "Optional or conditional"}
-                    </span>
-                  </div>
-                  <label className="upload-button">
-                    <input
-                      accept={document.accepted_types.join(",")}
-                      disabled={uploading}
-                      onChange={(event) =>
-                        handleUpload(event.target.files?.[0])
-                      }
-                      type="file"
-                    />
-                    {uploading ? "Uploading…" : "Choose file"}
-                  </label>
-                </div>
-              ))}
-          </div>
-          {message ? (
-            <p className="form-error" role="alert">
-              {message}
-            </p>
-          ) : null}
-        </Panel>
-        <Panel title="Uploaded metadata">
-          <div className="uploaded-list">
-            {documents.length === 0 ? (
-              <p className="muted">No files uploaded yet.</p>
-            ) : (
-              documents.map((document) => (
-                <div className="uploaded-row" key={document.id}>
-                  <span className="status-dot" aria-hidden="true" />
-                  <span>{document.filename}</span>
-                  <small>
-                    {Math.round(document.byte_size / 1024)} KB ·{" "}
-                    {document.content_type}
-                  </small>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="form-actions">
-            <Button onClick={() => onNavigate("tracking")}>
-              Continue to tracking
-            </Button>
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-// Show case status, versions, and the human-governance boundary.
-export function TrackingScreen({
-  caseRecord,
-  token,
-  onNavigate,
-}: {
-  caseRecord: CaseRecord | null;
-  token: string;
-  onNavigate: (screen: Screen) => void;
-}) {
-  const [current, setCurrent] = useState(caseRecord);
-
-  useEffect(() => {
-    if (caseRecord) {
-      readCase(token, caseRecord.id)
-        .then(setCurrent)
-        .catch(() => undefined);
-    }
-  }, [caseRecord, token]);
-
-  if (!current) {
-    return (
-      <Panel>
-        <div className="empty-state">
-          <h2>No case to track</h2>
-          <p>Start a fictional application to see its progress here.</p>
-          <Button onClick={() => onNavigate("products")}>
-            Start an application
-          </Button>
-        </div>
-      </Panel>
-    );
-  }
-
-  const done =
-    current.status === "completed"
-      ? 3
-      : current.status === "underwriter_review"
-        ? 2
-        : current.status === "new"
-          ? 1
-          : 2;
-  return (
-    <>
-      <PageHeading
-        eyebrow="Case tracking"
-        title="Your submission has a clear next step."
-        description={
-          `Case ${current.id.slice(0, 8)} · configuration `
-          + current.product_version
-        }
-        action={
-          <Badge tone={current.status}>
-            {current.status.replaceAll("_", " ")}
-          </Badge>
-        }
-      />
-      <Journey current={done} />
-      <Panel title="Pinned record">
-        <div className="detail-grid">
-          <div>
-            <span className="metric-label">Product</span>
-            <strong>{current.product_code}</strong>
-          </div>
-          <div>
-            <span className="metric-label">Rulebook</span>
-            <strong>{current.rulebook_version}</strong>
-          </div>
-          <div>
-            <span className="metric-label">Case ID</span>
-            <strong>{current.id.slice(0, 18)}…</strong>
-          </div>
-        </div>
-      </Panel>
-      <div className="notice-card">
-        <span className="notice-mark" aria-hidden="true">
-          i
-        </span>
-        <div>
-          <strong>Human confirmation is required.</strong>
-          <p>
-            UnderwriteFlow recommends a triage route only. An authenticated
-            underwriter must confirm the route before completion.
-          </p>
-        </div>
-      </div>
     </>
   );
 }

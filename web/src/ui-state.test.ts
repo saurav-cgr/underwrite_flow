@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   allDocumentCodes,
   homeScreenForRole,
+  requiredDocuments,
   validateFields,
   visibleFields,
 } from "./ui-state";
@@ -67,5 +68,9 @@ describe("document intake", () => {
       },
     ];
     expect(allDocumentCodes(documents)).toEqual(["identity_record"]);
+    const requiredCodes = requiredDocuments(documents).map(
+      (document) => document.code,
+    );
+    expect(requiredCodes).toEqual(["identity_record"]);
   });
 });
