@@ -21,10 +21,114 @@ export function yamlHash(text: string): string {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
+export interface AuditFact {
+  label: string;
+  value: string;
+}
+
+// Shorten one long audit value so a hash or id stays recognisable at a glance.
+function shortValue(text: string): string {
+  return text.length > 24 ? `${text.slice(0, 8)}…` : text;
+}
+
+// Turn a snake_case audit key into a readable label.
+export function auditLabel(key: string): string {
+  const words = key.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+// Summarize audit details as bounded facts instead of one raw JSON string.
+export function auditFacts(details: Record<string, unknown>): AuditFact[] {
+  const facts: AuditFact[] = [];
+  for (const [key, value] of Object.entries(details)) {
+    if (value === null || value === undefined) continue;
+    const label = auditLabel(key);
+    if (Array.isArray(value)) {
+      const scalars = value.filter(
+        (item) => item === null || typeof item !== "object",
+      );
+      const allScalar = scalars.length === value.length;
+      if (value.length === 0) {
+        facts.push({ label, value: "none" });
+      } else if (allScalar) {
+        facts.push({ label, value: shortValue(scalars.join(", ")) });
+      } else {
+        facts.push({
+          label,
+          value: `${value.length} record${value.length === 1 ? "" : "s"}`,
+        });
+      }
+      continue;
+    }
+    if (typeof value === "object") {
+      facts.push({ label, value: "structured detail" });
+      continue;
+    }
+    facts.push({ label, value: shortValue(String(value)) });
+  }
+  return facts;
+}
+
 
 // Report whether a case still needs applicant or underwriter attention.
 export function isOpenCase(status: string): boolean {
   return status !== "completed";
+}
+
+export interface NextStep {
+  title: string;
+  detail: string;
+  action: string;
+  screen: Screen;
+}
+
+// Describe the applicant's next action for one case status, including a case
+// whose processing never finished and is therefore still open for submission.
+export function applicantNextStep(status: string): NextStep {
+  if (status === "new") {
+    return {
+      title: "This case has not finished processing.",
+      detail:
+        "Its documents have not been submitted for review yet, so no "
+        + "recommendation exists. Send the required documents to start.",
+      action: "Continue documents",
+      screen: "documents",
+    };
+  }
+  if (status === "needs_information") {
+    return {
+      title: "More information is needed.",
+      detail:
+        "Review is paused until the requested evidence is supplied.",
+      action: "Add information",
+      screen: "documents",
+    };
+  }
+  if (status === "underwriter_review" || status === "manual_review") {
+    return {
+      title: "An underwriter is reviewing this case.",
+      detail:
+        "No action is needed. The confirmed route appears here once an "
+        + "underwriter records it.",
+      action: "Refresh guidance",
+      screen: "tracking",
+    };
+  }
+  if (status === "completed") {
+    return {
+      title: "This case is complete.",
+      detail:
+        "The confirmed route was handed to its destination queue.",
+      action: "View pinned record",
+      screen: "tracking",
+    };
+  }
+  return {
+    title: "This case needs review.",
+    detail: "Check the confirmed route and pinned configuration below.",
+    action: "View pinned record",
+    screen: "tracking",
+  };
 }
 
 // Return the two-letter avatar initials for a synthetic demo identity.

@@ -46,9 +46,28 @@ export function CaseReview({
   const [specialistLabel, setSpecialistLabel] = useState("");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
+  const [handoffFailed, setHandoffFailed] = useState(false);
   const [working, setWorking] = useState(false);
   const canReview = item.status === "underwriter_review";
   const locked = working || !canReview;
+
+  // Retry the queue handoff for a decision that was already recorded.
+  async function retryHandoff() {
+    setWorking(true);
+    setMessage("");
+    try {
+      await completeCase(token, item.case_id);
+      setHandoffFailed(false);
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "The handoff could not be completed.",
+      );
+    } finally {
+      setWorking(false);
+    }
+  }
 
   useEffect(() => {
     if (!canReview) {
@@ -95,8 +114,9 @@ export function CaseReview({
     }
     setWorking(true);
     setMessage("");
+    let review: ReviewResult;
     try {
-      const review = await submitReview(token, item.case_id, {
+      review = await submitReview(token, item.case_id, {
         action,
         selected_route: action === "confirm" ? undefined : selectedRoute,
         specialist_label:
@@ -106,19 +126,27 @@ export function CaseReview({
         reason: reason || undefined,
         evidence_acknowledged: acknowledged,
       });
-      setResult(review);
-      if (review.status === "confirmed" || review.status === "overridden") {
-        await completeCase(token, item.case_id);
-      }
     } catch (error) {
       setMessage(
         error instanceof ApiError
           ? error.message
           : "The decision could not be saved.",
       );
-    } finally {
       setWorking(false);
+      return;
     }
+    setResult(review);
+    // The decision is durable now, so a handoff failure is reported apart
+    // from it and left retryable rather than described as a lost decision.
+    if (review.status === "confirmed" || review.status === "overridden") {
+      try {
+        await completeCase(token, item.case_id);
+      } catch {
+        // "Decision recorded" and "decision lost" must not both be shown.
+        setHandoffFailed(true);
+      }
+    }
+    setWorking(false);
   }
 
   const recommendation: Recommendation | undefined = start?.recommendation;
@@ -147,13 +175,27 @@ export function CaseReview({
         </p>
       ) : null}
       {result ? (
-        <div className="success-card" role="status">
+        <div
+          className={handoffFailed ? "notice-card" : "success-card"}
+          role="status"
+        >
           <strong>Decision recorded.</strong>
           <span>
             {result.status.replaceAll("_", " ")} ·{" "}
             {result.selected_route ?? "needs information"}
           </span>
+          {handoffFailed ? (
+            <span>
+              The queue handoff did not complete, so this case is not in
+              the completed queue yet.
+            </span>
+          ) : null}
         </div>
+      ) : null}
+      {handoffFailed ? (
+        <Button disabled={working} onClick={retryHandoff} variant="secondary">
+          {working ? "Retrying…" : "Retry handoff"}
+        </Button>
       ) : null}
       <div className="review-layout">
         <div className="review-main">

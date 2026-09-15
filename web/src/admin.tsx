@@ -16,6 +16,7 @@ import {
 } from "./components";
 import { EvaluationPanel } from "./evaluation-panel";
 import { Icon } from "./icons";
+import { auditFacts } from "./ui-state";
 
 // Give administrators an inspectable queue and audit lookup workspace.
 export function AdminWorkspace({
@@ -147,7 +148,18 @@ export function AdminWorkspace({
                     <span className="audit-time">
                       {new Date(event.occurred_at).toLocaleString()}
                     </span>
-                    <code>{JSON.stringify(event.details)}</code>
+                    <dl className="audit-facts">
+                      {auditFacts(event.details).map((fact) => (
+                        <div key={fact.label}>
+                          <dt>{fact.label}</dt>
+                          <dd>{fact.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <details className="audit-raw">
+                      <summary>Raw event payload</summary>
+                      <code>{JSON.stringify(event.details, null, 2)}</code>
+                    </details>
                   </div>
                 </li>
               ))}

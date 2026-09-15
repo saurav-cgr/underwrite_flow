@@ -39,8 +39,10 @@ const DEMO_ACCOUNTS: {
 
 // Render the role entry point with paste-friendly demo credentials.
 export function RoleEntry({
+  notice,
   onLogin,
 }: {
+  notice?: string;
   onLogin: (session: Session) => void;
 }) {
   const [email, setEmail] = useState("");
@@ -130,6 +132,11 @@ export function RoleEntry({
               value={password}
             />
           </label>
+          {notice ? (
+            <p className="form-notice" role="status">
+              {notice}
+            </p>
+          ) : null}
           {message ? (
             <p className="form-error" role="alert">
               {message}

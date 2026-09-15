@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   allDocumentCodes,
+  applicantNextStep,
+  auditFacts,
   homeScreenForRole,
   identityInitials,
   isOpenCase,
@@ -94,5 +96,67 @@ describe("document intake", () => {
       (document) => document.code,
     );
     expect(requiredCodes).toEqual(["identity_record"]);
+  });
+});
+
+// Verify an unprocessed case is described as unfinished, not as progressing.
+describe("applicant next step", () => {
+  it("tells the applicant an unprocessed case still needs documents", () => {
+    const step = applicantNextStep("new");
+
+    expect(step.screen).toBe("documents");
+    expect(step.title).toContain("not finished processing");
+  });
+
+  it("points a needs-information case at the documents screen", () => {
+    expect(applicantNextStep("needs_information").screen).toBe("documents");
+  });
+
+  it("asks nothing of the applicant while an underwriter reviews", () => {
+    const step = applicantNextStep("underwriter_review");
+
+    expect(step.screen).toBe("tracking");
+    expect(step.detail).toContain("No action is needed");
+  });
+
+  it("describes a completed case as handed off", () => {
+    expect(applicantNextStep("completed").detail).toContain("handed");
+  });
+});
+
+// Verify audit details render as bounded facts instead of one raw blob.
+describe("audit facts", () => {
+  it("summarizes scalar, list, and nested values", () => {
+    const facts = auditFacts({
+      recommendation: "specialist",
+      review_cycle: 0,
+      conflicts: ["vehicle_age"],
+      missing_information: [],
+      documents: [{ id: 1 }, { id: 2 }],
+      nested: { a: 1 },
+    });
+
+    expect(facts).toEqual([
+      { label: "Recommendation", value: "specialist" },
+      { label: "Review cycle", value: "0" },
+      { label: "Conflicts", value: "vehicle_age" },
+      { label: "Missing information", value: "none" },
+      { label: "Documents", value: "2 records" },
+      { label: "Nested", value: "structured detail" },
+    ]);
+  });
+
+  it("shortens a long hash so it stays recognisable", () => {
+    const hash =
+      "765d638ae276115aaa407954995a899e89b246e23ec18d1511d6f04a507172dd";
+    const facts = auditFacts({ product_content_hash: hash });
+
+    expect(facts).toEqual([
+      { label: "Product content hash", value: "765d638a…" },
+    ]);
+  });
+
+  it("drops null values instead of rendering empty rows", () => {
+    expect(auditFacts({ absent: null })).toEqual([]);
   });
 });

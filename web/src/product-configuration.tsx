@@ -23,6 +23,7 @@ export function ProductConfiguration({ token }: { token: string }) {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [history, setHistory] = useState<ProductVersionHistoryItem[]>([]);
   const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [yamlText, setYamlText] = useState("");
@@ -81,7 +82,7 @@ export function ProductConfiguration({ token }: { token: string }) {
       setYamlText(await file.text());
       setPreview(null);
       setPreviewHash(null);
-      setMessage("YAML loaded locally. Validate it before importing.");
+      setNotice("YAML loaded locally. Validate it before importing.");
     } catch {
       setMessage("The YAML file could not be read.");
     }
@@ -95,9 +96,10 @@ export function ProductConfiguration({ token }: { token: string }) {
     }
     setWorking("validate");
     setMessage("");
+    setNotice("");
     try {
       const result = await validateProductConfiguration(token, yamlText);
-      setMessage(
+      setNotice(
         `Configuration ${result.product_code} ${result.version} is valid.`,
       );
     } catch (error) {
@@ -141,12 +143,13 @@ export function ProductConfiguration({ token }: { token: string }) {
     }
     setWorking("import");
     setMessage("");
+    setNotice("");
     try {
       const result = await importProductConfiguration(token, yamlText);
       setSelectedCode(result.product_code);
       setProductRefresh((current) => current + 1);
       await refreshHistory(result.product_code);
-      setMessage(
+      setNotice(
         `Draft ${result.version} imported for ${result.product_code}.`,
       );
     } catch (error) {
@@ -166,6 +169,7 @@ export function ProductConfiguration({ token }: { token: string }) {
     if (!window.confirm(`Activate ${selectedCode} ${version}?`)) return;
     setWorking(`activate-${version}`);
     setMessage("");
+    setNotice("");
     try {
       const result = await activateProductConfiguration(
         token,
@@ -174,7 +178,7 @@ export function ProductConfiguration({ token }: { token: string }) {
       );
       setProductRefresh((current) => current + 1);
       await refreshHistory(selectedCode);
-      setMessage(
+      setNotice(
         `Version ${result.version} is active for ${result.product_code}.`,
       );
     } catch (error) {
@@ -221,6 +225,11 @@ export function ProductConfiguration({ token }: { token: string }) {
           {message}
         </p>
       ) : null}
+      {notice ? (
+        <p className="form-notice" role="status">
+          {notice}
+        </p>
+      ) : null}
       <div className="admin-grid">
         <Panel title="Configured products">
           {loadingProducts ? (
@@ -233,23 +242,24 @@ export function ProductConfiguration({ token }: { token: string }) {
               detail="Import a fictional configuration to create one."
             />
           ) : (
-            <div className="mini-list" role="list" aria-label="Products">
+            <ul aria-label="Products" className="mini-list">
               {products.map((product) => (
-                <button
-                  aria-pressed={product.product_code === selectedCode}
-                  className="product-config-row"
-                  key={product.product_code}
-                  onClick={() => setSelectedCode(product.product_code)}
-                  type="button"
-                >
-                  <span>
-                    <strong>{product.title}</strong>
-                    <small>{product.product_code}</small>
-                  </span>
-                  <Badge tone={product.status}>{product.status}</Badge>
-                </button>
+                <li key={product.product_code}>
+                  <button
+                    aria-pressed={product.product_code === selectedCode}
+                    className="product-config-row"
+                    onClick={() => setSelectedCode(product.product_code)}
+                    type="button"
+                  >
+                    <span>
+                      <strong>{product.title}</strong>
+                      <small>{product.product_code}</small>
+                    </span>
+                    <Badge tone={product.status}>{product.status}</Badge>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </Panel>
         <Panel title="Version history">

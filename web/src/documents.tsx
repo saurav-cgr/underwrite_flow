@@ -166,6 +166,7 @@ export function DocumentsScreen({
           </small>
         </div>
         <div
+          aria-label="Document completion"
           aria-valuemax={100}
           aria-valuemin={0}
           aria-valuenow={completion}

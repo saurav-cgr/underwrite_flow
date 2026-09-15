@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-import { listCases, listCatalog } from "./api";
+import { listCases, listCatalog, setUnauthorizedHandler } from "./api";
 import { AdminWorkspace } from "./admin";
 import { ApplicantDashboard, ProductSelection } from "./applicant";
 import { ApplicationForm } from "./application-form";
@@ -31,6 +31,21 @@ export function App() {
   const [caseRecord, setCaseRecord] = useState<CaseRecord | null>(null);
   const [queueItem, setQueueItem] = useState<QueueItem | null>(null);
   const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
+
+  // Return to the role entry screen when a session stops being valid.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setSession(null);
+      setSelectedProduct(null);
+      setCaseRecord(null);
+      setQueueItem(null);
+      setMessage("");
+      setScreen("dashboard");
+      setNotice("Your session expired. Sign in again to continue.");
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   // Load product metadata after an applicant is authenticated.
   useEffect(() => {
@@ -61,6 +76,7 @@ export function App() {
     setSession(nextSession);
     setScreen(homeScreenForRole(nextSession.role));
     setMessage("");
+    setNotice("");
   }
 
   // Clear local UI state without retaining a bearer token.
@@ -78,7 +94,7 @@ export function App() {
     setScreen(nextScreen);
   }
 
-  if (!session) return <RoleEntry onLogin={handleLogin} />;
+  if (!session) return <RoleEntry notice={notice} onLogin={handleLogin} />;
 
   let activeScreen: Screen;
   let content: ReactNode;

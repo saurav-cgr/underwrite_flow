@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
-import { readCase } from "./api";
+import { ApiError, readCase } from "./api";
 import { Badge, Button, Journey, PageHeading, Panel } from "./components";
 import { Icon } from "./icons";
+import { applicantNextStep } from "./ui-state";
 import type { CaseRecord, Screen } from "./types";
 
 // Show case status, versions, and the human-governance boundary.
@@ -16,14 +17,23 @@ export function TrackingScreen({
   onNavigate: (screen: Screen) => void;
 }) {
   const [current, setCurrent] = useState(caseRecord);
+  const [message, setMessage] = useState("");
 
   // Refresh the case status without retaining raw application evidence.
   useEffect(() => {
-    if (caseRecord) {
-      readCase(token, caseRecord.id)
-        .then(setCurrent)
-        .catch(() => undefined);
-    }
+    if (!caseRecord) return;
+    readCase(token, caseRecord.id)
+      .then((refreshed) => {
+        setCurrent(refreshed);
+        setMessage("");
+      })
+      .catch((error) =>
+        setMessage(
+          error instanceof ApiError
+            ? error.message
+            : "The case status could not be refreshed.",
+        ),
+      );
   }, [caseRecord, token]);
 
   if (!current) {
@@ -48,11 +58,12 @@ export function TrackingScreen({
         : current.status === "new"
           ? 1
           : 2;
+  const nextStep = applicantNextStep(current.status);
   return (
     <>
       <PageHeading
         eyebrow="Case tracking"
-        title="Your submission has a clear next step."
+        title={nextStep.title}
         description={
           `Case ${current.id.slice(0, 8)} · configuration `
           + current.product_version
@@ -63,6 +74,19 @@ export function TrackingScreen({
           </Badge>
         }
       />
+      {message ? (
+        <p className="form-error" role="alert">
+          {message}
+        </p>
+      ) : null}
+      <Panel title="Next step">
+        <p>{nextStep.detail}</p>
+        {nextStep.screen !== "tracking" ? (
+          <Button onClick={() => onNavigate(nextStep.screen)}>
+            {nextStep.action}
+          </Button>
+        ) : null}
+      </Panel>
       <Journey current={done} />
       <Panel title="Pinned record">
         <div className="facts-grid">

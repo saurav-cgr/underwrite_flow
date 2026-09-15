@@ -299,3 +299,14 @@
   margin-bottom: 20px;
   padding: 14px 18px;
 }
+.notice-card {
+  align-items: flex-start;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-line);
+  color: var(--amber);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
+}

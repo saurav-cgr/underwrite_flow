@@ -98,8 +98,48 @@
   font-size: .78rem;
   margin: 18px 0 0;
 }
+.audit-facts {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+}
+.audit-facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.audit-facts dt {
+  color: var(--muted);
+  font-size: .74rem;
+  min-width: 132px;
+}
+.audit-facts dd {
+  font-size: .78rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.audit-raw {
+  margin-top: 8px;
+}
+.audit-raw summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .74rem;
+}
+.audit-raw code {
+  display: block;
+  font-size: .72rem;
+  margin-top: 6px;
+  max-height: 220px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 .mini-list {
   display: grid;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 .mini-row {
   align-items: center;
