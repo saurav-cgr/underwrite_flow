@@ -313,3 +313,9 @@ underwrite_flow/
 4. **Portfolio proof:** Steps 13–14 provide reproducible evaluation, optional observability, smoke verification, and demo documentation.
 
 At every milestone, review scope and remove optional work before adding infrastructure. LangSmith, Ollama, and the mock webhook are the first features to omit if they threaten the core human-governed triage demonstration.
+
+## Main-branch remediation
+
+The whole-branch PRD review identified follow-up work after Steps 1–14.
+Execute the remediation plan in
+`docs/MAIN_BRANCH_REMEDIATION_PLAN.md` under the same delivery protocol.
