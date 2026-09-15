@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   ApiError,
+  activateProductConfiguration,
   importProductConfiguration,
   listProductConfigurations,
   listProductVersionHistory,
@@ -150,6 +151,34 @@ export function ProductConfiguration({ token }: { token: string }) {
     }
   }
 
+  // Activate one draft only after an administrator confirms the action.
+  async function handleActivate(version: string) {
+    if (!selectedCode) return;
+    if (!window.confirm(`Activate ${selectedCode} ${version}?`)) return;
+    setWorking(`activate-${version}`);
+    setMessage("");
+    try {
+      const result = await activateProductConfiguration(
+        token,
+        selectedCode,
+        version,
+      );
+      setProductRefresh((current) => current + 1);
+      setHistoryRefresh((current) => current + 1);
+      setMessage(
+        `Version ${result.version} is active for ${result.product_code}.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "The product configuration could not be activated.",
+      );
+    } finally {
+      setWorking("");
+    }
+  }
+
   const selectedProduct = products.find(
     (product) => product.product_code === selectedCode,
   );
@@ -223,6 +252,17 @@ export function ProductConfiguration({ token }: { token: string }) {
                     >
                       <span>{version.version}</span>
                       <Badge tone={version.status}>{version.status}</Badge>
+                      {version.status === "active" ? null : (
+                        <Button
+                          disabled={Boolean(working)}
+                          onClick={() => handleActivate(version.version)}
+                          variant="secondary"
+                        >
+                          {working === `activate-${version.version}`
+                            ? "Activating…"
+                            : "Activate"}
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>

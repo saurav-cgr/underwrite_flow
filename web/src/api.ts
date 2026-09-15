@@ -130,6 +130,23 @@ export async function importProductConfiguration(
   });
 }
 
+// Activate one imported product version after administrator confirmation.
+export async function activateProductConfiguration(
+  token: string,
+  productCode: string,
+  version: string,
+): Promise<ProductConfigurationChange> {
+  return request(
+    `/products/${encodeURIComponent(productCode)}/activate`,
+    token,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ version }),
+    },
+  );
+}
+
 // Create an applicant case with all configured document codes.
 export async function createCase(
   token: string,

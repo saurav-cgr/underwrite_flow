@@ -202,3 +202,74 @@ specialist_labels: [synthetic review]
     assert import_response.json()["status"] == "draft"
     assert history_response.json()[0]["version"] == "v1"
     remove_generated_product(product_code)
+
+
+# Verify activation makes an imported draft active and records an audit event.
+def test_administrator_can_activate_imported_product_configuration() -> None:
+    product_code = f"synthetic-activation-{uuid4().hex}"
+    yaml_text = f"""
+product_code: {product_code}
+title: Synthetic Activation
+family: life
+scope: Fictional demonstration only
+description: Synthetic product configuration
+version: v1
+fields:
+  - key: applicant_age
+    label: Applicant age
+    type: integer
+    help_text: Enter a fictional applicant age.
+documents:
+  - code: identity_record
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf]
+routing_rules:
+  - code: standard_review
+    condition: {{field: applicant_age}}
+    route: standard
+specialist_labels: [synthetic review]
+"""
+    with TestClient(create_app()) as client:
+        login = client.post(
+            "/api/v1/auth/session",
+            json={
+                "email": "administrator@synthetic.test",
+                "password": "underwriteflow-demo-administrator",
+            },
+        )
+        headers = {"Authorization": f"Bearer {login.json()['token']}"}
+        imported = client.post(
+            "/api/v1/products/import",
+            json={"yaml_text": yaml_text},
+            headers=headers,
+        )
+        activated = client.post(
+            f"/api/v1/products/{product_code}/activate",
+            json={"version": "v1"},
+            headers=headers,
+        )
+        history = client.get(
+            f"/api/v1/products/{product_code}/history",
+            headers=headers,
+        )
+
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT event_type
+                FROM audit_events
+                WHERE details ->> 'product_code' = %s
+                  AND event_type = 'configuration_activated'
+                """,
+                (product_code,),
+            )
+            audit_event = cursor.fetchone()
+
+    assert login.status_code == 200
+    assert imported.json()["status"] == "draft"
+    assert activated.json()["status"] == "active"
+    assert history.json()[0]["status"] == "active"
+    assert audit_event == ("configuration_activated",)
+    remove_generated_product(product_code)
