@@ -45,6 +45,13 @@ class Client:
     # Return the status-specific response for every recovery request.
     def post(self, path: str, **kwargs: dict) -> Response:
         self.calls.append(("post", path, kwargs))
+        if path.endswith("/submit"):
+            return Response(
+                {
+                    "status": "underwriter_review",
+                    "recommendation": {"route": "expedited"},
+                }
+            )
         if path.endswith("/start"):
             return Response({"recommendation": {"route": "expedited"}})
         if path.startswith("/api/v1/reviews/"):

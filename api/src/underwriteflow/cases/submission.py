@@ -230,6 +230,7 @@ class SubmissionService:
                     status="pending_human_review",
                     summary={
                         "summary": triage_values.get("summary", {}),
+                        "recommendation": recommended,
                         "failures": len(extraction_failures),
                     },
                     workflow_version=WORKFLOW_VERSION,

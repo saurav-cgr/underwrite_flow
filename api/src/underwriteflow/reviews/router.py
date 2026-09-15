@@ -20,11 +20,11 @@ from underwriteflow.persistence.models import (
     Recommendation,
     Review,
     Submission,
+    Validation,
 )
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.reviews.schemas import ReviewCommand, ReviewResponse, ReviewStartResponse
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
-from underwriteflow.workflow.product_subgraphs import build_product_subgraph
 from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import build_triage_graph
 
@@ -53,60 +53,58 @@ def review_response_for_record(
     )
 
 
-# Start the selected product and triage graphs for a persisted case.
+# Return the persisted pending review without starting any workflow work.
 @router.post("/{case_id}/start", response_model=ReviewStartResponse)
 async def start_review(
     case_id: UUID,
-    request: Request,
     operator: dict[str, str] = Depends(require_permission(Permission.REVIEW_WRITE)),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewStartResponse:
     case = await session.scalar(select(Case).where(Case.id == case_id))
-    submission = await session.scalar(select(Submission).where(Submission.case_id == case_id))
+    submission = await session.scalar(
+        select(Submission).where(Submission.case_id == case_id)
+    )
     if case is None or submission is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    if case.status == "underwriter_review":
-        config = thread_config(str(case_id), case.review_cycle)
-        async with postgres_checkpointer(
-            request.app.state.settings.database_url
-        ) as checkpointer:
-            graph = build_triage_graph(checkpointer=checkpointer)
-            snapshot = await graph.aget_state(config)
-        recommendation = snapshot.values.get("recommendation")
-        if "human_review" not in snapshot.next or not isinstance(
-            recommendation, dict
-        ):
-            raise HTTPException(
-                status_code=409,
-                detail="Case is not awaiting human review",
-            )
-        return ReviewStartResponse(
-            case_id=case_id,
-            status="awaiting_human_review",
-            recommendation=recommendation,
+    if case.status != "underwriter_review":
+        raise HTTPException(
+            status_code=409,
+            detail="Case is not awaiting human review",
         )
-    if case.status != "new":
-        raise HTTPException(status_code=409, detail="Case review is already complete or active")
+    recommendation = await session.scalar(
+        select(Recommendation).where(Recommendation.case_id == case_id)
+    )
     product_version = await session.scalar(
         select(ProductVersion).where(ProductVersion.id == case.product_version_id)
     )
-    if product_version is None:
-        raise HTTPException(status_code=409, detail="Case configuration is unavailable")
-    configuration = ProductConfiguration.model_validate(product_version.configuration)
-    documents = list(await session.scalars(select(Document).where(Document.case_id == case_id)))
+    if recommendation is None or product_version is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Case recommendation is unavailable",
+        )
+    configuration = ProductConfiguration.model_validate(
+        product_version.configuration
+    )
+    documents = list(
+        await session.scalars(
+            select(Document).where(Document.case_id == case_id)
+        )
+    )
     extracted_fields = list(
-        await session.scalars(select(ExtractedField).where(ExtractedField.case_id == case_id))
+        await session.scalars(
+            select(ExtractedField).where(ExtractedField.case_id == case_id)
+        )
     )
+    failures = list(
+        await session.scalars(
+            select(Validation).where(
+                Validation.case_id == case_id,
+                Validation.status == "error",
+            )
+        )
+    )
+    summary = dict(recommendation.summary or {})
     application = submission.payload.get("application", {})
-    missing_information = missing_document_codes(
-        configuration,
-        [
-            document.document_code
-            for document in documents
-            if document.document_code
-        ],
-        application,
-    )
     evidence = [
         {
             "document_id": str(document.id),
@@ -126,58 +124,37 @@ async def start_review(
         }
         for field in extracted_fields
     )
-    conflicts = [
-        {
-            "field_name": field.field_name,
-            "source_locator": field.source_locator,
-            "conflict_status": field.conflict_status,
-        }
-        for field in extracted_fields
-        if field.conflict_status != "clear"
-    ]
-    product_result = await build_product_subgraph(configuration).ainvoke(
-        {
-            "product_code": configuration.product_code,
-            "payload": application,
-            "rule_results": [],
-        }
-    )
-    state = {
-        "case_id": str(case_id),
-        "evidence": evidence,
-        "conflicts": conflicts,
-        "missing_information": missing_information,
-        "low_confidence": any(
-            field.confidence is not None and field.confidence < 0.8
-            for field in extracted_fields
-        ),
-        "validations": product_result.get("validations", []),
-        "risk_signals": product_result.get("risk_signals", []),
-    }
-    config = thread_config(str(case_id), case.review_cycle)
-    async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
-        graph = build_triage_graph(checkpointer=checkpointer)
-        if (await graph.aget_state(config)).next:
-            raise HTTPException(status_code=409, detail="Case review has already started")
-        result = await graph.ainvoke(state, config=config)
-    case.status = "underwriter_review"
-    session.add(
-        AuditEvent(
-            case_id=case_id,
-            actor_user_id=UUID(operator["sub"]),
-            event_type="workflow_started",
-            details={
-                "product_code": configuration.product_code,
-                "product_version": product_version.version,
-                "recommendation": result["recommendation"]["route"],
-            },
-        )
-    )
-    await session.commit()
     return ReviewStartResponse(
         case_id=case_id,
         status="awaiting_human_review",
-        recommendation=result["recommendation"],
+        recommendation=summary.get(
+            "recommendation", {"route": recommendation.route}
+        ),
+        summary=summary.get("summary", {}),
+        evidence=evidence,
+        conflicts=[
+            {
+                "field_name": field.field_name,
+                "source_locator": field.source_locator,
+                "conflict_status": field.conflict_status,
+            }
+            for field in extracted_fields
+            if field.conflict_status != "clear"
+        ],
+        missing_information=missing_document_codes(
+            configuration,
+            [
+                document.document_code
+                for document in documents
+                if document.document_code
+            ],
+            application,
+        ),
+        extraction_failures=[
+            {"rule_code": failure.rule_code, "details": failure.details}
+            for failure in failures
+        ],
+        specialist_options=list(configuration.specialist_labels),
     )
 
 

@@ -36,8 +36,14 @@ class ReviewResponse(BaseModel):
 
 
 class ReviewStartResponse(BaseModel):
-    """Recommendation exposed while a case awaits human review."""
+    """Persisted human-review view for one case awaiting a decision."""
 
     case_id: UUID
     status: Literal["awaiting_human_review"]
     recommendation: dict[str, object]
+    summary: dict[str, object]
+    evidence: list[dict[str, object]]
+    conflicts: list[dict[str, object]]
+    missing_information: list[str]
+    extraction_failures: list[dict[str, object]]
+    specialist_options: list[str]

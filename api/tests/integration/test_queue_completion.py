@@ -4,6 +4,7 @@ import psycopg
 from fastapi.testclient import TestClient
 
 from underwriteflow.app import create_app
+from underwriteflow.config import Settings
 
 
 DATABASE_URL = "postgresql://underwriteflow:synthetic-local-password@db:5433/underwriteflow"
@@ -76,7 +77,23 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 )
 
     try:
-        with TestClient(create_app()) as client:
+        with TestClient(
+            create_app(Settings(generation_provider="fake"))
+        ) as client:
+            applicant_login = client.post(
+                "/api/v1/auth/session",
+                json={
+                    "email": "applicant@synthetic.test",
+                    "password": "underwriteflow-demo-applicant",
+                },
+            )
+            submitted = client.post(
+                f"/api/v1/cases/{case_id}/submit",
+                headers={
+                    "Authorization": f"Bearer {applicant_login.json()['token']}"
+                },
+            )
+            assert submitted.status_code == 200, submitted.text
             login = client.post(
                 "/api/v1/auth/session",
                 json={
@@ -126,7 +143,7 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
         assert audit.status_code == 200
         events = {event["event_type"]: event for event in audit.json()}
         event_types = set(events)
-        assert "workflow_started" in event_types
+        assert "case_submitted" in event_types
         assert "underwriter_reviewed" in event_types
         assert "case_completed" in event_types
         assert events["underwriter_reviewed"]["details"]["reason"] == "Synthetic demonstration override"
@@ -153,13 +170,34 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
     finally:
         with psycopg.connect(DATABASE_URL) as connection:
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM checkpoint_writes WHERE thread_id = %s", (f"case-{case_id}",))
-                cursor.execute("DELETE FROM checkpoint_blobs WHERE thread_id = %s", (f"case-{case_id}",))
-                cursor.execute("DELETE FROM checkpoints WHERE thread_id = %s", (f"case-{case_id}",))
+                cursor.execute(
+                    "DELETE FROM checkpoint_writes WHERE thread_id = %s",
+                    (f"case-{case_id}:cycle-0",),
+                )
+                cursor.execute(
+                    "DELETE FROM checkpoint_blobs WHERE thread_id = %s",
+                    (f"case-{case_id}:cycle-0",),
+                )
+                cursor.execute(
+                    "DELETE FROM checkpoints WHERE thread_id = %s",
+                    (f"case-{case_id}:cycle-0",),
+                )
                 cursor.execute("DELETE FROM handoffs WHERE case_id = %s", (case_id,))
                 cursor.execute("ALTER TABLE audit_events DISABLE TRIGGER audit_events_append_only")
                 try:
                     cursor.execute("DELETE FROM audit_events WHERE case_id = %s", (case_id,))
+                    cursor.execute(
+                        "DELETE FROM extracted_fields WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
+                        "DELETE FROM validations WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
+                        "DELETE FROM risk_signals WHERE case_id = %s",
+                        (case_id,),
+                    )
                     cursor.execute("DELETE FROM reviews WHERE case_id = %s", (case_id,))
                     cursor.execute("DELETE FROM recommendations WHERE case_id = %s", (case_id,))
                     cursor.execute("DELETE FROM documents WHERE case_id = %s", (case_id,))

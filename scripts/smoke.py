@@ -64,11 +64,11 @@ def recover_case(
     status = case["status"]
     if status == "new":
         upload_missing_documents(client, case_id, applicant)
-        start = client.post(
-            f"/api/v1/reviews/{case_id}/start", headers=underwriter
+        submitted = client.post(
+            f"/api/v1/cases/{case_id}/submit", headers=applicant
         )
-        assert start.status_code == 200, start.text
-        assert start.json()["recommendation"]["route"] == "expedited"
+        assert submitted.status_code == 200, submitted.text
+        assert submitted.json()["recommendation"]["route"] == "expedited"
         status = "underwriter_review"
     if status == "underwriter_review":
         decision = client.post(
