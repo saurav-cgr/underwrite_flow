@@ -30,7 +30,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -63,7 +81,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -96,7 +132,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -129,7 +183,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -162,7 +234,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -195,7 +285,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -228,7 +336,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -261,7 +387,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -294,7 +438,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -327,7 +489,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -360,7 +540,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -393,7 +591,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -426,7 +642,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -459,7 +693,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -492,7 +744,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -525,7 +795,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -558,7 +846,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -591,7 +897,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -624,7 +948,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -657,7 +999,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "vehicle_age: 4",
+          "vehicle_use: personal",
+          "prior_claims: 2"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -696,7 +1056,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -737,7 +1121,32 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "vehicle_age: 20"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -774,7 +1183,32 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -817,7 +1251,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "vehicle_age: 20"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -854,7 +1312,32 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -895,7 +1378,32 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "vehicle_age: 20"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -934,7 +1442,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -975,7 +1507,32 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "vehicle_age: 20"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1012,7 +1569,32 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal",
+          "prior_claims: 0"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1055,7 +1637,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "vehicle_age: 20"
+        ]
+      },
+      {
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
+        "lines": [
+          "document_reference: vehicle_record"
+        ]
+      },
+      {
+        "document_id": "inspection_photo",
+        "filename": "inspection_photo.pdf",
+        "lines": [
+          "vehicle_age: 13",
+          "vehicle_use: personal"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1084,7 +1690,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1113,7 +1730,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1142,7 +1770,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1171,7 +1810,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1200,7 +1850,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1229,7 +1890,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1258,7 +1930,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1287,7 +1970,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1316,7 +2010,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1345,7 +2050,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1378,7 +2094,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1411,7 +2145,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1444,7 +2196,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1477,7 +2247,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1510,7 +2298,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1543,7 +2349,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1576,7 +2400,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1609,7 +2451,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1642,7 +2502,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1675,7 +2553,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "income_record",
+        "filename": "income_record.pdf",
+        "lines": [
+          "requested_cover: 10000001",
+          "occupation_type: office",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1710,7 +2606,24 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1747,7 +2660,25 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000007"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1780,7 +2711,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1819,7 +2768,24 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000007"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1852,7 +2818,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1889,7 +2873,25 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000007"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1924,7 +2926,24 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1961,7 +2980,25 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000007"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1994,7 +3031,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous",
+          "health_declaration: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2033,7 +3088,24 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "requested_cover: 1000007"
+        ]
+      },
+      {
+        "document_id": "health_statement",
+        "filename": "health_statement.pdf",
+        "lines": [
+          "requested_cover: 1000000",
+          "occupation_type: hazardous"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2061,7 +3133,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2089,7 +3172,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2117,7 +3211,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2145,7 +3250,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2173,7 +3289,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2201,7 +3328,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2229,7 +3367,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2257,7 +3406,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2285,7 +3445,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2313,7 +3484,18 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2345,7 +3527,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2377,7 +3577,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2409,7 +3627,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2441,7 +3677,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2473,7 +3727,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2505,7 +3777,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2537,7 +3827,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2569,7 +3877,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2601,7 +3927,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2633,7 +3977,25 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "member_count: 5",
+          "prior_hospitalization: false",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2671,7 +4033,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2711,7 +4097,32 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 8"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2747,7 +4158,32 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2789,7 +4225,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 8"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2825,7 +4285,32 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2865,7 +4350,32 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 8"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2903,7 +4413,31 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2943,7 +4477,32 @@
         }
       ],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 8"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -2979,7 +4538,32 @@
       ],
       "conflicts": [],
       "missing_information": []
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "document_reference: identity_record"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true",
+          "continuity_months: None"
+        ]
+      }
+    ]
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -3021,6 +4605,30 @@
       "missing_information": [
         "synthetic_missing"
       ]
-    }
+    },
+    "documents": [
+      {
+        "document_id": "identity_record",
+        "filename": "identity_record.pdf",
+        "lines": [
+          "member_count: 8"
+        ]
+      },
+      {
+        "document_id": "member_relationship_record",
+        "filename": "member_relationship_record.pdf",
+        "lines": [
+          "document_reference: member_relationship_record"
+        ]
+      },
+      {
+        "document_id": "hospitalization_record",
+        "filename": "hospitalization_record.pdf",
+        "lines": [
+          "member_count: 1",
+          "prior_hospitalization: true"
+        ]
+      }
+    ]
   }
 ]

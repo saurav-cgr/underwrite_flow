@@ -36,7 +36,7 @@ def test_reference_dataset_has_balanced_synthetic_cases() -> None:
     }
 
 
-# Verify evaluator reports route, evidence, detection, and workflow metrics.
+# Verify evaluator reports route, detection, provenance, and workflow metrics.
 def test_evaluator_reports_expected_metric_groups() -> None:
     records = [
         {
@@ -52,6 +52,7 @@ def test_evaluator_reports_expected_metric_groups() -> None:
                 "evidence": ["identity_record"],
                 "conflict": False,
                 "missing": False,
+                "claim_count": 2,
                 "unsupported_claims": 0,
             },
             "workflow_succeeded": True,
@@ -69,6 +70,7 @@ def test_evaluator_reports_expected_metric_groups() -> None:
                 "evidence": [],
                 "conflict": False,
                 "missing": True,
+                "claim_count": 2,
                 "unsupported_claims": 2,
             },
             "workflow_succeeded": False,
@@ -82,9 +84,44 @@ def test_evaluator_reports_expected_metric_groups() -> None:
     assert summary["specialist_recall"] == 0.0
     assert summary["evidence_accuracy"] == 0.5
     assert summary["conflict_detection"] == 0.0
+    assert summary["conflict_precision"] == 0.0
     assert summary["missing_data_detection"] == 1.0
+    assert summary["missing_precision"] == 1.0
     assert summary["unsupported_claim_rate"] == 0.5
     assert summary["workflow_reliability"] == 0.5
+
+
+# Verify a case the pipeline could not route is scored on missing information
+# rather than counted as a route disagreement.
+def test_unroutable_cases_leave_route_agreement_denominator() -> None:
+    records = [
+        {
+            "expected": {
+                "route": "specialist",
+                "evidence": ["identity_record"],
+                "conflict": False,
+                "missing": True,
+                "unsupported_claims": 0,
+            },
+            "prediction": {
+                "route": "needs_information",
+                "evidence": ["identity_record"],
+                "conflict": False,
+                "missing": True,
+                "claim_count": 1,
+                "unsupported_claims": 0,
+            },
+            "workflow_succeeded": True,
+        }
+    ]
+
+    summary = evaluate_records(records)
+
+    assert summary["routable_count"] == 0
+    assert summary["needs_information_count"] == 1
+    assert summary["route_agreement"] == 0.0
+    assert summary["missing_data_detection"] == 1.0
+    assert summary["missing_precision"] == 1.0
 
 
 # Verify evaluation predictions come from deterministic workflow execution.
@@ -93,7 +130,12 @@ def test_runner_executes_fixture_workflows() -> None:
 
     assert summary["case_count"] == 60
     assert summary["workflow_reliability"] == 1.0
-    assert summary["route_agreement"] < 1.0
+    # The reference set is solvable by design, so the pipeline must reproduce
+    # every final-route label it had enough evidence to reach.
+    assert summary["route_agreement"] == 1.0
+    assert summary["routable_count"] + summary["needs_information_count"] == 60
+    assert summary["conflict_detection"] == 1.0
+    assert summary["missing_data_detection"] == 1.0
     assert all("prediction" not in record for record in load_dataset())
 
 
