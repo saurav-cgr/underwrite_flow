@@ -3,7 +3,16 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -54,7 +63,17 @@ class ProductVersion(IdentifiedRecord, TimestampedRecord, Base):
 
     __tablename__ = "product_versions"
     __table_args__ = (
-        UniqueConstraint("product_id", "version", name="uq_product_versions_product_version"),
+        UniqueConstraint(
+            "product_id",
+            "version",
+            name="uq_product_versions_product_version",
+        ),
+        Index(
+            "uq_product_versions_one_active",
+            "product_id",
+            unique=True,
+            postgresql_where=text("status = 'active'"),
+        ),
     )
 
     product_id: Mapped[UUID] = mapped_column(ForeignKey("products.id"), nullable=False)
@@ -92,12 +111,23 @@ class ReferenceDocument(IdentifiedRecord, TimestampedRecord, Base):
     content_hash: Mapped[str] = mapped_column(String(128), nullable=False)
     version: Mapped[str] = mapped_column(String(100), nullable=False)
     uploaded_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    content_type: Mapped[str | None] = mapped_column(String(100))
+    storage_key: Mapped[str | None] = mapped_column(String(500))
+    byte_size: Mapped[int | None] = mapped_column()
+    page_count: Mapped[int | None] = mapped_column()
 
 
 class Case(IdentifiedRecord, TimestampedRecord, Base):
     """Applicant case pinned to product and rulebook versions."""
 
     __tablename__ = "cases"
+    __table_args__ = (
+        UniqueConstraint(
+            "applicant_user_id",
+            "idempotency_key",
+            name="uq_cases_applicant_idempotency",
+        ),
+    )
 
     applicant_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     product_version_id: Mapped[UUID] = mapped_column(
@@ -107,8 +137,11 @@ class Case(IdentifiedRecord, TimestampedRecord, Base):
         ForeignKey("rulebook_versions.id"), nullable=False
     )
     status: Mapped[str] = mapped_column(String(50), nullable=False)
+    review_cycle: Mapped[int] = mapped_column(
+        default=0, server_default=text("0"), nullable=False
+    )
     workflow_thread_id: Mapped[str | None] = mapped_column(String(255), unique=True)
-    idempotency_key: Mapped[str | None] = mapped_column(String(255), unique=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(255))
 
 
 class Submission(IdentifiedRecord, TimestampedRecord, Base):
@@ -129,6 +162,7 @@ class Document(IdentifiedRecord, TimestampedRecord, Base):
     __tablename__ = "documents"
 
     case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    document_code: Mapped[str | None] = mapped_column(String(100))
     filename: Mapped[str] = mapped_column(String(500), nullable=False)
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
     storage_key: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
@@ -198,8 +232,12 @@ class Review(IdentifiedRecord, TimestampedRecord, Base):
 
     case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
     reviewer_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    review_cycle: Mapped[int] = mapped_column(
+        default=0, server_default=text("0"), nullable=False
+    )
     action: Mapped[str] = mapped_column(String(50), nullable=False)
     selected_route: Mapped[str | None] = mapped_column(String(50))
+    specialist_label: Mapped[str | None] = mapped_column(String(200))
     override_reason: Mapped[str | None] = mapped_column(Text)
     reviewed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
