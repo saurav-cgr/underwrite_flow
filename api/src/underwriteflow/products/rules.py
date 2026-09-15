@@ -2,7 +2,12 @@
 
 from pydantic import BaseModel
 
-from underwriteflow.products.schemas import SUPPORTED_OPERATORS, RoutingRule
+from underwriteflow.products.schemas import (
+    SUPPORTED_OPERATORS,
+    RoutingRule,
+    condition_operator,
+    condition_value,
+)
 
 
 class ProductRuleError(ValueError):
@@ -22,10 +27,11 @@ class RuleEvaluation(BaseModel):
 # Evaluate one supported fictional condition against submitted application data.
 def condition_matches(condition: dict[str, object], payload: dict[str, object]) -> bool:
     actual = payload.get(condition.get("field"))
-    expected = condition.get("value")
-    if condition.get("operator") == "equals":
+    operator = condition_operator(condition)
+    expected = condition_value(condition)
+    if operator == "equals":
         return actual == expected
-    if condition.get("operator") == "greater_than":
+    if operator == "greater_than":
         try:
             return actual is not None and actual > expected
         except TypeError:
@@ -35,7 +41,7 @@ def condition_matches(condition: dict[str, object], payload: dict[str, object]) 
 
 # Evaluate one configured rule and preserve its deterministic route metadata.
 def evaluate_rule(rule: RoutingRule, payload: dict[str, object]) -> RuleEvaluation:
-    if rule.condition.get("operator") not in SUPPORTED_OPERATORS:
+    if condition_operator(rule.condition) not in SUPPORTED_OPERATORS:
         raise ProductRuleError("unsupported rule operator")
     return RuleEvaluation(
         rule_code=rule.code,

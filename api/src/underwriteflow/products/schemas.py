@@ -14,18 +14,26 @@ COMPARABLE_OPERATORS = frozenset({"greater_than"})
 FIELD_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
-# Validate one configured condition and return its canonical form.
-def normalize_condition(
+# Return the effective operator for a configured condition.
+def condition_operator(condition: dict[str, Any]) -> Any:
+    return condition.get("operator") or "equals"
+
+
+# Return the comparison value for a configured condition.
+def condition_value(condition: dict[str, Any]) -> Any:
+    if condition.get("operator") is not None:
+        return condition.get("value")
+    # Accept the {field, equals} shorthand used for field visibility.
+    return condition.get("equals")
+
+
+# Validate one configured condition without changing its stored shape.
+def validate_condition(
     condition: dict[str, Any], field_keys: set[str], where: str
-) -> dict[str, Any]:
-    operator = condition.get("operator")
+) -> None:
+    operator = condition_operator(condition)
     field = condition.get("field")
-    if operator is None:
-        # Accept the {field, equals} shorthand used for field visibility.
-        operator = "equals"
-        value = condition.get("equals")
-    else:
-        value = condition.get("value")
+    value = condition_value(condition)
     if operator not in SUPPORTED_OPERATORS:
         raise ValueError(f"{where}: unsupported operator {operator!r}")
     if not isinstance(field, str) or not FIELD_NAME_PATTERN.match(field):
@@ -38,7 +46,6 @@ def normalize_condition(
         isinstance(value, bool) or not isinstance(value, (int, float))
     ):
         raise ValueError(f"{where}: numeric comparison value required")
-    return {"field": field, "operator": operator, "value": value}
 
 
 class ProductField(BaseModel):
@@ -124,18 +131,16 @@ class ProductConfiguration(BaseModel):
         keys = set(field_keys)
         for field in self.fields:
             if field.visible_when is not None:
-                field.visible_when = normalize_condition(
+                validate_condition(
                     field.visible_when, keys, f"field {field.key}"
                 )
         for document in self.documents:
             if document.condition is not None:
-                document.condition = normalize_condition(
+                validate_condition(
                     document.condition, keys, f"document {document.code}"
                 )
         for rule in self.routing_rules:
-            rule.condition = normalize_condition(
-                rule.condition, keys, f"rule {rule.code}"
-            )
+            validate_condition(rule.condition, keys, f"rule {rule.code}")
         return self
 
 
