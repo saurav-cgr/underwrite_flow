@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 
 import { ApiError, createSession, readSession } from "./api";
 import { BrandMark, Button } from "./components";
+import { Icon } from "./icons";
+import type { IconName } from "./icons";
 import type { Role, Session } from "./types";
 
 const DEMO_ACCOUNTS: {
@@ -10,24 +12,28 @@ const DEMO_ACCOUNTS: {
   email: string;
   password: string;
   role: Role;
+  icon: IconName;
 }[] = [
   {
     label: "Applicant",
     email: "applicant@synthetic.test",
     password: "underwriteflow-demo-applicant",
     role: "Applicant",
+    icon: "user",
   },
   {
     label: "Underwriter",
     email: "underwriter@synthetic.test",
     password: "underwriteflow-demo-underwriter",
     role: "Underwriter",
+    icon: "file",
   },
   {
     label: "Administrator",
     email: "administrator@synthetic.test",
     password: "underwriteflow-demo-administrator",
     role: "Administrator",
+    icon: "settings",
   },
 ];
 
@@ -68,15 +74,15 @@ export function RoleEntry({
   }
 
   // Fill a synthetic account without hiding its credentials from the user.
-  function useDemo(account: (typeof DEMO_ACCOUNTS)[number]) {
+  function fillDemoAccount(account: (typeof DEMO_ACCOUNTS)[number]) {
     setEmail(account.email);
     setPassword(account.password);
     setMessage("");
   }
 
   return (
-    <main className="entry-page">
-      <section className="entry-story">
+    <main className="welcome-shell">
+      <section className="welcome-copy">
         <div className="brand entry-brand">
           <BrandMark />
           <span>
@@ -85,24 +91,22 @@ export function RoleEntry({
         </div>
         <p className="eyebrow">Human-governed insurance triage</p>
         <h1>Make every review easier to trust.</h1>
-        <p className="entry-copy">
+        <p className="welcome-lede">
           A transparent workspace for fictional applications, evidence, and
           the underwriters who make the final call.
         </p>
-        <div className="entry-note">
-          <span className="notice-mark" aria-hidden="true">
-            i
-          </span>
-          <span>
-            Recommendations organize work. They never approve, decline, bind,
-            price, issue, renew, or cancel coverage.
-          </span>
+        <div className="trust-line">
+          <Icon name="shield" />
+          <span>AI assists. An underwriter remains accountable.</span>
         </div>
       </section>
-      <section className="entry-card">
+      <section className="role-panel">
         <p className="eyebrow">Role entry</p>
         <h2>Sign in to continue</h2>
-        <p className="muted">Use a synthetic demonstration account.</p>
+        <p className="muted">
+          Recommendations organize work. They never approve, decline, bind,
+          price, issue, renew, or cancel coverage.
+        </p>
         <form onSubmit={handleSubmit}>
           <label className="field" htmlFor="email">
             <span>Email</span>
@@ -133,18 +137,26 @@ export function RoleEntry({
           ) : null}
           <Button disabled={working} type="submit">
             {working ? "Signing in…" : "Sign in"}
+            {working ? null : <Icon name="arrow" />}
           </Button>
         </form>
-        <div className="demo-list">
+        <div className="role-options">
           <span className="eyebrow">Quick fill</span>
           {DEMO_ACCOUNTS.map((account) => (
             <button
+              className="role-option"
               key={account.role}
-              onClick={() => useDemo(account)}
+              onClick={() => fillDemoAccount(account)}
               type="button"
             >
-              <span>{account.label}</span>
-              <small>{account.email}</small>
+              <span className="role-icon">
+                <Icon name={account.icon} />
+              </span>
+              <span>
+                <b>{account.label}</b>
+                <small>{account.email}</small>
+              </span>
+              <Icon className="chevron" name="chevron" />
             </button>
           ))}
         </div>

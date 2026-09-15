@@ -1,98 +1,128 @@
 /*
  * Role entry screen.
  *
- * Split out of responsive.css, which had grown past the 400-line limit while
- * still holding base styles for several screens.
+ * The layout follows the prototype's welcome shell, but without the sidebar:
+ * the shell navigation is role-specific and needs an authenticated session.
  */
 
-.entry-page {
-  align-items: stretch;
-  background: var(--background);
+.welcome-shell {
+  align-items: center;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+  gap: clamp(32px, 6vw, 96px);
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+  margin: 0 auto;
+  max-width: 1440px;
   min-height: 100vh;
+  padding: 48px clamp(20px, 5vw, 72px);
 }
-.entry-story {
-  background: var(--primary);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 8vw;
+.welcome-copy .brand {
+  margin-bottom: 40px;
+  padding: 0;
 }
 .entry-brand {
-  color: white;
-  margin-bottom: auto;
+  color: var(--primary);
 }
 .entry-brand .brand-mark {
-  background: transparent;
-  color: var(--secondary-soft);
-}
-.entry-story .eyebrow {
-  color: var(--secondary-soft);
-  margin-top: auto;
-}
-.entry-story h1 {
+  background: var(--primary);
   color: white;
-  max-width: 670px;
 }
-.entry-copy {
-  color: var(--border);
-  font-size: 1.15rem;
+.welcome-copy h1 {
+  color: var(--primary);
+  font-size: clamp(2.2rem, 4.4vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.06;
+  margin: 14px 0 18px;
+  max-width: 640px;
+}
+.welcome-lede {
+  color: var(--muted);
+  font-size: 1.05rem;
+  margin: 0;
   max-width: 560px;
 }
-.entry-note {
-  align-items: flex-start;
-  border-top: 1px solid rgb(255 255 255 / 25%);
-  color: var(--border);
+.trust-line {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  color: var(--primary);
   display: flex;
-  gap: 12px;
-  margin-top: 42px;
+  font-weight: 600;
+  gap: 10px;
+  margin-top: 34px;
   max-width: 560px;
   padding-top: 20px;
 }
-.entry-card {
-  align-self: center;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  justify-self: center;
-  max-width: 480px;
-  padding: 42px;
-  width: calc(100% - 56px);
+.trust-line .icon {
+  flex: 0 0 auto;
 }
-.entry-card h2 {
+.role-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-top: 5px solid var(--primary);
+  box-shadow: var(--shadow-md);
+  max-width: 520px;
+  padding: 34px;
+  width: 100%;
+}
+.role-panel h2 {
   color: var(--primary);
-  font-size: 1.8rem;
+  font-size: 1.7rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  margin: 12px 0 4px;
+  margin: 6px 0;
 }
-.entry-card form {
+.role-panel .muted {
+  font-size: .9rem;
+}
+.role-panel form {
   display: grid;
-  gap: 18px;
-  margin-top: 28px;
+  gap: 16px;
+  margin-top: 24px;
 }
-.demo-list {
+.role-options {
   border-top: 1px solid var(--border-soft);
   display: grid;
   gap: 8px;
-  margin-top: 34px;
-  padding-top: 24px;
+  margin-top: 28px;
+  padding-top: 20px;
 }
-.demo-list button {
+.role-option {
   align-items: center;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  display: flex;
-  justify-content: space-between;
-  padding: 11px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 40px minmax(0, 1fr) 20px;
+  padding: 14px;
   text-align: left;
+  transition: background 180ms ease, border-color 180ms ease;
 }
-.demo-list button:hover {
+.role-option:hover {
+  background: var(--surface-accent);
   border-color: var(--secondary);
 }
-.demo-list small {
+.role-option b,
+.role-option small {
+  display: block;
+}
+.role-option small {
   color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.role-icon {
+  background: var(--primary-soft);
+  border-radius: 7px;
+  color: var(--primary);
+  display: grid;
+  height: 40px;
+  place-items: center;
+  width: 40px;
+}
+.role-option .chevron {
+  color: var(--icon-muted);
+  width: 17px;
 }

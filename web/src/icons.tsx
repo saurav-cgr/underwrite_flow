@@ -7,14 +7,23 @@
  */
 
 export type IconName =
+  | "alert"
+  | "arrow"
+  | "car"
+  | "check"
   | "chevron"
+  | "clock"
   | "file"
   | "grid"
+  | "health"
+  | "heart"
   | "inbox"
   | "log"
   | "plus"
   | "settings"
-  | "shield";
+  | "shield"
+  | "upload"
+  | "user";
 
 interface IconProps {
   name: IconName;
@@ -67,6 +76,53 @@ export function IconSprite() {
       </symbol>
       <symbol id="i-chevron" viewBox="0 0 24 24">
         <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24">
+        <path
+          d={
+            "M10.3 3.7 2.2 18a2 2 0 0 0 1.8 3h16a2 2 0 0 0 1.8-3"
+            + "L13.7 3.7a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"
+          }
+        />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </symbol>
+      <symbol id="i-car" viewBox="0 0 24 24">
+        <path
+          d={
+            "m5 17-2-2 1.5-6h15L21 15l-2 2"
+            + "M7 9l2-4h6l2 4M5 17v2M19 17v2M6 14h.01M18 14h.01M7 17h10"
+          }
+        />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-health" viewBox="0 0 24 24">
+        <path
+          d={
+            "M12 21C7 18 4 14 4 9a4 4 0 0 1 7-2.6L12 8l1-1.6A4 4 0 0 1"
+            + " 20 9c0 5-3 9-8 12zM8 12h2l1-2 2 4 1-2h2"
+          }
+        />
+      </symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24">
+        <path
+          d={
+            "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0"
+            + "-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8z"
+          }
+        />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+      </symbol>
+      <symbol id="i-user" viewBox="0 0 24 24">
+        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" />
       </symbol>
     </svg>
   );

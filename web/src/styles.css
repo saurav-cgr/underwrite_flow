@@ -189,22 +189,13 @@ a {
   margin: 8px 0 10px;
   max-width: 760px;
 }
-.entry-story h1 {
-  color: white;
-  font-size: clamp(2rem, 3.4vw, 3.1rem);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.08;
-  margin: 14px 0 18px;
-  max-width: 670px;
-}
 .lede {
   color: var(--muted);
   font-size: 1.05rem;
   margin: 0;
   max-width: 650px;
 }
-.eyebrow, .metric-label, .product-family {
+.eyebrow, .metric-label {
   color: var(--secondary);
   font-size: .72rem;
   font-weight: 700;

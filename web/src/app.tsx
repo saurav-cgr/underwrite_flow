@@ -3,11 +3,8 @@ import type { ReactNode } from "react";
 
 import { listCases, listCatalog } from "./api";
 import { AdminWorkspace } from "./admin";
-import {
-  ApplicantDashboard,
-  ApplicationForm,
-  ProductSelection,
-} from "./applicant";
+import { ApplicantDashboard, ProductSelection } from "./applicant";
+import { ApplicationForm } from "./application-form";
 import { DocumentsScreen } from "./documents";
 import { RoleEntry } from "./entry";
 import { ProductConfiguration } from "./product-configuration";
