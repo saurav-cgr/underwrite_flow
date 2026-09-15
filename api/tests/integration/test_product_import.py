@@ -159,7 +159,7 @@ documents:
     accepted_types: [application/pdf]
 routing_rules:
   - code: standard_review
-    condition: {{field: vehicle_age}}
+    condition: {{field: vehicle_age, operator: greater_than, value: 0}}
     route: standard
 specialist_labels: [synthetic review]
 """
@@ -226,7 +226,7 @@ documents:
     accepted_types: [application/pdf]
 routing_rules:
   - code: standard_review
-    condition: {{field: applicant_age}}
+    condition: {{field: applicant_age, operator: greater_than, value: 0}}
     route: standard
 specialist_labels: [synthetic review]
 """

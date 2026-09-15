@@ -166,7 +166,10 @@ description: Synthetic product configuration
 version: v1
 fields: [{key: age, label: Age, type: integer, help_text: Synthetic age}]
 documents: [{code: identity, title: Identity, requirement: required, accepted_types: [application/pdf]}]
-routing_rules: [{code: standard, condition: {field: age}, route: standard}]
+routing_rules:
+  - code: standard
+    condition: {field: age, operator: greater_than, value: 0}
+    route: standard
 specialist_labels: [synthetic review]
 """},
     )

@@ -2,9 +2,7 @@
 
 from pydantic import BaseModel
 
-from underwriteflow.products.schemas import RoutingRule
-
-SUPPORTED_OPERATORS = {"equals", "greater_than"}
+from underwriteflow.products.schemas import SUPPORTED_OPERATORS, RoutingRule
 
 
 class ProductRuleError(ValueError):

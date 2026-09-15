@@ -1,5 +1,6 @@
 """Typed schemas for fictional product configuration YAML."""
 
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -7,6 +8,37 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
 Route = Literal["manual", "needs_information", "specialist", "standard", "expedited"]
+
+SUPPORTED_OPERATORS = frozenset({"equals", "greater_than"})
+COMPARABLE_OPERATORS = frozenset({"greater_than"})
+FIELD_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+# Validate one configured condition and return its canonical form.
+def normalize_condition(
+    condition: dict[str, Any], field_keys: set[str], where: str
+) -> dict[str, Any]:
+    operator = condition.get("operator")
+    field = condition.get("field")
+    if operator is None:
+        # Accept the {field, equals} shorthand used for field visibility.
+        operator = "equals"
+        value = condition.get("equals")
+    else:
+        value = condition.get("value")
+    if operator not in SUPPORTED_OPERATORS:
+        raise ValueError(f"{where}: unsupported operator {operator!r}")
+    if not isinstance(field, str) or not FIELD_NAME_PATTERN.match(field):
+        raise ValueError(f"{where}: malformed field path")
+    if field not in field_keys:
+        raise ValueError(f"{where}: unknown field {field!r}")
+    if value is None or isinstance(value, (dict, list)):
+        raise ValueError(f"{where}: condition value must be a scalar")
+    if operator in COMPARABLE_OPERATORS and (
+        isinstance(value, bool) or not isinstance(value, (int, float))
+    ):
+        raise ValueError(f"{where}: numeric comparison value required")
+    return {"field": field, "operator": operator, "value": value}
 
 
 class ProductField(BaseModel):
@@ -89,6 +121,21 @@ class ProductConfiguration(BaseModel):
         for rule in self.routing_rules:
             if rule.route == "specialist" and rule.specialist_label not in labels:
                 raise ValueError("specialist rules must use a declared label")
+        keys = set(field_keys)
+        for field in self.fields:
+            if field.visible_when is not None:
+                field.visible_when = normalize_condition(
+                    field.visible_when, keys, f"field {field.key}"
+                )
+        for document in self.documents:
+            if document.condition is not None:
+                document.condition = normalize_condition(
+                    document.condition, keys, f"document {document.code}"
+                )
+        for rule in self.routing_rules:
+            rule.condition = normalize_condition(
+                rule.condition, keys, f"rule {rule.code}"
+            )
         return self
 
 
