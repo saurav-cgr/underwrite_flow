@@ -3,16 +3,10 @@ import type { FormEvent } from "react";
 
 import {
   ApiError,
-  getEvaluationSummary,
   listAudit,
   listQueue,
 } from "./api";
-import type {
-  AuditEvent,
-  EvaluationSummary,
-  QueueItem,
-  Screen,
-} from "./types";
+import type { AuditEvent, QueueItem, Screen } from "./types";
 import {
   Badge,
   Button,
@@ -20,6 +14,7 @@ import {
   PageHeading,
   Panel,
 } from "./components";
+import { EvaluationPanel } from "./evaluation-panel";
 import { Icon } from "./icons";
 
 // Give administrators an inspectable queue and audit lookup workspace.
@@ -33,7 +28,6 @@ export function AdminWorkspace({
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [caseId, setCaseId] = useState("");
   const [events, setEvents] = useState<AuditEvent[]>([]);
-  const [evaluation, setEvaluation] = useState<EvaluationSummary | null>(null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -46,10 +40,6 @@ export function AdminWorkspace({
             : "The queue could not be loaded.",
         ),
       );
-  }, [token]);
-
-  useEffect(() => {
-    getEvaluationSummary(token).then(setEvaluation).catch(() => undefined);
   }, [token]);
 
   // Fetch immutable events for an administrator-entered case identifier.
@@ -83,32 +73,8 @@ export function AdminWorkspace({
           </Button>
         }
       />
+      <EvaluationPanel token={token} />
       <div className="admin-grid">
-        <Panel title="Synthetic evaluation">
-          {evaluation ? (
-            <div className="metric-strip">
-              <div>
-                <strong>{Math.round(evaluation.route_agreement * 100)}%</strong>
-                <span>Route agreement</span>
-              </div>
-              <div>
-                <strong>
-                  {Math.round(evaluation.specialist_recall * 100)}%
-                </strong>
-                <span>Specialist recall</span>
-              </div>
-              <div>
-                <strong>{evaluation.holdout_count}</strong>
-                <span>Holdout cases</span>
-              </div>
-            </div>
-          ) : (
-            <EmptyState
-              title="Evaluation unavailable"
-              detail="Synthetic metrics will appear when the dataset is loaded."
-            />
-          )}
-        </Panel>
         <Panel title="Queue pulse">
           <div className="metric-strip">
             <div>

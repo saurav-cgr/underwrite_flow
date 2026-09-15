@@ -115,18 +115,26 @@ export interface AuditEvent {
   occurred_at: string;
 }
 
+export type EvaluationSplit = "development" | "holdout";
+
 export interface EvaluationSummary {
   case_count: number;
   development_count: number;
   holdout_count: number;
   route_counts: Record<string, number>;
+  routable_count: number;
+  needs_information_count: number;
   route_agreement: number;
   specialist_recall: number;
   evidence_accuracy: number;
   conflict_detection: number;
+  conflict_precision: number;
   missing_data_detection: number;
+  missing_precision: number;
   unsupported_claim_rate: number;
   workflow_reliability: number;
+  split: string;
+  trace_sent: boolean;
 }
 
 export interface Recommendation {

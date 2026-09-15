@@ -202,13 +202,13 @@ def test_evaluation_endpoint_is_administrator_only() -> None:
         return {"sub": "synthetic-underwriter", "role": "Underwriter"}
 
     app.dependency_overrides[get_current_session] = underwriter_session
-    response = TestClient(app).get("/api/v1/evaluation/summary")
+    response = TestClient(app).post("/api/v1/evaluation/run", json={})
 
     assert response.status_code == 403
 
 
-# Verify administrators receive the deterministic evaluation summary.
-def test_administrator_can_read_evaluation_summary() -> None:
+# Verify administrators can run the full reference set on demand.
+def test_administrator_can_run_full_evaluation() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
@@ -216,7 +216,57 @@ def test_administrator_can_read_evaluation_summary() -> None:
         return {"sub": "synthetic-administrator", "role": "Administrator"}
 
     app.dependency_overrides[get_current_session] = administrator_session
-    response = TestClient(app).get("/api/v1/evaluation/summary")
+    response = TestClient(app).post("/api/v1/evaluation/run", json={})
 
     assert response.status_code == 200
-    assert response.json()["case_count"] == 90
+    summary = response.json()
+    assert summary["case_count"] == 90
+    assert summary["split"] == "all"
+    assert set(summary) >= {
+        "route_agreement",
+        "specialist_recall",
+        "conflict_detection",
+        "conflict_precision",
+        "missing_data_detection",
+        "missing_precision",
+        "evidence_accuracy",
+        "unsupported_claim_rate",
+        "workflow_reliability",
+        "routable_count",
+        "needs_information_count",
+        "trace_sent",
+    }
+
+
+# Verify the split selector narrows the run to the requested cases.
+def test_evaluation_endpoint_accepts_a_known_split() -> None:
+    app = create_app()
+
+    # Supply a synthetic administrator identity to the authorization dependency.
+    async def administrator_session() -> dict[str, str]:
+        return {"sub": "synthetic-administrator", "role": "Administrator"}
+
+    app.dependency_overrides[get_current_session] = administrator_session
+    response = TestClient(app).post(
+        "/api/v1/evaluation/run", json={"split": "holdout"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["case_count"] == 30
+    assert response.json()["split"] == "holdout"
+
+
+# Verify an unknown split is rejected before any case is processed.
+def test_evaluation_endpoint_rejects_an_unknown_split() -> None:
+    app = create_app()
+
+    # Supply a synthetic administrator identity to the authorization dependency.
+    async def administrator_session() -> dict[str, str]:
+        return {"sub": "synthetic-administrator", "role": "Administrator"}
+
+    app.dependency_overrides[get_current_session] = administrator_session
+    response = TestClient(app).post(
+        "/api/v1/evaluation/run", json={"split": "everything"}
+    )
+
+    assert response.status_code == 422

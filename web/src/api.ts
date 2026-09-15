@@ -3,6 +3,7 @@ import type {
   CaseRecord,
   CompletionResult,
   DocumentRecord,
+  EvaluationSplit,
   EvaluationSummary,
   ProductCatalogItem,
   ProductConfigurationChange,
@@ -274,9 +275,14 @@ export async function listAudit(
   return request(`/audit/cases/${caseId}`, token);
 }
 
-// Load safe aggregate evaluation metrics for the administrator workspace.
-export async function getEvaluationSummary(
+// Run the synthetic reference set and return its aggregate metrics.
+export async function runEvaluation(
   token: string,
+  split?: EvaluationSplit,
 ): Promise<EvaluationSummary> {
-  return request("/evaluation/summary", token);
+  return request("/evaluation/run", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ split: split ?? null }),
+  });
 }
