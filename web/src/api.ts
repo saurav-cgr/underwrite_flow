@@ -39,10 +39,11 @@ async function request<T>(
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as {
       detail?: string;
+      message?: string;
     };
     throw new ApiError(
       response.status,
-      body.detail ?? "The request could not be completed.",
+      body.detail ?? body.message ?? "The request could not be completed.",
     );
   }
   return (await response.json()) as T;

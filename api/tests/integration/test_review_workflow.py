@@ -65,6 +65,10 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
             )
             headers = {"Authorization": f"Bearer {login.json()['token']}"}
             start = client.post(f"/api/v1/reviews/{case_id}/start", headers=headers)
+            resumed_start = client.post(
+                f"/api/v1/reviews/{case_id}/start",
+                headers=headers,
+            )
             admin_login = client.post(
                 "/api/v1/auth/session",
                 json={
@@ -87,6 +91,11 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
         assert login.status_code == 200
         assert start.status_code == 200
         assert start.json()["recommendation"]["route"] == "needs_information"
+        assert resumed_start.status_code == 200
+        assert (
+            resumed_start.json()["recommendation"]
+            == start.json()["recommendation"]
+        )
         assert admin_login.status_code == 200
         assert admin_response.status_code == 403
         assert response.status_code == 200

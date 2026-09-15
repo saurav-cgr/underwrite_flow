@@ -65,6 +65,26 @@ async def start_review(
     submission = await session.scalar(select(Submission).where(Submission.case_id == case_id))
     if case is None or submission is None:
         raise HTTPException(status_code=404, detail="Case not found")
+    if case.status == "underwriter_review":
+        config = thread_config(str(case_id))
+        async with postgres_checkpointer(
+            request.app.state.settings.database_url
+        ) as checkpointer:
+            graph = build_triage_graph(checkpointer=checkpointer)
+            snapshot = await graph.aget_state(config)
+        recommendation = snapshot.values.get("recommendation")
+        if "human_review" not in snapshot.next or not isinstance(
+            recommendation, dict
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Case is not awaiting human review",
+            )
+        return ReviewStartResponse(
+            case_id=case_id,
+            status="awaiting_human_review",
+            recommendation=recommendation,
+        )
     if case.status != "new":
         raise HTTPException(status_code=409, detail="Case review is already complete or active")
     product_version = await session.scalar(

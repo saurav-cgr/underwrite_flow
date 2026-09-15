@@ -152,8 +152,13 @@ export function CaseReview({
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [working, setWorking] = useState(false);
+  const canReview = item.status === "underwriter_review";
 
   useEffect(() => {
+    if (!canReview) {
+      setMessage("This case is no longer awaiting underwriter review.");
+      return;
+    }
     startReview(token, item.case_id)
       .then((response) => {
         setStart(response);
@@ -166,12 +171,13 @@ export function CaseReview({
             : "The review checkpoint could not be opened.",
         ),
       );
-  }, [item.case_id, token]);
+  }, [canReview, item.case_id, token]);
 
   // Confirm or override a recommendation and complete final routes.
   async function handleDecision(
     action: "confirm" | "override" | "request_information",
   ) {
+    if (!canReview) return;
     if (!acknowledged) {
       setMessage("Acknowledge the evidence before submitting a decision.");
       return;
@@ -207,6 +213,13 @@ export function CaseReview({
   }
 
   const recommendation: Recommendation | undefined = start?.recommendation;
+  const recommendationRoute =
+    recommendation?.route ?? item.route ?? "Unavailable";
+  const recommendationDetail = recommendation?.reasons?.join(" ") ?? (
+    canReview
+      ? "The workflow is assembling an evidence-backed summary."
+      : "This completed case cannot receive another review decision."
+  );
   return (
     <>
       <PageHeading
@@ -241,11 +254,8 @@ export function CaseReview({
           <Panel title="Recommendation">
             <div className="recommendation">
               <span className="eyebrow">System recommendation</span>
-              <strong>{recommendation?.route ?? "Loading"}</strong>
-              <p>
-                {recommendation?.reasons?.join(" ")
-                  ?? "The workflow is assembling an evidence-backed summary."}
-              </p>
+              <strong>{recommendationRoute}</strong>
+              <p>{recommendationDetail}</p>
             </div>
           </Panel>
           <Panel title="Evidence acknowledgement">
@@ -270,7 +280,7 @@ export function CaseReview({
           <label className="field">
             <span>Final triage route</span>
             <select
-              disabled={working}
+              disabled={working || !canReview}
               onChange={(event) => setSelectedRoute(event.target.value)}
               value={selectedRoute}
             >
@@ -282,7 +292,7 @@ export function CaseReview({
           <label className="field">
             <span>Reason / reviewer note</span>
             <textarea
-              disabled={working}
+              disabled={working || !canReview}
               onChange={(event) => setReason(event.target.value)}
               placeholder="Required for an override or information request."
               value={reason}
@@ -290,20 +300,20 @@ export function CaseReview({
           </label>
           <div className="decision-actions">
             <Button
-              disabled={working || Boolean(result)}
+              disabled={working || Boolean(result) || !canReview}
               onClick={() => handleDecision("confirm")}
             >
               Confirm recommendation
             </Button>
             <Button
-              disabled={working || Boolean(result)}
+              disabled={working || Boolean(result) || !canReview}
               onClick={() => handleDecision("override")}
               variant="secondary"
             >
               Override route
             </Button>
             <Button
-              disabled={working || Boolean(result)}
+              disabled={working || Boolean(result) || !canReview}
               onClick={() => handleDecision("request_information")}
               variant="quiet"
             >
