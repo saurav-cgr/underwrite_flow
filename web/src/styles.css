@@ -1,22 +1,9 @@
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
-color: #17202a;
-background: #f4f1ea;
-font-synthesis: none;
-line-height: 1.5;
---ink: #17202a;
---muted: #59636d;
---paper: #fffdf8;
---cream: #f4f1ea;
---line: #d8d3ca;
---navy: #1e3a5f;
---navy-soft: #e7edf3;
---gold: #b45309;
---gold-soft: #f5e8d2;
---red: #a83c35;
---green: #28634d;
---shadow: 0 18px 44px rgba(23, 32, 42, 0.08);
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font);
+  font-synthesis: none;
+  line-height: 1.5;
 }
 
 * {
@@ -29,7 +16,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--cream);
+  background: var(--background);
 }
 button, input, select, textarea {
   font: inherit;
@@ -42,8 +29,8 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 3px solid #d97706;
-  outline-offset: 3px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 a {
   color: inherit;
@@ -170,15 +157,25 @@ a {
   justify-content: space-between;
   margin-bottom: 40px;
 }
-.page-heading h1, .entry-story h1 {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.4rem, 5vw, 4.5rem);
-  font-weight: 500;
-  letter-spacing: -.065em;
-  line-height: .98;
-  margin: 10px 0 14px;
+/* Page headings sit at the prototype's scale; only the role entry leads
+   with display type. */
+.page-heading h1 {
+  color: var(--primary);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+  margin: 8px 0 10px;
   max-width: 760px;
+}
+.entry-story h1 {
+  color: white;
+  font-size: clamp(2rem, 3.4vw, 3.1rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  margin: 14px 0 18px;
+  max-width: 670px;
 }
 .lede {
   color: var(--muted);
@@ -204,16 +201,15 @@ a {
   margin-top: 24px;
 }
 .panel-title {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.55rem;
-  font-weight: 500;
+  color: var(--primary);
+  font-size: 1.4rem;
+  font-weight: 600;
   margin: 0 0 24px;
 }
 .button {
   border: 1px solid transparent;
-  border-radius: 2px;
-  font-weight: 750;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
   min-height: 46px;
   padding: 11px 18px;
   transition:
@@ -230,14 +226,14 @@ a {
   color: white;
 }
 .button-primary:hover {
-  background: #132c48;
+  background: var(--primary-strong);
 }
 .button-secondary {
-  background: var(--gold);
+  background: var(--secondary);
   color: white;
 }
 .button-secondary:hover {
-  background: #943f08;
+  background: var(--secondary-strong);
 }
 .button-quiet {
   background: transparent;
@@ -271,20 +267,19 @@ a {
   padding: 22px;
 }
 .metric-card strong {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.3rem;
-  font-weight: 500;
+  color: var(--primary);
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 .metric-card span:last-child {
   color: var(--muted);
   font-size: .88rem;
 }
 .metric-accent {
-  background: var(--navy);
-  border-color: var(--navy);
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 .metric-accent strong, .metric-accent .metric-label {
-  color: #f4c477;
+  color: var(--secondary-soft);
 }

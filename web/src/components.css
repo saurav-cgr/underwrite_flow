@@ -1,5 +1,5 @@
 .metric-accent span:last-child {
-  color: #d5e0e9;
+  color: var(--border);
 }
 .next-step {
   align-items: center;
@@ -22,9 +22,9 @@
   margin: 0;
 }
 .step-number {
-  color: var(--gold);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 2rem;
+  color: var(--secondary);
+  font-size: 1.9rem;
+  font-weight: 600;
 }
 .three-up {
   display: grid;
@@ -55,10 +55,9 @@
   transform: translateY(-3px);
 }
 .product-card h2 {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.65rem;
-  font-weight: 500;
+  color: var(--primary);
+  font-size: 1.45rem;
+  font-weight: 600;
   margin: 14px 0 10px;
 }
 .product-card p {
@@ -135,10 +134,10 @@
   font-size: .8rem;
 }
 .field input, .field select, .field textarea {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
   min-height: 44px;
   padding: 10px 12px;
   width: 100%;
@@ -169,17 +168,16 @@
   padding: 18px 20px;
 }
 .side-note h2 {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.5rem;
-  font-weight: 500;
+  color: var(--primary);
+  font-size: 1.35rem;
+  font-weight: 600;
 }
 .side-note p:last-child {
   color: var(--muted);
 }
 .error-summary {
-  background: #fff1ed;
-  border: 1px solid #e7b1a8;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-line);
   margin-bottom: 20px;
   padding: 16px;
 }
@@ -202,9 +200,9 @@
   gap: 4px;
 }
 .upload-button {
-  background: var(--navy-soft);
-  border: 1px solid #c2d0dd;
-  color: var(--navy);
+  background: var(--primary-soft);
+  border: 1px solid var(--border);
+  color: var(--primary);
   font-size: .8rem;
   font-weight: 750;
   padding: 9px 12px;
@@ -244,8 +242,8 @@
   padding: 18px;
 }
 .success-card {
-  background: #e7f1eb;
-  color: var(--green);
+  background: var(--accent-soft);
+  color: var(--accent);
   justify-content: space-between;
 }
 .notice-mark {

@@ -10,7 +10,7 @@
   padding: 15px 8px;
 }
 .queue-header {
-  border-bottom: 2px solid var(--line);
+  border-bottom: 2px solid var(--border);
   color: var(--muted);
   font-size: .72rem;
   font-weight: 800;
@@ -20,20 +20,21 @@
 .queue-row {
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  color: var(--ink);
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text);
   text-align: left;
   width: 100%;
 }
 .queue-row:hover {
-  background: #faf6ed;
+  background: var(--surface-hover);
 }
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: .82rem;
 }
 .badge {
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   display: inline-block;
   font-size: .7rem;
   font-weight: 800;
@@ -42,31 +43,31 @@
   text-transform: capitalize;
 }
 .badge-underwriter_review, .badge-confirmed {
-  background: var(--gold-soft);
-  border-color: #dfbe8e;
-  color: #7d480b;
+  background: var(--amber-soft);
+  border-color: var(--amber-line);
+  color: var(--amber);
 }
 .badge-completed, .badge-confirmed {
-  background: #e7f1eb;
-  border-color: #b7d3c1;
-  color: var(--green);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
 }
 .badge-specialist {
-  background: #eee8f8;
-  border-color: #cfc1e8;
-  color: #5e4388;
+  background: var(--purple-soft);
+  border-color: var(--purple-line);
+  color: var(--purple);
 }
 .badge-needs_information {
-  background: #fff1ed;
-  border-color: #e7b1a8;
-  color: var(--red);
+  background: var(--danger-soft);
+  border-color: var(--danger-line);
+  color: var(--danger);
 }
 .recommendation strong {
-  color: var(--navy);
+  color: var(--primary);
   display: block;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 3rem;
-  font-weight: 500;
+  font-size: 2.4rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin: 8px 0;
   text-transform: capitalize;
 }
@@ -74,15 +75,15 @@
   color: var(--muted);
 }
 .decision-panel {
-  background: var(--navy);
+  background: var(--primary);
   color: white;
   padding: 28px;
 }
 .decision-panel .eyebrow, .decision-panel .field > span {
-  color: #f4c477;
+  color: var(--secondary-soft);
 }
 .decision-panel .field small {
-  color: #d5e0e9;
+  color: var(--border);
 }
 .decision-actions {
   display: grid;
@@ -90,11 +91,11 @@
   margin-top: 24px;
 }
 .decision-panel .button-primary {
-  background: #f4c477;
-  color: var(--navy);
+  background: var(--secondary-soft);
+  color: var(--primary);
 }
 .decision-panel .button-quiet {
-  border-color: #7590aa;
+  border-color: rgb(255 255 255 / 45%);
   color: white;
 }
 .check-row {
@@ -117,15 +118,15 @@
   text-align: center;
 }
 .empty-state h2 {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 500;
+  color: var(--primary);
+  font-weight: 600;
 }
 .empty-state p, .muted {
   color: var(--muted);
 }
 .empty-line {
-  background: var(--gold);
+  background: var(--secondary);
+  border-radius: var(--radius-pill);
   display: block;
   height: 2px;
   margin: 0 auto;
@@ -169,9 +170,8 @@
   padding-bottom: 20px;
 }
 .metric-strip strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 2rem;
-  font-weight: 500;
+  font-size: 1.7rem;
+  font-weight: 600;
 }
 .metric-strip span {
   color: var(--muted);
@@ -184,8 +184,8 @@
   align-items: center;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  color: var(--ink);
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text);
   display: flex;
   gap: 12px;
   justify-content: space-between;
@@ -194,8 +194,8 @@
   width: 100%;
 }
 .product-config-row[aria-pressed="true"] {
-  background: #faf6ed;
-  border-left: 3px solid var(--gold);
+  background: var(--surface-hover);
+  border-left: 3px solid var(--secondary);
   padding-left: 10px;
 }
 .product-config-row span {
@@ -211,13 +211,13 @@
 
 .entry-page {
   align-items: stretch;
-  background: var(--cream);
+  background: var(--background);
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
   min-height: 100vh;
 }
 .entry-story {
-  background: var(--navy);
+  background: var(--primary);
   color: white;
   display: flex;
   flex-direction: column;
@@ -229,11 +229,11 @@
   margin-bottom: auto;
 }
 .entry-brand .brand-mark svg {
-  fill: #f4c477;
-  stroke: var(--navy);
+  fill: var(--secondary-soft);
+  stroke: var(--primary);
 }
 .entry-story .eyebrow {
-  color: #f4c477;
+  color: var(--secondary-soft);
   margin-top: auto;
 }
 .entry-story h1 {
@@ -241,14 +241,14 @@
   max-width: 670px;
 }
 .entry-copy {
-  color: #d5e0e9;
+  color: var(--border);
   font-size: 1.15rem;
   max-width: 560px;
 }
 .entry-note {
   align-items: flex-start;
-  border-top: 1px solid #496681;
-  color: #d5e0e9;
+  border-top: 1px solid rgb(255 255 255 / 25%);
+  color: var(--border);
   display: flex;
   gap: 12px;
   margin-top: 42px;
@@ -257,18 +257,19 @@
 }
 .entry-card {
   align-self: center;
-  background: var(--paper);
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   justify-self: center;
   max-width: 480px;
   padding: 42px;
   width: calc(100% - 56px);
 }
 .entry-card h2 {
-  color: var(--navy);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 2rem;
-  font-weight: 500;
+  color: var(--primary);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin: 12px 0 4px;
 }
 .entry-card form {
@@ -277,7 +278,7 @@
   margin-top: 28px;
 }
 .demo-list {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border-soft);
   display: grid;
   gap: 8px;
   margin-top: 34px;
@@ -286,14 +287,15 @@
 .demo-list button {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   display: flex;
   justify-content: space-between;
   padding: 11px 12px;
   text-align: left;
 }
 .demo-list button:hover {
-  border-color: var(--gold);
+  border-color: var(--secondary);
 }
 .demo-list small {
   color: var(--muted);

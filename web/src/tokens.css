@@ -1,0 +1,92 @@
+/*
+ * Design tokens for UnderwriteFlow.
+ *
+ * Values are ported from designs/underwriteflow-ui/styles.css, which is the
+ * visual source of truth for the product UI. design-system/underwriteflow/
+ * MASTER.md agrees on the palette, typography and component intent; where the
+ * two disagree, the prototype wins.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --primary: #1e3a5f;
+  --primary-strong: #142a46;
+  --primary-soft: #e8eef6;
+  --secondary: #2563eb;
+  --secondary-strong: #1d4ed8;
+  --secondary-soft: #dbeafe;
+  --accent: #15803d;
+  --accent-soft: #dcfce7;
+  --accent-line: #86efac;
+  --amber: #a16207;
+  --amber-soft: #fef3c7;
+  --amber-line: #fcd34d;
+  --purple: #6d28d9;
+  --purple-soft: #ede9fe;
+  --purple-line: #ddd6fe;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --danger-line: #fca5a5;
+
+  /* Surfaces, text and rules */
+  --background: #f5f7fa;
+  --surface: #ffffff;
+  --surface-subtle: #edf2f7;
+  --surface-hover: #f8fafc;
+  --text: #0f172a;
+  --muted: #526174;
+  --border: #cbd5e1;
+  --border-strong: #aeb9c6;
+  --border-soft: #e2e8f0;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
+  --shadow-md: 0 8px 24px rgb(15 23 42 / 8%);
+  --shadow-lg: 0 24px 80px rgb(15 23 42 / 25%);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
+  /* Type */
+  --font:
+    "IBM Plex Sans", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Focus */
+  --focus-ring: 3px solid rgb(37 99 235 / 35%);
+  --focus-offset: 2px;
+
+  /* Spacing scale from design-system/underwriteflow/MASTER.md */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+}
+
+/*
+ * Deprecated aliases for the stylesheets written before this token layer.
+ * Each alias is deleted as its last consumer is migrated: U1c (shared
+ * components), U1d (applicant journey), U1e (staff and admin), U1f
+ * (responsive). Do not use these in new code.
+ */
+:root {
+  --ink: var(--text);
+  --paper: var(--surface);
+  --cream: var(--background);
+  --line: var(--border);
+  --navy: var(--primary);
+  --navy-soft: var(--primary-soft);
+  --gold: var(--secondary);
+  --gold-soft: var(--amber-soft);
+  --red: var(--danger);
+  --green: var(--accent);
+  --shadow: var(--shadow-md);
+}
