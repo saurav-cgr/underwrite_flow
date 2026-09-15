@@ -72,6 +72,22 @@ async def create_case(
         raise HTTPException(status_code=422, detail="Invalid case submission") from None
 
 
+# List every case owned by the authenticated identity, newest first.
+@router.get("", response_model=list[CaseResponse])
+async def list_cases(
+    current: dict[str, str] = Depends(require_permission(Permission.CASE_READ)),
+    session: AsyncSession = Depends(get_session),
+) -> list[CaseResponse]:
+    cases = list(
+        await session.scalars(
+            select(Case)
+            .where(Case.applicant_user_id == UUID(current["sub"]))
+            .order_by(Case.created_at.desc())
+        )
+    )
+    return [await case_response(session, case) for case in cases]
+
+
 # Load one case only when the current role owns or may review it.
 async def get_authorized_case(
     case_id: UUID,
@@ -115,6 +131,34 @@ async def submit_case(
             settings.database_url,
             retry_count=settings.provider_retry_count,
         ).submit(session, case, UUID(current["sub"]))
+    except CaseValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    return SubmitResponse(
+        id=case_id,
+        status=str(result["status"]),
+        recommendation=result["recommendation"],
+    )
+
+
+# Restart processing for an owned case the underwriter returned for information.
+@router.post("/{case_id}/resubmit", response_model=SubmitResponse)
+async def resubmit_case(
+    case_id: UUID,
+    request: Request,
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> SubmitResponse:
+    case = await get_authorized_case(case_id, current, session)
+    settings = request.app.state.settings
+    try:
+        result = await SubmissionService(
+            build_provider(settings),
+            settings.upload_root,
+            settings.database_url,
+            retry_count=settings.provider_retry_count,
+        ).resubmit(session, case, UUID(current["sub"]))
     except CaseValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
     return SubmitResponse(

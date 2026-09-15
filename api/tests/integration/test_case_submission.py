@@ -129,3 +129,94 @@ def test_submission_requires_evidence_and_persists_recommendation() -> None:
                     assert cursor.fetchone()[0] == 1
     finally:
         set_motor_status("draft")
+
+
+# Verify resubmission opens a new review cycle for the same case.
+def test_resubmission_starts_a_new_review_cycle() -> None:
+    set_motor_status("active")
+    try:
+        content = synthetic_pdf()
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(
+                client,
+                "applicant@synthetic.test",
+                "underwriteflow-demo-applicant",
+            )
+            underwriter = login(
+                client,
+                "underwriter@synthetic.test",
+                "underwriteflow-demo-underwriter",
+            )
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "payload": {
+                        "vehicle_age": 2,
+                        "vehicle_use": "personal",
+                        "prior_claims": 0,
+                    },
+                    "document_codes": ["identity_record", "vehicle_record"],
+                },
+                headers=applicant,
+            )
+            assert created.status_code == 200, created.text
+            case_id = created.json()["id"]
+            listing = client.get("/api/v1/cases", headers=applicant)
+            assert listing.status_code == 200, listing.text
+            assert any(item["id"] == case_id for item in listing.json())
+            for code in ("identity_record", "vehicle_record"):
+                uploaded = client.post(
+                    f"/api/v1/cases/{case_id}/documents",
+                    files={
+                        "document": (
+                            "synthetic.pdf",
+                            content,
+                            "application/pdf",
+                        )
+                    },
+                    data={"document_code": code},
+                    headers=applicant,
+                )
+                assert uploaded.status_code == 200, uploaded.text
+            submitted = client.post(
+                f"/api/v1/cases/{case_id}/submit", headers=applicant
+            )
+            assert submitted.status_code == 200, submitted.text
+            requested = client.post(
+                f"/api/v1/reviews/{case_id}",
+                headers=underwriter,
+                json={
+                    "action": "request_information",
+                    "reason": "Synthetic extra evidence required",
+                    "evidence_acknowledged": True,
+                },
+            )
+            assert requested.status_code == 200, requested.text
+            assert requested.json()["status"] == "needs_information"
+            resubmitted = client.post(
+                f"/api/v1/cases/{case_id}/resubmit", headers=applicant
+            )
+            assert resubmitted.status_code == 200, resubmitted.text
+            assert resubmitted.json()["status"] == "underwriter_review"
+
+            with psycopg.connect(DATABASE_URL) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT status, review_cycle FROM cases WHERE id = %s",
+                        (case_id,),
+                    )
+                    assert cursor.fetchone() == (
+                        "underwriter_review",
+                        1,
+                    )
+                    cursor.execute(
+                        "SELECT count(*) FROM audit_events "
+                        "WHERE case_id = %s AND event_type = %s",
+                        (case_id, "case_resubmitted"),
+                    )
+                    assert cursor.fetchone()[0] == 1
+    finally:
+        set_motor_status("draft")

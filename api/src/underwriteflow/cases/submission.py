@@ -3,7 +3,7 @@
 from pathlib import Path
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.cases.service import CaseValidationError, missing_document_codes
@@ -163,6 +163,7 @@ class SubmissionService:
         product_result: dict[str, object],
         triage_values: dict[str, object],
         extraction_failures: list[dict[str, object]],
+        event_type: str = "case_submitted",
     ) -> None:
         for item in evidence_result.get("reconciled_fields", []):
             if not item.get("source_locator"):
@@ -219,6 +220,11 @@ class SubmissionService:
                 )
             )
         recommended = triage_values.get("recommendation", {})
+        summary = {
+            "summary": triage_values.get("summary", {}),
+            "recommendation": recommended,
+            "failures": len(extraction_failures),
+        }
         existing = await session.scalar(
             select(Recommendation).where(Recommendation.case_id == case.id)
         )
@@ -228,30 +234,74 @@ class SubmissionService:
                     case_id=case.id,
                     route=recommended.get("route"),
                     status="pending_human_review",
-                    summary={
-                        "summary": triage_values.get("summary", {}),
-                        "recommendation": recommended,
-                        "failures": len(extraction_failures),
-                    },
+                    summary=summary,
                     workflow_version=WORKFLOW_VERSION,
                 )
             )
+        else:
+            existing.route = recommended.get("route")
+            existing.status = "pending_human_review"
+            existing.summary = summary
+            existing.workflow_version = WORKFLOW_VERSION
         case.status = "underwriter_review"
         session.add(
             AuditEvent(
                 case_id=case.id,
                 actor_user_id=actor_user_id,
-                event_type="case_submitted",
-                details={"recommendation": recommended.get("route")},
+                event_type=event_type,
+                details={
+                    "recommendation": recommended.get("route"),
+                    "review_cycle": case.review_cycle,
+                },
             )
         )
         await session.commit()
-    # Validate evidence, run the workflow, and persist every produced record.
+
+    # Remove the previous cycle's derived evidence before a new run.
+    async def clear_previous_evidence(
+        self, session: AsyncSession, case: Case
+    ) -> None:
+        for model in (ExtractedField, Validation, RiskSignal):
+            await session.execute(delete(model).where(model.case_id == case.id))
+    # Start the first workflow cycle for a newly created case.
     async def submit(
         self, session: AsyncSession, case: Case, actor_user_id: UUID
     ) -> dict[str, object]:
         if case.status != "new":
             raise CaseValidationError("case is not open for submission")
+        return await self.run_cycle(
+            session,
+            case,
+            actor_user_id,
+            event_type="case_submitted",
+            clear_evidence=False,
+        )
+
+    # Start a fresh cycle for a case the underwriter returned for information.
+    async def resubmit(
+        self, session: AsyncSession, case: Case, actor_user_id: UUID
+    ) -> dict[str, object]:
+        if case.status != "needs_information":
+            raise CaseValidationError("case does not need more information")
+        case.review_cycle += 1
+        await session.flush()
+        return await self.run_cycle(
+            session,
+            case,
+            actor_user_id,
+            event_type="case_resubmitted",
+            clear_evidence=True,
+        )
+
+    # Validate evidence, run the workflow, and persist every produced record.
+    async def run_cycle(
+        self,
+        session: AsyncSession,
+        case: Case,
+        actor_user_id: UUID,
+        event_type: str,
+        clear_evidence: bool,
+    ) -> dict[str, object]:
         product_version = await session.scalar(
             select(ProductVersion).where(
                 ProductVersion.id == case.product_version_id
@@ -286,6 +336,8 @@ class SubmissionService:
             raise CaseValidationError(
                 "missing documents: " + ", ".join(missing)
             )
+        if clear_evidence:
+            await self.clear_previous_evidence(session, case)
         requested_fields = [field.key for field in configuration.fields]
         document_inputs, extraction_failures = self.extract_documents(documents)
         product_result = await build_product_subgraph(configuration).ainvoke(
@@ -312,6 +364,7 @@ class SubmissionService:
             product_result,
             triage_values,
             extraction_failures,
+            event_type=event_type,
         )
         return {
             "status": "underwriter_review",
