@@ -100,7 +100,10 @@ export interface QueueItem {
   product_code: string;
   status: string;
   route: string | null;
+  selected_route: string | null;
+  specialist_label: string | null;
   specialist: boolean;
+  awaiting_handoff: boolean;
 }
 
 export interface AuditEvent {
@@ -135,6 +138,12 @@ export interface ReviewStart {
   case_id: string;
   status: "awaiting_human_review";
   recommendation: Recommendation;
+  summary: Record<string, unknown>;
+  evidence: Record<string, unknown>[];
+  conflicts: Record<string, unknown>[];
+  missing_information: string[];
+  extraction_failures: Record<string, unknown>[];
+  specialist_options: string[];
 }
 
 export interface ReviewResult {
@@ -148,5 +157,6 @@ export interface CompletionResult {
   handoff_id: string;
   case_id: string;
   route: "specialist" | "standard" | "expedited";
+  specialist_label: string | null;
   status: "completed";
 }

@@ -212,8 +212,16 @@ export async function listDocuments(
 export async function listQueue(
   token: string,
   status?: string,
+  awaitingHandoff?: boolean,
 ): Promise<QueueItem[]> {
-  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  const params = new URLSearchParams();
+  if (status) {
+    params.set("status", status);
+  }
+  if (awaitingHandoff) {
+    params.set("awaiting_handoff", "true");
+  }
+  const query = params.size > 0 ? `?${params.toString()}` : "";
   return request(`/queues${query}`, token);
 }
 

@@ -22,6 +22,17 @@ import {
   Panel,
 } from "./components";
 
+// Show the human-selected route and specialist label once a decision exists.
+function routeLabel(item: QueueItem): string {
+  if (!item.selected_route) {
+    return item.route ?? "Pending";
+  }
+  return item.specialist_label
+    ? `${item.selected_route} · ${item.specialist_label}`
+    : item.selected_route;
+}
+
+
 // Load and filter the underwriter queue with safe server-side rows.
 export function UnderwriterQueue({
   token,
@@ -35,9 +46,11 @@ export function UnderwriterQueue({
   const [items, setItems] = useState<QueueItem[]>([]);
   const [filter, setFilter] = useState("underwriter_review");
   const [message, setMessage] = useState("");
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   useEffect(() => {
-    listQueue(token, filter)
+    const awaitingHandoff = filter === "awaiting_handoff";
+    listQueue(token, awaitingHandoff ? undefined : filter, awaitingHandoff)
       .then(setItems)
       .catch((error) =>
         setMessage(
@@ -47,6 +60,27 @@ export function UnderwriterQueue({
         ),
       );
   }, [filter, token]);
+
+  // Retry the handoff for a finalised route that was never completed.
+  async function handleRetry(item: QueueItem) {
+    setRetryingId(item.case_id);
+    setMessage("");
+    try {
+      await completeCase(token, item.case_id);
+      setItems((current) =>
+        current.filter((row) => row.case_id !== item.case_id),
+      );
+      setMessage("Handoff completed.");
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "The handoff could not be completed.",
+      );
+    } finally {
+      setRetryingId(null);
+    }
+  }
 
   return (
     <>
@@ -79,6 +113,13 @@ export function UnderwriterQueue({
           Needs information
         </button>
         <button
+          className={filter === "awaiting_handoff" ? "filter-active" : ""}
+          onClick={() => setFilter("awaiting_handoff")}
+          type="button"
+        >
+          Awaiting handoff
+        </button>
+        <button
           className={filter === "completed" ? "filter-active" : ""}
           onClick={() => setFilter("completed")}
           type="button"
@@ -106,16 +147,11 @@ export function UnderwriterQueue({
               <span />
             </div>
             {items.map((item) => (
-              <button
-                className="queue-row"
-                key={item.case_id}
-                onClick={() => onSelect(item)}
-                type="button"
-              >
+              <div className="queue-row" key={item.case_id} role="row">
                 <span className="mono">{item.case_id.slice(0, 8)}</span>
                 <span>{item.product_code}</span>
                 <span>
-                  {item.route ?? "Pending"}
+                  {routeLabel(item)}
                   {item.specialist ? (
                     <Badge tone="specialist">Specialist</Badge>
                   ) : null}
@@ -125,8 +161,23 @@ export function UnderwriterQueue({
                     {item.status.replaceAll("_", " ")}
                   </Badge>
                 </span>
-                <span aria-hidden="true">→</span>
-              </button>
+                <span>
+                  <Button variant="quiet" onClick={() => onSelect(item)}>
+                    Open
+                  </Button>
+                  {item.awaiting_handoff ? (
+                    <Button
+                      variant="secondary"
+                      disabled={retryingId === item.case_id}
+                      onClick={() => handleRetry(item)}
+                    >
+                      {retryingId === item.case_id
+                        ? "Retrying…"
+                        : "Retry handoff"}
+                    </Button>
+                  ) : null}
+                </span>
+              </div>
             ))}
           </div>
         )}
@@ -163,7 +214,15 @@ export function CaseReview({
     startReview(token, item.case_id)
       .then((response) => {
         setStart(response);
-        setSelectedRoute(response.recommendation.route);
+        const route = response.recommendation.route;
+        setSelectedRoute(
+          route === "expedited" ||
+            route === "standard" ||
+            route === "specialist"
+            ? route
+            : "standard",
+        );
+        setSpecialistLabel(response.specialist_options[0] ?? "");
       })
       .catch((error) =>
         setMessage(
@@ -298,13 +357,17 @@ export function CaseReview({
           {selectedRoute === "specialist" ? (
             <label className="field">
               <span>Specialist label</span>
-              <input
+              <select
                 disabled={working || !canReview}
                 onChange={(event) => setSpecialistLabel(event.target.value)}
-                placeholder="Required for specialist review."
-                type="text"
                 value={specialistLabel}
-              />
+              >
+                {(start?.specialist_options ?? []).map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </label>
           ) : null}
           <label className="field">
