@@ -1,0 +1,10 @@
+# Opt-in override: publish PostgreSQL on localhost only for host tools.
+#
+# Enable explicitly, for example:
+#   docker compose -f compose.yaml -f compose.localhost.yaml up --build
+#
+# The default compose.yaml publishes no database port.
+services:
+  db:
+    ports:
+      - "127.0.0.1:5433:5433"

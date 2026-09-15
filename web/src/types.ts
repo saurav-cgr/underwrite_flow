@@ -87,6 +87,7 @@ export interface CaseRecord {
 
 export interface DocumentRecord {
   id: string;
+  document_code: string | null;
   filename: string;
   content_type: string;
   byte_size: number;

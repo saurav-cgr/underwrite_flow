@@ -169,10 +169,12 @@ export async function createCase(
 export async function uploadDocument(
   token: string,
   caseId: string,
+  documentCode: string,
   file: File,
 ): Promise<DocumentRecord> {
   const form = new FormData();
   form.append("document", file);
+  form.append("document_code", documentCode);
   return request(`/cases/${caseId}/documents`, token, {
     method: "POST",
     body: form,

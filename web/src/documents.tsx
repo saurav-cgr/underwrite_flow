@@ -24,7 +24,7 @@ function DocumentUploadRow({
 }: {
   document: ProductDocument;
   uploading: boolean;
-  onUpload: (file: File | undefined) => void;
+  onUpload: (documentCode: string, file: File | undefined) => void;
 }) {
   return (
     <div className="document-row">
@@ -41,7 +41,9 @@ function DocumentUploadRow({
           accept={document.accepted_types.join(",")}
           aria-label={`Upload ${document.title}`}
           disabled={uploading}
-          onChange={(event) => onUpload(event.target.files?.[0])}
+          onChange={(event) =>
+            onUpload(document.code, event.target.files?.[0])
+          }
           type="file"
         />
         {uploading ? "Uploading…" : "Choose file"}
@@ -82,12 +84,17 @@ export function DocumentsScreen({
   }, [caseRecord.id, token]);
 
   // Upload one selected file and refresh the safe metadata list.
-  async function handleUpload(file: File | undefined) {
+  async function handleUpload(documentCode: string, file: File | undefined) {
     if (!file) return;
     setUploading(true);
     setMessage("");
     try {
-      const document = await uploadDocument(token, caseRecord.id, file);
+      const document = await uploadDocument(
+        token,
+        caseRecord.id,
+        documentCode,
+        file,
+      );
       setDocuments((current) => [...current, document]);
     } catch (error) {
       setMessage(

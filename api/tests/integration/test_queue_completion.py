@@ -58,13 +58,14 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 cursor.execute(
                     """
                     INSERT INTO documents (
-                        id, case_id, filename, content_type, storage_key,
-                        content_hash, byte_size, page_count
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        id, case_id, document_code, filename, content_type,
+                        storage_key, content_hash, byte_size, page_count
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         uuid4(),
                         case_id,
+                        code,
                         f"{code}.pdf",
                         "application/pdf",
                         f"{case_id}/{code}.pdf",

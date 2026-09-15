@@ -1,8 +1,10 @@
 import hashlib
+from io import BytesIO
 from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from pypdf import PdfWriter
 
 from underwriteflow.app import create_app
 
@@ -11,6 +13,15 @@ DATABASE_URL = (
     "postgresql://underwriteflow:synthetic-local-password@"
     "db:5433/underwriteflow"
 )
+
+
+# Build a minimal single-page synthetic PDF for upload tests.
+def synthetic_pdf() -> bytes:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    buffer = BytesIO()
+    writer.write(buffer)
+    return buffer.getvalue()
 
 
 # Set one built-in synthetic product active for the intake smoke test.
@@ -81,7 +92,7 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
             assert repeated.status_code == 200
             assert repeated.json()["id"] == created.json()["id"]
 
-            content = b"SYNTHETIC - FOR DEMONSTRATION ONLY"
+            content = synthetic_pdf()
             document = client.post(
                 f"/api/v1/cases/{created.json()['id']}/documents",
                 files={
@@ -91,7 +102,7 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
                         "application/pdf",
                     )
                 },
-                data={"page_count": "1"},
+                data={"document_code": "identity_record"},
                 headers=headers,
             )
             assert document.status_code == 200
@@ -134,6 +145,7 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
                         "application/pdf",
                     )
                 },
+                data={"document_code": "identity_record"},
                 headers=headers,
             )
             with psycopg.connect(DATABASE_URL) as connection:
@@ -156,6 +168,7 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
                         "application/pdf",
                     )
                 },
+                data={"document_code": "vehicle_record"},
                 headers=headers,
             )
             assert replacement.status_code == 200
@@ -165,8 +178,87 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
             rejected = client.post(
                 f"/api/v1/cases/{created.json()['id']}/documents",
                 files={"document": ("synthetic.txt", content, "text/plain")},
+                data={"document_code": "vehicle_record"},
                 headers=headers,
             )
             assert rejected.status_code == 422
+    finally:
+        set_motor_status("draft")
+
+
+# Verify uploads need a known product code and survive needs-information.
+def test_document_upload_requires_a_known_code() -> None:
+    set_motor_status("active")
+    try:
+        application = {
+            "product_code": "motor-private-car",
+            "idempotency_key": str(uuid4()),
+            "payload": {
+                "vehicle_age": 2,
+                "vehicle_use": "personal",
+                "prior_claims": 0,
+            },
+            "document_codes": ["identity_record", "vehicle_record"],
+        }
+        content = synthetic_pdf()
+        with TestClient(create_app()) as client:
+            login = client.post(
+                "/api/v1/auth/session",
+                json={
+                    "email": "applicant@synthetic.test",
+                    "password": "underwriteflow-demo-applicant",
+                },
+            )
+            headers = {"Authorization": f"Bearer {login.json()['token']}"}
+            created = client.post(
+                "/api/v1/cases", json=application, headers=headers
+            )
+            case_id = created.json()["id"]
+
+            missing_code = client.post(
+                f"/api/v1/cases/{case_id}/documents",
+                files={
+                    "document": ("synthetic.pdf", content, "application/pdf")
+                },
+                headers=headers,
+            )
+            unknown_code = client.post(
+                f"/api/v1/cases/{case_id}/documents",
+                files={
+                    "document": ("synthetic.pdf", content, "application/pdf")
+                },
+                data={"document_code": "not_a_product_document"},
+                headers=headers,
+            )
+            accepted = client.post(
+                f"/api/v1/cases/{case_id}/documents",
+                files={
+                    "document": ("synthetic.pdf", content, "application/pdf")
+                },
+                data={"document_code": "identity_record"},
+                headers=headers,
+            )
+
+            assert missing_code.status_code == 422
+            assert unknown_code.status_code == 422
+            assert accepted.status_code == 200
+            assert accepted.json()["document_code"] == "identity_record"
+            assert accepted.json()["page_count"] == 1
+
+            with psycopg.connect(DATABASE_URL) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE cases SET status = %s WHERE id = %s",
+                        ("needs_information", case_id),
+                    )
+            still_open = client.post(
+                f"/api/v1/cases/{case_id}/documents",
+                files={
+                    "document": ("synthetic.pdf", content, "application/pdf")
+                },
+                data={"document_code": "vehicle_record"},
+                headers=headers,
+            )
+            assert still_open.status_code == 200
     finally:
         set_motor_status("draft")

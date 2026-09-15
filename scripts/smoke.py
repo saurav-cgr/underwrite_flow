@@ -1,11 +1,26 @@
 """Run the deterministic Compose end-to-end demonstration flow."""
 
+from io import BytesIO
+
 from fastapi.testclient import TestClient
+from pypdf import PdfWriter
 
 from underwriteflow.app import create_app
 
 SMOKE_KEY = "synthetic-compose-smoke-v1"
-SYNTHETIC_DOCUMENT = b"SYNTHETIC - FOR DEMONSTRATION ONLY"
+SMOKE_DOCUMENTS = (
+    ("identity_record", "identity.pdf"),
+    ("vehicle_record", "vehicle.pdf"),
+)
+
+
+# Build a minimal single-page synthetic PDF for the smoke flow.
+def synthetic_pdf() -> bytes:
+    writer = PdfWriter()
+    writer.add_blank_page(width=72, height=72)
+    buffer = BytesIO()
+    writer.write(buffer)
+    return buffer.getvalue()
 
 
 # Log in one fictional demo role and return bearer headers.
@@ -18,26 +33,22 @@ def login(client: TestClient, email: str, password: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {response.json()['token']}"}
 
 
-# Upload only synthetic motor documents not already attached to the case.
+# Upload only configured motor documents absent from the case.
 def upload_missing_documents(
     client: TestClient, case_id: str, headers: dict[str, str]
 ) -> None:
     response = client.get(f"/api/v1/cases/{case_id}/documents", headers=headers)
     assert response.status_code == 200, response.text
-    filenames = {document["filename"] for document in response.json()}
-    for filename in ("identity.pdf", "vehicle.pdf"):
-        if filename in filenames:
+    attached = {document["document_code"] for document in response.json()}
+    content = synthetic_pdf()
+    for code, filename in SMOKE_DOCUMENTS:
+        if code in attached:
             continue
         response = client.post(
             f"/api/v1/cases/{case_id}/documents",
             headers=headers,
-            files={
-                "document": (
-                    filename,
-                    SYNTHETIC_DOCUMENT,
-                    "application/pdf",
-                )
-            },
+            files={"document": (filename, content, "application/pdf")},
+            data={"document_code": code},
         )
         assert response.status_code == 200, response.text
 

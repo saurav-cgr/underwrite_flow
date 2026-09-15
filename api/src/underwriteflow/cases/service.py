@@ -1,6 +1,9 @@
 """Case intake and document persistence rules."""
 
+import logging
+from collections.abc import Iterable, Mapping
 from pathlib import Path
+from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
@@ -18,16 +21,47 @@ from underwriteflow.persistence.models import (
 )
 from underwriteflow.persistence.repositories import AuditRepository
 from underwriteflow.products.rules import condition_matches
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    ProductDocument,
+)
 from underwriteflow.cases.schemas import CaseCreate
-from underwriteflow.cases.storage import UploadStorage
+from underwriteflow.cases.storage import StorageValidationError, UploadStorage
+
+LOGGER = logging.getLogger(__name__)
 
 MAX_DOCUMENT_COUNT = 10
-MAX_DOCUMENT_PAGES = 50
+MUTABLE_DOCUMENT_STATUSES = frozenset({"new", "needs_information"})
 
 
 class CaseValidationError(ValueError):
     """Raised when intake data does not satisfy the pinned product."""
+
+
+# Decide whether one configured document is required for this application.
+def document_is_required(
+    document: ProductDocument, payload: Mapping[str, Any]
+) -> bool:
+    if document.requirement == "required":
+        return True
+    return document.requirement == "conditional" and condition_matches(
+        document.condition or {}, payload
+    )
+
+
+# Return the required document codes that are not yet attached to the case.
+def missing_document_codes(
+    configuration: ProductConfiguration,
+    provided_codes: Iterable[str],
+    payload: Mapping[str, Any],
+) -> list[str]:
+    provided = set(provided_codes)
+    return sorted(
+        document.code
+        for document in configuration.documents
+        if document_is_required(document, payload)
+        and document.code not in provided
+    )
 
 
 # Validate required fields and documents against the selected product version.
@@ -68,11 +102,10 @@ def validate_application(
     if not provided_documents.issubset(known_documents):
         raise CaseValidationError("unsupported document code")
     for document in configuration.documents:
-        required = document.requirement == "required" or (
-            document.requirement == "conditional"
-            and condition_matches(document.condition or {}, application.payload)
-        )
-        if required and document.code not in provided_documents:
+        if (
+            document_is_required(document, application.payload)
+            and document.code not in provided_documents
+        ):
             raise CaseValidationError(f"missing document: {document.code}")
 
 
@@ -155,29 +188,41 @@ class CaseService:
         session: AsyncSession,
         case: Case,
         upload: UploadFile,
-        page_count: int | None,
+        document_code: str,
         actor_user_id: UUID,
     ) -> Document:
-        if case.status != "new":
+        if case.status not in MUTABLE_DOCUMENT_STATUSES:
             raise CaseValidationError(
                 "documents cannot change after review starts"
             )
+        product_version = await session.scalar(
+            select(ProductVersion).where(
+                ProductVersion.id == case.product_version_id
+            )
+        )
+        if product_version is None:
+            raise CaseValidationError("case configuration is unavailable")
+        configuration = ProductConfiguration.model_validate(
+            product_version.configuration
+        )
+        known_codes = {document.code for document in configuration.documents}
+        if document_code not in known_codes:
+            raise CaseValidationError("unsupported document code")
         count = await session.scalar(
             select(func.count(Document.id)).where(Document.case_id == case.id)
         )
         if count >= MAX_DOCUMENT_COUNT:
             raise CaseValidationError("document count limit exceeded")
-        if page_count is not None and not 1 <= page_count <= MAX_DOCUMENT_PAGES:
-            raise CaseValidationError("document page limit exceeded")
         stored = await self.storage.save(upload, case.id)
         document = Document(
             case_id=case.id,
+            document_code=document_code,
             filename=Path(upload.filename or "document").name,
-            content_type=upload.content_type or "",
+            content_type=stored.content_type,
             storage_key=stored.storage_key,
             content_hash=stored.content_hash,
             byte_size=stored.byte_size,
-            page_count=page_count,
+            page_count=stored.page_count,
         )
         session.add(document)
         self.audit.append(
@@ -186,13 +231,17 @@ class CaseService:
                 case_id=case.id,
                 actor_user_id=actor_user_id,
                 event_type="document_uploaded",
-                details={"content_hash": stored.content_hash, "byte_size": stored.byte_size},
+                details={
+                    "document_code": document_code,
+                    "content_hash": stored.content_hash,
+                    "byte_size": stored.byte_size,
+                },
             ),
         )
         await session.commit()
         return document
 
-    # Remove a pre-review document and preserve the removal in the audit trail.
+    # Remove an unlocked document, committing metadata before the stored file.
     async def remove_document(
         self,
         session: AsyncSession,
@@ -200,7 +249,7 @@ class CaseService:
         document_id: UUID,
         actor_user_id: UUID,
     ) -> None:
-        if case.status != "new":
+        if case.status not in MUTABLE_DOCUMENT_STATUSES:
             raise CaseValidationError(
                 "documents cannot change after review starts"
             )
@@ -212,7 +261,8 @@ class CaseService:
         )
         if document is None:
             raise CaseValidationError("document not found")
-        self.storage.delete(document.storage_key)
+        storage_key = document.storage_key
+        content_hash = document.content_hash
         await session.delete(document)
         self.audit.append(
             session,
@@ -221,9 +271,25 @@ class CaseService:
                 actor_user_id=actor_user_id,
                 event_type="document_removed",
                 details={
-                    "document_id": str(document.id),
-                    "content_hash": document.content_hash,
+                    "document_id": str(document_id),
+                    "content_hash": content_hash,
                 },
             ),
         )
+        # Commit first so a failed file removal cannot hide a missing row.
         await session.commit()
+        try:
+            self.storage.delete(storage_key)
+        except (OSError, StorageValidationError):
+            # Keep the orphan discoverable so an operator can reclaim it.
+            LOGGER.warning("orphaned upload retained: %s", storage_key)
+            self.audit.append(
+                session,
+                AuditEvent(
+                    case_id=case.id,
+                    actor_user_id=actor_user_id,
+                    event_type="document_file_orphaned",
+                    details={"storage_key": storage_key},
+                ),
+            )
+            await session.commit()

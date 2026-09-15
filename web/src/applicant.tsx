@@ -63,9 +63,10 @@ export function ApplicantDashboard({
         </div>
         <div className="metric-card metric-accent">
           <span className="metric-label">Data boundary</span>
-          <strong>Local</strong>
+          <strong>Gemini</strong>
           <span>
-            Fictional demonstration data stays inside this workspace.
+            Extraction uses Gemini by default. Set the fake provider to keep
+            synthetic data on this machine.
           </span>
         </div>
       </div>

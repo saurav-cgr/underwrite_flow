@@ -14,7 +14,15 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open `http://localhost:5173`. PostgreSQL listens on port `5433`.
+Open `http://localhost:5173`. PostgreSQL is reachable only on the Compose
+network by default. To use host database tools, opt in explicitly:
+
+```bash
+# Default: no published database port
+# Opt in to a localhost-only port for host tools
+docker compose -f compose.yaml -f compose.localhost.yaml up --build
+```
+
 The Compose bootstrap applies migrations and imports the three product files.
 The migration provisions fictional Applicant, Underwriter, and Administrator
 accounts. Their synthetic passwords are used by the API test fixtures.
@@ -29,10 +37,14 @@ make smoke
 
 ## Provider boundary
 
-The default generation provider is Gemini, but normal tests and the smoke
-flow use the deterministic fake provider. Ollama is available through the
-`ollama` Compose profile. Uploaded files remain in the local upload volume.
-They are untrusted content and are never treated as model instructions.
+The default generation provider is Gemini, so extracted document content and
+application facts are sent to the Gemini API unless the fake provider is
+selected. Set `GENERATION_PROVIDER=fake` to keep synthetic data on this
+machine. Ollama is available through the `ollama` Compose profile.
+
+Uploads are validated from their bytes, and file metadata is stored in the
+local upload volume. Uploaded content is untrusted and is never treated as
+model instructions.
 
 LangSmith tracing is disabled by default. To opt in for synthetic evaluation,
 set `LANGSMITH_TRACING=true`, provide a local evaluation key, and use the

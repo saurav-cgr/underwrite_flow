@@ -107,7 +107,7 @@ async def upload_document(
     case_id: UUID,
     request: Request,
     document: UploadFile = File(...),
-    page_count: int | None = Form(default=None),
+    document_code: str = Form(...),
     current: dict[str, str] = Depends(require_permission(Permission.CASE_WRITE)),
     session: AsyncSession = Depends(get_session),
 ) -> DocumentResponse:
@@ -115,7 +115,9 @@ async def upload_document(
     try:
         stored = await CaseService(
             UploadStorage(Path(request.app.state.settings.upload_root))
-        ).add_document(session, case, document, page_count, UUID(current["sub"]))
+        ).add_document(
+            session, case, document, document_code, UUID(current["sub"])
+        )
     except (CaseValidationError, StorageValidationError):
         raise HTTPException(status_code=422, detail="Invalid document upload") from None
     return DocumentResponse.model_validate(stored, from_attributes=True)

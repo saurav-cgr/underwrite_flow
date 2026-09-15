@@ -29,6 +29,7 @@ class DocumentResponse(BaseModel):
     """Safe uploaded-document metadata response."""
 
     id: UUID
+    document_code: str | None
     filename: str
     content_type: str
     byte_size: int

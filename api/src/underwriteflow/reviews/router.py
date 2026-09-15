@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.auth.dependencies import require_permission, require_role
 from underwriteflow.auth.schemas import Permission, UserRole
+from underwriteflow.cases.service import missing_document_codes
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
     AuditEvent,
@@ -20,7 +21,6 @@ from underwriteflow.persistence.models import (
     Review,
     Submission,
 )
-from underwriteflow.products.rules import condition_matches
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.reviews.schemas import ReviewCommand, ReviewResponse, ReviewStartResponse
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
@@ -98,16 +98,15 @@ async def start_review(
         await session.scalars(select(ExtractedField).where(ExtractedField.case_id == case_id))
     )
     application = submission.payload.get("application", {})
-    required_documents = [
-        document.code
-        for document in configuration.documents
-        if document.requirement == "required"
-        or (
-            document.requirement == "conditional"
-            and condition_matches(document.condition or {}, application)
-        )
-    ]
-    missing_information = required_documents[len(documents) :]
+    missing_information = missing_document_codes(
+        configuration,
+        [
+            document.document_code
+            for document in documents
+            if document.document_code
+        ],
+        application,
+    )
     evidence = [
         {
             "document_id": str(document.id),

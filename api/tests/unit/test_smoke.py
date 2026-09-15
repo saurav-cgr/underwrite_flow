@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[2] / "scripts"))
 
-from smoke import SYNTHETIC_DOCUMENT, recover_case
+from smoke import recover_case
 
 
 class Response:
@@ -27,16 +27,20 @@ class Response:
 class Client:
     """Record recovery calls while returning deterministic API responses."""
 
-    # Configure the case status and already-uploaded filenames.
-    def __init__(self, status: str, filenames: list[str] | None = None) -> None:
+    # Configure the case status and already-attached document codes.
+    def __init__(
+        self, status: str, document_codes: list[str] | None = None
+    ) -> None:
         self.status = status
-        self.filenames = filenames or []
+        self.document_codes = document_codes or []
         self.calls: list[tuple[str, str, dict]] = []
 
     # Return documents currently attached to the synthetic case.
     def get(self, path: str, **kwargs: dict) -> Response:
         self.calls.append(("get", path, kwargs))
-        return Response([{"filename": filename} for filename in self.filenames])
+        return Response(
+            [{"document_code": code} for code in self.document_codes]
+        )
 
     # Return the status-specific response for every recovery request.
     def post(self, path: str, **kwargs: dict) -> Response:
@@ -76,9 +80,9 @@ def test_recover_case_handles_each_recoverable_status(
     assert len(posts) == expected_posts
 
 
-# Verify a resumed new case uploads only the missing synthetic document.
+# Verify a resumed new case uploads only the missing configured document.
 def test_recover_case_skips_existing_documents() -> None:
-    client = Client("new", ["identity.pdf"])
+    client = Client("new", ["identity_record"])
 
     recover_case(
         client,
@@ -90,8 +94,8 @@ def test_recover_case_skips_existing_documents() -> None:
     uploads = [call for call in client.calls if "/documents" in call[1]]
     assert len(uploads) == 2
     assert uploads[0][0] == "get"
-    assert uploads[1][2]["files"]["document"] == (
-        "vehicle.pdf",
-        SYNTHETIC_DOCUMENT,
-        "application/pdf",
-    )
+    assert uploads[1][2]["data"]["document_code"] == "vehicle_record"
+    filename, content, content_type = uploads[1][2]["files"]["document"]
+    assert filename == "vehicle.pdf"
+    assert content_type == "application/pdf"
+    assert content.startswith(b"%PDF-")
