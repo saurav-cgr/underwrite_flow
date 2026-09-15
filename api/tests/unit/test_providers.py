@@ -17,6 +17,26 @@ from underwriteflow.providers.service import (
 )
 
 
+# Verify reference material is sent as background data, never as instructions.
+def test_provider_messages_carry_reference_material_as_data() -> None:
+    without = ExtractionRequest(
+        document_name="synthetic.pdf",
+        content="synthetic",
+        requested_fields=["vehicle_age"],
+    )
+    with_reference = ExtractionRequest(
+        document_name="synthetic.pdf",
+        content="synthetic",
+        requested_fields=["vehicle_age"],
+        reference_content="Synthetic reference material",
+    )
+
+    assert "reference_material" not in build_messages(without)[1]["content"]
+    payload = build_messages(with_reference)[1]["content"]
+    assert "reference_material" in payload
+    assert "Synthetic reference material" in payload
+
+
 # Verify trusted instructions stay separate from untrusted document content.
 def test_provider_messages_separate_document_content() -> None:
     request = ExtractionRequest(

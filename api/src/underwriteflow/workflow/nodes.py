@@ -22,6 +22,7 @@ async def extract_document(
         document_name=document["document_id"],
         content=document["content"],
         requested_fields=state["requested_fields"],
+        reference_content=state.get("reference_content", ""),
     )
     attempts = 0
     while True:
@@ -88,7 +89,11 @@ def fan_out_documents(state: EvidenceState) -> list[Send] | str:
     return [
         Send(
             "extract_document",
-            {"document": document, "requested_fields": state.get("requested_fields", [])},
+            {
+                "document": document,
+                "requested_fields": state.get("requested_fields", []),
+                "reference_content": state.get("reference_content", ""),
+            },
         )
         for document in pending[:MAX_DOCUMENT_BRANCHES]
     ]

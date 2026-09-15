@@ -17,6 +17,7 @@ class RecordingProvider:
         self.failures = failures or set()
         self.transient_once = transient_once
         self.calls: list[str] = []
+        self.requests: list[ExtractionRequest] = []
         self.attempts: dict[str, int] = defaultdict(int)
         self.current = 0
         self.max_concurrency = 0
@@ -25,6 +26,7 @@ class RecordingProvider:
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:
         document_id = request.document_name
         self.calls.append(document_id)
+        self.requests.append(request)
         self.attempts[document_id] += 1
         if document_id in self.failures:
             raise ProviderError("synthetic provider failure")
@@ -68,6 +70,30 @@ def test_thread_config_keeps_case_and_separates_cycles() -> None:
     assert (
         first["configurable"]["thread_id"]
         != second["configurable"]["thread_id"]
+    )
+
+
+# Verify administrator reference text reaches every provider branch request.
+@pytest.mark.asyncio
+async def test_evidence_graph_passes_reference_content_to_provider() -> None:
+    provider = RecordingProvider()
+    graph = build_evidence_graph(provider, checkpointer=MemorySaver())
+
+    await graph.ainvoke(
+        {
+            "case_id": "case-reference",
+            "documents": documents(1),
+            "requested_fields": ["synthetic_field"],
+            "reference_content": "Synthetic reference material",
+            "results": [],
+        },
+        config=thread_config("case-reference"),
+    )
+
+    assert provider.requests
+    assert (
+        provider.requests[0].reference_content
+        == "Synthetic reference material"
     )
 
 

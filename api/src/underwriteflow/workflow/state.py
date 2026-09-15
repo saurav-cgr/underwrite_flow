@@ -29,6 +29,7 @@ class EvidenceState(TypedDict, total=False):
     case_id: str
     documents: list[DocumentInput]
     requested_fields: list[str]
+    reference_content: str
     results: Annotated[list[DocumentResult], append_results]
     ordered_results: list[DocumentResult]
     reconciled_fields: list[dict[str, object]]
@@ -39,6 +40,7 @@ class DocumentWorkerState(TypedDict):
 
     document: DocumentInput
     requested_fields: list[str]
+    reference_content: str
 
 
 class ProductRuleInput(TypedDict):

@@ -11,6 +11,7 @@ class ExtractionRequest(BaseModel):
     document_name: str = Field(min_length=1, max_length=500)
     content: str = Field(max_length=10_000_000)
     requested_fields: list[str] = Field(max_length=50)
+    reference_content: str = Field(default="", max_length=100_000)
 
 
 class ExtractedField(BaseModel):

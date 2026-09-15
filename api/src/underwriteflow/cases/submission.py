@@ -14,6 +14,7 @@ from underwriteflow.persistence.models import (
     ExtractedField,
     ProductVersion,
     Recommendation,
+    ReferenceDocument,
     RiskSignal,
     Submission,
     Validation,
@@ -31,6 +32,7 @@ from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import build_triage_graph
 
 WORKFLOW_VERSION = "evidence-v1"
+MAX_REFERENCE_CHARS = 50_000
 
 
 class SubmissionService:
@@ -86,6 +88,7 @@ class SubmissionService:
         case: Case,
         document_inputs: list[dict[str, str]],
         requested_fields: list[str],
+        reference_content: str = "",
     ) -> dict[str, object]:
         graph = build_evidence_graph(
             self.provider, retry_count=self.retry_count
@@ -95,10 +98,51 @@ class SubmissionService:
                 "case_id": str(case.id),
                 "documents": document_inputs,
                 "requested_fields": requested_fields,
+                "reference_content": reference_content,
                 "results": [],
             },
             config=thread_config(str(case.id), case.review_cycle),
         )
+
+    # Read the pinned version's administrator references as background text.
+    async def load_reference_content(
+        self, session: AsyncSession, case: Case
+    ) -> str:
+        product_version = await session.scalar(
+            select(ProductVersion).where(
+                ProductVersion.id == case.product_version_id
+            )
+        )
+        if product_version is None:
+            return ""
+        documents = list(
+            await session.scalars(
+                select(ReferenceDocument).where(
+                    ReferenceDocument.product_id
+                    == product_version.product_id,
+                    ReferenceDocument.version == product_version.version,
+                )
+            )
+        )
+        extractor = LocalDocumentExtractor()
+        texts: list[str] = []
+        for document in documents:
+            if not document.storage_key or not document.content_type:
+                continue
+            try:
+                local = extractor.extract(
+                    self.upload_root / document.storage_key,
+                    document.content_type,
+                )
+            except ExtractionError:
+                continue
+            texts.append(
+                document.filename
+                + ":\n"
+                + "\n".join(page.text for page in local.pages)
+            )
+        # Reference text is background only and stays inside the provider bound.
+        return "\n\n".join(texts)[:MAX_REFERENCE_CHARS]
 
     # Reuse a paused checkpoint or run triage up to the human interrupt.
     async def run_triage_graph(
@@ -347,8 +391,9 @@ class SubmissionService:
                 "rule_results": [],
             }
         )
+        reference_content = await self.load_reference_content(session, case)
         evidence_result = await self.run_evidence_graph(
-            case, document_inputs, requested_fields
+            case, document_inputs, requested_fields, reference_content
         )
         triage_values = await self.run_triage_graph(
             case,
