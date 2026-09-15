@@ -1,7 +1,9 @@
 """Alembic environment for the PostgreSQL business schema."""
 
 import asyncio
+import re
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy.engine import Connection
@@ -16,10 +18,34 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+VERSIONS_DIR = Path(__file__).resolve().parent / "versions"
+NUMBERED_NAME = re.compile(r"^(\d+)_")
+
+
+# Return the next free sequence number for the migration versions directory.
+def next_migration_number(versions_dir: Path) -> str:
+    highest = 0
+    for path in versions_dir.glob("*.py"):
+        match = NUMBERED_NAME.match(path.name)
+        if match is not None:
+            highest = max(highest, int(match.group(1)))
+    return f"{highest + 1:02d}"
+
+
+# Number generated migrations so revision files follow the project convention.
+def number_revision(_context, _revision, directives) -> None:
+    number = next_migration_number(VERSIONS_DIR)
+    for directive in directives:
+        directive.rev_id = number
+
 
 # Configure migrations against an established synchronous connection.
 def run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        process_revision_directives=number_revision,
+    )
     with context.begin_transaction():
         context.run_migrations()
 
