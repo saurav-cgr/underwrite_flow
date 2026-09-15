@@ -1,6 +1,7 @@
 import pytest
 from uuid import uuid4
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
@@ -32,6 +33,18 @@ class FakeSession:
         return None
 
 
+class ConflictSession(FakeSession):
+    """Represent a commit that loses the concurrent activation race."""
+
+    # Fail the commit the way the active-version index does.
+    async def commit(self) -> None:
+        raise IntegrityError("SELECT 1", {}, Exception("synthetic conflict"))
+
+    # Accept the rollback issued after a lost race.
+    async def rollback(self) -> None:
+        return None
+
+
 class FakeRepository:
     """Return one product with a replaceable active version."""
 
@@ -39,10 +52,19 @@ class FakeRepository:
         self.product = product
         self.target = target
         self.active = active
+        self.locked: list[str] = []
 
     # Return the configured product for lifecycle tests.
     async def find_product(self, session: FakeSession, code: str) -> Product:
         del session, code
+        return self.product
+
+    # Return the configured product while recording the row-lock request.
+    async def find_product_for_update(
+        self, session: FakeSession, code: str
+    ) -> Product:
+        del session
+        self.locked.append(code)
         return self.product
 
     # Return the selected target version for lifecycle tests.
@@ -116,17 +138,54 @@ async def test_activation_replaces_active_version() -> None:
         id=uuid4(), product_id=product_id, version="v2", configuration={}, content_hash="two", status="draft"
     )
     session = FakeSession()
-    service = ProductService(repository=FakeRepository(product, target, active))
+    repository = FakeRepository(product, target, active)
+    service = ProductService(repository=repository)
 
     result = await service.activate(session, "synthetic-motor", "v2", uuid4())
 
     assert result is target
+    assert repository.locked == ["synthetic-motor"]
     assert active.status == "retired"
     assert target.status == "active"
     assert any(
         isinstance(event, AuditEvent) and event.event_type == "configuration_activated"
         for event in session.added
     )
+
+
+# Verify a lost activation race becomes a typed configuration conflict.
+@pytest.mark.asyncio
+async def test_activation_reports_a_lost_concurrent_race() -> None:
+    product_id = uuid4()
+    product = Product(
+        id=product_id,
+        code="synthetic-motor",
+        title="Synthetic Motor",
+        family="motor",
+        status="active",
+    )
+    active = ProductVersion(
+        id=uuid4(),
+        product_id=product_id,
+        version="v1",
+        configuration={},
+        content_hash="one",
+        status="active",
+    )
+    target = ProductVersion(
+        id=uuid4(),
+        product_id=product_id,
+        version="v2",
+        configuration={},
+        content_hash="two",
+        status="draft",
+    )
+    service = ProductService(repository=FakeRepository(product, target, active))
+
+    with pytest.raises(ProductConfigurationError, match="already active"):
+        await service.activate(
+            ConflictSession(), "synthetic-motor", "v2", uuid4()
+        )
 
 
 # Verify only administrators can validate product configuration.

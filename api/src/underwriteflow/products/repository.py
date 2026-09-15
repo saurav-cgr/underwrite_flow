@@ -15,6 +15,14 @@ class ProductRepository:
     async def find_product(self, session: AsyncSession, code: str) -> Product | None:
         return await session.scalar(select(Product).where(Product.code == code))
 
+    # Lock one product row so concurrent activation changes serialize.
+    async def find_product_for_update(
+        self, session: AsyncSession, code: str
+    ) -> Product | None:
+        return await session.scalar(
+            select(Product).where(Product.code == code).with_for_update()
+        )
+
     # Find one version belonging to a stable product code.
     async def find_version(
         self, session: AsyncSession, code: str, version: str

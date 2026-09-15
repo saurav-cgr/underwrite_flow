@@ -8,6 +8,7 @@ from uuid import UUID
 
 import yaml
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.persistence.models import (
@@ -143,7 +144,7 @@ class ProductService:
         version: str,
         actor_user_id: UUID,
     ) -> ProductVersion:
-        product = await self.repository.find_product(session, code)
+        product = await self.repository.find_product_for_update(session, code)
         target = await self.repository.find_version(session, code, version)
         if product is None or target is None:
             raise ProductConfigurationError("product version not found")
@@ -162,7 +163,15 @@ class ProductService:
                 details={"product_code": code, "version": version},
             ),
         )
-        await session.commit()
+        # The active-version index rejects a second active sibling, so a lost
+        # race is reported as a configuration conflict rather than a failure.
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            raise ProductConfigurationError(
+                "another version is already active"
+            ) from None
         return target
 
     # Retire one version and record the administrator action.
