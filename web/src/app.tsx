@@ -10,7 +10,8 @@ import { RoleEntry } from "./entry";
 import { ProductConfiguration } from "./product-configuration";
 import { TrackingScreen } from "./tracking";
 import { AppShell, Button } from "./components";
-import { CaseReview, UnderwriterQueue } from "./staff";
+import { CaseReview } from "./case-review";
+import { UnderwriterQueue } from "./queue";
 import { homeScreenForRole, isOpenCase } from "./ui-state";
 import type {
   CaseRecord,

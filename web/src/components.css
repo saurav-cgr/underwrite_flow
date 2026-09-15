@@ -187,9 +187,6 @@
   gap: 24px;
   grid-template-columns: minmax(0, 1fr) 320px;
 }
-.mini-row {
-  font-size: .82rem;
-}
 .facts-grid {
   border: 1px solid var(--border-soft);
   display: grid;
@@ -232,45 +229,73 @@
   color: var(--muted);
   margin: 4px 0 0;
 }
-.metric-strip {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(3, 1fr);
+.status {
+  border-radius: var(--radius-pill);
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  text-transform: capitalize;
+  white-space: nowrap;
 }
-.metric-strip div {
-  display: grid;
-  gap: 5px;
+.status-active, .status-completed, .status-confirmed {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
-.metric-strip strong {
+.status-new {
+  background: var(--secondary-soft);
+  color: var(--secondary-strong);
+}
+.status-underwriter_review, .status-manual_review {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+.status-specialist, .status-overridden {
+  background: var(--purple-soft);
+  color: var(--purple-strong);
+}
+.status-needs_information {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.status-draft, .status-retired {
+  background: var(--surface-subtle);
+  color: var(--muted);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+}
+.muted {
+  color: var(--muted);
+}
+.empty-state {
+  padding: 30px 0;
+  text-align: center;
+}
+.empty-state h2 {
   color: var(--primary);
-  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+.empty-state p {
+  color: var(--muted);
+}
+.empty-line {
+  background: var(--secondary);
+  border-radius: var(--radius-pill);
+  display: block;
+  height: 2px;
+  margin: 0 auto;
+  width: 45px;
 }
 .success-card {
-  align-items: flex-start;
+  align-items: center;
   background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
   color: var(--accent);
   display: flex;
   gap: 14px;
   justify-content: space-between;
-  margin-top: 24px;
-  padding: 18px;
-}
-.filter-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-  overflow-x: auto;
-}
-.filter-bar button {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  min-height: 42px;
-  padding: 8px 14px;
-  white-space: nowrap;
-}
-.filter-bar button:hover, .filter-active {
-  background: var(--navy);
-  border-color: var(--navy) !important;
-  color: white !important;
+  margin-bottom: 20px;
+  padding: 14px 18px;
 }

@@ -1,0 +1,84 @@
+/*
+ * Underwriter queue.
+ *
+ * A real table rather than an ARIA-role imitation: the previous markup put
+ * role="row" on a div wrapping buttons, which is invalid ownership.
+ */
+
+.filter-group {
+  background: var(--surface-subtle);
+  display: flex;
+  gap: 2px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding: 3px;
+}
+.filter {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+.filter:hover {
+  color: var(--primary);
+}
+.filter-active {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--primary);
+}
+.data-table-wrap {
+  background: var(--surface);
+  overflow-x: auto;
+}
+.data-table {
+  border-collapse: collapse;
+  min-width: 720px;
+  width: 100%;
+}
+.data-table th {
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 10px 14px;
+  text-align: left;
+  text-transform: uppercase;
+}
+.data-table td {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 13px 14px;
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.data-table tbody tr:hover {
+  background: var(--surface-accent);
+}
+.product-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 7px;
+}
+.product-label .icon {
+  color: var(--primary);
+  flex: 0 0 auto;
+  height: 17px;
+  width: 17px;
+}
+.route-cell {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  text-transform: capitalize;
+}
+.row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

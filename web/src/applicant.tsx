@@ -1,20 +1,6 @@
 import { Button, PageHeading, Panel } from "./components";
-import { Icon } from "./icons";
-import type { IconName } from "./icons";
+import { familyMark, Icon } from "./icons";
 import type { CaseRecord, ProductCatalogItem, Screen } from "./types";
-
-const FAMILY_ICONS: Record<string, IconName> = {
-  health: "health",
-  life: "heart",
-  motor: "car",
-};
-
-// Describe the product mark for a configured product family.
-function familyMark(family: string): { icon: IconName; className: string } {
-  const key = family.toLowerCase();
-  if (key in FAMILY_ICONS) return { icon: FAMILY_ICONS[key], className: key };
-  return { icon: "file", className: "other" };
-}
 
 // Show the applicant landing view and the next safe action.
 export function ApplicantDashboard({

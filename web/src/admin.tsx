@@ -20,6 +20,7 @@ import {
   PageHeading,
   Panel,
 } from "./components";
+import { Icon } from "./icons";
 
 // Give administrators an inspectable queue and audit lookup workspace.
 export function AdminWorkspace({
@@ -172,11 +173,14 @@ export function AdminWorkspace({
             <ol className="audit-list">
               {events.map((event) => (
                 <li key={event.id}>
-                  <span className="audit-time">
-                    {new Date(event.occurred_at).toLocaleString()}
+                  <span aria-hidden="true" className="audit-icon">
+                    <Icon name="log" />
                   </span>
                   <div>
                     <strong>{event.event_type.replaceAll("_", " ")}</strong>
+                    <span className="audit-time">
+                      {new Date(event.occurred_at).toLocaleString()}
+                    </span>
                     <code>{JSON.stringify(event.details)}</code>
                   </div>
                 </li>

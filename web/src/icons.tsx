@@ -14,16 +14,34 @@ export type IconName =
   | "chevron"
   | "clock"
   | "file"
+  | "filter"
   | "grid"
   | "health"
   | "heart"
   | "inbox"
   | "log"
   | "plus"
+  | "search"
   | "settings"
   | "shield"
   | "upload"
   | "user";
+
+const FAMILY_ICONS: Record<string, IconName> = {
+  health: "health",
+  life: "heart",
+  motor: "car",
+};
+
+// Describe the product mark for a configured product family.
+export function familyMark(family: string): {
+  icon: IconName;
+  className: string;
+} {
+  const key = family.toLowerCase();
+  if (key in FAMILY_ICONS) return { icon: FAMILY_ICONS[key], className: key };
+  return { icon: "file", className: "other" };
+}
 
 interface IconProps {
   name: IconName;
@@ -123,6 +141,12 @@ export function IconSprite() {
       </symbol>
       <symbol id="i-user" viewBox="0 0 24 24">
         <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <path d="M18 11a7 7 0 1 0-14 0 7 7 0 0 0 14 0zm-2 6 4 4" />
+      </symbol>
+      <symbol id="i-filter" viewBox="0 0 24 24">
+        <path d="M4 5h16M7 12h10M10 19h4" />
       </symbol>
     </svg>
   );
