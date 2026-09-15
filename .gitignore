@@ -41,6 +41,7 @@ yarn-error.log*
 # Runtime data
 uploads/
 tmp/
+output/
 *.log
 *.pid
 

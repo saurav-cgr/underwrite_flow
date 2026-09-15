@@ -5,7 +5,7 @@
 - **Secrets:** Never commit `.env`, backups, API keys, credentials, or tokens. Use `.env.example` as the only configuration template. Never log or return `GEMINI_API_KEY` or `LANGSMITH_API_KEY`.
 - **Synthetic data only:** The MVP uses fictional applicants, documents, organizations, products, and underwriting rules. Never add real personal, medical, financial, vehicle, or insurer data.
 - **Human authority:** UnderwriteFlow recommends a triage route only. It must never approve, decline, bind, price, issue, renew, or cancel insurance. An authenticated underwriter must confirm every final route.
-- **Schema migrations:** After `api/alembic/versions/0001_initial.py` exists, treat it as the immutable fresh-schema baseline. Create an additive Alembic revision for each later schema change; never rewrite migration history.
+- **Schema migrations:** After `api/alembic/versions/01_initial.py` exists, treat it as the immutable fresh-schema baseline. Create an additive Alembic revision for each later schema change; never rewrite migration history.
 - **Reset safety:** Never use `docker compose down -v` unless the user explicitly requests a complete purge and acknowledges that all project volumes will be deleted.
 - **Git:** Never force-push. Preserve user changes and unrelated files. Check staged files for secrets before every commit.
 - **SQL:** Use SQLAlchemy expressions or bound parameters. Never interpolate user-controlled values into SQL.

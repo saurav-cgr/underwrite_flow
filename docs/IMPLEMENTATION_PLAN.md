@@ -122,7 +122,7 @@ underwrite_flow/
 
 ### Step 3: Create the initial PostgreSQL model and migration
 
-**Files:** SQLAlchemy models, repositories, Alembic setup, `0001_initial.py`, and integration tests.
+**Files:** SQLAlchemy models, repositories, Alembic setup, `01_initial.py`, and integration tests.
 
 **Work:**
 

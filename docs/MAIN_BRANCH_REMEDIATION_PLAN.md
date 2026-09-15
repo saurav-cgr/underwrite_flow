@@ -29,7 +29,7 @@ of full PRD or pilot readiness.
 
 ### R1: Add persistence and concurrency safeguards
 
-Create one additive migration. Do not change `0001_initial.py`.
+Create one additive migration. Do not change `01_initial.py`.
 
 - Add `documents.document_code`. Keep it nullable for legacy rows but require
   it through the API for every new upload.
