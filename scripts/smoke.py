@@ -74,7 +74,7 @@ def recover_case(
         decision = client.post(
             f"/api/v1/reviews/{case_id}",
             headers=underwriter,
-            json={"action": "confirm"},
+            json={"action": "confirm", "evidence_acknowledged": True},
         )
         assert decision.status_code == 200, decision.text
         assert decision.json()["status"] == "confirmed"

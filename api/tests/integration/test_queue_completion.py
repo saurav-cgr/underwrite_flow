@@ -109,6 +109,7 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                     "action": "override",
                     "selected_route": "standard",
                     "reason": "Synthetic demonstration override",
+                    "evidence_acknowledged": True,
                 },
                 headers=headers,
             ).status_code == 200

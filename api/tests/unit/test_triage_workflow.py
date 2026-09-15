@@ -33,7 +33,10 @@ async def test_triage_graph_applies_route_precedence_before_review() -> None:
     assert paused["recommendation"]["route"] == "specialist"
     assert paused["summary"]["evidence"][0]["source_locator"] == "line:1"
 
-    resumed = await graph.ainvoke(Command(resume={"action": "confirm"}), config=config)
+    resumed = await graph.ainvoke(
+        Command(resume={"action": "confirm", "evidence_acknowledged": True}),
+        config=config,
+    )
 
     assert resumed["final_route"] == "specialist"
     assert resumed["review_status"] == "confirmed"
@@ -56,9 +59,15 @@ async def test_triage_graph_requires_override_reason() -> None:
         config=config,
     )
 
-    with pytest.raises(ValueError, match="override route and reason"):
+    with pytest.raises(ValueError, match="override reason is required"):
         await graph.ainvoke(
-            Command(resume={"action": "override", "selected_route": "standard"}),
+            Command(
+                resume={
+                    "action": "override",
+                    "selected_route": "standard",
+                    "evidence_acknowledged": True,
+                }
+            ),
             config=config,
         )
 
@@ -82,7 +91,13 @@ async def test_triage_graph_supports_information_request() -> None:
 
     assert paused["recommendation"]["route"] == "needs_information"
     resumed = await graph.ainvoke(
-        Command(resume={"action": "request_information", "reason": "Synthetic document required"}),
+        Command(
+            resume={
+                "action": "request_information",
+                "reason": "Synthetic document required",
+                "evidence_acknowledged": True,
+            }
+        ),
         config=config,
     )
 
@@ -92,14 +107,51 @@ async def test_triage_graph_supports_information_request() -> None:
 
 # Verify review commands reject an override without its mandatory reason.
 def test_review_command_requires_override_reason() -> None:
-    with pytest.raises(ValidationError, match="override route and reason"):
-        ReviewCommand(action="override", selected_route="standard")
+    with pytest.raises(ValidationError, match="override reason is required"):
+        ReviewCommand(
+            action="override",
+            selected_route="standard",
+            evidence_acknowledged=True,
+        )
+
+
+# Verify a decision is refused until the evidence is acknowledged.
+def test_review_command_requires_evidence_acknowledgement() -> None:
+    with pytest.raises(ValidationError, match="evidence acknowledgement"):
+        ReviewCommand(action="confirm")
+
+
+# Verify whitespace-only reasons are treated as missing text.
+def test_review_command_rejects_whitespace_only_reason() -> None:
+    with pytest.raises(ValidationError, match="override reason is required"):
+        ReviewCommand(
+            action="override",
+            selected_route="standard",
+            reason="   ",
+            evidence_acknowledged=True,
+        )
+
+
+# Verify a specialist route requires one configured specialist label.
+def test_review_command_requires_specialist_label() -> None:
+    with pytest.raises(ValidationError, match="specialist label is required"):
+        ReviewCommand(
+            action="override",
+            selected_route="specialist",
+            reason="Synthetic specialist reason",
+            evidence_acknowledged=True,
+        )
 
 
 # Verify internal product routes cannot be selected as final override routes.
 def test_review_command_rejects_internal_override_routes() -> None:
     with pytest.raises(ValidationError):
-        ReviewCommand(action="override", selected_route="manual", reason="Synthetic reason")
+        ReviewCommand(
+            action="override",
+            selected_route="manual",
+            reason="Synthetic reason",
+            evidence_acknowledged=True,
+        )
 
 
 # Verify configured manual and information rules outrank specialist and expedited routes.

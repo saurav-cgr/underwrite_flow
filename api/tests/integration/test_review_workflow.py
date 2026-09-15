@@ -115,12 +115,12 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
             )
             admin_response = client.post(
                 f"/api/v1/reviews/{case_id}",
-                json={"action": "confirm"},
+                json={"action": "confirm", "evidence_acknowledged": True},
                 headers={"Authorization": f"Bearer {admin_login.json()['token']}"},
             )
             response = client.post(
                 f"/api/v1/reviews/{case_id}",
-                json={"action": "confirm"},
+                json={"action": "confirm", "evidence_acknowledged": True},
                 headers=headers,
             )
             restarted = client.post(f"/api/v1/reviews/{case_id}/start", headers=headers)

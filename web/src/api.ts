@@ -232,7 +232,9 @@ export async function submitReview(
   command: {
     action: "confirm" | "override" | "request_information";
     selected_route?: string;
+    specialist_label?: string;
     reason?: string;
+    evidence_acknowledged: boolean;
   },
 ): Promise<ReviewResult> {
   return request(`/reviews/${caseId}`, token, {

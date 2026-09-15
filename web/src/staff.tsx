@@ -149,6 +149,7 @@ export function CaseReview({
   const [result, setResult] = useState<ReviewResult | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState(item.route ?? "standard");
+  const [specialistLabel, setSpecialistLabel] = useState("");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [working, setWorking] = useState(false);
@@ -195,7 +196,12 @@ export function CaseReview({
       const review = await submitReview(token, item.case_id, {
         action,
         selected_route: action === "confirm" ? undefined : selectedRoute,
+        specialist_label:
+          action !== "confirm" && selectedRoute === "specialist"
+            ? specialistLabel
+            : undefined,
         reason: reason || undefined,
+        evidence_acknowledged: acknowledged,
       });
       setResult(review);
       if (review.status === "confirmed" || review.status === "overridden") {
@@ -289,6 +295,18 @@ export function CaseReview({
               <option value="specialist">Specialist review</option>
             </select>
           </label>
+          {selectedRoute === "specialist" ? (
+            <label className="field">
+              <span>Specialist label</span>
+              <input
+                disabled={working || !canReview}
+                onChange={(event) => setSpecialistLabel(event.target.value)}
+                placeholder="Required for specialist review."
+                type="text"
+                value={specialistLabel}
+              />
+            </label>
+          ) : null}
           <label className="field">
             <span>Reason / reviewer note</span>
             <textarea

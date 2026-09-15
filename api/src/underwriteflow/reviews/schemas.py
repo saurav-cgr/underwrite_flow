@@ -3,7 +3,7 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 ReviewAction = Literal["confirm", "override", "request_information"]
 FinalRoute = Literal["specialist", "standard", "expedited"]
@@ -14,15 +14,32 @@ class ReviewCommand(BaseModel):
 
     action: ReviewAction
     selected_route: FinalRoute | None = None
+    specialist_label: str | None = Field(default=None, max_length=200)
     reason: str | None = Field(default=None, max_length=2_000)
+    evidence_acknowledged: bool = False
 
-    # Require route and reason only for actions that need an explanation.
+    # Trim a reason and treat whitespace-only text as missing.
+    @field_validator("reason")
+    @classmethod
+    def trim_reason(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+    # Require acknowledgement and every field the chosen action depends on.
     @model_validator(mode="after")
     def validate_action(self) -> "ReviewCommand":
-        if self.action == "override" and (self.selected_route is None or not self.reason):
-            raise ValueError("override route and reason are required")
+        if not self.evidence_acknowledged:
+            raise ValueError("evidence acknowledgement is required")
+        if self.action == "override":
+            if self.selected_route is None:
+                raise ValueError("override route is required")
+            if not self.reason:
+                raise ValueError("override reason is required")
         if self.action == "request_information" and not self.reason:
             raise ValueError("information request reason is required")
+        if self.selected_route == "specialist" and not self.specialist_label:
+            raise ValueError("specialist label is required")
         return self
 
 

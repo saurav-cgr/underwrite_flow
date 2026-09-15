@@ -69,17 +69,17 @@ def apply_human_review(state: TriageState) -> dict[str, str | None]:
     command = ReviewCommand.model_validate(state["review_command"])
     if command.action == "request_information":
         return {"final_route": None, "review_status": "needs_information"}
-    route = (
-        command.selected_route
-        if command.action == "override"
-        else state["recommendation"]["route"]
-    )
+    recommended = state["recommendation"]["route"]
+    route = command.selected_route or recommended
     if route == "needs_information":
         return {"final_route": None, "review_status": "needs_information"}
-    return {
-        "final_route": route,
-        "review_status": "overridden" if command.action == "override" else "confirmed",
-    }
+    # Manual is a review state, never a final route; the most cautious of the
+    # three PRD routes is used when the underwriter supplied no route.
+    if route == "manual":
+        route = "specialist"
+    if command.action == "override" or route != recommended:
+        return {"final_route": route, "review_status": "overridden"}
+    return {"final_route": route, "review_status": "confirmed"}
 
 
 # Compile a resumable triage graph with a human checkpoint before final routing.

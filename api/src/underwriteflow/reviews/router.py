@@ -179,7 +179,16 @@ async def resume_review(
     async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
         graph = build_triage_graph(checkpointer=checkpointer)
         snapshot = await graph.aget_state(config)
+        recommendation = snapshot.values.get("recommendation", {})
         if "human_review" in snapshot.next:
+            if (
+                command.action == "override"
+                and command.selected_route == recommendation.get("route")
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Override must change the recommended route",
+                )
             command_to_persist = command
             result = await graph.ainvoke(
                 Command(resume=command.model_dump(exclude_none=True)), config=config
@@ -192,7 +201,6 @@ async def resume_review(
             }
         else:
             raise HTTPException(status_code=409, detail="Case is not awaiting human review")
-        recommendation = snapshot.values.get("recommendation", {})
         if await session.scalar(
             select(Recommendation).where(Recommendation.case_id == case_id)
         ) is None:
@@ -208,8 +216,10 @@ async def resume_review(
     review = Review(
         case_id=case_id,
         reviewer_user_id=UUID(reviewer["sub"]),
+        review_cycle=case.review_cycle,
         action=command_to_persist.action,
         selected_route=result.get("final_route"),
+        specialist_label=command_to_persist.specialist_label,
         override_reason=command_to_persist.reason,
     )
     session.add(review)
