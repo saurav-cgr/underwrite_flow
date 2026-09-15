@@ -18,7 +18,10 @@ class QueueItem(BaseModel):
     product_code: str
     status: str
     route: Route | None
+    selected_route: FinalRoute | None = None
+    specialist_label: str | None = None
     specialist: bool
+    awaiting_handoff: bool = False
 
 
 class AuditEventResponse(BaseModel):
@@ -37,4 +40,5 @@ class CompletionResponse(BaseModel):
     handoff_id: UUID
     case_id: UUID
     route: FinalRoute
+    specialist_label: str | None = None
     status: Literal["completed"]

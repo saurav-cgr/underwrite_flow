@@ -107,14 +107,25 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 f"/api/v1/reviews/{case_id}",
                 json={
                     "action": "override",
-                    "selected_route": "standard",
+                    "selected_route": "specialist",
+                    "specialist_label": "Synthetic specialist",
                     "reason": "Synthetic demonstration override",
                     "evidence_acknowledged": True,
                 },
                 headers=headers,
             ).status_code == 200
+            pending_handoff = client.get(
+                "/api/v1/queues",
+                params={"awaiting_handoff": "true"},
+                headers=headers,
+            )
             completed = client.post(f"/api/v1/completion/{case_id}", headers=headers)
             repeated = client.post(f"/api/v1/completion/{case_id}", headers=headers)
+            handoff_queue = client.get(
+                "/api/v1/queues",
+                params={"awaiting_handoff": "true"},
+                headers=headers,
+            )
             queue = client.get(
                 "/api/v1/queues",
                 params={
@@ -139,8 +150,24 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
         assert completed.status_code == 200
         assert repeated.status_code == 200
         assert repeated.json()["handoff_id"] == completed.json()["handoff_id"]
+        assert completed.json()["route"] == "specialist"
+        assert completed.json()["specialist_label"] == "Synthetic specialist"
+        assert pending_handoff.status_code == 200
+        pending = [
+            item
+            for item in pending_handoff.json()
+            if item["case_id"] == str(case_id)
+        ]
+        assert pending[0]["selected_route"] == "specialist"
+        assert pending[0]["specialist_label"] == "Synthetic specialist"
+        assert pending[0]["awaiting_handoff"] is True
+        assert all(
+            item["case_id"] != str(case_id) for item in handoff_queue.json()
+        )
         assert queue.status_code == 200
         assert queue.json()[0]["status"] == "completed"
+        assert queue.json()[0]["selected_route"] == "specialist"
+        assert queue.json()[0]["specialist_label"] == "Synthetic specialist"
         assert audit.status_code == 200
         events = {event["event_type"]: event for event in audit.json()}
         event_types = set(events)
