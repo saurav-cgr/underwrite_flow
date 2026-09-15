@@ -25,7 +25,7 @@ from underwriteflow.cases.schemas import (
     SubmitResponse,
 )
 from underwriteflow.cases.service import CaseService, CaseValidationError
-from underwriteflow.cases.storage import StorageValidationError, UploadStorage
+from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.cases.submission import SubmissionService
 from underwriteflow.providers.factory import build_provider
 from underwriteflow.database import get_session

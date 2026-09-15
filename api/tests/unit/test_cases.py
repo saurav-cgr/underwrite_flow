@@ -14,7 +14,7 @@ from underwriteflow.cases.service import (
     missing_document_codes,
     validate_application,
 )
-from underwriteflow.cases.storage import StorageValidationError, UploadStorage
+from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.persistence.models import Case, Document
 from underwriteflow.persistence.repositories import AuditRepository
 from underwriteflow.products.service import load_configuration

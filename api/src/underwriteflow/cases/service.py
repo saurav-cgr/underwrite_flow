@@ -26,7 +26,7 @@ from underwriteflow.products.schemas import (
     ProductDocument,
 )
 from underwriteflow.cases.schemas import CaseCreate
-from underwriteflow.cases.storage import StorageValidationError, UploadStorage
+from underwriteflow.storage import StorageValidationError, UploadStorage
 
 LOGGER = logging.getLogger(__name__)
 
