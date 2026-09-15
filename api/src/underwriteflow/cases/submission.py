@@ -3,21 +3,20 @@
 from pathlib import Path
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from underwriteflow.cases.evidence_persistence import (
+    clear_previous_evidence,
+    persist_case_evidence,
+)
 from underwriteflow.cases.service import CaseValidationError, missing_document_codes
 from underwriteflow.persistence.models import (
-    AuditEvent,
     Case,
     Document,
-    ExtractedField,
     ProductVersion,
-    Recommendation,
     ReferenceDocument,
-    RiskSignal,
     Submission,
-    Validation,
 )
 from underwriteflow.providers.extraction import (
     ExtractionError,
@@ -31,7 +30,6 @@ from underwriteflow.workflow.product_subgraphs import build_product_subgraph
 from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import build_triage_graph
 
-WORKFLOW_VERSION = "evidence-v1"
 MAX_REFERENCE_CHARS = 50_000
 
 
@@ -199,124 +197,6 @@ class SubmissionService:
             ),
         }
 
-    # Persist evidence, validations, branch failures, and the recommendation.
-    async def persist(
-        self,
-        session: AsyncSession,
-        case: Case,
-        actor_user_id: UUID,
-        evidence_result: dict[str, object],
-        product_result: dict[str, object],
-        triage_values: dict[str, object],
-        extraction_failures: list[dict[str, object]],
-        event_type: str = "case_submitted",
-    ) -> None:
-        conflicting = {
-            str(item["field_name"])
-            for item in evidence_result.get("conflicts", [])
-        }
-        for item in evidence_result.get("reconciled_fields", []):
-            if not item.get("source_locator"):
-                continue
-            session.add(
-                ExtractedField(
-                    case_id=case.id,
-                    document_id=UUID(str(item["document_id"])),
-                    field_name=item["field_name"],
-                    value=item.get("value"),
-                    source_locator=item["source_locator"],
-                    extraction_method=item.get("extraction_method", "provider"),
-                    confidence=item.get("confidence"),
-                    conflict_status=(
-                        "conflict"
-                        if item["field_name"] in conflicting
-                        else "clear"
-                    ),
-                )
-            )
-        for validation in product_result.get("validations", []):
-            session.add(
-                Validation(
-                    case_id=case.id,
-                    rule_code=validation["rule_code"],
-                    status=validation["status"],
-                    details=validation,
-                )
-            )
-        for signal in product_result.get("risk_signals", []):
-            session.add(
-                RiskSignal(
-                    case_id=case.id,
-                    code=signal["code"],
-                    severity=signal.get("severity", "high"),
-                    explanation=signal.get("explanation", ""),
-                    source_type=signal.get("source_type", "deterministic"),
-                )
-            )
-        for failure in [
-            *extraction_failures,
-            *[
-                {
-                    "document_id": result["document_id"],
-                    "filename": result["filename"],
-                    "error_code": result["error_code"],
-                }
-                for result in evidence_result.get("results", [])
-                if result.get("error_code")
-            ],
-        ]:
-            session.add(
-                Validation(
-                    case_id=case.id,
-                    rule_code=f"document:{failure['document_id']}",
-                    status="error",
-                    details=failure,
-                )
-            )
-        recommended = triage_values.get("recommendation", {})
-        summary = {
-            "summary": triage_values.get("summary", {}),
-            "recommendation": recommended,
-            "failures": len(extraction_failures),
-        }
-        existing = await session.scalar(
-            select(Recommendation).where(Recommendation.case_id == case.id)
-        )
-        if existing is None:
-            session.add(
-                Recommendation(
-                    case_id=case.id,
-                    route=recommended.get("route"),
-                    status="pending_human_review",
-                    summary=summary,
-                    workflow_version=WORKFLOW_VERSION,
-                )
-            )
-        else:
-            existing.route = recommended.get("route")
-            existing.status = "pending_human_review"
-            existing.summary = summary
-            existing.workflow_version = WORKFLOW_VERSION
-        case.status = "underwriter_review"
-        session.add(
-            AuditEvent(
-                case_id=case.id,
-                actor_user_id=actor_user_id,
-                event_type=event_type,
-                details={
-                    "recommendation": recommended.get("route"),
-                    "review_cycle": case.review_cycle,
-                },
-            )
-        )
-        await session.commit()
-
-    # Remove the previous cycle's derived evidence before a new run.
-    async def clear_previous_evidence(
-        self, session: AsyncSession, case: Case
-    ) -> None:
-        for model in (ExtractedField, Validation, RiskSignal):
-            await session.execute(delete(model).where(model.case_id == case.id))
     # Start the first workflow cycle for a newly created case.
     async def submit(
         self, session: AsyncSession, case: Case, actor_user_id: UUID
@@ -391,7 +271,7 @@ class SubmissionService:
                 "missing documents: " + ", ".join(missing)
             )
         if clear_evidence:
-            await self.clear_previous_evidence(session, case)
+            await clear_previous_evidence(session, case)
         requested_fields = [field.key for field in configuration.fields]
         document_inputs, extraction_failures = self.extract_documents(documents)
         product_result = await build_product_subgraph(configuration).ainvoke(
@@ -411,7 +291,7 @@ class SubmissionService:
                 case, documents, evidence_result, product_result
             ),
         )
-        await self.persist(
+        await persist_case_evidence(
             session,
             case,
             actor_user_id,
@@ -419,6 +299,7 @@ class SubmissionService:
             product_result,
             triage_values,
             extraction_failures,
+            documents,
             event_type=event_type,
         )
         return {

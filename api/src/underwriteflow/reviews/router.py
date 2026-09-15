@@ -1,18 +1,18 @@
 """Authenticated human-review start and resume endpoints."""
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from langgraph.types import Command
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from underwriteflow.audit.events import build_audit_event
 from underwriteflow.auth.dependencies import require_permission, require_role
 from underwriteflow.auth.schemas import Permission, UserRole
 from underwriteflow.cases.service import missing_document_codes
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
-    AuditEvent,
     Case,
     Document,
     ExtractedField,
@@ -214,6 +214,7 @@ async def resume_review(
                 )
             )
     review = Review(
+        id=uuid4(),
         case_id=case_id,
         reviewer_user_id=UUID(reviewer["sub"]),
         review_cycle=case.review_cycle,
@@ -224,16 +225,20 @@ async def resume_review(
     )
     session.add(review)
     session.add(
-        AuditEvent(
-            case_id=case_id,
-            actor_user_id=UUID(reviewer["sub"]),
-            event_type="underwriter_reviewed",
-            details={
+        build_audit_event(
+            "underwriter_reviewed",
+            {
+                "review_id": review.id,
+                "review_cycle": case.review_cycle,
                 "action": command_to_persist.action,
+                "recommended_route": recommendation.get("route"),
                 "selected_route": result.get("final_route"),
+                "specialist_label": command_to_persist.specialist_label,
                 "status": result["review_status"],
                 "reason": command_to_persist.reason,
             },
+            case_id=case_id,
+            actor_user_id=UUID(reviewer["sub"]),
         )
     )
     case.status = result["review_status"]

@@ -10,8 +10,8 @@ from fastapi import UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from underwriteflow.audit.events import build_audit_event, version_details
 from underwriteflow.persistence.models import (
-    AuditEvent,
     Case,
     Document,
     Product,
@@ -172,11 +172,14 @@ class CaseService:
         )
         self.audit.append(
             session,
-            AuditEvent(
+            build_audit_event(
+                "case_created",
+                {
+                    "product_code": application.product_code,
+                    **version_details(product_version, rulebook),
+                },
                 case_id=case.id,
                 actor_user_id=applicant_id,
-                event_type="case_created",
-                details={"product_code": application.product_code},
             ),
         )
         await session.commit()
@@ -215,6 +218,7 @@ class CaseService:
             raise CaseValidationError("document count limit exceeded")
         stored = await self.storage.save(upload, case.id)
         document = Document(
+            id=uuid4(),
             case_id=case.id,
             document_code=document_code,
             filename=Path(upload.filename or "document").name,
@@ -227,15 +231,16 @@ class CaseService:
         session.add(document)
         self.audit.append(
             session,
-            AuditEvent(
-                case_id=case.id,
-                actor_user_id=actor_user_id,
-                event_type="document_uploaded",
-                details={
+            build_audit_event(
+                "document_uploaded",
+                {
+                    "document_id": document.id,
                     "document_code": document_code,
                     "content_hash": stored.content_hash,
                     "byte_size": stored.byte_size,
                 },
+                case_id=case.id,
+                actor_user_id=actor_user_id,
             ),
         )
         await session.commit()
@@ -266,14 +271,14 @@ class CaseService:
         await session.delete(document)
         self.audit.append(
             session,
-            AuditEvent(
-                case_id=case.id,
-                actor_user_id=actor_user_id,
-                event_type="document_removed",
-                details={
+            build_audit_event(
+                "document_removed",
+                {
                     "document_id": str(document_id),
                     "content_hash": content_hash,
                 },
+                case_id=case.id,
+                actor_user_id=actor_user_id,
             ),
         )
         # Commit first so a failed file removal cannot hide a missing row.
@@ -285,11 +290,14 @@ class CaseService:
             LOGGER.warning("orphaned upload retained: %s", storage_key)
             self.audit.append(
                 session,
-                AuditEvent(
+                build_audit_event(
+                    "document_file_orphaned",
+                    {
+                        "document_id": str(document_id),
+                        "storage_key": storage_key,
+                    },
                     case_id=case.id,
                     actor_user_id=actor_user_id,
-                    event_type="document_file_orphaned",
-                    details={"storage_key": storage_key},
                 ),
             )
             await session.commit()

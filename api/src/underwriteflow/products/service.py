@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import yaml
 from fastapi import UploadFile
@@ -15,8 +15,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from underwriteflow.audit.events import build_audit_event, version_details
 from underwriteflow.persistence.models import (
-    AuditEvent,
     Product,
     ProductVersion,
     ReferenceDocument,
@@ -135,14 +135,13 @@ class ProductService:
         )
         self.audit_repository.append(
             session,
-            AuditEvent(
-                actor_user_id=actor_user_id,
-                event_type="configuration_imported",
-                details={
+            build_audit_event(
+                "configuration_imported",
+                {
                     "product_code": configuration.product_code,
-                    "version": configuration.version,
-                    "content_hash": content_hash,
+                    **version_details(version),
                 },
+                actor_user_id=actor_user_id,
             ),
         )
         await session.commit()
@@ -169,10 +168,10 @@ class ProductService:
         product.status = "active"
         self.audit_repository.append(
             session,
-            AuditEvent(
+            build_audit_event(
+                "configuration_activated",
+                {"product_code": code, **version_details(target)},
                 actor_user_id=actor_user_id,
-                event_type="configuration_activated",
-                details={"product_code": code, "version": version},
             ),
         )
         # The active-version index rejects a second active sibling, so a lost
@@ -202,6 +201,7 @@ class ProductService:
             raise ProductConfigurationError("product version not found")
         stored = await storage.save(upload, f"references/{code}/{version}")
         document = ReferenceDocument(
+            id=uuid4(),
             product_id=product.id,
             version=version,
             filename=Path(upload.filename or "reference").name,
@@ -215,15 +215,14 @@ class ProductService:
         session.add(document)
         self.audit_repository.append(
             session,
-            AuditEvent(
-                actor_user_id=actor_user_id,
-                event_type="reference_document_added",
-                details={
+            build_audit_event(
+                "reference_document_added",
+                {
                     "product_code": code,
-                    "version": version,
-                    "content_hash": stored.content_hash,
-                    "byte_size": stored.byte_size,
+                    "reference_id": document.id,
+                    **version_details(target),
                 },
+                actor_user_id=actor_user_id,
             ),
         )
         await session.commit()
@@ -269,13 +268,15 @@ class ProductService:
         await session.delete(document)
         self.audit_repository.append(
             session,
-            AuditEvent(
-                actor_user_id=actor_user_id,
-                event_type="reference_document_removed",
-                details={
+            build_audit_event(
+                "reference_document_removed",
+                {
                     "product_code": code,
+                    "product_version": document.version,
                     "reference_id": str(reference_id),
+                    "content_hash": document.content_hash,
                 },
+                actor_user_id=actor_user_id,
             ),
         )
         # Commit first so a failed file removal cannot hide a missing row.
@@ -307,10 +308,10 @@ class ProductService:
             product.status = "draft"
         self.audit_repository.append(
             session,
-            AuditEvent(
+            build_audit_event(
+                "configuration_retired",
+                {"product_code": code, **version_details(target)},
                 actor_user_id=actor_user_id,
-                event_type="configuration_retired",
-                details={"product_code": code, "version": version},
             ),
         )
         await session.commit()

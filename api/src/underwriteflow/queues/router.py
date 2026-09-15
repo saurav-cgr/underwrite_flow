@@ -1,12 +1,13 @@
 """Queue views, audit history, and confirmed-case completion."""
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from underwriteflow.audit.events import build_audit_event
 from underwriteflow.auth.dependencies import require_permission, require_role
 from underwriteflow.auth.schemas import Permission, UserRole
 from underwriteflow.database import get_session
@@ -171,6 +172,7 @@ async def complete_case(
             status="completed",
         )
     handoff = Handoff(
+        id=uuid4(),
         case_id=case_id,
         idempotency_key=idempotency_key,
         status="completed",
@@ -184,11 +186,21 @@ async def complete_case(
     session.add(handoff)
     case.status = "completed"
     session.add(
-        AuditEvent(
+        build_audit_event(
+            "case_completed",
+            {
+                "handoff_id": handoff.id,
+                "destination": handoff.destination,
+                "idempotency_key": handoff.idempotency_key,
+                "route": review.selected_route,
+                "specialist_label": review.specialist_label,
+                "review_id": review.id,
+                "review_cycle": review.review_cycle,
+                "reviewed_at": review.reviewed_at,
+                "case_status": case.status,
+            },
             case_id=case_id,
             actor_user_id=UUID(operator["sub"]),
-            event_type="case_completed",
-            details={"route": review.selected_route, "destination": "completed_queue"},
         )
     )
     try:
