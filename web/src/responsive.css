@@ -43,7 +43,7 @@
 .document-layout,
 .review-layout,
 .admin-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 .form-grid {
   grid-template-columns: 1fr;

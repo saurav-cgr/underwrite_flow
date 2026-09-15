@@ -5,9 +5,9 @@ import { Button, EmptyState, Panel } from "./components";
 import type { EvaluationSplit, EvaluationSummary } from "./types";
 
 const SPLITS: { value: string; label: string }[] = [
-  { value: "", label: "All 90 synthetic cases" },
-  { value: "development", label: "Development split (60 cases)" },
-  { value: "holdout", label: "Holdout split (30 cases)" },
+  { value: "", label: "All cases (90)" },
+  { value: "development", label: "Development (60)" },
+  { value: "holdout", label: "Holdout (30)" },
 ];
 
 interface Metric {

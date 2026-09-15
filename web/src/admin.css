@@ -85,6 +85,7 @@
 .eval-controls {
   align-items: end;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -104,6 +105,7 @@
   align-items: center;
   border-bottom: 1px solid var(--border-soft);
   display: flex;
+  flex-wrap: wrap;
   font-size: .82rem;
   gap: 10px;
   justify-content: space-between;
