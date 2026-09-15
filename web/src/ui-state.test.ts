@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   allDocumentCodes,
   homeScreenForRole,
+  isOpenCase,
   requiredDocuments,
   validateFields,
   visibleFields,
@@ -36,6 +37,12 @@ describe("role workspace routing", () => {
     expect(homeScreenForRole("Applicant")).toBe("dashboard");
     expect(homeScreenForRole("Underwriter")).toBe("queue");
     expect(homeScreenForRole("Administrator")).toBe("admin");
+  });
+
+  it("treats only completed cases as closed", () => {
+    expect(isOpenCase("completed")).toBe(false);
+    expect(isOpenCase("needs_information")).toBe(true);
+    expect(isOpenCase("underwriter_review")).toBe(true);
   });
 });
 

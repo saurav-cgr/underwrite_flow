@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { listCatalog } from "./api";
+import { listCases, listCatalog } from "./api";
 import { AdminWorkspace } from "./admin";
 import {
   ApplicantDashboard,
@@ -13,7 +13,7 @@ import { ProductConfiguration } from "./product-configuration";
 import { TrackingScreen } from "./tracking";
 import { AppShell, Button } from "./components";
 import { CaseReview, UnderwriterQueue } from "./staff";
-import { homeScreenForRole } from "./ui-state";
+import { homeScreenForRole, isOpenCase } from "./ui-state";
 import type {
   CaseRecord,
   ProductCatalogItem,
@@ -40,6 +40,22 @@ export function App() {
       .then(setCatalog)
       .catch(() => setMessage("Active products could not be loaded."));
   }, [session]);
+
+  // Restore the latest open case and its product after a reload.
+  useEffect(() => {
+    if (session?.role !== "Applicant" || caseRecord) return;
+    listCases(session.token)
+      .then((cases) => {
+        const latest = cases.find((item) => isOpenCase(item.status));
+        if (!latest) return;
+        setCaseRecord(latest);
+        const match = catalog.find(
+          (item) => item.product_code === latest.product_code,
+        );
+        if (match) setSelectedProduct(match);
+      })
+      .catch(() => setMessage("Existing cases could not be loaded."));
+  }, [catalog, caseRecord, session]);
 
   // Enter a role workspace and choose its first screen.
   function handleLogin(nextSession: Session) {

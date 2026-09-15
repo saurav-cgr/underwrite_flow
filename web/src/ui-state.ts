@@ -12,6 +12,12 @@ export function homeScreenForRole(role: Role): Screen {
   return "admin";
 }
 
+// Report whether a case still needs applicant or underwriter attention.
+export function isOpenCase(status: string): boolean {
+  return status !== "completed";
+}
+
+
 // Return only fields that are currently visible for the application values.
 export function visibleFields(
   fields: ProductField[],

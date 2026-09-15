@@ -192,6 +192,12 @@ export async function removeDocument(
   });
 }
 
+// Load every case owned by the authenticated identity.
+export async function listCases(token: string): Promise<CaseRecord[]> {
+  return request("/cases", token);
+}
+
+
 // Load one case visible to the current role.
 export async function readCase(
   token: string,
