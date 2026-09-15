@@ -25,6 +25,14 @@ class CaseResponse(BaseModel):
     status: str
 
 
+class SubmitResponse(BaseModel):
+    """Submission result with the pending human-review recommendation."""
+
+    id: UUID
+    status: str
+    recommendation: dict[str, Any]
+
+
 class DocumentResponse(BaseModel):
     """Safe uploaded-document metadata response."""
 

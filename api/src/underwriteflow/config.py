@@ -17,6 +17,12 @@ class Settings(BaseSettings):
         "underwriteflow"
     )
     generation_provider: Literal["fake", "gemini", "ollama"] = "gemini"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.1-flash-lite"
+    ollama_base_url: str = "http://ollama:11434"
+    ollama_model: str = "llama3.2"
+    provider_timeout_seconds: float = Field(default=30, gt=0)
+    provider_retry_count: int = Field(default=2, ge=0, le=5)
     session_secret: str = "synthetic-local-session-secret"
     session_ttl_seconds: int = Field(default=900, gt=0, le=86_400)
     upload_root: str = "/data/uploads"

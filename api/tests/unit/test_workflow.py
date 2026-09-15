@@ -58,6 +58,40 @@ def documents(count: int) -> list[dict[str, str]]:
     ]
 
 
+# Verify each review cycle keeps the case identity and a fresh thread.
+def test_thread_config_keeps_case_and_separates_cycles() -> None:
+    first = thread_config("case-9", 0)
+    second = thread_config("case-9", 1)
+
+    assert first["configurable"]["thread_id"].startswith("case-case-9")
+    assert second["configurable"]["thread_id"].startswith("case-case-9")
+    assert (
+        first["configurable"]["thread_id"]
+        != second["configurable"]["thread_id"]
+    )
+
+
+# Verify provider output is limited to the fields the application requested.
+@pytest.mark.asyncio
+async def test_evidence_graph_rejects_unrequested_provider_fields() -> None:
+    provider = RecordingProvider()
+    graph = build_evidence_graph(provider, checkpointer=MemorySaver())
+
+    result = await graph.ainvoke(
+        {
+            "case_id": "case-unrequested",
+            "documents": documents(1),
+            "requested_fields": ["expected_field"],
+            "results": [],
+        },
+        config=thread_config("case-unrequested"),
+    )
+
+    assert result["results"][0]["error_code"] == "unrequested_field"
+    assert result["results"][0]["fields"] == []
+    assert result["reconciled_fields"] == []
+
+
 # Verify all documents complete in stable order with no more than three active branches.
 @pytest.mark.asyncio
 async def test_evidence_graph_batches_documents_and_sorts_results() -> None:
@@ -65,7 +99,12 @@ async def test_evidence_graph_batches_documents_and_sorts_results() -> None:
     graph = build_evidence_graph(provider, checkpointer=MemorySaver())
 
     result = await graph.ainvoke(
-        {"case_id": "case-1", "documents": documents(5), "requested_fields": [], "results": []},
+        {
+            "case_id": "case-1",
+            "documents": documents(5),
+            "requested_fields": ["synthetic_field"],
+            "results": [],
+        },
         config=thread_config("case-1"),
     )
 
@@ -87,7 +126,12 @@ async def test_evidence_graph_isolates_branch_failure() -> None:
     graph = build_evidence_graph(provider)
 
     result = await graph.ainvoke(
-        {"case_id": "case-2", "documents": documents(3), "requested_fields": [], "results": []},
+        {
+            "case_id": "case-2",
+            "documents": documents(3),
+            "requested_fields": ["synthetic_field"],
+            "results": [],
+        },
         config=thread_config("case-2"),
     )
 
@@ -104,7 +148,12 @@ async def test_evidence_graph_retries_only_transient_branch_errors() -> None:
     graph = build_evidence_graph(provider, retry_count=1)
 
     result = await graph.ainvoke(
-        {"case_id": "case-3", "documents": documents(2), "requested_fields": [], "results": []},
+        {
+            "case_id": "case-3",
+            "documents": documents(2),
+            "requested_fields": ["synthetic_field"],
+            "results": [],
+        },
         config=thread_config("case-3"),
     )
 
@@ -129,7 +178,7 @@ async def test_evidence_graph_skips_already_processed_documents() -> None:
         {
             "case_id": "case-4",
             "documents": documents(2),
-            "requested_fields": [],
+            "requested_fields": ["synthetic_field"],
             "results": [existing],
         },
         config=thread_config("case-4"),
@@ -162,7 +211,12 @@ async def test_evidence_graph_reconciles_when_no_documents_need_processing() -> 
     ]
 
     result = await graph.ainvoke(
-        {"case_id": "case-processed", "documents": documents(1), "requested_fields": [], "results": existing},
+        {
+            "case_id": "case-processed",
+            "documents": documents(1),
+            "requested_fields": ["synthetic_field"],
+            "results": existing,
+        },
         config=thread_config("case-processed"),
     )
 
@@ -178,7 +232,12 @@ async def test_evidence_graph_checkpoint_resume_state() -> None:
     config = thread_config("case-5")
 
     await graph.ainvoke(
-        {"case_id": "case-5", "documents": documents(1), "requested_fields": [], "results": []},
+        {
+            "case_id": "case-5",
+            "documents": documents(1),
+            "requested_fields": ["synthetic_field"],
+            "results": [],
+        },
         config=config,
     )
 

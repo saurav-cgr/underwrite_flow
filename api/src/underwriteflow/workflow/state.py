@@ -95,6 +95,14 @@ class TriageState(TypedDict, total=False):
     review_status: str
 
 
-# Return a stable thread configuration for one case workflow run.
-def thread_config(case_id: str) -> dict[str, dict[str, str]]:
-    return {"configurable": {"thread_id": f"case-{case_id}"}}
+# Return a stable thread configuration for one review cycle of a case.
+def thread_config(
+    case_id: str, review_cycle: int = 0
+) -> dict[str, dict[str, str]]:
+    # LangGraph reserves checkpoint_ns for subgraphs, so the review cycle is
+    # carried in the thread id to keep one case's cycles from colliding.
+    return {
+        "configurable": {
+            "thread_id": f"case-{case_id}:cycle-{review_cycle}",
+        }
+    }

@@ -28,13 +28,30 @@ async def extract_document(
         attempts += 1
         try:
             result = await provider.extract(request)
+            requested = set(state["requested_fields"])
+            accepted = [
+                field
+                for field in result.fields
+                if field.field_name in requested
+            ]
+            # Any field the application did not request fails the branch.
+            unrequested = len(accepted) != len(result.fields)
             return {
                 "results": [
                     {
                         "document_id": document["document_id"],
                         "filename": document["filename"],
-                        "fields": [field.model_dump(mode="json") for field in result.fields],
-                        "error_code": None,
+                        "fields": (
+                            []
+                            if unrequested
+                            else [
+                                field.model_dump(mode="json")
+                                for field in accepted
+                            ]
+                        ),
+                        "error_code": (
+                            "unrequested_field" if unrequested else None
+                        ),
                         "attempts": attempts,
                     }
                 ]

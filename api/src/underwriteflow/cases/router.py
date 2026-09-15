@@ -18,9 +18,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.auth.dependencies import authorize_case_access, require_permission
 from underwriteflow.auth.schemas import Permission
-from underwriteflow.cases.schemas import CaseCreate, CaseResponse, DocumentResponse
+from underwriteflow.cases.schemas import (
+    CaseCreate,
+    CaseResponse,
+    DocumentResponse,
+    SubmitResponse,
+)
 from underwriteflow.cases.service import CaseService, CaseValidationError
 from underwriteflow.cases.storage import StorageValidationError, UploadStorage
+from underwriteflow.cases.submission import SubmissionService
+from underwriteflow.providers.factory import build_provider
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import Case, Document, ProductVersion, RulebookVersion
 
@@ -87,6 +94,34 @@ async def read_case(
     session: AsyncSession = Depends(get_session),
 ) -> CaseResponse:
     return await case_response(session, await get_authorized_case(case_id, current, session))
+
+
+# Submit an owned case for evidence processing and human review.
+@router.post("/{case_id}/submit", response_model=SubmitResponse)
+async def submit_case(
+    case_id: UUID,
+    request: Request,
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> SubmitResponse:
+    case = await get_authorized_case(case_id, current, session)
+    settings = request.app.state.settings
+    try:
+        result = await SubmissionService(
+            build_provider(settings),
+            settings.upload_root,
+            settings.database_url,
+            retry_count=settings.provider_retry_count,
+        ).submit(session, case, UUID(current["sub"]))
+    except CaseValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    return SubmitResponse(
+        id=case_id,
+        status=str(result["status"]),
+        recommendation=result["recommendation"],
+    )
 
 
 # Return safe metadata for all documents attached to an authorized case.

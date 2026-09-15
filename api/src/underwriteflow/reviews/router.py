@@ -66,7 +66,7 @@ async def start_review(
     if case is None or submission is None:
         raise HTTPException(status_code=404, detail="Case not found")
     if case.status == "underwriter_review":
-        config = thread_config(str(case_id))
+        config = thread_config(str(case_id), case.review_cycle)
         async with postgres_checkpointer(
             request.app.state.settings.database_url
         ) as checkpointer:
@@ -154,7 +154,7 @@ async def start_review(
         "validations": product_result.get("validations", []),
         "risk_signals": product_result.get("risk_signals", []),
     }
-    config = thread_config(str(case_id))
+    config = thread_config(str(case_id), case.review_cycle)
     async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
         graph = build_triage_graph(checkpointer=checkpointer)
         if (await graph.aget_state(config)).next:
@@ -198,7 +198,7 @@ async def resume_review(
     )
     if existing_review is not None:
         return review_response_for_record(case_id, existing_review, case.status)
-    config = thread_config(str(case_id))
+    config = thread_config(str(case_id), case.review_cycle)
     async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
         graph = build_triage_graph(checkpointer=checkpointer)
         snapshot = await graph.aget_state(config)
