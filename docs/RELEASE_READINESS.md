@@ -34,10 +34,10 @@ Resolved or reduced since this report:
   the integration fixture builders through an explicit path insertion.
 - **Limitation 11** — partly closed. Every line added during remediation is
   within the 80-column limit, and `web/src` has none. The pre-existing debt is
-  larger than this report states: 138 lines across `api/src`, of which 12 are
+  larger than this report states: 137 lines across `api/src`, of which 12 are
   the two files named in the list below.
 
-Defects found by the browser journeys and closed:
+Defects found during remediation and closed:
 
 - **The applicant readiness meter counted files, not satisfied requirements.**
   A replacement upload for a code that was already received made the screen
@@ -48,20 +48,19 @@ Defects found by the browser journeys and closed:
   rendered "needs information · needs information", because the banner joined
   the status with a route that was the same string. The route is now omitted
   when it matches the status, so `confirmed · specialist` is unchanged.
+- **Two intake paths assumed a readable configuration**, previously listed
+  below as limitation 15. `create_case` and `add_document` validated the
+  stored configuration without catching `ValidationError`, so a corrupted
+  product version escaped as an unhandled error. Both now read it through one
+  guarded helper and return the sanitized 422 the rest of intake uses.
+- **The review-start fallback dropped `factors`**, previously listed below as
+  limitation 14. A case whose persisted summary was empty served a
+  recommendation object without the `factors` key that `case-review.tsx`
+  reads. The served shape is now identical on every path.
 
 New limitations recorded since this report, ordered with the list below:
 
-14. **A review-start fallback drops `factors`.** `reviews/router.py` serves
-    `summary.get("recommendation", {"route": recommendation.route})`, so a case
-    whose persisted summary is missing returns a recommendation object without
-    the `factors` key that `case-review.tsx` reads. The contract suite pins the
-    normal path only.
-15. **Two intake paths assume a readable configuration.** `cases/service.py`
-    calls `ProductConfiguration.model_validate` in `create_case` and
-    `add_document` without catching `ValidationError`, so a corrupted pinned
-    version raises an unhandled error instead of the 409 or review hand-off the
-    review endpoints now produce.
-16. **`web/src/product-configuration.tsx` is at 396 of the 400-line cap.** The
+14. **`web/src/product-configuration.tsx` is at 396 of the 400-line cap.** The
     next change to that screen must split it, along the validate and import
     panel boundary.
 

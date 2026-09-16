@@ -7,6 +7,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +38,20 @@ MUTABLE_DOCUMENT_STATUSES = frozenset({"new", "needs_information"})
 
 class CaseValidationError(ValueError):
     """Raised when intake data does not satisfy the pinned product."""
+
+
+# Read one stored product configuration or report it as unavailable.
+def read_stored_configuration(
+    product_version: ProductVersion,
+) -> ProductConfiguration:
+    try:
+        return ProductConfiguration.model_validate(
+            product_version.configuration
+        )
+    except ValidationError:
+        # A stored configuration that no longer validates cannot be applied to
+        # intake, so the caller is told rather than the request failing open.
+        raise CaseValidationError("case configuration is unavailable") from None
 
 
 # Decide whether one configured document is required for this application.
@@ -147,7 +162,7 @@ class CaseService:
         )
         if product_version is None:
             raise CaseValidationError("active product configuration not found")
-        configuration = ProductConfiguration.model_validate(product_version.configuration)
+        configuration = read_stored_configuration(product_version)
         validate_application(application, configuration)
         rulebook = await session.scalar(
             select(RulebookVersion).where(
@@ -213,9 +228,7 @@ class CaseService:
         )
         if product_version is None:
             raise CaseValidationError("case configuration is unavailable")
-        configuration = ProductConfiguration.model_validate(
-            product_version.configuration
-        )
+        configuration = read_stored_configuration(product_version)
         requirement = next(
             (
                 item

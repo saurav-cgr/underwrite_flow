@@ -48,6 +48,17 @@ def login(client: TestClient, account: tuple[str, str]) -> dict[str, str]:
     return {"Authorization": f"Bearer {response.json()['token']}"}
 
 
+# Replace one case's persisted recommendation summary with an empty object.
+def clear_recommendation_summary(case_id: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE recommendations SET summary = '{}'::jsonb "
+                "WHERE case_id = %s",
+                (case_id,),
+            )
+
+
 # Read the current status of the built-in synthetic motor product.
 def motor_status() -> str:
     with psycopg.connect(DATABASE_URL) as connection:

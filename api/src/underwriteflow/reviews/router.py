@@ -163,7 +163,10 @@ async def start_review(
         case_id=case_id,
         status="awaiting_human_review",
         recommendation=summary.get(
-            "recommendation", {"route": recommendation.route}
+            "recommendation",
+            # A recommendation row can outlive the summary that produced it,
+            # so the served shape stays the same on every path.
+            {"route": recommendation.route, "factors": []},
         ),
         summary=summary.get("summary", {}),
         evidence=evidence,

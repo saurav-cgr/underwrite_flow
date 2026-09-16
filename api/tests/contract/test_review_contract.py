@@ -10,6 +10,7 @@ from support import (
     APPLICANT,
     RECOMMENDATION_KEYS,
     UNDERWRITER,
+    clear_recommendation_summary,
     conflicting_motor_uploads,
     create_motor_case,
     login,
@@ -142,6 +143,35 @@ def test_failed_branch_response_keys_are_stable() -> None:
                 assert set(failure) == FAILURE_KEYS, failure
                 assert set(failure["details"]) == FAILURE_DETAIL_KEYS, failure
                 assert failure["rule_code"].startswith("document:")
+    finally:
+        if case_id:
+            remove_case(case_id)
+        set_motor_status(prior)
+
+
+# Pin the recommendation keys served when the persisted summary is empty.
+def test_review_start_keeps_factors_when_summary_is_missing() -> None:
+    prior = motor_status()
+    set_motor_status("active")
+    case_id = ""
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(client, APPLICANT)
+            underwriter = login(client, UNDERWRITER)
+            created = create_motor_case(client, applicant)
+            case_id = str(created["id"])
+            upload_motor_documents(client, applicant, case_id)
+            submit_motor_case(client, applicant, case_id)
+
+            # A recommendation row can outlive the summary that produced it.
+            clear_recommendation_summary(case_id)
+
+            body = start_review(client, underwriter, case_id)
+            recommendation = body["recommendation"]
+            assert set(recommendation) == RECOMMENDATION_KEYS, recommendation
+            assert recommendation["route"] == "expedited"
+            assert recommendation["factors"] == []
     finally:
         if case_id:
             remove_case(case_id)

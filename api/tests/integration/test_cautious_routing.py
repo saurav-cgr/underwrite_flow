@@ -252,3 +252,92 @@ def test_failed_branch_routes_to_specialist_review() -> None:
         assert read_case(case_id) == ("underwriter_review", "specialist")
     finally:
         set_motor_status("draft")
+
+
+# Verify intake against an unreadable active configuration is refused cleanly.
+def test_unreadable_active_configuration_refuses_intake() -> None:
+    set_motor_status("active")
+    original = None
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(
+                client,
+                "applicant@synthetic.test",
+                "underwriteflow-demo-applicant",
+            )
+            original = break_motor_configuration()
+
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "payload": MOTOR_PAYLOAD,
+                    "document_codes": DOCUMENT_CODES,
+                },
+                headers=applicant,
+            )
+
+            assert created.status_code == 422, created.text
+    finally:
+        if original is not None:
+            write_motor_configuration(original)
+        set_motor_status("draft")
+
+
+# Verify an upload against an unreadable pinned configuration is refused
+# before anything reaches the upload volume.
+def test_unreadable_pinned_configuration_refuses_upload() -> None:
+    set_motor_status("active")
+    original = None
+    case_id = ""
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(
+                client,
+                "applicant@synthetic.test",
+                "underwriteflow-demo-applicant",
+            )
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "payload": MOTOR_PAYLOAD,
+                    "document_codes": DOCUMENT_CODES,
+                },
+                headers=applicant,
+            )
+            assert created.status_code == 200, created.text
+            case_id = created.json()["id"]
+
+            original = break_motor_configuration()
+
+            uploaded = client.post(
+                f"/api/v1/cases/{case_id}/documents",
+                files={
+                    "document": (
+                        "synthetic.pdf",
+                        text_pdf(MOTOR_EVIDENCE_LINES),
+                        "application/pdf",
+                    )
+                },
+                data={"document_code": "vehicle_record"},
+                headers=applicant,
+            )
+
+            assert uploaded.status_code == 422, uploaded.text
+
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT count(*) FROM documents WHERE case_id = %s",
+                    (case_id,),
+                )
+                assert cursor.fetchone()[0] == 0
+    finally:
+        if original is not None:
+            write_motor_configuration(original)
+        set_motor_status("draft")
