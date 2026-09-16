@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { ApiError, completeCase, startReview, submitReview } from "./api";
 import { Button, PageHeading, Panel } from "./components";
+import { EvidencePanel } from "./evidence-panel";
 import { Icon } from "./icons";
 import { reviewDecisionBody } from "./ui-state";
 import type {
@@ -49,7 +50,7 @@ export function CaseReview({
   const [message, setMessage] = useState("");
   const [handoffFailed, setHandoffFailed] = useState(false);
   const [working, setWorking] = useState(false);
-  const canReview = item.status === "underwriter_review";
+  const canReview = !result && item.status === "underwriter_review";
   const locked = working || !canReview;
 
   // Retry the queue handoff for a decision that was already recorded.
@@ -154,7 +155,7 @@ export function CaseReview({
   }
 
   const recommendation: Recommendation | undefined = start?.recommendation;
-  const reasons = recommendation?.reasons ?? [];
+  const factors = recommendation?.factors ?? [];
   const route =
     recommendation?.route ?? item.route ?? "unavailable";
   const decided = Boolean(result);
@@ -212,7 +213,7 @@ export function CaseReview({
               <div>
                 <h2>{route}</h2>
                 <p>
-                  {reasons.length > 0
+                  {factors.length > 0
                     ? "Deterministic rules and extracted evidence produced "
                       + "this route."
                     : canReview
@@ -225,13 +226,13 @@ export function CaseReview({
                 <span className="specialist-tag">Specialist</span>
               ) : null}
             </div>
-            {reasons.length > 0 ? (
+            {factors.length > 0 ? (
               <div className="reason-box">
                 <Icon name="alert" />
                 <div>
                   <b>Why this route</b>
                   <ul>
-                    {reasons.map((entry) => (
+                    {factors.map((entry) => (
                       <li key={entry}>{entry}</li>
                     ))}
                   </ul>
@@ -243,6 +244,7 @@ export function CaseReview({
               Triage only. An underwriter confirms every final route.
             </p>
           </section>
+          {start ? <EvidencePanel pack={start} /> : null}
           <Panel title="Evidence acknowledgement">
             <label className="check-row">
               <input

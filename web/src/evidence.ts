@@ -1,0 +1,103 @@
+// Pure helpers that turn one review evidence pack into reviewer-facing rows.
+
+export interface DocumentRow {
+  documentId: string;
+  filename: string;
+  source: string;
+}
+
+export interface FieldRow {
+  documentId: string;
+  field: string;
+  value: string;
+  source: string;
+}
+
+export interface RiskSignalRow {
+  code: string;
+  severity: string;
+  explanation: string;
+}
+
+// Render one evidence value as short readable text.
+export function displayValue(value: unknown): string {
+  if (value === null || value === undefined) return "not provided";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return "structured value";
+}
+
+// Read the machine reason recorded anywhere inside one failure payload.
+export function failureReason(payload: unknown, depth = 0): string {
+  if (depth > 3 || typeof payload !== "object" || payload === null) {
+    return "recorded failure";
+  }
+  const record = payload as Record<string, unknown>;
+  for (const key of ["reason", "error_code"]) {
+    if (typeof record[key] === "string") return record[key] as string;
+  }
+  if ("details" in record) return failureReason(record.details, depth + 1);
+  return "recorded failure";
+}
+
+// Read the stored locator of one evidence entry.
+function locatorOf(item: Record<string, unknown>): string {
+  return typeof item.source_locator === "string"
+    ? item.source_locator
+    : "no locator recorded";
+}
+
+// List the submitted documents named in the review evidence pack.
+export function evidenceDocuments(
+  evidence: Record<string, unknown>[],
+): DocumentRow[] {
+  return evidence
+    .filter(
+      (item) =>
+        item.source_type === "submitted_document"
+        && typeof item.filename === "string",
+    )
+    .map((item) => ({
+      documentId: String(item.document_id ?? ""),
+      filename: item.filename as string,
+      source: locatorOf(item),
+    }));
+}
+
+// List the extracted fields with their value and provenance.
+export function evidenceFields(
+  evidence: Record<string, unknown>[],
+): FieldRow[] {
+  return evidence
+    .filter(
+      (item) =>
+        item.source_type === "extracted_field"
+        && typeof item.field_name === "string",
+    )
+    .map((item) => ({
+      documentId: String(item.document_id ?? ""),
+      field: item.field_name as string,
+      value: displayValue(item.value),
+      source: locatorOf(item),
+    }));
+}
+
+// Read configured risk signals from the assembled case summary.
+export function riskSignals(summary: unknown): RiskSignalRow[] {
+  if (typeof summary !== "object" || summary === null) return [];
+  const value = (summary as Record<string, unknown>).risk_signals;
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        typeof item === "object" && item !== null,
+    )
+    .map((item) => ({
+      code: typeof item.code === "string" ? item.code : "unnamed signal",
+      severity: typeof item.severity === "string" ? item.severity : "high",
+      explanation:
+        typeof item.explanation === "string" ? item.explanation : "",
+    }));
+}

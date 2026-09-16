@@ -139,7 +139,7 @@ export interface EvaluationSummary {
 
 export interface Recommendation {
   route: string;
-  reasons?: string[];
+  factors?: string[];
   summary?: Record<string, unknown>;
 }
 
