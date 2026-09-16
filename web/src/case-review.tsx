@@ -50,7 +50,8 @@ export function CaseReview({
   const [message, setMessage] = useState("");
   const [handoffFailed, setHandoffFailed] = useState(false);
   const [working, setWorking] = useState(false);
-  const canReview = !result && item.status === "underwriter_review";
+  const queueReviewable = item.status === "underwriter_review";
+  const canReview = queueReviewable && !result;
   const locked = working || !canReview;
 
   // Retry the queue handoff for a decision that was already recorded.
@@ -72,7 +73,7 @@ export function CaseReview({
   }
 
   useEffect(() => {
-    if (!canReview) {
+    if (!queueReviewable) {
       setMessage("This case is no longer awaiting underwriter review.");
       return;
     }
@@ -98,7 +99,7 @@ export function CaseReview({
             : "The review checkpoint could not be opened.",
         ),
       );
-  }, [canReview, item.case_id, token]);
+  }, [queueReviewable, item.case_id, token]);
 
   // Confirm or override a recommendation and complete final routes.
   async function handleDecision(

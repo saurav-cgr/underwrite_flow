@@ -12,7 +12,7 @@ vi.mock("./api", () => ({
   submitReview: vi.fn(),
 }));
 
-import { startReview, submitReview } from "./api";
+import { completeCase, startReview, submitReview } from "./api";
 import { CaseReview } from "./case-review";
 import "./test-setup";
 import type { QueueItem, ReviewStart } from "./types";
@@ -218,5 +218,40 @@ describe("decision summary", () => {
     expect(recorded.textContent?.replace(/\s+/g, " ").trim()).toBe(
       "Decision recorded. needs information",
     );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(startReview).toHaveBeenCalledTimes(1);
   });
+
+  it(
+    "keeps a failed handoff visible and retryable without a stale alert",
+    async () => {
+      vi.mocked(submitReview).mockResolvedValue({
+        case_id: ITEM.case_id,
+        action: "confirm",
+        selected_route: "specialist",
+        status: "confirmed",
+      });
+      vi.mocked(completeCase).mockRejectedValueOnce(new Error("offline"));
+      renderReview();
+      const user = userEvent.setup();
+
+      await user.click(
+        await screen.findByRole("checkbox", {
+          name: /reviewed the submitted evidence/i,
+        }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Confirm recommendation" }),
+      );
+
+      expect(
+        await screen.findByText(/queue handoff did not complete/i),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Retry handoff" }),
+      ).toBeTruthy();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(startReview).toHaveBeenCalledTimes(1);
+    },
+  );
 });
