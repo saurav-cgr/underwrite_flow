@@ -14,15 +14,21 @@ from underwriteflow.app import create_app
 from underwriteflow.config import Settings
 
 
-DATABASE_URL = "postgresql://underwriteflow:synthetic-local-password@db:5433/underwriteflow"
+DATABASE_URL = (
+    "postgresql://underwriteflow:synthetic-local-password@"
+    "db:5433/underwriteflow"
+)
 
 
-# Verify an underwriter resumes a checkpoint and persists the governed review outcome.
+# Verify an underwriter resumes and persists the governed review outcome.
 def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
     case_id = uuid4()
     with psycopg.connect(DATABASE_URL) as connection:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM users WHERE role = %s LIMIT 1", ("Applicant",))
+            cursor.execute(
+                "SELECT id FROM users WHERE role = %s LIMIT 1",
+                ("Applicant",),
+            )
             applicant_id = cursor.fetchone()[0]
             cursor.execute(
                 """
@@ -40,7 +46,8 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
             cursor.execute(
                 """
                 INSERT INTO cases (
-                    id, applicant_user_id, product_version_id, rulebook_version_id,
+                    id, applicant_user_id, product_version_id,
+                    rulebook_version_id,
                     status, workflow_thread_id, idempotency_key
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
@@ -115,7 +122,10 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
                 },
             )
             headers = {"Authorization": f"Bearer {login.json()['token']}"}
-            start = client.post(f"/api/v1/reviews/{case_id}/start", headers=headers)
+            start = client.post(
+                f"/api/v1/reviews/{case_id}/start",
+                headers=headers,
+            )
             resumed_start = client.post(
                 f"/api/v1/reviews/{case_id}/start",
                 headers=headers,
@@ -130,14 +140,21 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
             admin_response = client.post(
                 f"/api/v1/reviews/{case_id}",
                 json={"action": "confirm", "evidence_acknowledged": True},
-                headers={"Authorization": f"Bearer {admin_login.json()['token']}"},
+                headers={
+                    "Authorization": (
+                        f"Bearer {admin_login.json()['token']}"
+                    )
+                },
             )
             response = client.post(
                 f"/api/v1/reviews/{case_id}",
                 json={"action": "confirm", "evidence_acknowledged": True},
                 headers=headers,
             )
-            restarted = client.post(f"/api/v1/reviews/{case_id}/start", headers=headers)
+            restarted = client.post(
+                f"/api/v1/reviews/{case_id}/start",
+                headers=headers,
+            )
 
         assert login.status_code == 200
         assert start.status_code == 200, start.text
@@ -145,7 +162,11 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
         assert pack["recommendation"]["route"] == "expedited"
         assert pack["missing_information"] == []
         assert pack["specialist_options"]
-        assert any(item["source_locator"] for item in pack["evidence"])
+        assert any(
+            item.get("source_locator")
+            for item in pack["evidence"]
+            if item["source_type"] == "extracted_field"
+        )
         assert resumed_start.status_code == 200
         assert resumed_start.json() == pack
         assert admin_login.status_code == 200

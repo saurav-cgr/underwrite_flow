@@ -81,7 +81,9 @@ def test_application_validation_checks_product_requirements() -> None:
 
     validate_application(application, MOTOR_CONFIGURATION)
 
-    missing = application.model_copy(update={"document_codes": ["identity_record"]})
+    missing = application.model_copy(
+        update={"document_codes": ["identity_record"]}
+    )
     with pytest.raises(CaseValidationError):
         validate_application(missing, MOTOR_CONFIGURATION)
 
@@ -169,6 +171,20 @@ async def test_upload_storage_computes_page_count(tmp_path: Path) -> None:
 
     assert stored.page_count == 3
     assert stored.content_type == "application/pdf"
+
+
+# Verify stored content is resolved only from beneath the upload root.
+def test_upload_storage_resolves_safe_content_paths(tmp_path: Path) -> None:
+    stored = tmp_path / "case-123" / "synthetic.pdf"
+    stored.parent.mkdir()
+    stored.write_bytes(synthetic_pdf())
+    storage = UploadStorage(tmp_path)
+
+    assert storage.read_path("case-123/synthetic.pdf") == stored.resolve()
+    with pytest.raises(StorageValidationError):
+        storage.read_path("../outside.pdf")
+    with pytest.raises(StorageValidationError):
+        storage.read_path("case-123/missing.pdf")
 
 
 # Verify a configured document code accepts only its advertised content types

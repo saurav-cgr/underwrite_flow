@@ -178,6 +178,23 @@ def test_unreadable_pinned_configuration_routes_to_manual_review() -> None:
             assert pack["specialist_options"] == [
                 FALLBACK_SPECIALIST_LABEL
             ]
+            submitted = next(
+                fact
+                for fact in pack["submitted_facts"]
+                if fact["field_name"] == "vehicle_age"
+            )
+            assert submitted == {
+                "field_name": "vehicle_age",
+                "field_label": "Vehicle age",
+                "field_type": "unknown",
+                "value": 2,
+            }
+            document = next(
+                item
+                for item in pack["evidence"]
+                if item["source_type"] == "submitted_document"
+            )
+            assert document["document_title"] == document["filename"]
             assert pack["missing_information"] == []
             assert pack["extraction_failures"] == [
                 {

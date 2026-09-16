@@ -70,6 +70,14 @@ class UploadStorage:
     def __init__(self, root: Path) -> None:
         self.root = root
 
+    # Resolve one generated key without permitting traversal or symlink escape.
+    def _resolve(self, storage_key: str) -> Path:
+        root = self.root.resolve()
+        destination = (root / storage_key).resolve()
+        if root not in destination.parents:
+            raise StorageValidationError("invalid document storage key")
+        return destination
+
     # Validate and write one upload under a generated case-scoped key.
     async def save(
         self,
@@ -114,9 +122,13 @@ class UploadStorage:
             page_count=page_count,
         )
 
+    # Return one existing stored document path after containment validation.
+    def read_path(self, storage_key: str) -> Path:
+        destination = self._resolve(storage_key)
+        if not destination.is_file():
+            raise StorageValidationError("document content is unavailable")
+        return destination
+
     # Remove one generated upload key without permitting path traversal.
     def delete(self, storage_key: str) -> None:
-        destination = (self.root / storage_key).resolve()
-        if self.root.resolve() not in destination.parents:
-            raise StorageValidationError("invalid document storage key")
-        destination.unlink(missing_ok=True)
+        self._resolve(storage_key).unlink(missing_ok=True)

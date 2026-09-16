@@ -49,7 +49,12 @@ class ReviewResponse(BaseModel):
     case_id: UUID
     action: ReviewAction
     selected_route: FinalRoute | None
-    status: Literal["confirmed", "overridden", "needs_information", "manual_review"]
+    status: Literal[
+        "confirmed",
+        "overridden",
+        "needs_information",
+        "manual_review",
+    ]
 
 
 class ReviewStartResponse(BaseModel):
@@ -59,6 +64,7 @@ class ReviewStartResponse(BaseModel):
     status: Literal["awaiting_human_review"]
     recommendation: dict[str, object]
     summary: dict[str, object]
+    submitted_facts: list[dict[str, object]]
     evidence: list[dict[str, object]]
     conflicts: list[dict[str, object]]
     missing_information: list[str]

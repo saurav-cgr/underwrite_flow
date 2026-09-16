@@ -33,6 +33,7 @@ REVIEW_START_KEYS = {
     "status",
     "recommendation",
     "summary",
+    "submitted_facts",
     "evidence",
     "conflicts",
     "missing_information",
@@ -50,17 +51,32 @@ SUMMARY_KEYS = {
 
 DOCUMENT_EVIDENCE_KEYS = {
     "document_id",
+    "document_code",
+    "document_title",
     "filename",
-    "source_locator",
+    "content_type",
+    "page_count",
     "source_type",
 }
 
 FIELD_EVIDENCE_KEYS = {
     "document_id",
     "field_name",
+    "field_label",
+    "field_type",
     "value",
     "source_locator",
+    "extraction_method",
+    "confidence",
+    "conflict_status",
     "source_type",
+}
+
+SUBMITTED_FACT_KEYS = {
+    "field_name",
+    "field_label",
+    "field_type",
+    "value",
 }
 
 CONFLICT_KEYS = {
@@ -100,6 +116,30 @@ def test_review_start_response_keys_are_stable() -> None:
             recommendation = body["recommendation"]
             assert set(recommendation) == RECOMMENDATION_KEYS, recommendation
             assert set(body["summary"]) == SUMMARY_KEYS, body["summary"]
+            assert body["submitted_facts"] == [
+                {
+                    "field_name": "vehicle_age",
+                    "field_label": "Vehicle age",
+                    "field_type": "integer",
+                    "value": 2,
+                },
+                {
+                    "field_name": "vehicle_use",
+                    "field_label": "Vehicle use",
+                    "field_type": "enum",
+                    "value": "personal",
+                },
+                {
+                    "field_name": "prior_claims",
+                    "field_label": "Prior claims",
+                    "field_type": "integer",
+                    "value": 0,
+                },
+            ]
+            assert all(
+                set(fact) == SUBMITTED_FACT_KEYS
+                for fact in body["submitted_facts"]
+            )
 
             assert body["evidence"], "a submitted case carries evidence"
             kinds = {item["source_type"] for item in body["evidence"]}
@@ -110,8 +150,14 @@ def test_review_start_response_keys_are_stable() -> None:
             for item in body["evidence"]:
                 if item["source_type"] == "submitted_document":
                     assert set(item) == DOCUMENT_EVIDENCE_KEYS, item
+                    assert item["document_title"].startswith("Synthetic ")
+                    assert str(case_id) not in item.values()
                 else:
                     assert set(item) == FIELD_EVIDENCE_KEYS, item
+                    assert item["field_label"]
+                    assert item["field_type"] in {"integer", "enum"}
+                    assert item["extraction_method"] == "fake"
+                    assert item["conflict_status"] == "clear"
 
             assert body["conflicts"] == []
             assert body["missing_information"] == []

@@ -1,8 +1,10 @@
 """Authenticated human-review start and resume endpoints."""
 
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import FileResponse
 from langgraph.types import Command
 from pydantic import ValidationError
 from sqlalchemy import select
@@ -11,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from underwriteflow.audit.events import build_audit_event
 from underwriteflow.auth.dependencies import require_permission, require_role
 from underwriteflow.auth.schemas import Permission, UserRole
-from underwriteflow.cases.service import missing_document_codes
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
     Case,
@@ -24,7 +25,16 @@ from underwriteflow.persistence.models import (
     Validation,
 )
 from underwriteflow.products.schemas import ProductConfiguration
-from underwriteflow.reviews.schemas import ReviewCommand, ReviewResponse, ReviewStartResponse
+from underwriteflow.reviews.evidence import (
+    FALLBACK_SPECIALIST_LABEL,
+    build_review_start_response,
+)
+from underwriteflow.reviews.schemas import (
+    ReviewCommand,
+    ReviewResponse,
+    ReviewStartResponse,
+)
+from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import (
@@ -33,14 +43,19 @@ from underwriteflow.workflow.triage import (
 )
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
-FALLBACK_SPECIALIST_LABEL = "Manual configuration review"
 
 
 # Reconstruct the public response from an idempotent persisted review record.
 def review_response_for_record(
     case_id: UUID, review: Review, status: str | None = None
 ) -> ReviewResponse:
-    if status in {"confirmed", "overridden", "needs_information", "manual_review"}:
+    completed_statuses = {
+        "confirmed",
+        "overridden",
+        "needs_information",
+        "manual_review",
+    }
+    if status in completed_statuses:
         review_status = status
     elif review.action == "request_information":
         review_status = "needs_information"
@@ -117,7 +132,9 @@ def recover_review_command(
 @router.post("/{case_id}/start", response_model=ReviewStartResponse)
 async def start_review(
     case_id: UUID,
-    operator: dict[str, str] = Depends(require_permission(Permission.REVIEW_WRITE)),
+    operator: dict[str, str] = Depends(
+        require_permission(Permission.REVIEW_WRITE)
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewStartResponse:
     case = await session.scalar(select(Case).where(Case.id == case_id))
@@ -170,73 +187,59 @@ async def start_review(
             )
         )
     )
-    summary = dict(recommendation.summary or {})
-    application = submission.payload.get("application", {})
-    evidence = [
-        {
-            "document_id": str(document.id),
-            "filename": document.filename,
-            "source_locator": document.storage_key,
-            "source_type": "submitted_document",
-        }
-        for document in documents
-    ]
-    evidence.extend(
-        {
-            "document_id": str(field.document_id) if field.document_id else None,
-            "field_name": field.field_name,
-            "value": field.value,
-            "source_locator": field.source_locator,
-            "source_type": "extracted_field",
-        }
-        for field in extracted_fields
+    stored_application = submission.payload.get("application", {})
+    application = (
+        stored_application if isinstance(stored_application, dict) else {}
     )
-    return ReviewStartResponse(
-        case_id=case_id,
-        status="awaiting_human_review",
-        recommendation=summary.get(
-            "recommendation",
-            # A recommendation row can outlive the summary that produced it,
-            # so the served shape stays the same on every path.
-            {"route": recommendation.route, "factors": []},
-        ),
-        summary=summary.get("summary", {}),
-        evidence=evidence,
-        conflicts=[
-            {
-                "field_name": field.field_name,
-                "value": field.value,
-                "document_id": (
-                    str(field.document_id) if field.document_id else None
-                ),
-                "source_locator": field.source_locator,
-                "conflict_status": field.conflict_status,
-            }
-            for field in extracted_fields
-            if field.conflict_status != "clear"
-        ],
-        missing_information=(
-            []
-            if configuration is None
-            else missing_document_codes(
-                configuration,
-                [
-                    document.document_code
-                    for document in documents
-                    if document.document_code
-                ],
-                application,
-            )
-        ),
-        extraction_failures=[
-            {"rule_code": failure.rule_code, "details": failure.details}
-            for failure in failures
-        ],
-        specialist_options=(
-            [FALLBACK_SPECIALIST_LABEL]
-            if configuration is None
-            else list(configuration.specialist_labels)
-        ),
+    return build_review_start_response(
+        case_id,
+        recommendation,
+        application,
+        documents,
+        extracted_fields,
+        failures,
+        configuration,
+    )
+
+
+# Serve one case-scoped upload only to an authenticated underwriter.
+@router.get("/{case_id}/documents/{document_id}")
+async def read_review_document(
+    case_id: UUID,
+    document_id: UUID,
+    request: Request,
+    reviewer: dict[str, str] = Depends(
+        require_role(UserRole.UNDERWRITER.value)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> FileResponse:
+    del reviewer
+    document = await session.scalar(
+        select(Document).where(
+            Document.id == document_id,
+            Document.case_id == case_id,
+        )
+    )
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    try:
+        path = UploadStorage(
+            Path(request.app.state.settings.upload_root)
+        ).read_path(document.storage_key)
+    except (OSError, StorageValidationError):
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found",
+        ) from None
+    return FileResponse(
+        path,
+        media_type=document.content_type,
+        filename=document.filename,
+        content_disposition_type="inline",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 
@@ -246,7 +249,9 @@ async def resume_review(
     case_id: UUID,
     command: ReviewCommand,
     request: Request,
-    reviewer: dict[str, str] = Depends(require_role(UserRole.UNDERWRITER.value)),
+    reviewer: dict[str, str] = Depends(
+        require_role(UserRole.UNDERWRITER.value)
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewResponse:
     # Lock the case row so a second decision waits instead of resuming the
@@ -279,11 +284,13 @@ async def resume_review(
             product_version.configuration
         )
     except ValidationError:
-        # Without a readable configuration the label vocabulary is unknown, so
-        # only the presence of a label can be enforced.
+        # Without a readable configuration the label vocabulary is unknown,
+        # so only the presence of a label can be enforced.
         configuration = None
     config = thread_config(str(case_id), case.review_cycle)
-    async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
+    async with postgres_checkpointer(
+        request.app.state.settings.database_url
+    ) as checkpointer:
         graph = build_triage_graph(checkpointer=checkpointer)
         snapshot = await graph.aget_state(config)
         recommendation = snapshot.values.get("recommendation", {})
@@ -301,7 +308,8 @@ async def resume_review(
             )
             command_to_persist = command
             result = await graph.ainvoke(
-                Command(resume=command.model_dump(exclude_none=True)), config=config
+                Command(resume=command.model_dump(exclude_none=True)),
+                config=config,
             )
         elif "review_command" in snapshot.values:
             command_to_persist = recover_review_command(
@@ -317,7 +325,10 @@ async def resume_review(
                 "review_status": snapshot.values.get("review_status"),
             }
         else:
-            raise HTTPException(status_code=409, detail="Case is not awaiting human review")
+            raise HTTPException(
+                status_code=409,
+                detail="Case is not awaiting human review",
+            )
         if await session.scalar(
             select(Recommendation).where(Recommendation.case_id == case_id)
         ) is None:
