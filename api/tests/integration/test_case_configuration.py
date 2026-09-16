@@ -242,7 +242,9 @@ def test_case_configuration_survives_an_inactive_catalogue() -> None:
                 "applicant@synthetic.test",
                 "underwriteflow-demo-applicant",
             )
-            catalogue = client.get("/api/v1/products/catalog", headers=applicant)
+            catalogue = client.get(
+                "/api/v1/products/catalog", headers=applicant
+            )
             assert catalogue.status_code == 200, catalogue.text
             assert catalogue.json() == []
 

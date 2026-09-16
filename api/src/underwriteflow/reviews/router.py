@@ -103,7 +103,9 @@ async def start_review(
         select(Recommendation).where(Recommendation.case_id == case_id)
     )
     product_version = await session.scalar(
-        select(ProductVersion).where(ProductVersion.id == case.product_version_id)
+        select(ProductVersion).where(
+            ProductVersion.id == case.product_version_id
+        )
     )
     if recommendation is None or product_version is None:
         raise HTTPException(
@@ -199,7 +201,7 @@ async def start_review(
     )
 
 
-# Resume one pending checkpoint per case and cycle, and persist the decision once.
+# Resume one pending checkpoint per case and cycle, and persist it once.
 @router.post("/{case_id}", response_model=ReviewResponse)
 async def resume_review(
     case_id: UUID,
@@ -224,7 +226,9 @@ async def resume_review(
     if existing_review is not None:
         return review_response_for_record(case_id, existing_review, case.status)
     product_version = await session.scalar(
-        select(ProductVersion).where(ProductVersion.id == case.product_version_id)
+        select(ProductVersion).where(
+            ProductVersion.id == case.product_version_id
+        )
     )
     if product_version is None:
         raise HTTPException(

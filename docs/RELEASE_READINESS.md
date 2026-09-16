@@ -1,9 +1,57 @@
 # Release Readiness Report
 
-**Scope:** `main` at the R9 acceptance run, 15 September 2026.
-**Branch state:** 38 commits ahead of `origin/main`; nothing pushed.
+**Scope:** `main` at the R9 acceptance run, 15 September 2026. The body below
+is the record of that run; the amendment that follows supersedes its counts.
+**Branch state at R9:** 38 commits ahead of `origin/main`, since pushed.
 **Verdict:** Remediation steps R1–R9 complete. The MVP is demonstrable
 end to end on synthetic data. It is **not** pilot-ready or PRD-complete.
+
+## Amendment, 16 September 2026
+
+The twelve-finding code-review remediation landed after this report. The
+verdict above is unchanged. Current measurements:
+
+| Requirement | Result |
+| --- | --- |
+| API unit and integration tests | 163 passed |
+| API contract tests | Satisfied — 8 passed in `api/tests/contract/` |
+| Web tests | 66 passed across 9 files |
+| Production web build | Passed; 245 kB JS, 27 kB CSS |
+| Migrations | 6 revisions, linear; `alembic current` at `e5f6a7b8c9d0` |
+| Branch state | 14 commits ahead of `origin/main`, unpushed |
+
+Resolved or reduced since this report:
+
+- **Limitation 3** — reduced. `jsdom` and `@testing-library/react` are
+  installed, and DOM tests now cover intake, the evidence pack, and reference
+  documents. Applicant tracking, admin product configuration, and sign-in still
+  have no DOM coverage.
+- **Limitation 6** — reduced. The contract suite removes every row it creates,
+  verified by comparing row counts before and after a run. Other integration
+  suites still mutate the shared development database.
+- **Limitation 10** — reduced. `api/tests/contract/` now exists.
+  `sample_data/` and `api/tests/fixtures/` do not; the contract suite reaches
+  the integration fixture builders through an explicit path insertion.
+- **Limitation 11** — partly closed. Every line added during remediation is
+  within the 80-column limit, and `web/src` has none. The pre-existing debt is
+  larger than this report states: 138 lines across `api/src`, of which 12 are
+  the two files named in the list below.
+
+New limitations recorded since this report, ordered with the list below:
+
+14. **A review-start fallback drops `factors`.** `reviews/router.py` serves
+    `summary.get("recommendation", {"route": recommendation.route})`, so a case
+    whose persisted summary is missing returns a recommendation object without
+    the `factors` key that `case-review.tsx` reads. The contract suite pins the
+    normal path only.
+15. **Two intake paths assume a readable configuration.** `cases/service.py`
+    calls `ProductConfiguration.model_validate` in `create_case` and
+    `add_document` without catching `ValidationError`, so a corrupted pinned
+    version raises an unhandled error instead of the 409 or review hand-off the
+    review endpoints now produce.
+16. **`web/src/product-configuration.tsx` is at 396 of the 400-line cap.** The
+    next change to that screen must split it, along the validate and import
+    panel boundary.
 
 ## Accepted exception: upload security
 
