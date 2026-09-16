@@ -62,9 +62,9 @@ beforeEach(() => {
 });
 
 // Render the review screen for the synthetic queued case.
-function renderReview() {
+function renderReview(item: QueueItem = ITEM) {
   render(
-    <CaseReview item={ITEM} onNavigate={vi.fn()} token="session" />,
+    <CaseReview item={item} onNavigate={vi.fn()} token="session" />,
   );
 }
 
@@ -109,6 +109,83 @@ describe("review evidence pack", () => {
     );
     expect(submitReview).not.toHaveBeenCalled();
   });
+});
+
+// Verify manual recommendations become explicit specialist decisions.
+describe("manual recommendation", () => {
+  const fallback = "Manual configuration review";
+  const manualPack: ReviewStart = {
+    ...PACK,
+    recommendation: { route: "manual", factors: ["unsupported_product"] },
+    specialist_options: [fallback],
+  };
+
+  it("shows and submits the fallback specialist destination", async () => {
+    vi.mocked(startReview).mockResolvedValue(manualPack);
+    vi.mocked(submitReview).mockResolvedValue({
+      case_id: ITEM.case_id,
+      action: "confirm",
+      selected_route: "specialist",
+      status: "overridden",
+    });
+    renderReview({ ...ITEM, route: "manual" });
+    const user = userEvent.setup();
+
+    const option = await screen.findByRole("option", { name: fallback });
+    const specialist = screen.getByRole("radio", {
+      name: /Specialist review/i,
+    }) as HTMLInputElement;
+    expect(option).toBeTruthy();
+    expect(specialist.checked).toBe(true);
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: /reviewed the submitted evidence/i,
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Confirm recommendation" }),
+    );
+
+    expect(submitReview).toHaveBeenCalledWith(
+      "session",
+      ITEM.case_id,
+      {
+        action: "confirm",
+        selected_route: undefined,
+        specialist_label: fallback,
+        reason: undefined,
+        evidence_acknowledged: true,
+      },
+    );
+  });
+
+  it.each(["Standard", "Expedited"])(
+    "still requires a reason for a %s override",
+    async (route) => {
+      vi.mocked(startReview).mockResolvedValue(manualPack);
+      renderReview({ ...ITEM, route: "manual" });
+      const user = userEvent.setup();
+
+      await screen.findByRole("option", { name: fallback });
+      await user.click(
+        screen.getByRole("radio", { name: new RegExp(`${route} review`, "i") }),
+      );
+      await user.click(
+        screen.getByRole("checkbox", {
+          name: /reviewed the submitted evidence/i,
+        }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Override route" }),
+      );
+
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Add a short reason",
+      );
+      expect(submitReview).not.toHaveBeenCalled();
+    },
+  );
 });
 
 // Verify a recorded decision is described once, without a repeated route.

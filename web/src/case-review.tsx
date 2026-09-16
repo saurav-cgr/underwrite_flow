@@ -81,11 +81,13 @@ export function CaseReview({
         setStart(response);
         const route = response.recommendation.route;
         setSelectedRoute(
-          route === "expedited" ||
-            route === "standard" ||
-            route === "specialist"
-            ? route
-            : "standard",
+          route === "manual"
+            ? "specialist"
+            : route === "expedited" ||
+                route === "standard" ||
+                route === "specialist"
+              ? route
+              : "standard",
         );
         setSpecialistLabel(response.specialist_options[0] ?? "");
       })
