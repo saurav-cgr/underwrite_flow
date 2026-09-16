@@ -173,6 +173,7 @@ async def start_review(
         conflicts=[
             {
                 "field_name": field.field_name,
+                "value": field.value,
                 "source_locator": field.source_locator,
                 "conflict_status": field.conflict_status,
             }

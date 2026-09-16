@@ -39,6 +39,11 @@ Resolved or reduced since this report:
 - **Limitation 6** — reduced. The contract suite removes every row it creates,
   verified by comparing row counts before and after a run. Other integration
   suites still mutate the shared development database.
+- **Conflict rows named a field but not the disagreement.** Each conflict
+  carried `field_name`, `source_locator`, and `conflict_status` only, so an
+  underwriter reading "vehicle_age — conflict" had to hunt the evidence list
+  for the two values. A conflict now carries `value`, the contract suite pins
+  the added key, and the panel shows each value inline.
 - **Limitation 9** — closed. Product activation, applicant document removal,
   and reference document removal each used the native `window.confirm`, which
   is unstyled, blocking, and outside the design system. All three now use one

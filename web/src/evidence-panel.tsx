@@ -1,5 +1,6 @@
 import { Panel } from "./components";
 import {
+  displayValue,
   evidenceDocuments,
   evidenceFields,
   failureReason,
@@ -77,7 +78,10 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
             {pack.conflicts.map((conflict, index) => (
               <li key={`conflict-${index}`}>
                 <b>{String(conflict.field_name ?? "unnamed field")}</b>
-                <span>{String(conflict.conflict_status ?? "conflict")}</span>
+                <span>{displayValue(conflict.value)}</span>
+                <small>
+                  {String(conflict.conflict_status ?? "conflict")}
+                </small>
               </li>
             ))}
           </ul>
