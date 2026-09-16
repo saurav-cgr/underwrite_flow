@@ -33,9 +33,9 @@ Resolved or reduced since this report:
   stay generic on purpose: that payload can echo submitted input values.
 - **Limitation 3** — reduced. `jsdom` and `@testing-library/react` are
   installed, and DOM tests now cover intake, the evidence pack, the review
-  decision, reference documents, the admin product configuration and import
-  panels, and the shared confirm dialog. Applicant tracking, the audit
-  workspace, and sign-in still have no DOM coverage.
+  decision, reference documents, the admin product configuration, import, and
+  evaluation panels, and the shared confirm dialog. Applicant tracking, the
+  audit workspace, and sign-in still have no DOM coverage.
 - **Limitation 6** — reduced. The contract suite removes every row it creates,
   verified by comparing row counts before and after a run. Other integration
   suites still mutate the shared development database.
