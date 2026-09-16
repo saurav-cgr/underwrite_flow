@@ -1,7 +1,7 @@
 import { Panel } from "./components";
 import {
   conflictRows,
-  displayValue,
+  documentLabels,
   evidenceDocuments,
   evidenceFields,
   failureReason,
@@ -17,9 +17,7 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
   const signals = riskSignals(pack.summary);
   const gaps = missingFields(pack.summary);
   const rows = conflictRows(pack.conflicts);
-  const names = new Map(
-    documents.map((document) => [document.documentId, document.filename]),
-  );
+  const names = documentLabels(documents);
 
   return (
     <>
@@ -33,7 +31,7 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
           <ul className="evidence-list">
             {documents.map((document) => (
               <li key={document.source}>
-                <b>{document.filename}</b>
+                <b>{names.get(document.documentId) ?? document.filename}</b>
                 <small>{document.source}</small>
               </li>
             ))}

@@ -153,4 +153,40 @@ describe("evidence panel", () => {
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
   });
+
+  it("tells two documents with the same name apart", () => {
+    render(
+      <EvidencePanel
+        pack={{
+          ...PACK,
+          conflicts: [],
+          evidence: [
+            {
+              document_id: "1f55fb0b-3d8d-48b7-80ea-b9125f98b489",
+              filename: "synthetic.pdf",
+              source_locator: "case-1/a.pdf",
+              source_type: "submitted_document",
+            },
+            {
+              document_id: "9056e397-a56c-49d4-a5ef-3d54bc0ec0b3",
+              filename: "synthetic.pdf",
+              source_locator: "case-1/b.pdf",
+              source_type: "submitted_document",
+            },
+            {
+              document_id: "9056e397-a56c-49d4-a5ef-3d54bc0ec0b3",
+              field_name: "vehicle_age",
+              value: "9",
+              source_locator: "line:1",
+              source_type: "extracted_field",
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("synthetic.pdf #1f55fb0b")).toBeTruthy();
+    expect(screen.getByText("synthetic.pdf #9056e397")).toBeTruthy();
+    expect(screen.getByText("synthetic.pdf #9056e397 · line:1")).toBeTruthy();
+  });
 });

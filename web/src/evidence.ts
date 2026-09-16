@@ -73,7 +73,26 @@ export function evidenceDocuments(
       source: locatorOf(item),
     }));
 }
-
+// Label each document once, disambiguating files that share a filename so two
+// rows never read identically.
+export function documentLabels(
+  documents: DocumentRow[],
+): Map<string, string> {
+  const counts = new Map<string, number>();
+  for (const document of documents) {
+    counts.set(document.filename, (counts.get(document.filename) ?? 0) + 1);
+  }
+  return new Map(
+    documents.map((document) => {
+      const unique = counts.get(document.filename) === 1;
+      const label =
+        unique || !document.documentId
+          ? document.filename
+          : `${document.filename} #${document.documentId.slice(0, 8)}`;
+      return [document.documentId, label];
+    }),
+  );
+}
 // List the extracted fields with their value and provenance.
 export function evidenceFields(
   evidence: Record<string, unknown>[],

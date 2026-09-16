@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   conflictRows,
   displayValue,
+  documentLabels,
   evidenceDocuments,
   evidenceFields,
   failureReason,
@@ -144,6 +145,54 @@ describe("conflict rows", () => {
       source: "no locator recorded",
       status: "conflict",
     });
+  });
+});
+
+// Verify two uploaded files with the same name can still be told apart.
+describe("document labels", () => {
+  it("keeps a filename that only one document uses", () => {
+    const labels = documentLabels([
+      {
+        documentId: "1f55fb0b-3d8d-48b7-80ea-b9125f98b489",
+        filename: "synthetic.pdf",
+        source: "case-1/a.pdf",
+      },
+    ]);
+
+    expect(labels.get("1f55fb0b-3d8d-48b7-80ea-b9125f98b489")).toBe(
+      "synthetic.pdf",
+    );
+  });
+
+  it("suffixes a filename that two documents share", () => {
+    const labels = documentLabels([
+      {
+        documentId: "1f55fb0b-3d8d-48b7-80ea-b9125f98b489",
+        filename: "synthetic.pdf",
+        source: "case-1/a.pdf",
+      },
+      {
+        documentId: "9056e397-a56c-49d4-a5ef-3d54bc0ec0b3",
+        filename: "synthetic.pdf",
+        source: "case-1/b.pdf",
+      },
+    ]);
+
+    expect(labels.get("1f55fb0b-3d8d-48b7-80ea-b9125f98b489")).toBe(
+      "synthetic.pdf #1f55fb0b",
+    );
+    expect(labels.get("9056e397-a56c-49d4-a5ef-3d54bc0ec0b3")).toBe(
+      "synthetic.pdf #9056e397",
+    );
+  });
+
+  it("leaves a document that recorded no id alone", () => {
+    const labels = documentLabels([
+      { documentId: "", filename: "synthetic.pdf", source: "a.pdf" },
+      { documentId: "", filename: "synthetic.pdf", source: "b.pdf" },
+    ]);
+
+    expect(labels.get("")).toBe("synthetic.pdf");
   });
 });
 

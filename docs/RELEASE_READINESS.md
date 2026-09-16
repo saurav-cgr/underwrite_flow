@@ -39,6 +39,13 @@ Resolved or reduced since this report:
 - **Limitation 6** — reduced. The contract suite removes every row it creates,
   verified by comparing row counts before and after a run. Other integration
   suites still mutate the shared development database.
+- **Two documents with the same filename were indistinguishable.** The
+  evidence and conflict rows named only the file, so a case with two
+  `synthetic.pdf` uploads showed identical labels — the same condition that
+  produced a duplicate React key during remediation. A document is now
+  suffixed with the first eight characters of its id when another document
+  shares its name (`synthetic.pdf #df591137`), and unique names stay as they
+  are.
 - **Conflict rows named a field but not the disagreement.** Each conflict
   carried `field_name`, `source_locator`, and `conflict_status` only, so an
   underwriter reading "vehicle_age — conflict" had to hunt the evidence list
