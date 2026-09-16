@@ -65,11 +65,11 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
                 headers=headers,
             )
             assert catalog.status_code == 200
-            assert (
-                catalog.json()[0]["product_code"]
-                == "motor-private-car"
-            )
-            assert "routing_rules" not in catalog.json()[0]
+            offered = {
+                entry["product_code"]: entry for entry in catalog.json()
+            }
+            assert "motor-private-car" in offered
+            assert "routing_rules" not in offered["motor-private-car"]
 
             created = client.post(
                 "/api/v1/cases",

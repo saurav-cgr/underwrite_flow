@@ -13,12 +13,12 @@ verdict above is unchanged. Current measurements:
 
 | Requirement | Result |
 | --- | --- |
-| API unit and integration tests | 167 passed |
-| API contract tests | Satisfied — 9 passed in `api/tests/contract/` |
-| Web tests | 68 passed across 9 files |
-| Production web build | Passed; 245 kB JS, 27 kB CSS |
+| API tests | 178 passed |
+| API contract tests | Satisfied — 9 of those, in `api/tests/contract/` |
+| Web tests | 97 passed across 13 files |
+| Production web build | Passed; 247.84 kB JS, 27.07 kB CSS |
 | Migrations | 6 revisions, linear; `alembic current` at `e5f6a7b8c9d0` |
-| Branch state | 18 commits ahead of `origin/main`, unpushed |
+| Branch state | 30 commits ahead of `origin/main`, unpushed |
 
 Resolved or reduced since this report:
 
@@ -39,6 +39,22 @@ Resolved or reduced since this report:
 - **Limitation 6** — reduced. The contract suite removes every row it creates,
   verified by comparing row counts before and after a run. Other integration
   suites still mutate the shared development database.
+- **Limitation 6, second pass** — the applicant catalogue was left empty again
+  after a run, because twenty-two sites across seven integration modules ended
+  with `set_motor_status("draft")` rather than restoring the status they
+  found. A session-scoped fixture in `api/tests/conftest.py` now returns
+  product activation to whatever the run found it as, and three tests that
+  read the ambient status (the bootstrap import, the catalogue on first
+  intake, and the inactive-catalogue pin) assert the state they set up
+  instead. The suite was run twice, once with all three products active and
+  once with all three draft: 178 passed in both cases, and the status was
+  unchanged afterwards in both.
+- **A web test raced its own second fetch.**
+  `web/src/product-configuration.test.tsx` read the `Activate` buttons with a
+  synchronous query after awaiting only the product list, so it failed
+  whenever the version history arrived late — observed once in three
+  consecutive runs of the same commit. It now awaits the buttons themselves
+  and passed three consecutive runs.
 - **Two documents with the same filename were indistinguishable.** The
   evidence and conflict rows named only the file, so a case with two
   `synthetic.pdf` uploads showed identical labels — the same condition that
@@ -214,51 +230,46 @@ sanitizer respond to change rather than passing vacuously.
 Ordered by the risk each poses to a real deployment.
 
 1. **Uploads are not scanned for malware.** See the accepted exception above.
-2. **The API discards router error messages.** `http_error_handler` replaces
-   every `HTTPException.detail` with "Request could not be completed". A user
-   overriding to the already-recommended route sees that generic text instead
-   of the actionable reason the router already wrote. Reversing this requires
-   auditing every `detail=` string for safety first.
-3. **No automated frontend regression coverage.** `@testing-library/react` and
-   `jsdom` are not installed, so no screen behaviour is locked in by a test.
-   New logic was deliberately placed in pure helpers (`ui-state.ts`,
-   `api.ts`) so it is unit-tested, but screen wiring is verified only by
-   browser probing.
+2. **Closed.** The API served one generic sentence for every router 4xx, so an
+   underwriter overriding to the already-recommended route could not read why
+   it failed. A 4xx detail is now served while 5xx stays generic; see the
+   amendment above.
+3. **Reduced.** DOM coverage now exists for intake, the evidence pack, the
+   review decision, reference documents, and the admin product, import,
+   evaluation, and confirm-dialog screens. Applicant tracking, the audit
+   workspace, and sign-in still have none.
 4. **Evaluation runs synchronously on the event loop.** `POST /evaluation/run`
    executes the full 90-case pipeline (~500 ms CPU) inline. Acceptable
    locally; needs caching or a worker before real use.
 5. **Product and rulebook content hashes are identical by construction.**
    `products/service.py` passes one hash to both records, so the rulebook hash
    provides no independent verification today.
-6. **Integration tests mutate the shared development database.** A test that
-   toggles product status left the applicant catalog empty during this run and
-   had to be reactivated by hand.
+6. **Product status is no longer clobbered; rows still are.** Integration
+   tests no longer leave the applicant catalogue empty, and no test reads the
+   ambient product status any more. Suites other than the contract one still
+   create cases, documents, reviews, and audit rows in the shared development
+   database.
 7. **`alembic check` is unsafe to follow.** It reports drift confined to the
    four LangGraph checkpoint tables, which are managed outside the ORM
    metadata. Acting on its suggestion would drop `checkpoints`,
    `checkpoint_blobs`, `checkpoint_writes`, and `checkpoint_migrations`.
-8. **`ReviewStartResponse.missing_information` is ambiguous.** It carries
-   missing *document codes*, while field-level gaps live at
-   `summary.missing_information`. An underwriter on a `needs_information` case
-   therefore sees an empty missing list.
-9. **Product activation uses native `window.confirm`.** Accessible but
-   unstyled, blocking, and outside the design system.
-10. **Planned structure is partially absent.** `sample_data/`,
-    `api/tests/contract/`, and `api/tests/fixtures/` are named in `AGENTS.md`
-    but do not exist. Provider contract coverage lives in
-    `api/tests/unit/test_providers.py` instead.
+8. **Closed.** The review screen separates missing documents from missing
+   fields and names every missing field; see the amendment above.
+9. **Closed.** Activation and the two removal actions use the shared
+   `ConfirmDialog`; no `window.confirm` remains in `web/src`.
+10. **Reduced.** `api/tests/contract/` and `api/tests/fixtures/` now exist and
+    every suite imports the shared fixture package instead of inserting a path
+    for itself. Seven integration modules still carry a local `login` copy,
+    and `sample_data/` still does not exist.
 11. **Line-length debt.** Twelve pre-existing backend lines exceed 80 columns
     in `nodes.py` and `queues/router.py`. Every line added during remediation
     stays within the limit.
 12. **Rotate local provider keys.** The untracked `.env` holds
     `GEMINI_API_KEY` and `LANGSMITH_API_KEY`. If either was ever displayed or
     shared during development, rotate it.
-13. **Checkpoint/audit separation is not directly tested.** Resume is covered
-    by `test_review_endpoint_resumes_checkpoint_and_records_decision`, but
-    that resumes within one process. No test proves that replay cannot
-    rewrite audit history, and no test simulates a restart mid-review.
-    AGENTS.md lists checkpoint/audit separation and resume after restart as
-    required coverage, so this is a gap rather than a verified property.
+13. **Closed.** `api/tests/integration/test_checkpoint_audit_separation.py`
+    resumes one review across two application instances and proves a repeated
+    resume cannot rewrite audit history; see the amendment above.
 
 ## What is genuinely trustworthy
 

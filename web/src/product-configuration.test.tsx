@@ -67,7 +67,9 @@ describe("product activation", () => {
 
     expect(await screen.findByText("Fictional Private-Car Motor")).toBeTruthy();
     expect(await screen.findByText(/Active version: v1/)).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Activate" })).toHaveLength(1);
+    expect(
+      await screen.findAllByRole("button", { name: "Activate" })
+    ).toHaveLength(1);
   });
 
   it("asks for confirmation before activating a draft", async () => {

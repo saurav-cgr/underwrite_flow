@@ -208,7 +208,7 @@ def test_case_configuration_rejects_another_applicant() -> None:
         set_motor_status("draft")
 
 
-# Verify a case keeps its pinned version when the active catalogue is empty.
+# Verify a case keeps its pinned version once its product is deactivated.
 def test_case_configuration_survives_an_inactive_catalogue() -> None:
     set_motor_status("active")
     try:
@@ -232,7 +232,10 @@ def test_case_configuration_survives_an_inactive_catalogue() -> None:
                 "/api/v1/products/catalog", headers=applicant
             )
             assert catalogue.status_code == 200, catalogue.text
-            assert catalogue.json() == []
+            offered = {
+                entry["product_code"] for entry in catalogue.json()
+            }
+            assert "motor-private-car" not in offered
 
             response = client.get(
                 f"/api/v1/cases/{case_id}/configuration", headers=applicant

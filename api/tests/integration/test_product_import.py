@@ -65,16 +65,23 @@ def test_bootstrap_imports_builtin_products() -> None:
         cursor.execute("SELECT code FROM products ORDER BY code")
         products = [row[0] for row in cursor.fetchall()]
         cursor.execute(
-            "SELECT COUNT(*) FROM product_versions WHERE status = 'draft'"
+            "SELECT p.code, COUNT(*) FROM product_versions v "
+            "JOIN products p ON p.id = v.product_id "
+            "WHERE v.version = 'v1' AND v.content_hash <> '' "
+            "GROUP BY p.code ORDER BY p.code"
         )
-        draft_count = cursor.fetchone()[0]
+        imported = cursor.fetchall()
 
     assert products == [
         "health-individual-family-floater",
         "life-individual-term",
         "motor-private-car",
     ]
-    assert draft_count == 3
+    assert imported == [
+        ("health-individual-family-floater", 1),
+        ("life-individual-term", 1),
+        ("motor-private-car", 1),
+    ]
 
 
 # Verify the additive migration inserts all fictional demo identities.
