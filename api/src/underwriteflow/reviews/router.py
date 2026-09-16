@@ -158,7 +158,7 @@ async def start_review(
     )
 
 
-# Resume only an underwriter's pending checkpoint and persist the decision once.
+# Resume one pending checkpoint per case and cycle, and persist the decision once.
 @router.post("/{case_id}", response_model=ReviewResponse)
 async def resume_review(
     case_id: UUID,
@@ -167,11 +167,18 @@ async def resume_review(
     reviewer: dict[str, str] = Depends(require_role(UserRole.UNDERWRITER.value)),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewResponse:
-    case = await session.scalar(select(Case).where(Case.id == case_id))
+    # Lock the case row so a second decision waits instead of resuming the
+    # same checkpoint concurrently with a different command.
+    case = await session.scalar(
+        select(Case).where(Case.id == case_id).with_for_update()
+    )
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     existing_review = await session.scalar(
-        select(Review).where(Review.case_id == case_id).order_by(Review.created_at.desc())
+        select(Review).where(
+            Review.case_id == case_id,
+            Review.review_cycle == case.review_cycle,
+        )
     )
     if existing_review is not None:
         return review_response_for_record(case_id, existing_review, case.status)
