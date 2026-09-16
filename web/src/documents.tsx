@@ -9,13 +9,13 @@ import {
   uploadDocument,
 } from "./api";
 import { Button, Journey, PageHeading } from "./components";
+import { ConfirmDialog } from "./confirm";
 import { Icon } from "./icons";
 import {
   intakeActionFor,
   requiredDocuments,
   satisfiedRequirementCount,
-} from "./ui-state";
-import type {
+} from "./ui-state";import type {
   CaseConfiguration,
   CaseRecord,
   DocumentRecord,
@@ -81,6 +81,8 @@ export function DocumentsScreen({
   const [removingDocumentId, setRemovingDocumentId] = useState<string | null>(
     null,
   );
+  const [pendingRemoval, setPendingRemoval] =
+    useState<DocumentRecord | null>(null);
   const required = requiredDocuments(configuration.documents);
   const otherDocuments = configuration.documents.filter(
     (document) =>
@@ -151,9 +153,16 @@ export function DocumentsScreen({
     }
   }
 
-  // Remove one incorrectly uploaded document after native confirmation.
-  async function handleRemove(document: DocumentRecord) {
-    if (!window.confirm(`Remove ${document.filename}?`)) return;
+  // Ask before removing a document the applicant already uploaded.
+  function requestRemoval(document: DocumentRecord) {
+    setPendingRemoval(document);
+  }
+
+  // Remove the confirmed document and prompt for a replacement.
+  async function confirmRemoval() {
+    const document = pendingRemoval;
+    if (document === null) return;
+    setPendingRemoval(null);
     setRemovingDocumentId(document.id);
     setMessage("");
     try {
@@ -277,7 +286,7 @@ export function DocumentsScreen({
                   </span>
                   <Button
                     disabled={removingDocumentId === document.id}
-                    onClick={() => handleRemove(document)}
+                    onClick={() => requestRemoval(document)}
                     variant="danger"
                   >
                     {removingDocumentId === document.id
@@ -308,6 +317,18 @@ export function DocumentsScreen({
           </div>
         </div>
       </div>
+      {pendingRemoval ? (
+        <ConfirmDialog
+          confirmLabel="Remove document"
+          detail={
+            `${pendingRemoval.filename} will no longer be evidence for this `
+            + "case."
+          }
+          onCancel={() => setPendingRemoval(null)}
+          onConfirm={() => void confirmRemoval()}
+          title="Remove this document?"
+        />
+      ) : null}
     </>
   );
 }

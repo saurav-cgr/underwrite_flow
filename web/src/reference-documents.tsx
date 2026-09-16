@@ -7,6 +7,7 @@ import {
   uploadReference,
 } from "./api";
 import { Badge, Button, EmptyState, Panel } from "./components";
+import { ConfirmDialog } from "./confirm";
 import type { ProductVersionHistoryItem, ReferenceDocument } from "./types";
 
 // Describe one reference document's size, length, and content hash.
@@ -43,6 +44,7 @@ export function ReferenceDocuments({
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [working, setWorking] = useState("");
+  const [pending, setPending] = useState<ReferenceDocument | null>(null);
 
   // Follow the newest available version whenever the product changes.
   useEffect(() => {
@@ -91,10 +93,17 @@ export function ReferenceDocuments({
     }
   }
 
-  // Remove one reference document after native confirmation.
-  async function handleDelete(reference: ReferenceDocument) {
+  // Ask before removing a reference document from this version.
+  function requestDelete(reference: ReferenceDocument) {
     if (!productCode) return;
-    if (!window.confirm(`Remove ${reference.filename}?`)) return;
+    setPending(reference);
+  }
+
+  // Remove the confirmed reference document and report the outcome.
+  async function confirmDelete() {
+    const reference = pending;
+    if (!productCode || reference === null) return;
+    setPending(null);
     setWorking(reference.id);
     setMessage("");
     setNotice("");
@@ -189,7 +198,7 @@ export function ReferenceDocuments({
                 </Badge>
                 <Button
                   disabled={working === reference.id}
-                  onClick={() => handleDelete(reference)}
+                  onClick={() => requestDelete(reference)}
                   variant="danger"
                 >
                   {working === reference.id ? "Removing…" : "Remove"}
@@ -208,6 +217,18 @@ export function ReferenceDocuments({
         <p className="form-notice" role="status">
           {notice}
         </p>
+      ) : null}
+      {pending ? (
+        <ConfirmDialog
+          confirmLabel="Remove reference"
+          detail={
+            `${pending.filename} will no longer guide extraction for this `
+            + "version."
+          }
+          onCancel={() => setPending(null)}
+          onConfirm={() => void confirmDelete()}
+          title="Remove this reference document?"
+        />
       ) : null}
     </Panel>
   );

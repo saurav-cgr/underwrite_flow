@@ -310,3 +310,36 @@
   margin-bottom: 14px;
   padding: 14px 18px;
 }
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  max-width: 500px;
+  padding: var(--space-xl);
+  width: 90%;
+}
+.modal h2 {
+  font-size: 1.15rem;
+  margin: 0 0 var(--space-sm);
+}
+.modal p {
+  color: var(--muted);
+  margin: 0;
+}
+.modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+}
+.modal-overlay {
+  align-items: center;
+  background: rgb(15 23 42 / 50%);
+  backdrop-filter: blur(4px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: var(--space-lg);
+  position: fixed;
+  z-index: 20;
+}

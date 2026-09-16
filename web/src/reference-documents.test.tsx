@@ -132,30 +132,28 @@ describe("reference document upload", () => {
 
 // Verify deletion is destructive only after an explicit confirmation.
 describe("reference document deletion", () => {
-  it("keeps the reference when the confirmation is refused", async () => {
+  it("keeps the reference when the confirmation is cancelled", async () => {
     listReferencesMock.mockResolvedValue([STORED]);
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     renderPanel();
     const user = userEvent.setup();
 
-    await user.click(
-      await screen.findByRole("button", { name: "Remove" }),
-    );
+    await user.click(await screen.findByRole("button", { name: "Remove" }));
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
 
     expect(deleteReferenceMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByText("synthetic-reference.pdf")).toBeTruthy();
-    confirm.mockRestore();
   });
 
   it("removes the reference once it is confirmed", async () => {
     listReferencesMock.mockResolvedValue([STORED]);
     deleteReferenceMock.mockResolvedValue(undefined);
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     renderPanel();
     const user = userEvent.setup();
 
+    await user.click(await screen.findByRole("button", { name: "Remove" }));
     await user.click(
-      await screen.findByRole("button", { name: "Remove" }),
+      await screen.findByRole("button", { name: "Remove reference" }),
     );
 
     await waitFor(() =>
@@ -167,6 +165,5 @@ describe("reference document deletion", () => {
     );
     expect(screen.queryByText("synthetic-reference.pdf")).toBeNull();
     expect(screen.getByRole("status").textContent).toContain("removed");
-    confirm.mockRestore();
   });
 });

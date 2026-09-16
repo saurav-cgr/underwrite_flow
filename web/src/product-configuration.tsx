@@ -7,6 +7,7 @@ import {
   listProductVersionHistory,
 } from "./api";
 import { Badge, Button, EmptyState, PageHeading, Panel } from "./components";
+import { ConfirmDialog } from "./confirm";
 import { ProductImport } from "./product-import";
 import { ReferenceDocuments } from "./reference-documents";
 import type {
@@ -25,6 +26,7 @@ export function ProductConfiguration({ token }: { token: string }) {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [working, setWorking] = useState("");
   const [productRefresh, setProductRefresh] = useState(0);
+  const [pendingVersion, setPendingVersion] = useState<string | null>(null);
 
   // Load every administrator-visible product configuration on entry.
   useEffect(() => {
@@ -80,10 +82,17 @@ export function ProductConfiguration({ token }: { token: string }) {
     if (next.notice !== undefined) setNotice(next.notice);
   }
 
-  // Activate one draft only after an administrator confirms the action.
-  async function handleActivate(version: string) {
+  // Ask before activating a version, which changes what new cases pin.
+  function requestActivate(version: string) {
     if (!selectedCode) return;
-    if (!window.confirm(`Activate ${selectedCode} ${version}?`)) return;
+    setPendingVersion(version);
+  }
+
+  // Activate the confirmed version and reload the version history.
+  async function confirmActivate() {
+    const version = pendingVersion;
+    if (!selectedCode || version === null) return;
+    setPendingVersion(null);
     setWorking(`activate-${version}`);
     setMessage("");
     setNotice("");
@@ -205,7 +214,7 @@ export function ProductConfiguration({ token }: { token: string }) {
                       {version.status === "active" ? null : (
                         <Button
                           disabled={Boolean(working)}
-                          onClick={() => handleActivate(version.version)}
+                          onClick={() => requestActivate(version.version)}
                           variant="secondary"
                         >
                           {working === `activate-${version.version}`
@@ -236,6 +245,18 @@ export function ProductConfiguration({ token }: { token: string }) {
         token={token}
         versions={history}
       />
+      {pendingVersion ? (
+        <ConfirmDialog
+          confirmLabel="Activate version"
+          detail={
+            `${selectedCode} ${pendingVersion} becomes the version new `
+            + "cases pin."
+          }
+          onCancel={() => setPendingVersion(null)}
+          onConfirm={() => void confirmActivate()}
+          title="Activate this version?"
+        />
+      ) : null}
     </>
   );
 }

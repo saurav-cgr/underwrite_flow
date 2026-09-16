@@ -38,6 +38,13 @@ Resolved or reduced since this report:
 - **Limitation 6** — reduced. The contract suite removes every row it creates,
   verified by comparing row counts before and after a run. Other integration
   suites still mutate the shared development database.
+- **Limitation 9** — closed. Product activation, applicant document removal,
+  and reference document removal each used the native `window.confirm`, which
+  is unstyled, blocking, and outside the design system. All three now use one
+  `ConfirmDialog` built on the design system's modal tokens, with a labelled
+  `role="dialog"`, `aria-modal`, Escape to cancel, Tab held inside the dialog,
+  and focus returned to the control that opened it. Covered by DOM tests and a
+  browser check of both the cancel and confirm paths.
 - **Limitation 10** — reduced. `api/tests/contract/` and `api/tests/fixtures/`
   now exist, and every suite imports the shared fixture package instead of
   inserting a path for itself or copying helpers. `sample_data/` still does
