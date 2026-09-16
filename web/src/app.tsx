@@ -38,6 +38,7 @@ export function App() {
   const [configuration, setConfiguration] =
     useState<CaseConfiguration | null>(null);
   const [queueItem, setQueueItem] = useState<QueueItem | null>(null);
+  const [auditCaseId, setAuditCaseId] = useState("");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -49,6 +50,7 @@ export function App() {
       setCaseRecord(null);
       setConfiguration(null);
       setQueueItem(null);
+      setAuditCaseId("");
       setMessage("");
       setScreen("dashboard");
       setNotice("Your session expired. Sign in again to continue.");
@@ -101,6 +103,7 @@ export function App() {
     setCaseRecord(null);
     setConfiguration(null);
     setQueueItem(null);
+    setAuditCaseId("");
     setScreen("dashboard");
   }
 
@@ -205,13 +208,12 @@ export function App() {
     activeScreen = "queue";
     content = (
       <UnderwriterQueue
+        actionLabel="View audit"
         onNavigate={navigate}
-        onSelect={() =>
-          setMessage(
-            "Administrator queue inspection is read-only; open audit "
-              + "history for case reconstruction.",
-          )
-        }
+        onSelect={(item) => {
+          setAuditCaseId(item.case_id);
+          navigate("admin");
+        }}
         token={session.token}
       />
     );
@@ -225,7 +227,11 @@ export function App() {
     activeScreen = "admin";
     content = (
       <>
-        <AdminWorkspace onNavigate={navigate} token={session.token} />
+        <AdminWorkspace
+          initialCaseId={auditCaseId}
+          onNavigate={navigate}
+          token={session.token}
+        />
         {message ? (
           <p className="form-error" role="alert">
             {message}

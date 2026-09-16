@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import {
@@ -22,14 +22,30 @@ import { auditFacts } from "./ui-state";
 export function AdminWorkspace({
   token,
   onNavigate,
+  initialCaseId = "",
 }: {
   token: string;
   onNavigate: (screen: Screen) => void;
+  initialCaseId?: string;
 }) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [caseId, setCaseId] = useState("");
+  const [caseId, setCaseId] = useState(initialCaseId);
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [message, setMessage] = useState("");
+
+  // Load immutable audit history for one exact case identifier.
+  const loadAuditHistory = useCallback(async (targetCaseId: string) => {
+    setMessage("");
+    try {
+      setEvents(await listAudit(token, targetCaseId));
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Audit history could not be loaded.",
+      );
+    }
+  }, [token]);
 
   useEffect(() => {
     listQueue(token)
@@ -43,20 +59,15 @@ export function AdminWorkspace({
       );
   }, [token]);
 
+  useEffect(() => {
+    if (initialCaseId) void loadAuditHistory(initialCaseId);
+  }, [initialCaseId, loadAuditHistory]);
+
   // Fetch immutable events for an administrator-entered case identifier.
   async function handleAuditSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!caseId.trim()) return;
-    setMessage("");
-    try {
-      setEvents(await listAudit(token, caseId.trim()));
-    } catch (error) {
-      setMessage(
-        error instanceof ApiError
-          ? error.message
-          : "Audit history could not be loaded.",
-      );
-    }
+    await loadAuditHistory(caseId.trim());
   }
 
   return (

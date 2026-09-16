@@ -38,18 +38,22 @@ vi.mock("./api", () => ({
 
 import {
   createSession,
+  listAudit,
   listCases,
   listCatalog,
   listDocuments,
+  listQueue,
   readCaseConfiguration,
   readSession,
 } from "./api";
 import { App } from "./app";
 import "./test-setup";
 import type {
+  AuditEvent,
   CaseConfiguration,
   CaseRecord,
   ProductCatalogItem,
+  QueueItem,
 } from "./types";
 
 const ACTIVE_CATALOGUE: ProductCatalogItem = {
@@ -96,6 +100,25 @@ const PINNED_CONFIGURATION: CaseConfiguration = {
   ],
 };
 
+const REVIEW_ITEM: QueueItem = {
+  case_id: "00000000-0000-0000-0000-000000000001",
+  product_code: "motor-private-car",
+  status: "underwriter_review",
+  route: "standard",
+  selected_route: null,
+  specialist_label: null,
+  specialist: false,
+  awaiting_handoff: false,
+};
+
+const AUDIT_EVENT: AuditEvent = {
+  id: "audit-id",
+  actor_user_id: "administrator-id",
+  event_type: "case_created",
+  details: { status: "new" },
+  occurred_at: "2026-09-16T08:00:00Z",
+};
+
 // Sign in as the demo applicant through the rendered role entry screen.
 async function signIn() {
   const user = userEvent.setup();
@@ -111,12 +134,65 @@ async function signIn() {
   return user;
 }
 
+// Sign in as the demo administrator through the rendered role entry screen.
+async function signInAsAdministrator() {
+  const user = userEvent.setup();
+  await user.type(
+    screen.getByLabelText("Email"),
+    "administrator@synthetic.test",
+  );
+  await user.type(
+    screen.getByLabelText("Password"),
+    "underwriteflow-demo-administrator",
+  );
+  await user.click(screen.getByRole("button", { name: "Sign in" }));
+  return user;
+}
+
 // Reset the mocked client and default every call to an empty result.
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(listCatalog).mockResolvedValue([]);
   vi.mocked(listCases).mockResolvedValue([]);
   vi.mocked(listDocuments).mockResolvedValue([]);
+  vi.mocked(listQueue).mockResolvedValue([]);
+  vi.mocked(listAudit).mockResolvedValue([]);
+});
+
+// Verify administrators can open a queue row in the audit workspace.
+describe("administrator queue inspection", () => {
+  it("opens the selected case audit history", async () => {
+    vi.mocked(createSession).mockResolvedValue({
+      token: "session",
+      expires_in: 900,
+    });
+    vi.mocked(readSession).mockResolvedValue({
+      sub: "administrator-id",
+      role: "Administrator",
+    });
+    vi.mocked(listQueue).mockImplementation(async (_token, status) =>
+      status === "underwriter_review" ? [REVIEW_ITEM] : [],
+    );
+    vi.mocked(listAudit).mockResolvedValue([AUDIT_EVENT]);
+
+    render(<App />);
+    const user = await signInAsAdministrator();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Open all queues" }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "View audit" }),
+    );
+
+    await waitFor(() =>
+      expect(listAudit).toHaveBeenCalledWith(
+        "session",
+        REVIEW_ITEM.case_id,
+      ),
+    );
+    expect(await screen.findByText("case created")).toBeTruthy();
+  });
 });
 
 // Verify a restored case keeps the version it was pinned to.

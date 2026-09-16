@@ -33,10 +33,12 @@ export function UnderwriterQueue({
   token,
   onSelect,
   onNavigate,
+  actionLabel = "Open",
 }: {
   token: string;
   onSelect: (item: QueueItem) => void;
   onNavigate: (screen: Screen) => void;
+  actionLabel?: string;
 }) {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [filter, setFilter] = useState("underwriter_review");
@@ -162,7 +164,7 @@ export function UnderwriterQueue({
                             variant="quiet"
                             onClick={() => onSelect(item)}
                           >
-                            Open
+                            {actionLabel}
                           </Button>
                           {item.awaiting_handoff ? (
                             <Button
