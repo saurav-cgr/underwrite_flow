@@ -12,20 +12,20 @@ import { Button, Journey, PageHeading } from "./components";
 import { Icon } from "./icons";
 import { intakeActionFor, requiredDocuments } from "./ui-state";
 import type {
+  CaseConfiguration,
   CaseRecord,
   DocumentRecord,
-  ProductCatalogItem,
-  ProductDocument,
+  ResolvedDocument,
   Screen,
 } from "./types";
 
-// Render one product-configured document request and its upload control.
+// Render one resolved document request and its upload control.
 function DocumentRequestRow({
   document,
   uploading,
   onUpload,
 }: {
-  document: ProductDocument;
+  document: ResolvedDocument;
   uploading: boolean;
   onUpload: (documentCode: string, file: File | undefined) => void;
 }) {
@@ -37,9 +37,7 @@ function DocumentRequestRow({
       <span className="doc-copy">
         <b>{document.title}</b>
         <small>
-          {document.requirement === "required"
-            ? "Required"
-            : "Optional or conditional"}
+          {document.required ? "Required" : "Optional or conditional"}
         </small>
       </span>
       <label className="upload-button">
@@ -60,13 +58,13 @@ function DocumentRequestRow({
 
 // Let applicants upload supporting documents and submit the case for review.
 export function DocumentsScreen({
-  product,
+  configuration,
   caseRecord,
   token,
   onNavigate,
   onCaseChange,
 }: {
-  product: ProductCatalogItem;
+  configuration: CaseConfiguration;
   caseRecord: CaseRecord;
   token: string;
   onNavigate: (screen: Screen) => void;
@@ -79,10 +77,10 @@ export function DocumentsScreen({
   const [removingDocumentId, setRemovingDocumentId] = useState<string | null>(
     null,
   );
-  const required = requiredDocuments(product.documents);
-  const otherDocuments = product.documents.filter(
-    (document) => document.requirement !== "required"
-      && document.requirement !== "not_applicable",
+  const required = requiredDocuments(configuration.documents);
+  const otherDocuments = configuration.documents.filter(
+    (document) =>
+      !document.required && document.requirement !== "not_applicable",
   );
   const requiredCodes = new Set(required.map((document) => document.code));
   const receivedCount = documents.filter(

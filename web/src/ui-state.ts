@@ -191,11 +191,15 @@ export function allDocumentCodes(documents: ProductDocument[]): string[] {
     .map((document) => document.code);
 }
 
-// Return only product-configured documents mandatory for an application.
-export function requiredDocuments(
-  documents: ProductDocument[],
-): ProductDocument[] {
-  return documents.filter((document) => document.requirement === "required");
+export interface ResolvedRequirement {
+  required: boolean;
+}
+
+// Return the documents the backend resolved as mandatory for this case.
+export function requiredDocuments<T extends ResolvedRequirement>(
+  documents: T[],
+): T[] {
+  return documents.filter((document) => document.required);
 }
 
 export type ReviewAction = "confirm" | "override" | "request_information";

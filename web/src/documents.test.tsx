@@ -17,36 +17,38 @@ vi.mock("./api", () => ({
 import { listDocuments, resubmitCase, submitCase } from "./api";
 import { DocumentsScreen } from "./documents";
 import "./test-setup";
-import type {
-  CaseRecord,
-  DocumentRecord,
-  ProductCatalogItem,
-} from "./types";
+import type { CaseConfiguration, CaseRecord, DocumentRecord } from "./types";
 
 const listDocumentsMock = vi.mocked(listDocuments);
 const submitCaseMock = vi.mocked(submitCase);
 const resubmitCaseMock = vi.mocked(resubmitCase);
 
-const PRODUCT: ProductCatalogItem = {
+const CONFIGURATION: CaseConfiguration = {
+  case_id: "case-id",
   product_code: "motor-private-car",
-  title: "Fictional Private-Car Motor",
-  family: "motor",
-  scope: "Fictional demonstration only",
-  description: "Synthetic demonstration product",
-  version: "v1",
+  product_version: "v1",
+  rulebook_version: "v1",
   fields: [],
   documents: [
     {
       code: "identity_record",
       title: "Synthetic identity record",
       requirement: "required",
+      required: true,
       accepted_types: ["application/pdf"],
+      condition: null,
     },
     {
       code: "inspection_photo",
       title: "Synthetic inspection photo",
       requirement: "conditional",
+      required: false,
       accepted_types: ["image/png"],
+      condition: {
+        field: "vehicle_age",
+        operator: "greater_than",
+        value: 12,
+      },
     },
   ],
 };
@@ -75,18 +77,19 @@ const SUBMITTED = {
   recommendation: { route: "expedited", factors: [] },
 };
 
-// Render the documents screen with synthetic case and catalogue fixtures.
+// Render the documents screen with synthetic case and configuration fixtures.
 function renderScreen(
   caseRecord: CaseRecord,
+  configuration: CaseConfiguration = CONFIGURATION,
   onNavigate = vi.fn(),
   onCaseChange = vi.fn(),
 ) {
   render(
     <DocumentsScreen
       caseRecord={caseRecord}
+      configuration={configuration}
       onCaseChange={onCaseChange}
       onNavigate={onNavigate}
-      product={PRODUCT}
       token="session"
     />,
   );
@@ -184,5 +187,33 @@ describe("case resubmission", () => {
 
     await screen.findByRole("button", { name: "Continue to tracking" });
     expect(screen.queryByRole("button", { name: /submit/i })).toBeNull();
+  });
+});
+
+// Verify a conditionally required document counts toward completion, so the
+// applicant is never told a case is ready when submission would be rejected.
+describe("resolved conditional requirement", () => {
+  it("counts a matched condition as a required document", async () => {
+    const conditional = CONFIGURATION.documents[1];
+    listDocumentsMock.mockResolvedValue([UPLOADED]);
+    renderScreen(CASE, {
+      ...CONFIGURATION,
+      documents: [
+        CONFIGURATION.documents[0],
+        { ...conditional, required: true },
+      ],
+    });
+
+    const submit = await screen.findByRole("button", {
+      name: "Submit for review",
+    });
+
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen.getByRole("progressbar").getAttribute("aria-valuenow"),
+    ).toBe("50");
+    expect(
+      screen.getByText("Upload every required document to submit this case."),
+    ).toBeTruthy();
   });
 });

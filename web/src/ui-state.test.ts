@@ -13,7 +13,11 @@ import {
   visibleFields,
   yamlHash,
 } from "./ui-state";
-import type { ProductDocument, ProductField } from "./types";
+import type {
+  ProductDocument,
+  ProductField,
+  ResolvedDocument,
+} from "./types";
 
 const fields: ProductField[] = [
   {
@@ -94,10 +98,50 @@ describe("document intake", () => {
       },
     ];
     expect(allDocumentCodes(documents)).toEqual(["identity_record"]);
-    const requiredCodes = requiredDocuments(documents).map(
-      (document) => document.code,
-    );
-    expect(requiredCodes).toEqual(["identity_record"]);
+  });
+});
+
+// Verify required documents come from the resolved backend requirement.
+describe("resolved requirements", () => {
+  const resolved: ResolvedDocument[] = [
+    {
+      code: "identity_record",
+      title: "Identity",
+      requirement: "required",
+      required: true,
+      accepted_types: ["application/pdf"],
+      condition: null,
+    },
+    {
+      code: "inspection_photo",
+      title: "Inspection",
+      requirement: "conditional",
+      required: true,
+      accepted_types: ["image/png"],
+      condition: {
+        field: "vehicle_age",
+        operator: "greater_than",
+        value: 12,
+      },
+    },
+    {
+      code: "prior_report",
+      title: "Prior report",
+      requirement: "conditional",
+      required: false,
+      accepted_types: ["application/pdf"],
+      condition: {
+        field: "prior_claims",
+        operator: "greater_than",
+        value: 1,
+      },
+    },
+  ];
+
+  it("keeps a matched condition and drops an unmatched one", () => {
+    expect(
+      requiredDocuments(resolved).map((document) => document.code),
+    ).toEqual(["identity_record", "inspection_photo"]);
   });
 });
 

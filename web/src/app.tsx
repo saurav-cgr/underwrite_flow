@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-import { listCases, listCatalog, setUnauthorizedHandler } from "./api";
+import {
+  listCases,
+  listCatalog,
+  readCaseConfiguration,
+  setUnauthorizedHandler,
+} from "./api";
 import { AdminWorkspace } from "./admin";
 import { ApplicantDashboard, ProductSelection } from "./applicant";
 import { ApplicationForm } from "./application-form";
@@ -14,6 +19,7 @@ import { CaseReview } from "./case-review";
 import { UnderwriterQueue } from "./queue";
 import { homeScreenForRole, isOpenCase } from "./ui-state";
 import type {
+  CaseConfiguration,
   CaseRecord,
   ProductCatalogItem,
   QueueItem,
@@ -29,6 +35,8 @@ export function App() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductCatalogItem | null>(null);
   const [caseRecord, setCaseRecord] = useState<CaseRecord | null>(null);
+  const [configuration, setConfiguration] =
+    useState<CaseConfiguration | null>(null);
   const [queueItem, setQueueItem] = useState<QueueItem | null>(null);
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
@@ -39,6 +47,7 @@ export function App() {
       setSession(null);
       setSelectedProduct(null);
       setCaseRecord(null);
+      setConfiguration(null);
       setQueueItem(null);
       setMessage("");
       setScreen("dashboard");
@@ -55,21 +64,27 @@ export function App() {
       .catch(() => setMessage("Active products could not be loaded."));
   }, [session]);
 
-  // Restore the latest open case and its product after a reload.
+  // Restore the latest open case after a reload.
   useEffect(() => {
     if (session?.role !== "Applicant" || caseRecord) return;
     listCases(session.token)
       .then((cases) => {
         const latest = cases.find((item) => isOpenCase(item.status));
-        if (!latest) return;
-        setCaseRecord(latest);
-        const match = catalog.find(
-          (item) => item.product_code === latest.product_code,
-        );
-        if (match) setSelectedProduct(match);
+        if (latest) setCaseRecord(latest);
       })
       .catch(() => setMessage("Existing cases could not be loaded."));
-  }, [catalog, caseRecord, session]);
+  }, [caseRecord, session]);
+
+  // Load the configuration version the applicant's case is pinned to, so a
+  // newer active version never changes an existing case's requirements.
+  useEffect(() => {
+    if (session?.role !== "Applicant" || !caseRecord) return;
+    readCaseConfiguration(session.token, caseRecord.id)
+      .then(setConfiguration)
+      .catch(() =>
+        setMessage("The pinned configuration could not be loaded."),
+      );
+  }, [caseRecord?.id, session]);
 
   // Enter a role workspace and choose its first screen.
   function handleLogin(nextSession: Session) {
@@ -84,6 +99,7 @@ export function App() {
     setSession(null);
     setSelectedProduct(null);
     setCaseRecord(null);
+    setConfiguration(null);
     setQueueItem(null);
     setScreen("dashboard");
   }
@@ -138,16 +154,16 @@ export function App() {
   } else if (
     session.role === "Applicant" &&
     screen === "documents" &&
-    selectedProduct &&
+    configuration &&
     caseRecord
   ) {
     activeScreen = "documents";
     content = (
       <DocumentsScreen
         caseRecord={caseRecord}
+        configuration={configuration}
         onCaseChange={setCaseRecord}
         onNavigate={navigate}
-        product={selectedProduct}
         token={session.token}
       />
     );
