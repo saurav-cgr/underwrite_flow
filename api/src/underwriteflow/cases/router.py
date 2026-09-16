@@ -13,23 +13,39 @@ from fastapi import (
     Response,
     UploadFile,
 )
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.auth.dependencies import authorize_case_access, require_permission
 from underwriteflow.auth.schemas import Permission
 from underwriteflow.cases.schemas import (
+    CaseConfigurationResponse,
     CaseCreate,
+    CaseDocumentResponse,
+    CaseFieldResponse,
     CaseResponse,
     DocumentResponse,
     SubmitResponse,
 )
-from underwriteflow.cases.service import CaseService, CaseValidationError
+from underwriteflow.cases.service import (
+    CaseService,
+    CaseValidationError,
+    document_is_required,
+    field_is_visible,
+)
+from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.cases.submission import SubmissionService
 from underwriteflow.providers.factory import build_provider
 from underwriteflow.database import get_session
-from underwriteflow.persistence.models import Case, Document, ProductVersion, RulebookVersion
+from underwriteflow.persistence.models import (
+    Case,
+    Document,
+    ProductVersion,
+    RulebookVersion,
+    Submission,
+)
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -110,6 +126,77 @@ async def read_case(
     session: AsyncSession = Depends(get_session),
 ) -> CaseResponse:
     return await case_response(session, await get_authorized_case(case_id, current, session))
+
+
+# Return the pinned configuration and resolved requirements for one case.
+@router.get(
+    "/{case_id}/configuration", response_model=CaseConfigurationResponse
+)
+async def read_case_configuration(
+    case_id: UUID,
+    current: dict[str, str] = Depends(require_permission(Permission.CASE_READ)),
+    session: AsyncSession = Depends(get_session),
+) -> CaseConfigurationResponse:
+    case = await get_authorized_case(case_id, current, session)
+    product_version = await session.scalar(
+        select(ProductVersion).where(
+            ProductVersion.id == case.product_version_id
+        )
+    )
+    rulebook = await session.scalar(
+        select(RulebookVersion).where(
+            RulebookVersion.id == case.rulebook_version_id
+        )
+    )
+    if product_version is None or rulebook is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Case configuration is unavailable",
+        )
+    try:
+        configuration = ProductConfiguration.model_validate(
+            product_version.configuration
+        )
+    except ValidationError:
+        raise HTTPException(
+            status_code=409,
+            detail="Case configuration cannot be read",
+        ) from None
+    submission = await session.scalar(
+        select(Submission).where(Submission.case_id == case_id)
+    )
+    payload = submission.payload.get("application", {}) if submission else {}
+    return CaseConfigurationResponse(
+        case_id=case.id,
+        product_code=configuration.product_code,
+        product_version=product_version.version,
+        rulebook_version=rulebook.version,
+        fields=[
+            CaseFieldResponse(
+                key=field.key,
+                label=field.label,
+                type=field.type,
+                required=field.required,
+                help_text=field.help_text,
+                validation=field.validation,
+                options=field.options,
+                visible_when=field.visible_when,
+            )
+            for field in configuration.fields
+            if field_is_visible(field, payload)
+        ],
+        documents=[
+            CaseDocumentResponse(
+                code=document.code,
+                title=document.title,
+                requirement=document.requirement,
+                required=document_is_required(document, payload),
+                accepted_types=document.accepted_types,
+                condition=document.condition,
+            )
+            for document in configuration.documents
+        ],
+    )
 
 
 # Submit an owned case for evidence processing and human review.

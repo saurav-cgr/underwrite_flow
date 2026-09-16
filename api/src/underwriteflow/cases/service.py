@@ -24,6 +24,7 @@ from underwriteflow.products.rules import condition_matches
 from underwriteflow.products.schemas import (
     ProductConfiguration,
     ProductDocument,
+    ProductField,
 )
 from underwriteflow.cases.schemas import CaseCreate
 from underwriteflow.storage import StorageValidationError, UploadStorage
@@ -49,6 +50,13 @@ def document_is_required(
     )
 
 
+# Decide whether one configured field applies to this application.
+def field_is_visible(field: ProductField, payload: Mapping[str, Any]) -> bool:
+    return field.visible_when is None or condition_matches(
+        field.visible_when, payload
+    )
+
+
 # Return the required document codes that are not yet attached to the case.
 def missing_document_codes(
     configuration: ProductConfiguration,
@@ -71,7 +79,7 @@ def validate_application(
     if application.product_code != configuration.product_code:
         raise CaseValidationError("product code does not match configuration")
     for field in configuration.fields:
-        visible = field.visible_when is None or condition_matches(field.visible_when, application.payload)
+        visible = field_is_visible(field, application.payload)
         if field.required and visible:
             if field.key not in application.payload or application.payload[field.key] in (None, ""):
                 raise CaseValidationError(f"missing field: {field.key}")
