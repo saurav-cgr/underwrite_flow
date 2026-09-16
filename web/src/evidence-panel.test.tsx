@@ -38,6 +38,7 @@ const PACK: ReviewStart = {
     {
       field_name: "vehicle_use",
       value: "commute",
+      document_id: "document-1",
       source_locator: "page:2",
       conflict_status: "conflict",
     },
@@ -65,7 +66,9 @@ describe("evidence panel", () => {
     expect(screen.getByText("vehicle_age_specialist")).toBeTruthy();
     expect(screen.getByText("vehicle_use")).toBeTruthy();
     expect(screen.getByText("commute")).toBeTruthy();
-    expect(screen.getByText("conflict")).toBeTruthy();
+    expect(
+      screen.getByText("synthetic.pdf · page:2 · conflict"),
+    ).toBeTruthy();
     expect(screen.getByText("inspection_photo")).toBeTruthy();
     expect(screen.getByText("document:document-1")).toBeTruthy();
     expect(screen.getByText("extraction_failed")).toBeTruthy();

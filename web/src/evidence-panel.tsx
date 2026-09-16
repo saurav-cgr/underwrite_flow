@@ -1,5 +1,6 @@
 import { Panel } from "./components";
 import {
+  conflictRows,
   displayValue,
   evidenceDocuments,
   evidenceFields,
@@ -15,6 +16,7 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
   const fields = evidenceFields(pack.evidence);
   const signals = riskSignals(pack.summary);
   const gaps = missingFields(pack.summary);
+  const rows = conflictRows(pack.conflicts);
   const names = new Map(
     documents.map((document) => [document.documentId, document.filename]),
   );
@@ -71,16 +73,20 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
         )}
       </Panel>
       <Panel title="Conflicts and gaps">
-        {pack.conflicts.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="muted">No conflict was detected.</p>
         ) : (
           <ul className="evidence-list">
-            {pack.conflicts.map((conflict, index) => (
+            {rows.map((row, index) => (
               <li key={`conflict-${index}`}>
-                <b>{String(conflict.field_name ?? "unnamed field")}</b>
-                <span>{displayValue(conflict.value)}</span>
+                <b>{row.field}</b>
+                <span>{row.value}</span>
                 <small>
-                  {String(conflict.conflict_status ?? "conflict")}
+                  {names.get(row.documentId) ?? "unknown document"}
+                  {" · "}
+                  {row.source}
+                  {" · "}
+                  {row.status}
                 </small>
               </li>
             ))}

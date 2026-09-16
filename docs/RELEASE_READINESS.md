@@ -42,8 +42,9 @@ Resolved or reduced since this report:
 - **Conflict rows named a field but not the disagreement.** Each conflict
   carried `field_name`, `source_locator`, and `conflict_status` only, so an
   underwriter reading "vehicle_age — conflict" had to hunt the evidence list
-  for the two values. A conflict now carries `value`, the contract suite pins
-  the added key, and the panel shows each value inline.
+  for the two values. A conflict now carries `value` and `document_id`, the
+  contract suite pins both keys, and the panel shows each value with the
+  document and locator it came from.
 - **Limitation 9** — closed. Product activation, applicant document removal,
   and reference document removal each used the native `window.confirm`, which
   is unstyled, blocking, and outside the design system. All three now use one

@@ -19,6 +19,14 @@ export interface RiskSignalRow {
   explanation: string;
 }
 
+export interface ConflictRow {
+  field: string;
+  value: string;
+  documentId: string;
+  source: string;
+  status: string;
+}
+
 // Render one evidence value as short readable text.
 export function displayValue(value: unknown): string {
   if (value === null || value === undefined) return "not provided";
@@ -82,6 +90,25 @@ export function evidenceFields(
       value: displayValue(item.value),
       source: locatorOf(item),
     }));
+}
+
+// List the recorded field conflicts with their value and provenance.
+export function conflictRows(
+  conflicts: Record<string, unknown>[],
+): ConflictRow[] {
+  return conflicts.map((conflict) => ({
+    field:
+      typeof conflict.field_name === "string"
+        ? conflict.field_name
+        : "unnamed field",
+    value: displayValue(conflict.value),
+    documentId: String(conflict.document_id ?? ""),
+    source: locatorOf(conflict),
+    status:
+      typeof conflict.conflict_status === "string"
+        ? conflict.conflict_status
+        : "conflict",
+  }));
 }
 
 // Read configured risk signals from the assembled case summary.

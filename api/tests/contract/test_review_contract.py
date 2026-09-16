@@ -63,7 +63,13 @@ FIELD_EVIDENCE_KEYS = {
     "source_type",
 }
 
-CONFLICT_KEYS = {"field_name", "source_locator", "conflict_status", "value"}
+CONFLICT_KEYS = {
+    "field_name",
+    "value",
+    "document_id",
+    "source_locator",
+    "conflict_status",
+}
 
 FAILURE_KEYS = {"rule_code", "details"}
 

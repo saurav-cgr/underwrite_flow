@@ -174,6 +174,9 @@ async def start_review(
             {
                 "field_name": field.field_name,
                 "value": field.value,
+                "document_id": (
+                    str(field.document_id) if field.document_id else None
+                ),
                 "source_locator": field.source_locator,
                 "conflict_status": field.conflict_status,
             }

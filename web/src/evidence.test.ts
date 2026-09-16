@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  conflictRows,
   displayValue,
   evidenceDocuments,
   evidenceFields,
@@ -106,6 +107,43 @@ describe("failure reasons", () => {
     expect(failureReason({ rule_code: "synthetic" })).toBe(
       "recorded failure",
     );
+  });
+});
+
+// Verify conflicts are read with the value and the document behind them.
+describe("conflict rows", () => {
+  it("reads the value, document, locator, and status", () => {
+    const rows = conflictRows([
+      {
+        field_name: "vehicle_age",
+        value: 9,
+        document_id: "document-2",
+        source_locator: "line:2",
+        conflict_status: "conflict",
+      },
+    ]);
+
+    expect(rows).toEqual([
+      {
+        field: "vehicle_age",
+        value: "9",
+        documentId: "document-2",
+        source: "line:2",
+        status: "conflict",
+      },
+    ]);
+  });
+
+  it("tolerates a conflict that omits the optional facts", () => {
+    const rows = conflictRows([{ field_name: "vehicle_use" }]);
+
+    expect(rows[0]).toEqual({
+      field: "vehicle_use",
+      value: "not provided",
+      documentId: "",
+      source: "no locator recorded",
+      status: "conflict",
+    });
   });
 });
 
