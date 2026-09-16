@@ -13,12 +13,12 @@ verdict above is unchanged. Current measurements:
 
 | Requirement | Result |
 | --- | --- |
-| API unit and integration tests | 163 passed |
-| API contract tests | Satisfied — 8 passed in `api/tests/contract/` |
-| Web tests | 66 passed across 9 files |
+| API unit and integration tests | 167 passed |
+| API contract tests | Satisfied — 9 passed in `api/tests/contract/` |
+| Web tests | 68 passed across 9 files |
 | Production web build | Passed; 245 kB JS, 27 kB CSS |
 | Migrations | 6 revisions, linear; `alembic current` at `e5f6a7b8c9d0` |
-| Branch state | 14 commits ahead of `origin/main`, unpushed |
+| Branch state | 18 commits ahead of `origin/main`, unpushed |
 
 Resolved or reduced since this report:
 
@@ -36,6 +36,13 @@ Resolved or reduced since this report:
   within the 80-column limit, and `web/src` has none. The pre-existing debt is
   larger than this report states: 137 lines across `api/src`, of which 12 are
   the two files named in the list below.
+- **Limitation 13** — closed.
+  `api/tests/integration/test_checkpoint_audit_separation.py` runs one review
+  across two application instances, so the second instance resumes a
+  checkpoint that only PostgreSQL holds, and proves that a repeated resume
+  returns the first decision without rewriting or duplicating a single audit
+  row. Both tests were confirmed to fail when the checkpointer is not durable
+  and when the duplicate-resume guard is removed.
 
 Defects found during remediation and closed:
 
