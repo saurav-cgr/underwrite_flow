@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from synthetic_pdf import (
+from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
     blank_pdf,

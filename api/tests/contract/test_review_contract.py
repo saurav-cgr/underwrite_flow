@@ -6,18 +6,20 @@ each nested key set is pinned here as well as the top-level response.
 
 from fastapi.testclient import TestClient
 
-from support import (
-    APPLICANT,
-    RECOMMENDATION_KEYS,
-    UNDERWRITER,
+from fixtures.records import (
     clear_recommendation_summary,
-    conflicting_motor_uploads,
-    create_motor_case,
-    login,
     motor_status,
     remove_case,
     remove_upload,
     set_motor_status,
+)
+from fixtures.support import (
+    APPLICANT,
+    RECOMMENDATION_KEYS,
+    UNDERWRITER,
+    conflicting_motor_uploads,
+    create_motor_case,
+    login,
     start_review,
     submit_motor_case,
     upload_documents,

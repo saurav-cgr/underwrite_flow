@@ -9,16 +9,14 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from review_support import (
-    APPLICANT,
-    UNDERWRITER,
+from fixtures.records import (
     count_handoffs,
-    login,
     read_audit,
     read_decisions,
     remove_case,
     seed_case,
 )
+from fixtures.support import APPLICANT, UNDERWRITER, login
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
 

@@ -1,15 +1,16 @@
-"""Shared helpers for the review, checkpoint, and audit integration tests.
+"""Shared database and upload-volume helpers for the test suites.
 
-The seeding helper writes the rows intake would create, so a test can start
-from a case that is ready to submit without depending on product activation.
+These helpers seed and inspect rows directly, so a test can start from a case
+that is ready to submit without depending on product activation. Helpers that
+drive the API live beside this module in `fixtures.support`.
 """
 
 import shutil
 from uuid import UUID, uuid4
 
 import psycopg
-from fastapi.testclient import TestClient
-from synthetic_pdf import (
+
+from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
     UPLOAD_ROOT,
@@ -22,19 +23,57 @@ DATABASE_URL = (
     "db:5433/underwriteflow"
 )
 
-APPLICANT = ("applicant@synthetic.test", "underwriteflow-demo-applicant")
-UNDERWRITER = ("underwriter@synthetic.test", "underwriteflow-demo-underwriter")
+
+# Read the current status of the built-in synthetic motor product.
+def motor_status() -> str:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT status FROM products WHERE code = %s",
+                ("motor-private-car",),
+            )
+            row = cursor.fetchone()
+    return row[0] if row else "draft"
 
 
-# Log in one fictional demo role and return bearer headers.
-def login(client: TestClient, account: tuple[str, str]) -> dict[str, str]:
-    email, password = account
-    response = client.post(
-        "/api/v1/auth/session",
-        json={"email": email, "password": password},
-    )
-    assert response.status_code == 200, response.text
-    return {"Authorization": f"Bearer {response.json()['token']}"}
+# Set the built-in synthetic motor product active or back to draft.
+def set_motor_status(status: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE product_versions SET status = %s WHERE product_id "
+                "= (SELECT id FROM products WHERE code = %s)",
+                (status, "motor-private-car"),
+            )
+            cursor.execute(
+                "UPDATE products SET status = %s WHERE code = %s",
+                (status, "motor-private-car"),
+            )
+
+
+# Replace one case's persisted recommendation summary with an empty object.
+def clear_recommendation_summary(case_id: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE recommendations SET summary = '{}'::jsonb "
+                "WHERE case_id = %s",
+                (case_id,),
+            )
+
+
+# Delete one uploaded file so its extraction branch fails on the volume.
+def remove_upload(case_id: str, document_code: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT storage_key FROM documents WHERE case_id = %s "
+                "AND document_code = %s",
+                (case_id, document_code),
+            )
+            row = cursor.fetchone()
+    assert row is not None
+    (UPLOAD_ROOT / row[0]).unlink()
 
 
 # Write the rows and upload files a submittable synthetic motor case needs.

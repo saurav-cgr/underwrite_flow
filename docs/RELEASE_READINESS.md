@@ -29,9 +29,10 @@ Resolved or reduced since this report:
 - **Limitation 6** — reduced. The contract suite removes every row it creates,
   verified by comparing row counts before and after a run. Other integration
   suites still mutate the shared development database.
-- **Limitation 10** — reduced. `api/tests/contract/` now exists.
-  `sample_data/` and `api/tests/fixtures/` do not; the contract suite reaches
-  the integration fixture builders through an explicit path insertion.
+- **Limitation 10** — reduced. `api/tests/contract/` and `api/tests/fixtures/`
+  now exist, and every suite imports the shared fixture package instead of
+  inserting a path for itself or copying helpers. `sample_data/` still does
+  not exist.
 - **Limitation 11** — partly closed. Every line added during remediation is
   within the 80-column limit, and `web/src` has none. The pre-existing debt is
   larger than this report states: 137 lines across `api/src`, of which 12 are

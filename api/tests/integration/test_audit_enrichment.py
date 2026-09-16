@@ -4,7 +4,11 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from synthetic_pdf import IDENTITY_ONLY_LINES, MOTOR_EVIDENCE_LINES, text_pdf
+from fixtures.synthetic_pdf import (
+    IDENTITY_ONLY_LINES,
+    MOTOR_EVIDENCE_LINES,
+    text_pdf,
+)
 
 from underwriteflow.app import create_app
 from underwriteflow.audit.events import (

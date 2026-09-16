@@ -2,7 +2,8 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from synthetic_pdf import (
+from fixtures.records import remove_case
+from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
     text_pdf,
@@ -154,30 +155,4 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
         assert response.json()["status"] == "confirmed"
         assert restarted.status_code == 409
     finally:
-        with psycopg.connect(DATABASE_URL) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("ALTER TABLE audit_events DISABLE TRIGGER audit_events_append_only")
-                try:
-                    cursor.execute(
-                        "DELETE FROM extracted_fields WHERE case_id = %s",
-                        (case_id,),
-                    )
-                    cursor.execute(
-                        "DELETE FROM validations WHERE case_id = %s",
-                        (case_id,),
-                    )
-                    cursor.execute(
-                        "DELETE FROM risk_signals WHERE case_id = %s",
-                        (case_id,),
-                    )
-                    cursor.execute(
-                        "DELETE FROM documents WHERE case_id = %s",
-                        (case_id,),
-                    )
-                    cursor.execute("DELETE FROM audit_events WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM reviews WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM recommendations WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM submissions WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM cases WHERE id = %s", (case_id,))
-                finally:
-                    cursor.execute("ALTER TABLE audit_events ENABLE TRIGGER audit_events_append_only")
+        remove_case(case_id)

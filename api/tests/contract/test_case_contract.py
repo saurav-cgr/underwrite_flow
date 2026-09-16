@@ -6,15 +6,13 @@ what the typed web client and the applicant screens depend on.
 
 from fastapi.testclient import TestClient
 
-from support import (
+from fixtures.records import motor_status, remove_case, set_motor_status
+from fixtures.support import (
     APPLICANT,
     DOCUMENT_CODES,
     RECOMMENDATION_KEYS,
     create_motor_case,
     login,
-    motor_status,
-    remove_case,
-    set_motor_status,
     submit_motor_case,
     upload_motor_documents,
 )

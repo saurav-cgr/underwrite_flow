@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from synthetic_pdf import blank_pdf
+from fixtures.synthetic_pdf import blank_pdf
 
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
