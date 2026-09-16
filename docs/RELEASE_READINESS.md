@@ -37,6 +37,18 @@ Resolved or reduced since this report:
   larger than this report states: 138 lines across `api/src`, of which 12 are
   the two files named in the list below.
 
+Defects found by the browser journeys and closed:
+
+- **The applicant readiness meter counted files, not satisfied requirements.**
+  A replacement upload for a code that was already received made the screen
+  read "3 of 2 requested documents received" with `aria-valuenow` 150 against
+  `aria-valuemax` 100. It now counts each requested code once, covered by a
+  regression test in `web/src/documents.test.tsx`.
+- **A recorded decision named its route twice.** A request for information
+  rendered "needs information · needs information", because the banner joined
+  the status with a route that was the same string. The route is now omitted
+  when it matches the status, so `confirmed · specialist` is unchanged.
+
 New limitations recorded since this report, ordered with the list below:
 
 14. **A review-start fallback drops `factors`.** `reviews/router.py` serves

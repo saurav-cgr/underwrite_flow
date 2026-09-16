@@ -202,6 +202,18 @@ export function requiredDocuments<T extends ResolvedRequirement>(
   return documents.filter((document) => document.required);
 }
 
+// Count how many required codes hold at least one stored document, so a
+// replacement upload for one code cannot push the meter past its total.
+export function satisfiedRequirementCount<T extends { code: string }>(
+  required: T[],
+  documentCodes: (string | null)[],
+): number {
+  const stored = new Set(
+    documentCodes.filter((code): code is string => code !== null),
+  );
+  return required.filter((requirement) => stored.has(requirement.code)).length;
+}
+
 export type ReviewAction = "confirm" | "override" | "request_information";
 
 export interface ReviewDecisionInput {
@@ -254,4 +266,16 @@ export function reviewDecisionBody(
     reason: input.reason || undefined,
     evidence_acknowledged: input.acknowledged,
   };
+}
+
+// Describe one recorded decision without repeating the same word twice, since
+// a request for information settles on no separate route.
+export function decisionSummary(result: {
+  status: string;
+  selected_route: string | null;
+}): string {
+  const status = result.status.replaceAll("_", " ");
+  const route = result.selected_route?.replaceAll("_", " ") ?? null;
+  if (route === null || route === status) return status;
+  return `${status} · ${route}`;
 }

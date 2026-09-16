@@ -110,3 +110,36 @@ describe("review evidence pack", () => {
     expect(submitReview).not.toHaveBeenCalled();
   });
 });
+
+// Verify a recorded decision is described once, without a repeated route.
+describe("decision summary", () => {
+  it("does not repeat the word when the route matches the status", async () => {
+    vi.mocked(submitReview).mockResolvedValue({
+      case_id: ITEM.case_id,
+      action: "request_information",
+      selected_route: null,
+      status: "needs_information",
+    });
+    renderReview();
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("checkbox", {
+        name: /reviewed the submitted evidence/i,
+      }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /reason/i }),
+      "Send the missing record.",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Request information" }),
+    );
+
+    const recorded = await screen.findByRole("status");
+
+    expect(recorded.textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "Decision recorded. needs information",
+    );
+  });
+});

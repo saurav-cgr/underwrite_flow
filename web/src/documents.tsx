@@ -10,7 +10,11 @@ import {
 } from "./api";
 import { Button, Journey, PageHeading } from "./components";
 import { Icon } from "./icons";
-import { intakeActionFor, requiredDocuments } from "./ui-state";
+import {
+  intakeActionFor,
+  requiredDocuments,
+  satisfiedRequirementCount,
+} from "./ui-state";
 import type {
   CaseConfiguration,
   CaseRecord,
@@ -82,11 +86,10 @@ export function DocumentsScreen({
     (document) =>
       !document.required && document.requirement !== "not_applicable",
   );
-  const requiredCodes = new Set(required.map((document) => document.code));
-  const receivedCount = documents.filter(
-    (document) =>
-      document.document_code && requiredCodes.has(document.document_code),
-  ).length;
+  const receivedCount = satisfiedRequirementCount(
+    required,
+    documents.map((document) => document.document_code),
+  );
   const completion =
     required.length === 0
       ? 100

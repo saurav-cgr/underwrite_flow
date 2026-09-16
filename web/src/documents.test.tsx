@@ -217,3 +217,23 @@ describe("resolved conditional requirement", () => {
     ).toBeTruthy();
   });
 });
+
+// Verify a replacement upload for one code cannot inflate the readiness meter.
+describe("replacement upload counting", () => {
+  it("counts each requested code once after a replacement", async () => {
+    listDocumentsMock.mockResolvedValue([
+      UPLOADED,
+      { ...UPLOADED, id: "replacement-id", filename: "replacement.pdf" },
+    ]);
+    renderScreen(CASE);
+
+    await screen.findByText("replacement.pdf");
+
+    expect(
+      screen.getByText("1 of 1 requested documents received."),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("progressbar").getAttribute("aria-valuenow"),
+    ).toBe("100");
+  });
+});

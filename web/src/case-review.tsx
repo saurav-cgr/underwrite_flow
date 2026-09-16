@@ -4,7 +4,7 @@ import { ApiError, completeCase, startReview, submitReview } from "./api";
 import { Button, PageHeading, Panel } from "./components";
 import { EvidencePanel } from "./evidence-panel";
 import { Icon } from "./icons";
-import { reviewDecisionBody } from "./ui-state";
+import { decisionSummary, reviewDecisionBody } from "./ui-state";
 import type {
   QueueItem,
   Recommendation,
@@ -184,11 +184,8 @@ export function CaseReview({
           className={handoffFailed ? "notice-card" : "success-card"}
           role="status"
         >
-          <strong>Decision recorded.</strong>
-          <span>
-            {result.status.replaceAll("_", " ")} ·{" "}
-            {result.selected_route ?? "needs information"}
-          </span>
+          <strong>Decision recorded.</strong>{" "}
+          <span>{decisionSummary(result)}</span>
           {handoffFailed ? (
             <span>
               The queue handoff did not complete, so this case is not in
