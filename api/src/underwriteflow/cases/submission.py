@@ -28,7 +28,10 @@ from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.product_subgraphs import build_product_subgraph
 from underwriteflow.workflow.state import thread_config
-from underwriteflow.workflow.triage import build_triage_graph
+from underwriteflow.workflow.triage import (
+    build_triage_graph,
+    has_low_confidence,
+)
 
 MAX_REFERENCE_CHARS = 50_000
 
@@ -192,9 +195,7 @@ class SubmissionService:
             ),
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
-            "low_confidence": any(
-                (item.get("confidence") or 1.0) < 0.8 for item in reconciled
-            ),
+            "low_confidence": has_low_confidence(reconciled),
         }
 
     # Start the first workflow cycle for a newly created case.

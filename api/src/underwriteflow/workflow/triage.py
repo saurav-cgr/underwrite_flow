@@ -7,6 +7,19 @@ from langgraph.types import interrupt
 from underwriteflow.reviews.schemas import ReviewCommand
 from underwriteflow.workflow.state import TriageState
 
+LOW_CONFIDENCE_THRESHOLD = 0.8
+
+
+# Report whether any reconciled field has unknown or low confidence.
+def has_low_confidence(reconciled: list[dict[str, object]]) -> bool:
+    for item in reconciled:
+        confidence = item.get("confidence")
+        if not isinstance(confidence, (int, float)):
+            return True
+        if confidence < LOW_CONFIDENCE_THRESHOLD:
+            return True
+    return False
+
 
 # Assemble evidence, conflicts, missing inputs, and deterministic signals.
 def assemble_case_summary(state: TriageState) -> dict[str, dict[str, object]]:

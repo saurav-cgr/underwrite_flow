@@ -13,9 +13,10 @@ from underwriteflow.products.service import load_configuration
 from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.product_subgraphs import select_product_subgraph
-from underwriteflow.workflow.triage import recommend_triage_route
-
-LOW_CONFIDENCE = 0.8
+from underwriteflow.workflow.triage import (
+    has_low_confidence,
+    recommend_triage_route,
+)
 
 
 # Locate mounted product configurations or their source-checkout fallback.
@@ -82,10 +83,7 @@ async def run_record(
             "missing_information": missing,
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
-            "low_confidence": any(
-                (item.get("confidence") or 1.0) < LOW_CONFIDENCE
-                for item in reconciled
-            ),
+            "low_confidence": has_low_confidence(reconciled),
         }
     )["recommendation"]
     return {

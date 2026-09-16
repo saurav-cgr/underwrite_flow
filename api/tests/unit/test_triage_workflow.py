@@ -3,13 +3,17 @@ from fastapi.testclient import TestClient
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import ValidationError
+from types import SimpleNamespace
 from uuid import uuid4
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
+from underwriteflow.cases.submission import SubmissionService
+from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import (
     build_triage_graph,
+    has_low_confidence,
     resolve_final_route,
 )
 from underwriteflow.reviews.schemas import ReviewCommand
@@ -253,3 +257,49 @@ def test_resolve_final_route_confirms_information_recommendation() -> None:
         None,
         "needs_information",
     )
+
+
+# Verify unknown confidence counts as low confidence rather than certainty.
+def test_has_low_confidence_treats_unknown_confidence_as_low() -> None:
+    assert has_low_confidence([{"confidence": None}]) is True
+    assert has_low_confidence([{"field_name": "vehicle_age"}]) is True
+    assert has_low_confidence([{"confidence": "unknown"}]) is True
+    assert has_low_confidence([]) is False
+
+
+# Verify a measured zero score is low and a confident field is not.
+def test_has_low_confidence_uses_the_measured_score() -> None:
+    assert has_low_confidence([{"confidence": 0.0}]) is True
+    assert has_low_confidence([{"confidence": 0.79}]) is True
+    assert has_low_confidence([{"confidence": 0.8}]) is False
+    assert has_low_confidence([{"confidence": 1.0}]) is False
+
+
+# Verify the triage input flags unknown confidence from reconciled evidence.
+def test_build_triage_state_flags_unknown_confidence() -> None:
+    service = SubmissionService(
+        provider=FakeProvider(),
+        upload_root="/tmp/synthetic-uploads",
+        database_url="postgresql://synthetic",
+    )
+    case = SimpleNamespace(id=uuid4())
+
+    unknown = service.build_triage_state(
+        case,
+        [],
+        {"reconciled_fields": [{"field_name": "vehicle_age"}]},
+        {},
+    )
+    confident = service.build_triage_state(
+        case,
+        [],
+        {
+            "reconciled_fields": [
+                {"field_name": "vehicle_age", "confidence": 1.0}
+            ]
+        },
+        {},
+    )
+
+    assert unknown["low_confidence"] is True
+    assert confident["low_confidence"] is False
