@@ -89,7 +89,31 @@ describe("evidence panel", () => {
       screen.getByText("No requested document is outstanding."),
     ).toBeTruthy();
     expect(
+      screen.getByText("No requested field is missing."),
+    ).toBeTruthy();
+    expect(
       screen.getByText("No processing failure was recorded."),
+    ).toBeTruthy();
+  });
+
+  it("names the fields the evidence never supplied", () => {
+    render(
+      <EvidencePanel
+        pack={{
+          ...PACK,
+          missing_information: [],
+          summary: {
+            missing_information: ["prior_claims", "annual_distance"],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("prior_claims")).toBeTruthy();
+    expect(screen.getByText("annual_distance")).toBeTruthy();
+    expect(screen.queryByText("No requested field is missing.")).toBeNull();
+    expect(
+      screen.getByText("No requested document is outstanding."),
     ).toBeTruthy();
   });
 

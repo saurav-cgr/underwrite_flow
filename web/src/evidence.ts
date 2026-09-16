@@ -101,3 +101,12 @@ export function riskSignals(summary: unknown): RiskSignalRow[] {
         typeof item.explanation === "string" ? item.explanation : "",
     }));
 }
+
+// List the requested fields the extracted evidence never supplied, which the
+// top-level response reports separately as outstanding document codes.
+export function missingFields(summary: unknown): string[] {
+  if (typeof summary !== "object" || summary === null) return [];
+  const value = (summary as Record<string, unknown>).missing_information;
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}

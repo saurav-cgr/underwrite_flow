@@ -3,6 +3,7 @@ import {
   evidenceDocuments,
   evidenceFields,
   failureReason,
+  missingFields,
   riskSignals,
 } from "./evidence";
 import type { ReviewStart } from "./types";
@@ -12,6 +13,7 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
   const documents = evidenceDocuments(pack.evidence);
   const fields = evidenceFields(pack.evidence);
   const signals = riskSignals(pack.summary);
+  const gaps = missingFields(pack.summary);
   const names = new Map(
     documents.map((document) => [document.documentId, document.filename]),
   );
@@ -80,6 +82,7 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
             ))}
           </ul>
         )}
+        <p className="muted">Missing documents</p>
         {pack.missing_information.length === 0 ? (
           <p className="muted">No requested document is outstanding.</p>
         ) : (
@@ -87,6 +90,21 @@ export function EvidencePanel({ pack }: { pack: ReviewStart }) {
             {pack.missing_information.map((code) => (
               <li key={code}>
                 <b>{code}</b>
+              </li>
+            ))}
+          </ul>
+        )}
+        {/* The response reports missing document codes and missing requested
+            fields separately, so both are labelled to keep them apart. */}
+        <p className="muted">Missing fields</p>
+        {gaps.length === 0 ? (
+          <p className="muted">No requested field is missing.</p>
+        ) : (
+          <ul className="evidence-list">
+            {gaps.map((field) => (
+              <li key={field}>
+                <b>{field}</b>
+                <span>missing</span>
               </li>
             ))}
           </ul>

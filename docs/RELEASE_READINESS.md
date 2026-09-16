@@ -37,6 +37,12 @@ Resolved or reduced since this report:
   within the 80-column limit, and `web/src` has none. The pre-existing debt is
   larger than this report states: 137 lines across `api/src`, of which 12 are
   the two files named in the list below.
+- **Limitation 8** — closed. The review screen reported missing *document
+  codes* and missing *requested fields* under one heading, so a case returned
+  for information said only "No requested document is outstanding" and hid why
+  it was routed there. The panel now labels both lists and names every missing
+  field, covered by a DOM test and checked in the browser against a live
+  `needs_information` case.
 - **Limitation 13** — closed.
   `api/tests/integration/test_checkpoint_audit_separation.py` runs one review
   across two application instances, so the second instance resumes a
