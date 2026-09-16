@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from langgraph.types import Command
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,7 +61,7 @@ def review_response_for_record(
 def require_specialist_label(
     command: ReviewCommand,
     recommended_route: str | None,
-    configuration: ProductConfiguration,
+    configuration: ProductConfiguration | None,
 ) -> None:
     route, _ = resolve_final_route(command, recommended_route)
     if route != "specialist":
@@ -70,7 +71,10 @@ def require_specialist_label(
             status_code=422,
             detail="A specialist label is required for specialist review",
         )
-    if command.specialist_label not in configuration.specialist_labels:
+    if (
+        configuration is not None
+        and command.specialist_label not in configuration.specialist_labels
+    ):
         raise HTTPException(
             status_code=422,
             detail="Specialist label is not configured for this product",
@@ -106,9 +110,14 @@ async def start_review(
             status_code=409,
             detail="Case recommendation is unavailable",
         )
-    configuration = ProductConfiguration.model_validate(
-        product_version.configuration
-    )
+    try:
+        configuration = ProductConfiguration.model_validate(
+            product_version.configuration
+        )
+    except ValidationError:
+        # An unreadable pinned configuration still opens for human review
+        # with no derived requirements and no selectable specialist labels.
+        configuration = None
     documents = list(
         await session.scalars(
             select(Document).where(Document.case_id == case_id)
@@ -165,20 +174,28 @@ async def start_review(
             for field in extracted_fields
             if field.conflict_status != "clear"
         ],
-        missing_information=missing_document_codes(
-            configuration,
-            [
-                document.document_code
-                for document in documents
-                if document.document_code
-            ],
-            application,
+        missing_information=(
+            []
+            if configuration is None
+            else missing_document_codes(
+                configuration,
+                [
+                    document.document_code
+                    for document in documents
+                    if document.document_code
+                ],
+                application,
+            )
         ),
         extraction_failures=[
             {"rule_code": failure.rule_code, "details": failure.details}
             for failure in failures
         ],
-        specialist_options=list(configuration.specialist_labels),
+        specialist_options=(
+            []
+            if configuration is None
+            else list(configuration.specialist_labels)
+        ),
     )
 
 
@@ -214,9 +231,14 @@ async def resume_review(
             status_code=409,
             detail="Case configuration is unavailable",
         )
-    configuration = ProductConfiguration.model_validate(
-        product_version.configuration
-    )
+    try:
+        configuration = ProductConfiguration.model_validate(
+            product_version.configuration
+        )
+    except ValidationError:
+        # Without a readable configuration the label vocabulary is unknown, so
+        # only the presence of a label can be enforced.
+        configuration = None
     config = thread_config(str(case_id), case.review_cycle)
     async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
         graph = build_triage_graph(checkpointer=checkpointer)

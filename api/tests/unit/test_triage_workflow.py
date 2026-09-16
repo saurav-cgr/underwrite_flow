@@ -303,3 +303,43 @@ def test_build_triage_state_flags_unknown_confidence() -> None:
 
     assert unknown["low_confidence"] is True
     assert confident["low_confidence"] is False
+
+
+# Verify an unsupported product configuration outranks every other signal and
+# still resolves to a final route once a human reviews it.
+@pytest.mark.asyncio
+async def test_unsupported_product_recommends_manual_review() -> None:
+    graph = build_triage_graph(checkpointer=MemorySaver())
+    config = thread_config("triage-unsupported")
+
+    paused = await graph.ainvoke(
+        {
+            "case_id": "triage-unsupported",
+            "unsupported_product": True,
+            "validations": [
+                {"status": "triggered", "route": "standard"}
+            ],
+            "risk_signals": [{"code": "synthetic_signal"}],
+            "conflicts": [{"field_name": "vehicle_age"}],
+            "missing_information": ["prior_claims"],
+            "evidence": [],
+        },
+        config=config,
+    )
+
+    assert paused["recommendation"]["route"] == "manual"
+    assert paused["recommendation"]["factors"] == ["unsupported_product"]
+
+    resumed = await graph.ainvoke(
+        Command(
+            resume={
+                "action": "confirm",
+                "specialist_label": "motor inspection",
+                "evidence_acknowledged": True,
+            }
+        ),
+        config=config,
+    )
+
+    assert resumed["final_route"] == "specialist"
+    assert resumed["review_status"] == "overridden"

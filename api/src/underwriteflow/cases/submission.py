@@ -3,6 +3,7 @@
 from pathlib import Path
 from uuid import UUID
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -198,6 +199,58 @@ class SubmissionService:
             "low_confidence": has_low_confidence(reconciled),
         }
 
+    # Route a case whose pinned configuration cannot be read to manual review.
+    async def route_unsupported_case(
+        self,
+        session: AsyncSession,
+        case: Case,
+        actor_user_id: UUID,
+        event_type: str,
+        clear_evidence: bool,
+    ) -> dict[str, object]:
+        if clear_evidence:
+            await clear_previous_evidence(session, case)
+        documents = list(
+            await session.scalars(
+                select(Document).where(Document.case_id == case.id)
+            )
+        )
+        # The reason is carried in the triage input and persisted as a
+        # validation so the review screen can explain why a human is needed.
+        failure = {
+            "rule_code": "unsupported_product",
+            "status": "error",
+            "details": {"reason": "unreadable_product_configuration"},
+        }
+        triage_values = await self.run_triage_graph(
+            case,
+            {
+                "case_id": str(case.id),
+                "evidence": [],
+                "conflicts": [],
+                "missing_information": [],
+                "risk_signals": [],
+                "validations": [failure],
+                "low_confidence": False,
+                "unsupported_product": True,
+            },
+        )
+        await persist_case_evidence(
+            session,
+            case,
+            actor_user_id,
+            {},
+            {"validations": [failure]},
+            triage_values,
+            [],
+            documents,
+            event_type=event_type,
+        )
+        return {
+            "status": "underwriter_review",
+            "recommendation": triage_values.get("recommendation", {}),
+        }
+
     # Start the first workflow cycle for a newly created case.
     async def submit(
         self, session: AsyncSession, case: Case, actor_user_id: UUID
@@ -244,9 +297,20 @@ class SubmissionService:
         )
         if product_version is None:
             raise CaseValidationError("case configuration is unavailable")
-        configuration = ProductConfiguration.model_validate(
-            product_version.configuration
-        )
+        try:
+            configuration = ProductConfiguration.model_validate(
+                product_version.configuration
+            )
+        except ValidationError:
+            # A pinned configuration the application can no longer read cannot
+            # be processed deterministically, so a human decides the route.
+            return await self.route_unsupported_case(
+                session,
+                case,
+                actor_user_id,
+                event_type,
+                clear_evidence,
+            )
         submission = await session.scalar(
             select(Submission).where(Submission.case_id == case.id)
         )

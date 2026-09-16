@@ -36,6 +36,23 @@ Uploaded documents are untrusted data. Extraction receives a separate trusted
 system instruction and a serialized document payload. Stored audit and trace
 views contain metadata and evidence locators, not credentials or raw files.
 
+## Routing precedence
+
+Deterministic rules outrank model suggestions. The applied order is
+unsupported/manual, needs information, specialist, standard, expedited. Only
+`expedited`, `standard`, and `specialist` are final routes; `manual` and
+`needs_information` are review states, and a manual recommendation resolves to
+the most cautious final route once an underwriter decides.
+
+Normal intake cannot produce an unsupported product. A case is pinned to a
+version that was validated when it was imported, and the case carries no
+independent product code, so the pinned configuration always describes a
+supported product. The `unsupported_product` state the triage graph reads as
+tier one is set when the pinned version's stored configuration can no longer be
+read. That routes the case to manual review with the reason recorded as a
+validation, instead of failing the request. Any future intake path that accepts
+a product the rulebook does not cover must set the same state.
+
 ## Governance boundary
 
 The workflow produces only `expedited`, `standard`, or `specialist` triage

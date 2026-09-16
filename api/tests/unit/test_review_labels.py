@@ -86,3 +86,24 @@ def test_standard_resolution_requires_no_label() -> None:
     )
 
     require_specialist_label(command, "manual", specialist_configuration())
+
+
+# Verify an unreadable configuration still requires a label for specialists.
+def test_unreadable_configuration_still_requires_a_label() -> None:
+    command = ReviewCommand(action="confirm", evidence_acknowledged=True)
+
+    with pytest.raises(HTTPException) as error:
+        require_specialist_label(command, "manual", None)
+
+    assert error.value.status_code == 422
+
+
+# Verify an unreadable configuration cannot reject an unknown label.
+def test_unreadable_configuration_accepts_any_label() -> None:
+    command = ReviewCommand(
+        action="confirm",
+        specialist_label="unverifiable desk",
+        evidence_acknowledged=True,
+    )
+
+    require_specialist_label(command, "manual", None)
