@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from fixtures.records import set_motor_status
 from pypdf import PdfWriter
 
 from underwriteflow.app import create_app
@@ -33,24 +34,6 @@ def synthetic_pdf() -> bytes:
     buffer = BytesIO()
     writer.write(buffer)
     return buffer.getvalue()
-
-
-# Set one built-in synthetic product active for the intake smoke test.
-def set_motor_status(status: str) -> None:
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE product_versions
-                SET status = %s
-                WHERE product_id = (SELECT id FROM products WHERE code = %s)
-                """,
-                (status, "motor-private-car"),
-            )
-            cursor.execute(
-                "UPDATE products SET status = %s WHERE code = %s",
-                (status, "motor-private-car"),
-            )
 
 
 # Verify idempotent intake and safe upload metadata.

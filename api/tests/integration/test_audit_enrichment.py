@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from fixtures.records import set_motor_status
 from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
@@ -30,23 +31,6 @@ ADMIN = (
     "underwriteflow-demo-administrator",
 )
 
-
-# Set one built-in synthetic product active for the audit journey.
-def set_motor_status(status: str) -> None:
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE product_versions
-                SET status = %s
-                WHERE product_id = (SELECT id FROM products WHERE code = %s)
-                """,
-                (status, "motor-private-car"),
-            )
-            cursor.execute(
-                "UPDATE products SET status = %s WHERE code = %s",
-                (status, "motor-private-car"),
-            )
 
 
 # Log in one fictional demo role and return bearer headers.

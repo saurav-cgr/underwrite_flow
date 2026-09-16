@@ -48,8 +48,9 @@ Resolved or reduced since this report:
   browser check of both the cancel and confirm paths.
 - **Limitation 10** — reduced. `api/tests/contract/` and `api/tests/fixtures/`
   now exist, and every suite imports the shared fixture package instead of
-  inserting a path for itself or copying helpers. `sample_data/` still does
-  not exist.
+  inserting a path for itself. Product-state helpers are shared by every
+  module, but seven integration modules still carry a local `login` copy.
+  `sample_data/` still does not exist.
 - **Limitation 11** — partly closed. Every line added during remediation is
   within the 80-column limit, and `web/src` has none. The pre-existing debt is
   larger than this report states: 137 lines across `api/src`, of which 12 are

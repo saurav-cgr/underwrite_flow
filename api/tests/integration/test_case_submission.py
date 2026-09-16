@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from fixtures.records import set_motor_status
 from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
@@ -26,24 +27,6 @@ def motor_uploads() -> list[tuple[str, bytes]]:
         ("identity_record", text_pdf(IDENTITY_ONLY_LINES)),
         ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
     ]
-
-
-# Set one built-in synthetic product active for the submission test.
-def set_motor_status(status: str) -> None:
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE product_versions
-                SET status = %s
-                WHERE product_id = (SELECT id FROM products WHERE code = %s)
-                """,
-                (status, "motor-private-car"),
-            )
-            cursor.execute(
-                "UPDATE products SET status = %s WHERE code = %s",
-                (status, "motor-private-car"),
-            )
 
 
 # Log in one fictional demo role and return bearer headers.
@@ -93,7 +76,11 @@ def test_submission_requires_evidence_and_persists_recommendation() -> None:
                 uploaded = client.post(
                     f"/api/v1/cases/{case_id}/documents",
                     files={
-                        "document": ("synthetic.pdf", content, "application/pdf")
+                        "document": (
+                            "synthetic.pdf",
+                            content,
+                            "application/pdf",
+                        )
                     },
                     data={"document_code": code},
                     headers=headers,

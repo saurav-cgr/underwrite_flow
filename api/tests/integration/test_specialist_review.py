@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from fixtures.records import set_motor_status
 from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
@@ -40,21 +41,6 @@ def login(
     )
     assert response.status_code == 200, response.text
     return {"Authorization": f"Bearer {response.json()['token']}"}
-
-
-# Set the built-in synthetic motor product active or back to draft.
-def set_motor_status(status: str) -> None:
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "UPDATE product_versions SET status = %s WHERE product_id "
-                "= (SELECT id FROM products WHERE code = %s)",
-                (status, "motor-private-car"),
-            )
-            cursor.execute(
-                "UPDATE products SET status = %s WHERE code = %s",
-                (status, "motor-private-car"),
-            )
 
 
 # Create, upload conflicting evidence, and submit a specialist case.
