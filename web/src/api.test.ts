@@ -3,9 +3,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ApiError,
   createSession,
+  deleteReference,
+  listReferences,
   readCase,
+  readCaseConfiguration,
   removeDocument,
+  resubmitCase,
   setUnauthorizedHandler,
+  submitCase,
+  uploadReference,
 } from "./api";
 
 // Restore the global request function after each typed-client check.
@@ -106,5 +112,127 @@ describe("error envelope", () => {
     await createSession("synthetic@test", "wrong").catch(() => undefined);
 
     expect(handler).not.toHaveBeenCalled();
+  });
+});
+
+// Stub one JSON response and return the fetch mock for assertions.
+function stubJson(status: number, value: unknown) {
+  const fetchMock = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(value), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+// Verify the applicant lifecycle calls the owned case routes.
+describe("case submission API", () => {
+  const submission = {
+    id: "case-id",
+    status: "underwriter_review",
+    recommendation: { route: "expedited", factors: [] },
+  };
+
+  it("submits an owned case for processing", async () => {
+    const fetchMock = stubJson(200, submission);
+
+    const result = await submitCase("session", "case-id");
+
+    expect(result.status).toBe("underwriter_review");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/cases/case-id/submit",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("resubmits a case returned for information", async () => {
+    const fetchMock = stubJson(200, submission);
+
+    await resubmitCase("session", "case-id");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/cases/case-id/resubmit",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+});
+
+// Verify the pinned configuration and reference documents use their routes.
+describe("configuration and reference API", () => {
+  it("reads the pinned configuration of one case", async () => {
+    const fetchMock = stubJson(200, {
+      case_id: "case-id",
+      product_code: "motor-private-car",
+      product_version: "v1",
+      rulebook_version: "v1",
+      fields: [],
+      documents: [],
+    });
+
+    const configuration = await readCaseConfiguration(
+      "session",
+      "case-id",
+    );
+
+    expect(configuration.product_version).toBe("v1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/cases/case-id/configuration",
+      expect.anything(),
+    );
+  });
+
+  it("uploads a reference document as multipart form data", async () => {
+    const fetchMock = stubJson(200, {
+      id: "reference-id",
+      version: "v1",
+      filename: "synthetic.pdf",
+      content_type: "application/pdf",
+      byte_size: 32,
+      content_hash: "synthetic",
+      page_count: 1,
+    });
+    const file = new File(["synthetic"], "synthetic.pdf", {
+      type: "application/pdf",
+    });
+
+    await uploadReference("session", "motor-private-car", "v1", file);
+
+    const [path, init] = fetchMock.mock.calls[0];
+    expect(path).toBe(
+      "/api/v1/products/motor-private-car/references",
+    );
+    expect(init.method).toBe("POST");
+    const form = init.body as FormData;
+    expect(form.get("version")).toBe("v1");
+    expect(form.get("reference")).toBe(file);
+  });
+
+  it("lists reference documents for one product version", async () => {
+    const fetchMock = stubJson(200, []);
+
+    await listReferences("session", "motor-private-car", "v1");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/products/motor-private-car/references?version=v1",
+      expect.anything(),
+    );
+  });
+
+  it("deletes one reference document", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(null, { status: 204 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      deleteReference("session", "motor-private-car", "reference-id"),
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/products/motor-private-car/references/reference-id",
+      expect.objectContaining({ method: "DELETE" }),
+    );
   });
 });

@@ -169,3 +169,37 @@ export interface CompletionResult {
   specialist_label: string | null;
   status: "completed";
 }
+
+export interface CaseSubmissionResult {
+  id: string;
+  status: string;
+  recommendation: Recommendation;
+}
+
+export interface ResolvedDocument {
+  code: string;
+  title: string;
+  requirement: "required" | "optional" | "conditional" | "not_applicable";
+  required: boolean;
+  accepted_types: string[];
+  condition: Record<string, unknown> | null;
+}
+
+export interface CaseConfiguration {
+  case_id: string;
+  product_code: string;
+  product_version: string;
+  rulebook_version: string;
+  fields: ProductField[];
+  documents: ResolvedDocument[];
+}
+
+export interface ReferenceDocument {
+  id: string;
+  version: string;
+  filename: string;
+  content_type: string;
+  byte_size: number;
+  content_hash: string;
+  page_count: number | null;
+}
