@@ -8,7 +8,7 @@ import type {
   ReviewResult,
   ReviewStart,
 } from "./types";
-import { request } from "./api-core";
+import { request, requestBlob } from "./api-core";
 
 // Load operations queue rows with safe optional filters.
 export async function listQueue(
@@ -33,6 +33,15 @@ export async function startReview(
   caseId: string,
 ): Promise<ReviewStart> {
   return request(`/reviews/${caseId}/start`, token, { method: "POST" });
+}
+
+// Load one case document for the authenticated underwriter inline preview.
+export async function fetchReviewDocument(
+  token: string,
+  caseId: string,
+  documentId: string,
+): Promise<{ blob: Blob; contentType: string; filename: string }> {
+  return requestBlob(`/reviews/${caseId}/documents/${documentId}`, token);
 }
 
 // Persist one underwriter command at the human review checkpoint.

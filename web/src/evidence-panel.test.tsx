@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("./api", () => ({
+  ApiError: class ApiError extends Error {
+    status = 500;
+  },
+  fetchReviewDocument: vi.fn(),
+}));
+
+import { fetchReviewDocument } from "./api";
 import { EvidencePanel } from "./evidence-panel";
 import "./test-setup";
 import type { ReviewStart } from "./types";
@@ -19,77 +28,113 @@ const PACK: ReviewStart = {
       },
     ],
   },
+  submitted_facts: [
+    {
+      field_name: "vehicle_age",
+      field_label: "Vehicle age",
+      field_type: "integer",
+      value: 2,
+    },
+    {
+      field_name: "annual_distance",
+      field_label: "Annual distance",
+      field_type: "integer",
+      value: 12000,
+    },
+  ],
   evidence: [
     {
-      document_id: "document-1",
-      filename: "synthetic.pdf",
-      source_locator: "case-1/synthetic.pdf",
       source_type: "submitted_document",
+      document_id: "doc-1",
+      document_code: "vehicle_record",
+      document_title: "Synthetic vehicle record",
+      filename: "synthetic.pdf",
+      content_type: "application/pdf",
+      page_count: 1,
     },
     {
-      document_id: "document-1",
-      field_name: "vehicle_age",
-      value: 2,
-      source_locator: "page:1",
       source_type: "extracted_field",
+      document_id: "doc-1",
+      field_name: "vehicle_age",
+      field_label: "Vehicle age",
+      field_type: "integer",
+      value: 2,
+      source_locator: "line:1",
+      extraction_method: "fake",
+      confidence: null,
+      conflict_status: "clear",
     },
   ],
-  conflicts: [
-    {
-      field_name: "vehicle_use",
-      value: "commute",
-      document_id: "document-1",
-      source_locator: "page:2",
-      conflict_status: "conflict",
-    },
-  ],
+  conflicts: [],
   missing_information: ["inspection_photo"],
   extraction_failures: [
     {
-      rule_code: "document:document-1",
+      rule_code: "document:doc-1",
       details: { error_code: "extraction_failed" },
     },
   ],
   specialist_options: ["motor inspection"],
 };
 
+function stubObjectUrl() {
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    value: vi.fn(() => "blob:mock"),
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
+function renderPanel(pack: ReviewStart = PACK) {
+  return render(<EvidencePanel pack={pack} token="session" />);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 // Verify the panel shows every part of the pack the reviewer must weigh.
 describe("evidence panel", () => {
-  it("shows documents, fields, signals, conflicts, gaps, and failures", () => {
-    render(<EvidencePanel pack={PACK} />);
+  it("shows documents, facts, signals, gaps, and failures", () => {
+    renderPanel();
 
-    expect(screen.getByText("synthetic.pdf")).toBeTruthy();
-    expect(screen.getByText("case-1/synthetic.pdf")).toBeTruthy();
-    expect(screen.getByText("vehicle_age")).toBeTruthy();
-    expect(screen.getByText("2")).toBeTruthy();
-    expect(screen.getByText("synthetic.pdf · page:1")).toBeTruthy();
-    expect(screen.getByText("vehicle_age_specialist")).toBeTruthy();
-    expect(screen.getByText("vehicle_use")).toBeTruthy();
-    expect(screen.getByText("commute")).toBeTruthy();
+    expect(screen.getByText("Synthetic vehicle record")).toBeTruthy();
+    expect(screen.getByText("synthetic.pdf · PDF · 1 page")).toBeTruthy();
     expect(
-      screen.getByText("synthetic.pdf · page:2 · conflict"),
+      screen.getByRole("heading", { name: "Vehicle age" }),
     ).toBeTruthy();
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Synthetic vehicle record · Line 1"),
+    ).toBeTruthy();
+    expect(screen.getByText("Consistent")).toBeTruthy();
+    expect(screen.getByText("vehicle_age_specialist")).toBeTruthy();
     expect(screen.getByText("inspection_photo")).toBeTruthy();
-    expect(screen.getByText("document:document-1")).toBeTruthy();
     expect(screen.getByText("extraction_failed")).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: "View source" }).length,
+    ).toBe(1);
+    expect(
+      screen.getAllByRole("button", { name: "View document" }).length,
+    ).toBe(1);
   });
 
   it("states plainly when nothing is outstanding", () => {
-    render(
-      <EvidencePanel
-        pack={{
-          ...PACK,
-          conflicts: [],
-          evidence: [],
-          extraction_failures: [],
-          missing_information: [],
-          summary: {},
-        }}
-      />,
-    );
+    renderPanel({
+      ...PACK,
+      submitted_facts: [],
+      evidence: [],
+      extraction_failures: [],
+      missing_information: [],
+      summary: {},
+    });
 
     expect(screen.getByText("No evidence was supplied.")).toBeTruthy();
-    expect(screen.getByText("No conflict was detected.")).toBeTruthy();
+    expect(
+      screen.getByText("No configured risk signal was recorded."),
+    ).toBeTruthy();
     expect(
       screen.getByText("No requested document is outstanding."),
     ).toBeTruthy();
@@ -101,92 +146,142 @@ describe("evidence panel", () => {
     ).toBeTruthy();
   });
 
-  it("names the fields the evidence never supplied", () => {
-    render(
-      <EvidencePanel
-        pack={{
-          ...PACK,
-          missing_information: [],
-          summary: {
-            missing_information: ["prior_claims", "annual_distance"],
-          },
-        }}
-      />,
-    );
+  it("shows conflict and missing statuses as explicit text", () => {
+    renderPanel({
+      ...PACK,
+      submitted_facts: [
+        ...PACK.submitted_facts,
+        {
+          field_name: "vehicle_use",
+          field_label: "Vehicle use",
+          field_type: "enum",
+          value: "commute",
+        },
+      ],
+      evidence: [
+        ...PACK.evidence,
+        {
+          source_type: "extracted_field",
+          document_id: "doc-1",
+          field_name: "vehicle_use",
+          field_label: "Vehicle use",
+          field_type: "enum",
+          value: "commercial",
+          source_locator: "page:2",
+          extraction_method: "fake",
+          confidence: null,
+          conflict_status: "conflict",
+        },
+        {
+          source_type: "extracted_field",
+          document_id: "doc-1",
+          field_name: "chassis_number",
+          field_label: "Chassis number",
+          field_type: "text",
+          value: "CH-0001",
+          source_locator: "page:1",
+          extraction_method: "fake",
+          confidence: null,
+          conflict_status: "clear",
+        },
+      ],
+    });
 
-    expect(screen.getByText("prior_claims")).toBeTruthy();
-    expect(screen.getByText("annual_distance")).toBeTruthy();
-    expect(screen.queryByText("No requested field is missing.")).toBeNull();
+    expect(screen.getByText("Conflict")).toBeTruthy();
+    expect(screen.getByText("Not found in documents")).toBeTruthy();
+    expect(screen.getByText("Document only")).toBeTruthy();
+  });
+
+  it("shows extraction confidence when it is recorded", () => {
+    renderPanel({
+      ...PACK,
+      evidence: PACK.evidence.map((item) =>
+        item.source_type === "extracted_field"
+          ? { ...item, confidence: 0.98 }
+          : item,
+      ),
+    });
+
     expect(
-      screen.getByText("No requested document is outstanding."),
+      screen.getByText("Synthetic vehicle record · Line 1 · 98% confidence"),
     ).toBeTruthy();
   });
 
-  it("renders two documents reporting the same field at the same line", () => {
-    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    render(
-      <EvidencePanel
-        pack={{
-          ...PACK,
-          evidence: [
-            {
-              document_id: "document-1",
-              field_name: "vehicle_age",
-              value: "2",
-              source_locator: "line:1",
-              source_type: "extracted_field",
-            },
-            {
-              document_id: "document-2",
-              field_name: "vehicle_age",
-              value: "9",
-              source_locator: "line:1",
-              source_type: "extracted_field",
-            },
-          ],
-        }}
-      />,
-    );
+  it("tells two documents with the same name apart by title", () => {
+    renderPanel({
+      ...PACK,
+      evidence: [
+        {
+          source_type: "submitted_document",
+          document_id: "doc-1",
+          document_code: "vehicle_record",
+          document_title: "Synthetic vehicle record",
+          filename: "synthetic.pdf",
+          content_type: "application/pdf",
+          page_count: 1,
+        },
+        {
+          source_type: "submitted_document",
+          document_id: "doc-2",
+          document_code: "vehicle_record",
+          document_title: "Synthetic vehicle record",
+          filename: "synthetic.pdf",
+          content_type: "application/pdf",
+          page_count: 1,
+        },
+      ],
+    });
 
-    expect(screen.getByText("2")).toBeTruthy();
-    expect(screen.getByText("9")).toBeTruthy();
-    expect(errors).not.toHaveBeenCalled();
-    errors.mockRestore();
+    expect(screen.getByText("Synthetic vehicle record (1)")).toBeTruthy();
+    expect(screen.getByText("Synthetic vehicle record (2)")).toBeTruthy();
+    expect(screen.queryByText(/#[0-9a-f]/i)).toBeNull();
   });
 
-  it("tells two documents with the same name apart", () => {
-    render(
-      <EvidencePanel
-        pack={{
-          ...PACK,
-          conflicts: [],
-          evidence: [
-            {
-              document_id: "1f55fb0b-3d8d-48b7-80ea-b9125f98b489",
-              filename: "synthetic.pdf",
-              source_locator: "case-1/a.pdf",
-              source_type: "submitted_document",
-            },
-            {
-              document_id: "9056e397-a56c-49d4-a5ef-3d54bc0ec0b3",
-              filename: "synthetic.pdf",
-              source_locator: "case-1/b.pdf",
-              source_type: "submitted_document",
-            },
-            {
-              document_id: "9056e397-a56c-49d4-a5ef-3d54bc0ec0b3",
-              field_name: "vehicle_age",
-              value: "9",
-              source_locator: "line:1",
-              source_type: "extracted_field",
-            },
-          ],
-        }}
-      />,
-    );
+  it("never shows a storage path or raw field code as a heading", () => {
+    renderPanel();
 
-    expect(screen.getByText("synthetic.pdf #1f55fb0b")).toBeTruthy();
-    expect(screen.getByText("synthetic.pdf #9056e397")).toBeTruthy();
-    expect(screen.getByText("synthetic.pdf #9056e397 · line:1")).toBeTruthy();
+    expect(screen.queryByText(/case-1\/synthetic\.pdf/)).toBeNull();
+    expect(screen.queryByText(/uploads/)).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "vehicle_age" }),
+    ).toBeNull();
+  });
+
+  it("keeps raw codes inside the technical details disclosure", async () => {
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(screen.getAllByText("Technical details")[0]);
+
+    expect(screen.getAllByText("Field code").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("vehicle_age").length).toBeGreaterThan(0);
+  });
+
+  it("loads the source document with its PDF page", async () => {
+    stubObjectUrl();
+    vi.mocked(fetchReviewDocument).mockResolvedValue({
+      blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }),
+      contentType: "application/pdf",
+      filename: "synthetic.pdf",
+    });
+    renderPanel({
+      ...PACK,
+      evidence: PACK.evidence.map((item) =>
+        item.source_type === "extracted_field"
+          ? { ...item, source_locator: "page:2" }
+          : item,
+      ),
+    });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "View source" }));
+
+    expect(fetchReviewDocument).toHaveBeenCalledWith(
+      "session",
+      "case-id",
+      "doc-1",
+    );
+    const frame = await screen.findByTitle("Synthetic vehicle record");
+    expect((frame as HTMLIFrameElement).src).toBe("blob:mock#page=2");
   });
 });

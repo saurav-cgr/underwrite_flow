@@ -143,13 +143,63 @@ export interface Recommendation {
   summary?: Record<string, unknown>;
 }
 
+export type EvidenceFieldType =
+  | "text"
+  | "integer"
+  | "number"
+  | "date"
+  | "boolean"
+  | "enum"
+  | "unknown";
+
+export interface SubmittedFact {
+  field_name: string;
+  field_label: string;
+  field_type: EvidenceFieldType;
+  value: unknown;
+}
+
+export interface DocumentEvidence {
+  source_type: "submitted_document";
+  document_id: string;
+  document_code: string | null;
+  document_title: string;
+  filename: string;
+  content_type: string;
+  page_count: number | null;
+}
+
+export interface ExtractedFieldEvidence {
+  source_type: "extracted_field";
+  document_id: string | null;
+  field_name: string;
+  field_label: string;
+  field_type: EvidenceFieldType;
+  value: unknown;
+  source_locator: string | null;
+  extraction_method: string;
+  confidence: number | null;
+  conflict_status: "clear" | "conflict";
+}
+
+export type EvidenceItem = DocumentEvidence | ExtractedFieldEvidence;
+
+export interface ConflictEvidence {
+  field_name: string;
+  value: unknown;
+  document_id: string | null;
+  source_locator: string | null;
+  conflict_status: string;
+}
+
 export interface ReviewStart {
   case_id: string;
   status: "awaiting_human_review";
   recommendation: Recommendation;
   summary: Record<string, unknown>;
-  evidence: Record<string, unknown>[];
-  conflicts: Record<string, unknown>[];
+  submitted_facts: SubmittedFact[];
+  evidence: EvidenceItem[];
+  conflicts: ConflictEvidence[];
   missing_information: string[];
   extraction_failures: Record<string, unknown>[];
   specialist_options: string[];

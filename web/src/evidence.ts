@@ -1,30 +1,51 @@
-// Pure helpers that turn one review evidence pack into reviewer-facing rows.
+// Pure helpers that turn one review evidence pack into reviewer-facing cards.
 
-export interface DocumentRow {
-  documentId: string;
-  filename: string;
-  source: string;
-}
+import type {
+  DocumentEvidence,
+  EvidenceItem,
+  ExtractedFieldEvidence,
+  SubmittedFact,
+} from "./types";
 
-export interface FieldRow {
-  documentId: string;
-  field: string;
+export type FactStatus =
+  | "Consistent"
+  | "Conflict"
+  | "Not found in documents"
+  | "Document only";
+
+export interface ExtractedEntry {
+  documentId: string | null;
+  documentTitle: string;
   value: string;
   source: string;
+  locator: string | null;
+  confidence: number | null;
+  status: string;
+  extractionMethod: string;
+}
+
+export interface FactCard {
+  fieldName: string;
+  fieldLabel: string;
+  fieldType: string;
+  submittedValue: string | null;
+  entries: ExtractedEntry[];
+  status: FactStatus;
+}
+
+export interface DocumentCard {
+  documentId: string;
+  documentCode: string | null;
+  title: string;
+  filename: string;
+  contentType: string;
+  pageCount: number | null;
 }
 
 export interface RiskSignalRow {
   code: string;
   severity: string;
   explanation: string;
-}
-
-export interface ConflictRow {
-  field: string;
-  value: string;
-  documentId: string;
-  source: string;
-  status: string;
 }
 
 // Render one evidence value as short readable text.
@@ -50,84 +71,148 @@ export function failureReason(payload: unknown, depth = 0): string {
   return "recorded failure";
 }
 
-// Read the stored locator of one evidence entry.
-function locatorOf(item: Record<string, unknown>): string {
-  return typeof item.source_locator === "string"
-    ? item.source_locator
-    : "no locator recorded";
+// Render a stored media type as a short reviewer-facing label.
+export function contentTypeLabel(contentType: string): string {
+  if (contentType === "application/pdf") return "PDF";
+  if (contentType === "image/jpeg" || contentType === "image/jpg") {
+    return "JPEG";
+  }
+  if (contentType === "image/png") return "PNG";
+  const subtype = contentType.split("/")[1];
+  return subtype ? subtype.toUpperCase() : "File";
 }
 
-// List the submitted documents named in the review evidence pack.
-export function evidenceDocuments(
-  evidence: Record<string, unknown>[],
-): DocumentRow[] {
-  return evidence
-    .filter(
-      (item) =>
-        item.source_type === "submitted_document"
-        && typeof item.filename === "string",
-    )
-    .map((item) => ({
-      documentId: String(item.document_id ?? ""),
-      filename: item.filename as string,
-      source: locatorOf(item),
-    }));
+// Render a stored page count as a readable suffix, or empty when unknown.
+export function pageCountLabel(pageCount: number | null): string {
+  if (pageCount === null || pageCount === undefined) return "";
+  return `${pageCount} page${pageCount === 1 ? "" : "s"}`;
 }
-// Label each document once, disambiguating files that share a filename so two
-// rows never read identically.
-export function documentLabels(
-  documents: DocumentRow[],
-): Map<string, string> {
-  const counts = new Map<string, number>();
-  for (const document of documents) {
-    counts.set(document.filename, (counts.get(document.filename) ?? 0) + 1);
-  }
+
+// Render a stored locator as reviewer-facing prose where the format is known.
+export function sourceLabel(locator: string | null): string {
+  if (!locator) return "—";
+  const page = /^page:(\d+)$/i.exec(locator);
+  if (page) return `Page ${page[1]}`;
+  const line = /^line:(\d+)$/i.exec(locator);
+  if (line) return `Line ${line[1]}`;
+  return locator;
+}
+
+// Read the PDF page a page-style locator points at, when one exists.
+export function pdfPageOf(locator: string | null): number | null {
+  if (!locator) return null;
+  const page = /^page:(\d+)$/i.exec(locator);
+  return page ? Number(page[1]) : null;
+}
+
+// Return the uploaded documents as readable cards, disambiguating titles.
+export function documentCards(evidence: EvidenceItem[]): DocumentCard[] {
+  const cards = evidence
+    .filter((item): item is DocumentEvidence =>
+      item.source_type === "submitted_document")
+    .map((item) => ({
+      documentId: item.document_id,
+      documentCode: item.document_code,
+      title: item.document_title,
+      filename: item.filename,
+      contentType: item.content_type,
+      pageCount: item.page_count,
+    }));
+  return dedupeTitles(cards);
+}
+
+// Resolve each submitted document id to its reviewer-facing title.
+export function documentTitles(evidence: EvidenceItem[]): Map<string, string> {
   return new Map(
-    documents.map((document) => {
-      const unique = counts.get(document.filename) === 1;
-      const label =
-        unique || !document.documentId
-          ? document.filename
-          : `${document.filename} #${document.documentId.slice(0, 8)}`;
-      return [document.documentId, label];
-    }),
+    documentCards(evidence).map((card) => [card.documentId, card.title]),
   );
 }
-// List the extracted fields with their value and provenance.
-export function evidenceFields(
-  evidence: Record<string, unknown>[],
-): FieldRow[] {
-  return evidence
-    .filter(
-      (item) =>
-        item.source_type === "extracted_field"
-        && typeof item.field_name === "string",
-    )
-    .map((item) => ({
-      documentId: String(item.document_id ?? ""),
-      field: item.field_name as string,
-      value: displayValue(item.value),
-      source: locatorOf(item),
-    }));
+
+// Group submitted facts and extracted values into one card per case field.
+export function groupFacts(
+  submitted: SubmittedFact[],
+  evidence: EvidenceItem[],
+): FactCard[] {
+  const titles = documentTitles(evidence);
+  const extracted = evidence.filter(
+    (item): item is ExtractedFieldEvidence =>
+      item.source_type === "extracted_field",
+  );
+  const byField = new Map<string, ExtractedFieldEvidence[]>();
+  for (const item of extracted) {
+    const list = byField.get(item.field_name) ?? [];
+    list.push(item);
+    byField.set(item.field_name, list);
+  }
+
+  const cards: FactCard[] = [];
+  const seen = new Set<string>();
+  for (const fact of submitted) {
+    seen.add(fact.field_name);
+    const entries = buildEntries(byField.get(fact.field_name) ?? [], titles);
+    cards.push({
+      fieldName: fact.field_name,
+      fieldLabel: fact.field_label,
+      fieldType: fact.field_type,
+      submittedValue: displayValue(fact.value),
+      entries,
+      status: factStatus(entries),
+    });
+  }
+  for (const [name, items] of byField) {
+    if (seen.has(name)) continue;
+    cards.push({
+      fieldName: name,
+      fieldLabel: items[0]?.field_label ?? name,
+      fieldType: items[0]?.field_type ?? "unknown",
+      submittedValue: null,
+      entries: buildEntries(items, titles),
+      status: "Document only",
+    });
+  }
+  return cards;
 }
 
-// List the recorded field conflicts with their value and provenance.
-export function conflictRows(
-  conflicts: Record<string, unknown>[],
-): ConflictRow[] {
-  return conflicts.map((conflict) => ({
-    field:
-      typeof conflict.field_name === "string"
-        ? conflict.field_name
-        : "unnamed field",
-    value: displayValue(conflict.value),
-    documentId: String(conflict.document_id ?? ""),
-    source: locatorOf(conflict),
-    status:
-      typeof conflict.conflict_status === "string"
-        ? conflict.conflict_status
-        : "conflict",
+// Derive one card status from backend conflict metadata and presence alone.
+function factStatus(entries: ExtractedEntry[]): FactStatus {
+  if (entries.length === 0) return "Not found in documents";
+  if (entries.some((entry) => entry.status === "conflict")) return "Conflict";
+  return "Consistent";
+}
+
+// Build the readable extracted rows that back one field.
+function buildEntries(
+  items: ExtractedFieldEvidence[],
+  titles: Map<string, string>,
+): ExtractedEntry[] {
+  return items.map((item) => ({
+    documentId: item.document_id,
+    documentTitle:
+      item.document_id
+        ? titles.get(item.document_id) ?? "unknown document"
+        : "unknown document",
+    value: displayValue(item.value),
+    source: sourceLabel(item.source_locator),
+    locator: item.source_locator,
+    confidence: item.confidence,
+    status: item.conflict_status,
+    extractionMethod: item.extraction_method,
   }));
+}
+
+// Disambiguate duplicate document titles with a readable ordinal suffix.
+function dedupeTitles(cards: DocumentCard[]): DocumentCard[] {
+  const counts = new Map<string, number>();
+  for (const card of cards) {
+    counts.set(card.title, (counts.get(card.title) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+  return cards.map((card) => {
+    if ((counts.get(card.title) ?? 0) === 1) return card;
+    const index = (seen.get(card.title) ?? 0) + 1;
+    seen.set(card.title, index);
+    return { ...card, title: `${card.title} (${index})` };
+  });
 }
 
 // Read configured risk signals from the assembled case summary.

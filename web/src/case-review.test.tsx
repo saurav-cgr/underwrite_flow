@@ -43,12 +43,16 @@ const PACK: ReviewStart = {
   },
   evidence: [
     {
-      document_id: "document-1",
-      filename: "synthetic.pdf",
-      source_locator: "case-1/synthetic.pdf",
       source_type: "submitted_document",
+      document_id: "document-1",
+      document_code: "vehicle_record",
+      document_title: "Synthetic vehicle record",
+      filename: "synthetic.pdf",
+      content_type: "application/pdf",
+      page_count: 1,
     },
   ],
+  submitted_facts: [],
   conflicts: [],
   missing_information: [],
   extraction_failures: [],
@@ -74,13 +78,13 @@ describe("review evidence pack", () => {
     renderReview();
 
     const heading = await screen.findByRole("heading", {
-      name: "Submitted evidence",
+      name: "Case evidence",
     });
     const acknowledgement = screen.getByText(
       "I reviewed the submitted evidence.",
     );
 
-    expect(screen.getByText("synthetic.pdf")).toBeTruthy();
+    expect(screen.getByText("Synthetic vehicle record")).toBeTruthy();
     expect(
       heading.compareDocumentPosition(acknowledgement)
         & Node.DOCUMENT_POSITION_FOLLOWING,

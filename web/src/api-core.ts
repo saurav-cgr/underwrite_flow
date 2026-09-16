@@ -60,6 +60,19 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
   unauthorizedHandler = handler;
 }
 
+export interface BlobResponse {
+  blob: Blob;
+  contentType: string;
+  filename: string;
+}
+
+// Read an optional filename from a Content-Disposition header value.
+function filenameFromDisposition(header: string | null): string {
+  if (!header) return "";
+  const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(header);
+  return match ? match[1].trim() : "";
+}
+
 // Call one typed API endpoint and normalize safe error text.
 export async function request<T>(
   path: string,
@@ -81,4 +94,34 @@ export async function request<T>(
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+// Fetch one binary endpoint and return its bytes plus safe media headers.
+export async function requestBlob(
+  path: string,
+  token: string | undefined,
+  init?: RequestInit,
+): Promise<BlobResponse> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!response.ok) {
+    // An expired token is recoverable: let the shell offer a fresh sign-in.
+    if (response.status === 401 && token) unauthorizedHandler?.();
+    const body = await response.json().catch(() => undefined);
+    throw parseErrorBody(response.status, body);
+  }
+  const blob = await response.blob();
+  return {
+    blob,
+    contentType:
+      response.headers.get("Content-Type") ?? "application/octet-stream",
+    filename: filenameFromDisposition(
+      response.headers.get("Content-Disposition"),
+    ),
+  };
 }

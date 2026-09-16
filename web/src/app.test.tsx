@@ -11,6 +11,7 @@ vi.mock("./api", () => ({
   completeCase: vi.fn(),
   createSession: vi.fn(),
   deleteReference: vi.fn(),
+  fetchReviewDocument: vi.fn(),
   importProductConfiguration: vi.fn(),
   listAudit: vi.fn(),
   listCases: vi.fn(),

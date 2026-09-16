@@ -1,72 +1,281 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  conflictRows,
+  contentTypeLabel,
   displayValue,
-  documentLabels,
-  evidenceDocuments,
-  evidenceFields,
+  documentCards,
+  documentTitles,
   failureReason,
+  groupFacts,
+  pageCountLabel,
+  pdfPageOf,
   riskSignals,
+  sourceLabel,
 } from "./evidence";
+import type { EvidenceItem, SubmittedFact } from "./types";
 
-const EVIDENCE = [
+const SUBMITTED: SubmittedFact[] = [
   {
-    document_id: "document-1",
-    filename: "synthetic.pdf",
-    source_locator: "case-1/synthetic.pdf",
-    source_type: "submitted_document",
-  },
-  {
-    document_id: "document-1",
     field_name: "vehicle_age",
+    field_label: "Vehicle age",
+    field_type: "integer",
     value: 2,
-    source_locator: "page:1",
-    source_type: "extracted_field",
   },
   {
-    document_id: "document-1",
-    field_name: "prior_claims",
-    value: null,
-    source_locator: "page:1",
-    source_type: "extracted_field",
+    field_name: "vehicle_use",
+    field_label: "Vehicle use",
+    field_type: "enum",
+    value: "commute",
+  },
+  {
+    field_name: "annual_distance",
+    field_label: "Annual distance",
+    field_type: "integer",
+    value: 12000,
   },
 ];
 
-// Verify documents and extracted fields are separated for the reviewer.
-describe("evidence rows", () => {
-  it("lists submitted documents with their stored locator", () => {
-    expect(evidenceDocuments(EVIDENCE)).toEqual([
+const EVIDENCE: EvidenceItem[] = [
+  {
+    source_type: "submitted_document",
+    document_id: "doc-1",
+    document_code: "vehicle_record",
+    document_title: "Synthetic vehicle record",
+    filename: "synthetic.pdf",
+    content_type: "application/pdf",
+    page_count: 1,
+  },
+  {
+    source_type: "extracted_field",
+    document_id: "doc-1",
+    field_name: "vehicle_age",
+    field_label: "Vehicle age",
+    field_type: "integer",
+    value: 2,
+    source_locator: "line:1",
+    extraction_method: "fake",
+    confidence: 0.98,
+    conflict_status: "clear",
+  },
+  {
+    source_type: "extracted_field",
+    document_id: "doc-1",
+    field_name: "vehicle_use",
+    field_label: "Vehicle use",
+    field_type: "enum",
+    value: "commercial",
+    source_locator: "page:2",
+    extraction_method: "fake",
+    confidence: 0.9,
+    conflict_status: "conflict",
+  },
+  {
+    source_type: "extracted_field",
+    document_id: "doc-1",
+    field_name: "chassis_number",
+    field_label: "Chassis number",
+    field_type: "text",
+    value: "CH-0001",
+    source_locator: "page:1",
+    extraction_method: "fake",
+    confidence: null,
+    conflict_status: "clear",
+  },
+];
+
+// Verify a media type and page count read as short reviewer-facing labels.
+describe("media labels", () => {
+  it("names common document types", () => {
+    expect(contentTypeLabel("application/pdf")).toBe("PDF");
+    expect(contentTypeLabel("image/jpeg")).toBe("JPEG");
+    expect(contentTypeLabel("image/png")).toBe("PNG");
+    expect(contentTypeLabel("text/plain")).toBe("PLAIN");
+  });
+
+  it("describes a page count or omits it when unknown", () => {
+    expect(pageCountLabel(1)).toBe("1 page");
+    expect(pageCountLabel(3)).toBe("3 pages");
+    expect(pageCountLabel(null)).toBe("");
+  });
+});
+
+// Verify provider locators become readable prose without inventing detail.
+describe("source labels", () => {
+  it("turns page and line locators into prose", () => {
+    expect(sourceLabel("page:1")).toBe("Page 1");
+    expect(sourceLabel("line:2")).toBe("Line 2");
+    expect(sourceLabel(null)).toBe("—");
+    expect(sourceLabel("table:3")).toBe("table:3");
+  });
+
+  it("reads a PDF page from a page locator only", () => {
+    expect(pdfPageOf("page:3")).toBe(3);
+    expect(pdfPageOf("line:1")).toBeNull();
+    expect(pdfPageOf(null)).toBeNull();
+  });
+});
+
+// Verify uploaded documents become readable, distinguishable cards.
+describe("document cards", () => {
+  it("keeps a unique configured title", () => {
+    expect(documentCards(EVIDENCE)).toEqual([
       {
-        documentId: "document-1",
+        documentId: "doc-1",
+        documentCode: "vehicle_record",
+        title: "Synthetic vehicle record",
         filename: "synthetic.pdf",
-        source: "case-1/synthetic.pdf",
+        contentType: "application/pdf",
+        pageCount: 1,
       },
     ]);
   });
 
-  it("lists extracted fields with value and provenance", () => {
-    expect(evidenceFields(EVIDENCE)).toEqual([
+  it("disambiguates two documents that share a title", () => {
+    const two: EvidenceItem[] = [
       {
-        documentId: "document-1",
-        field: "vehicle_age",
-        value: "2",
-        source: "page:1",
+        source_type: "submitted_document",
+        document_id: "doc-1",
+        document_code: "vehicle_record",
+        document_title: "Synthetic vehicle record",
+        filename: "a.pdf",
+        content_type: "application/pdf",
+        page_count: 1,
       },
       {
-        documentId: "document-1",
-        field: "prior_claims",
-        value: "not provided",
-        source: "page:1",
+        source_type: "submitted_document",
+        document_id: "doc-2",
+        document_code: "vehicle_record",
+        document_title: "Synthetic vehicle record",
+        filename: "b.pdf",
+        content_type: "application/pdf",
+        page_count: 1,
       },
-    ]);
-  });
+    ];
 
-  it("ignores entries without a usable name", () => {
-    expect(evidenceDocuments([{ source_type: "submitted_document" }])).toEqual(
-      [],
+    expect(documentCards(two).map((card) => card.title)).toEqual([
+      "Synthetic vehicle record (1)",
+      "Synthetic vehicle record (2)",
+    ]);
+    expect(documentTitles(two).get("doc-2")).toBe(
+      "Synthetic vehicle record (2)",
     );
-    expect(evidenceFields([{ source_type: "extracted_field" }])).toEqual([]);
+  });
+});
+
+// Verify one card groups a submitted value with its extracted evidence.
+describe("group facts", () => {
+  it("groups a consistent fact with its value and provenance", () => {
+    const [card] = groupFacts(SUBMITTED, EVIDENCE);
+
+    expect(card).toMatchObject({
+      fieldName: "vehicle_age",
+      fieldLabel: "Vehicle age",
+      fieldType: "integer",
+      submittedValue: "2",
+      status: "Consistent",
+    });
+    expect(card.entries).toHaveLength(1);
+    expect(card.entries[0]).toMatchObject({
+      documentTitle: "Synthetic vehicle record",
+      value: "2",
+      source: "Line 1",
+      confidence: 0.98,
+      extractionMethod: "fake",
+    });
+  });
+
+  it("reports a backend-recorded conflict without comparing values", () => {
+    const cards = groupFacts(SUBMITTED, EVIDENCE);
+    const use = cards.find((card) => card.fieldName === "vehicle_use");
+
+    expect(use?.status).toBe("Conflict");
+    expect(use?.submittedValue).toBe("commute");
+    expect(use?.entries[0].value).toBe("commercial");
+  });
+
+  it("never infers a conflict from differing values", () => {
+    const evidence: EvidenceItem[] = [
+      {
+        source_type: "extracted_field",
+        document_id: "doc-1",
+        field_name: "vehicle_age",
+        field_label: "Vehicle age",
+        field_type: "integer",
+        value: 3,
+        source_locator: "line:1",
+        extraction_method: "fake",
+        confidence: null,
+        conflict_status: "clear",
+      },
+    ];
+
+    expect(groupFacts(SUBMITTED, evidence)[0].status).toBe("Consistent");
+  });
+
+  it("marks a submitted fact with no document value as not found", () => {
+    const cards = groupFacts(SUBMITTED, EVIDENCE);
+    const distance = cards.find(
+      (card) => card.fieldName === "annual_distance",
+    );
+
+    expect(distance?.status).toBe("Not found in documents");
+    expect(distance?.entries).toEqual([]);
+  });
+
+  it("marks an extracted value with no submitted fact as document only", () => {
+    const cards = groupFacts(SUBMITTED, EVIDENCE);
+    const chassis = cards.find((card) => card.fieldName === "chassis_number");
+
+    expect(chassis?.status).toBe("Document only");
+    expect(chassis?.submittedValue).toBeNull();
+    expect(chassis?.fieldLabel).toBe("Chassis number");
+  });
+
+  it("orders submitted facts first and document-only facts after", () => {
+    const names = groupFacts(SUBMITTED, EVIDENCE).map(
+      (card) => card.fieldName,
+    );
+
+    expect(names).toEqual([
+      "vehicle_age",
+      "vehicle_use",
+      "annual_distance",
+      "chassis_number",
+    ]);
+  });
+
+  it("keeps two extracted values for the same field apart", () => {
+    const evidence: EvidenceItem[] = [
+      {
+        source_type: "extracted_field",
+        document_id: "doc-1",
+        field_name: "vehicle_age",
+        field_label: "Vehicle age",
+        field_type: "integer",
+        value: "2",
+        source_locator: "line:1",
+        extraction_method: "fake",
+        confidence: null,
+        conflict_status: "clear",
+      },
+      {
+        source_type: "extracted_field",
+        document_id: "doc-1",
+        field_name: "vehicle_age",
+        field_label: "Vehicle age",
+        field_type: "integer",
+        value: "9",
+        source_locator: "line:1",
+        extraction_method: "fake",
+        confidence: null,
+        conflict_status: "clear",
+      },
+    ];
+
+    const [card] = groupFacts(SUBMITTED, evidence);
+
+    expect(card.entries).toHaveLength(2);
+    expect(card.entries.map((entry) => entry.value)).toEqual(["2", "9"]);
   });
 });
 
@@ -108,91 +317,6 @@ describe("failure reasons", () => {
     expect(failureReason({ rule_code: "synthetic" })).toBe(
       "recorded failure",
     );
-  });
-});
-
-// Verify conflicts are read with the value and the document behind them.
-describe("conflict rows", () => {
-  it("reads the value, document, locator, and status", () => {
-    const rows = conflictRows([
-      {
-        field_name: "vehicle_age",
-        value: 9,
-        document_id: "document-2",
-        source_locator: "line:2",
-        conflict_status: "conflict",
-      },
-    ]);
-
-    expect(rows).toEqual([
-      {
-        field: "vehicle_age",
-        value: "9",
-        documentId: "document-2",
-        source: "line:2",
-        status: "conflict",
-      },
-    ]);
-  });
-
-  it("tolerates a conflict that omits the optional facts", () => {
-    const rows = conflictRows([{ field_name: "vehicle_use" }]);
-
-    expect(rows[0]).toEqual({
-      field: "vehicle_use",
-      value: "not provided",
-      documentId: "",
-      source: "no locator recorded",
-      status: "conflict",
-    });
-  });
-});
-
-// Verify two uploaded files with the same name can still be told apart.
-describe("document labels", () => {
-  it("keeps a filename that only one document uses", () => {
-    const labels = documentLabels([
-      {
-        documentId: "1f55fb0b-3d8d-48b7-80ea-b9125f98b489",
-        filename: "synthetic.pdf",
-        source: "case-1/a.pdf",
-      },
-    ]);
-
-    expect(labels.get("1f55fb0b-3d8d-48b7-80ea-b9125f98b489")).toBe(
-      "synthetic.pdf",
-    );
-  });
-
-  it("suffixes a filename that two documents share", () => {
-    const labels = documentLabels([
-      {
-        documentId: "1f55fb0b-3d8d-48b7-80ea-b9125f98b489",
-        filename: "synthetic.pdf",
-        source: "case-1/a.pdf",
-      },
-      {
-        documentId: "9056e397-a56c-49d4-a5ef-3d54bc0ec0b3",
-        filename: "synthetic.pdf",
-        source: "case-1/b.pdf",
-      },
-    ]);
-
-    expect(labels.get("1f55fb0b-3d8d-48b7-80ea-b9125f98b489")).toBe(
-      "synthetic.pdf #1f55fb0b",
-    );
-    expect(labels.get("9056e397-a56c-49d4-a5ef-3d54bc0ec0b3")).toBe(
-      "synthetic.pdf #9056e397",
-    );
-  });
-
-  it("leaves a document that recorded no id alone", () => {
-    const labels = documentLabels([
-      { documentId: "", filename: "synthetic.pdf", source: "a.pdf" },
-      { documentId: "", filename: "synthetic.pdf", source: "b.pdf" },
-    ]);
-
-    expect(labels.get("")).toBe("synthetic.pdf");
   });
 });
 

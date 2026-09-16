@@ -244,7 +244,7 @@ export function CaseReview({
               Triage only. An underwriter confirms every final route.
             </p>
           </section>
-          {start ? <EvidencePanel pack={start} /> : null}
+          {start ? <EvidencePanel pack={start} token={token} /> : null}
           <Panel title="Evidence acknowledgement">
             <label className="check-row">
               <input

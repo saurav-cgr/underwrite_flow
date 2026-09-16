@@ -25,7 +25,9 @@ export type IconName =
   | "settings"
   | "shield"
   | "upload"
-  | "user";
+  | "user"
+  | "close"
+  | "external";
 
 const FAMILY_ICONS: Record<string, IconName> = {
   health: "health",
@@ -147,6 +149,12 @@ export function IconSprite() {
       </symbol>
       <symbol id="i-filter" viewBox="0 0 24 24">
         <path d="M4 5h16M7 12h10M10 19h4" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6L6 18" />
+      </symbol>
+      <symbol id="i-external" viewBox="0 0 24 24">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
       </symbol>
     </svg>
   );

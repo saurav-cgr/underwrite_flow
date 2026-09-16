@@ -115,6 +115,12 @@
   flex-direction: column;
   gap: 18px;
 }
+.evidence-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+.preview-pane {
+  position: static;
+}
 }
 
 @media (max-width: 640px) {

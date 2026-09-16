@@ -4,6 +4,7 @@ import {
   ApiError,
   createSession,
   deleteReference,
+  fetchReviewDocument,
   listReferences,
   readCase,
   readCaseConfiguration,
@@ -234,5 +235,65 @@ describe("configuration and reference API", () => {
       "/api/v1/products/motor-private-car/references/reference-id",
       expect.objectContaining({ method: "DELETE" }),
     );
+  });
+});
+
+// Verify the authenticated underwriter can fetch one case document.
+describe("review document API", () => {
+  it("loads bytes with their content type and authorization", async () => {
+    const blob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(blob, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": 'inline; filename="synthetic.pdf"',
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const document = await fetchReviewDocument(
+      "session",
+      "case-id",
+      "document-id",
+    );
+
+    expect(document.contentType).toBe("application/pdf");
+    expect(document.filename).toBe("synthetic.pdf");
+    expect(await document.blob.text()).toBe("%PDF-1.4");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/reviews/case-id/documents/document-id",
+      expect.objectContaining({
+        headers: { Authorization: "Bearer session" },
+      }),
+    );
+  });
+
+  it("throws a sanitized error when the document is unavailable", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: { code: "not_found", message: "Document not found" },
+          }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      ),
+    );
+
+    const error = await fetchReviewDocument(
+      "session",
+      "case-id",
+      "document-id",
+    ).catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(404);
+    expect((error as ApiError).message).toBe("Document not found");
   });
 });
