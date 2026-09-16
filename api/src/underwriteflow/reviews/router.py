@@ -26,7 +26,10 @@ from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.reviews.schemas import ReviewCommand, ReviewResponse, ReviewStartResponse
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.state import thread_config
-from underwriteflow.workflow.triage import build_triage_graph
+from underwriteflow.workflow.triage import (
+    build_triage_graph,
+    resolve_final_route,
+)
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -51,6 +54,27 @@ def review_response_for_record(
         selected_route=review.selected_route,
         status=review_status,
     )
+
+
+# Require a configured specialist label when the resolved route is specialist.
+def require_specialist_label(
+    command: ReviewCommand,
+    recommended_route: str | None,
+    configuration: ProductConfiguration,
+) -> None:
+    route, _ = resolve_final_route(command, recommended_route)
+    if route != "specialist":
+        return
+    if not command.specialist_label:
+        raise HTTPException(
+            status_code=422,
+            detail="A specialist label is required for specialist review",
+        )
+    if command.specialist_label not in configuration.specialist_labels:
+        raise HTTPException(
+            status_code=422,
+            detail="Specialist label is not configured for this product",
+        )
 
 
 # Return the persisted pending review without starting any workflow work.
@@ -182,6 +206,17 @@ async def resume_review(
     )
     if existing_review is not None:
         return review_response_for_record(case_id, existing_review, case.status)
+    product_version = await session.scalar(
+        select(ProductVersion).where(ProductVersion.id == case.product_version_id)
+    )
+    if product_version is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Case configuration is unavailable",
+        )
+    configuration = ProductConfiguration.model_validate(
+        product_version.configuration
+    )
     config = thread_config(str(case_id), case.review_cycle)
     async with postgres_checkpointer(request.app.state.settings.database_url) as checkpointer:
         graph = build_triage_graph(checkpointer=checkpointer)
@@ -196,6 +231,9 @@ async def resume_review(
                     status_code=422,
                     detail="Override must change the recommended route",
                 )
+            require_specialist_label(
+                command, recommendation.get("route"), configuration
+            )
             command_to_persist = command
             result = await graph.ainvoke(
                 Command(resume=command.model_dump(exclude_none=True)), config=config

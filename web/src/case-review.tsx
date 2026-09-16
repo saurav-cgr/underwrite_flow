@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ApiError, completeCase, startReview, submitReview } from "./api";
 import { Button, PageHeading, Panel } from "./components";
 import { Icon } from "./icons";
+import { reviewDecisionBody } from "./ui-state";
 import type {
   QueueItem,
   Recommendation,
@@ -116,16 +117,19 @@ export function CaseReview({
     setMessage("");
     let review: ReviewResult;
     try {
-      review = await submitReview(token, item.case_id, {
-        action,
-        selected_route: action === "confirm" ? undefined : selectedRoute,
-        specialist_label:
-          action !== "confirm" && selectedRoute === "specialist"
-            ? specialistLabel
-            : undefined,
-        reason: reason || undefined,
-        evidence_acknowledged: acknowledged,
-      });
+      review = await submitReview(
+        token,
+        item.case_id,
+        reviewDecisionBody({
+          action,
+          selectedRoute,
+          recommendedRoute:
+            start?.recommendation?.route ?? item.route ?? undefined,
+          specialistLabel,
+          reason,
+          acknowledged,
+        }),
+      );
     } catch (error) {
       setMessage(
         error instanceof ApiError

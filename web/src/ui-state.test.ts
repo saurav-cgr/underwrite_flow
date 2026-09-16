@@ -7,6 +7,7 @@ import {
   identityInitials,
   isOpenCase,
   requiredDocuments,
+  reviewDecisionBody,
   validateFields,
   visibleFields,
   yamlHash,
@@ -158,5 +159,70 @@ describe("audit facts", () => {
 
   it("drops null values instead of rendering empty rows", () => {
     expect(auditFacts({ absent: null })).toEqual([]);
+  });
+});
+
+// Verify a decision always carries the label the API requires for specialists.
+describe("review decision body", () => {
+  const base = {
+    selectedRoute: "specialist" as const,
+    specialistLabel: "motor inspection",
+    reason: "Synthetic reason",
+    acknowledged: true,
+  };
+
+  it("labels a confirmed specialist recommendation", () => {
+    const body = reviewDecisionBody({
+      ...base,
+      action: "confirm",
+      recommendedRoute: "specialist",
+    });
+
+    expect(body.selected_route).toBeUndefined();
+    expect(body.specialist_label).toBe("motor inspection");
+  });
+
+  it("labels a confirmed manual recommendation", () => {
+    const body = reviewDecisionBody({
+      ...base,
+      action: "confirm",
+      recommendedRoute: "manual",
+    });
+
+    expect(body.specialist_label).toBe("motor inspection");
+  });
+
+  it("omits the label when the confirmed route is not specialist", () => {
+    const body = reviewDecisionBody({
+      ...base,
+      action: "confirm",
+      recommendedRoute: "expedited",
+    });
+
+    expect(body.specialist_label).toBeUndefined();
+  });
+
+  it("sends the chosen route and label for a specialist override", () => {
+    const body = reviewDecisionBody({
+      ...base,
+      action: "override",
+      recommendedRoute: "expedited",
+    });
+
+    expect(body.selected_route).toBe("specialist");
+    expect(body.specialist_label).toBe("motor inspection");
+    expect(body.reason).toBe("Synthetic reason");
+  });
+
+  it("keeps an information request free of routes and labels", () => {
+    const body = reviewDecisionBody({
+      ...base,
+      action: "request_information",
+      recommendedRoute: "specialist",
+    });
+
+    expect(body.selected_route).toBeUndefined();
+    expect(body.specialist_label).toBeUndefined();
+    expect(body.reason).toBe("Synthetic reason");
   });
 });

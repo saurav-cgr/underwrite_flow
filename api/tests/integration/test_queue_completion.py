@@ -108,7 +108,7 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 json={
                     "action": "override",
                     "selected_route": "specialist",
-                    "specialist_label": "Synthetic specialist",
+                    "specialist_label": "motor inspection",
                     "reason": "Synthetic demonstration override",
                     "evidence_acknowledged": True,
                 },
@@ -151,7 +151,7 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
         assert repeated.status_code == 200
         assert repeated.json()["handoff_id"] == completed.json()["handoff_id"]
         assert completed.json()["route"] == "specialist"
-        assert completed.json()["specialist_label"] == "Synthetic specialist"
+        assert completed.json()["specialist_label"] == "motor inspection"
         assert pending_handoff.status_code == 200
         pending = [
             item
@@ -159,7 +159,7 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
             if item["case_id"] == str(case_id)
         ]
         assert pending[0]["selected_route"] == "specialist"
-        assert pending[0]["specialist_label"] == "Synthetic specialist"
+        assert pending[0]["specialist_label"] == "motor inspection"
         assert pending[0]["awaiting_handoff"] is True
         assert all(
             item["case_id"] != str(case_id) for item in handoff_queue.json()
@@ -167,7 +167,7 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
         assert queue.status_code == 200
         assert queue.json()[0]["status"] == "completed"
         assert queue.json()[0]["selected_route"] == "specialist"
-        assert queue.json()[0]["specialist_label"] == "Synthetic specialist"
+        assert queue.json()[0]["specialist_label"] == "motor inspection"
         assert audit.status_code == 200
         events = {event["event_type"]: event for event in audit.json()}
         event_types = set(events)

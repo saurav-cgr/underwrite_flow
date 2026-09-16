@@ -8,7 +8,10 @@ from uuid import uuid4
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
 from underwriteflow.workflow.state import thread_config
-from underwriteflow.workflow.triage import build_triage_graph
+from underwriteflow.workflow.triage import (
+    build_triage_graph,
+    resolve_final_route,
+)
 from underwriteflow.reviews.schemas import ReviewCommand
 
 
@@ -192,3 +195,61 @@ def test_review_endpoint_requires_review_permission() -> None:
     )
 
     assert response.status_code == 403
+
+
+# Verify the shared resolver turns a manual recommendation into specialist.
+def test_resolve_final_route_maps_manual_recommendation() -> None:
+    command = ReviewCommand(action="confirm", evidence_acknowledged=True)
+
+    # The status is overridden because the resolved route differs from the
+    # recommended manual state, which is never a final route.
+    assert resolve_final_route(command, "manual") == (
+        "specialist",
+        "overridden",
+    )
+
+
+# Verify the shared resolver keeps a confirmed specialist recommendation.
+def test_resolve_final_route_confirms_specialist_recommendation() -> None:
+    command = ReviewCommand(action="confirm", evidence_acknowledged=True)
+
+    assert resolve_final_route(command, "specialist") == (
+        "specialist",
+        "confirmed",
+    )
+
+
+# Verify overriding an internal recommendation selects the requested route.
+def test_resolve_final_route_overrides_internal_recommendation() -> None:
+    command = ReviewCommand(
+        action="override",
+        selected_route="standard",
+        reason="Synthetic override reason",
+        evidence_acknowledged=True,
+    )
+
+    assert resolve_final_route(command, "manual") == ("standard", "overridden")
+
+
+# Verify an information request never resolves to a final route.
+def test_resolve_final_route_returns_no_route_for_information_request() -> None:
+    command = ReviewCommand(
+        action="request_information",
+        reason="Synthetic information reason",
+        evidence_acknowledged=True,
+    )
+
+    assert resolve_final_route(command, "specialist") == (
+        None,
+        "needs_information",
+    )
+
+
+# Verify confirming an information recommendation stays a queue state.
+def test_resolve_final_route_confirms_information_recommendation() -> None:
+    command = ReviewCommand(action="confirm", evidence_acknowledged=True)
+
+    assert resolve_final_route(command, "needs_information") == (
+        None,
+        "needs_information",
+    )

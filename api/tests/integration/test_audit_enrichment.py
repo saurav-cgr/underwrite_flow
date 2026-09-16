@@ -122,7 +122,7 @@ def test_audit_events_record_the_full_decision_chain() -> None:
                 json={
                     "action": "override",
                     "selected_route": "specialist",
-                    "specialist_label": "Synthetic specialist desk",
+                    "specialist_label": "motor inspection",
                     "reason": "Synthetic demonstration override",
                     "evidence_acknowledged": True,
                 },
@@ -174,7 +174,7 @@ def test_audit_events_record_the_full_decision_chain() -> None:
     assert review["action"] == "override"
     assert review["recommended_route"] == "expedited"
     assert review["selected_route"] == "specialist"
-    assert review["specialist_label"] == "Synthetic specialist desk"
+    assert review["specialist_label"] == "motor inspection"
     assert review["reason"] == "Synthetic demonstration override"
 
     completion = audit["case_completed"]
@@ -182,7 +182,7 @@ def test_audit_events_record_the_full_decision_chain() -> None:
     assert completion["destination"] == "completed_queue"
     assert completion["idempotency_key"]
     assert completion["route"] == "specialist"
-    assert completion["specialist_label"] == "Synthetic specialist desk"
+    assert completion["specialist_label"] == "motor inspection"
     assert completion["review_id"] == review["review_id"]
 
 

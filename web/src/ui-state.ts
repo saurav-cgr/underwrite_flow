@@ -180,3 +180,57 @@ export function requiredDocuments(
 ): ProductDocument[] {
   return documents.filter((document) => document.requirement === "required");
 }
+
+export type ReviewAction = "confirm" | "override" | "request_information";
+
+export interface ReviewDecisionInput {
+  action: ReviewAction;
+  selectedRoute: string;
+  recommendedRoute: string | undefined;
+  specialistLabel: string;
+  reason: string;
+  acknowledged: boolean;
+}
+
+export interface ReviewDecisionBody {
+  action: ReviewAction;
+  selected_route?: string;
+  specialist_label?: string;
+  reason?: string;
+  evidence_acknowledged: boolean;
+}
+
+// Resolve the route a decision settles on, mirroring the server rule that
+// treats a manual recommendation as specialist review.
+export function resolvedRoute(
+  action: ReviewAction,
+  selectedRoute: string,
+  recommendedRoute: string | undefined,
+): string | undefined {
+  if (action === "request_information") return undefined;
+  if (action === "override") return selectedRoute;
+  return recommendedRoute;
+}
+
+// Build the decision body the API expects, labelling every specialist route.
+export function reviewDecisionBody(
+  input: ReviewDecisionInput,
+): ReviewDecisionBody {
+  const route = resolvedRoute(
+    input.action,
+    input.selectedRoute,
+    input.recommendedRoute,
+  );
+  const needsLabel = route === "specialist" || route === "manual";
+  const routeField =
+    input.action === "override" ? input.selectedRoute : undefined;
+  return {
+    action: input.action,
+    selected_route: routeField,
+    specialist_label: needsLabel
+      ? input.specialistLabel || undefined
+      : undefined,
+    reason: input.reason || undefined,
+    evidence_acknowledged: input.acknowledged,
+  };
+}

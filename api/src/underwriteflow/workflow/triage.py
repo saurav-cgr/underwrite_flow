@@ -64,22 +64,31 @@ def human_review(state: TriageState) -> dict[str, dict[str, object]]:
     return {"review_command": command.model_dump(mode="json", exclude_none=True)}
 
 
-# Apply the resumed human decision as the only source of final routing.
-def apply_human_review(state: TriageState) -> dict[str, str | None]:
-    command = ReviewCommand.model_validate(state["review_command"])
+# Resolve one human command into the final route and the review status.
+def resolve_final_route(
+    command: ReviewCommand, recommended_route: str | None
+) -> tuple[str | None, str]:
     if command.action == "request_information":
-        return {"final_route": None, "review_status": "needs_information"}
-    recommended = state["recommendation"]["route"]
-    route = command.selected_route or recommended
+        return None, "needs_information"
+    route = command.selected_route or recommended_route
     if route == "needs_information":
-        return {"final_route": None, "review_status": "needs_information"}
+        return None, "needs_information"
     # Manual is a review state, never a final route; the most cautious of the
     # three PRD routes is used when the underwriter supplied no route.
     if route == "manual":
         route = "specialist"
-    if command.action == "override" or route != recommended:
-        return {"final_route": route, "review_status": "overridden"}
-    return {"final_route": route, "review_status": "confirmed"}
+    if command.action == "override" or route != recommended_route:
+        return route, "overridden"
+    return route, "confirmed"
+
+
+# Apply the resumed human decision as the only source of final routing.
+def apply_human_review(state: TriageState) -> dict[str, str | None]:
+    command = ReviewCommand.model_validate(state["review_command"])
+    route, status = resolve_final_route(
+        command, state["recommendation"]["route"]
+    )
+    return {"final_route": route, "review_status": status}
 
 
 # Compile a resumable triage graph with a human checkpoint before final routing.
