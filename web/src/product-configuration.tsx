@@ -10,6 +10,7 @@ import {
   validateProductConfiguration,
 } from "./api";
 import { Badge, Button, EmptyState, PageHeading, Panel } from "./components";
+import { ReferenceDocuments } from "./reference-documents";
 import { yamlHash } from "./ui-state";
 import type {
   ProductConfigurationItem,
@@ -385,6 +386,11 @@ export function ProductConfiguration({ token }: { token: string }) {
           )}
         </Panel>
       </div>
+      <ReferenceDocuments
+        productCode={selectedCode}
+        token={token}
+        versions={history}
+      />
     </>
   );
 }
