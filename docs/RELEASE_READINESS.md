@@ -22,6 +22,15 @@ verdict above is unchanged. Current measurements:
 
 Resolved or reduced since this report:
 
+- **Limitation 2** — closed. The HTTP error handler replaced every router
+  message with one generic sentence, so an underwriter overriding to the
+  already-recommended route saw "Request could not be completed" instead of the
+  actionable reason the router had already written. Every `detail` in the
+  codebase was audited first: all are hand-written literals or
+  application-owned error messages, with no exception text, file path, SQL, or
+  user data. A 4xx detail is now served to the client while 5xx stays generic,
+  pinned by a unit test covering both branches. Framework validation errors
+  stay generic on purpose: that payload can echo submitted input values.
 - **Limitation 3** — reduced. `jsdom` and `@testing-library/react` are
   installed, and DOM tests now cover intake, the evidence pack, and reference
   documents. Applicant tracking, admin product configuration, and sign-in still

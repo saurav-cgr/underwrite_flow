@@ -16,7 +16,11 @@ from underwriteflow.auth.router import router as auth_router
 from underwriteflow.cases.router import router as cases_router
 from underwriteflow.config import Settings, get_settings
 from underwriteflow.database import Database
-from underwriteflow.errors import ApiError, error_response
+from underwriteflow.errors import (
+    ApiError,
+    error_response,
+    http_error_message,
+)
 from underwriteflow.evaluation.router import router as evaluation_router
 from underwriteflow.products.router import router as products_router
 from underwriteflow.reviews.router import router as reviews_router
@@ -86,7 +90,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return error_response(
             status_code=error.status_code,
             code="http_error",
-            message="Request could not be completed",
+            message=http_error_message(error.status_code, error.detail),
             request_id=request_id_for(request),
         )
 

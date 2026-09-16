@@ -41,6 +41,18 @@ class ApiError(Exception):
         self.details = details
 
 
+# Choose the client-facing message for one framework HTTP error.
+def http_error_message(status_code: int, detail: object) -> str:
+    if status_code >= 500:
+        # A server error may describe internals, so it stays generic.
+        return "Request could not be completed"
+    if isinstance(detail, str) and detail:
+        # Every detail in this codebase is either a hand-written message or an
+        # application-owned error, so a client can safely read it.
+        return detail
+    return "Request could not be completed"
+
+
 # Build a sanitized response with the shared error schema.
 def error_response(
     status_code: int,
