@@ -3,18 +3,14 @@ import { useEffect, useState } from "react";
 import {
   ApiError,
   activateProductConfiguration,
-  importProductConfiguration,
   listProductConfigurations,
   listProductVersionHistory,
-  previewProductConfiguration,
-  validateProductConfiguration,
 } from "./api";
 import { Badge, Button, EmptyState, PageHeading, Panel } from "./components";
+import { ProductImport } from "./product-import";
 import { ReferenceDocuments } from "./reference-documents";
-import { yamlHash } from "./ui-state";
 import type {
   ProductConfigurationItem,
-  ProductConfigurationPreview,
   ProductVersionHistoryItem,
 } from "./types";
 
@@ -27,11 +23,6 @@ export function ProductConfiguration({ token }: { token: string }) {
   const [notice, setNotice] = useState("");
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [yamlText, setYamlText] = useState("");
-  const [preview, setPreview] = useState<ProductConfigurationPreview | null>(
-    null,
-  );
-  const [previewHash, setPreviewHash] = useState<string | null>(null);
   const [working, setWorking] = useState("");
   const [productRefresh, setProductRefresh] = useState(0);
 
@@ -76,92 +67,17 @@ export function ProductConfiguration({ token }: { token: string }) {
     }
   }
 
-  // Load a selected local YAML file without sending it to the server.
-  async function handleFileChange(file: File | undefined) {
-    if (!file) return;
-    try {
-      setYamlText(await file.text());
-      setPreview(null);
-      setPreviewHash(null);
-      setNotice("YAML loaded locally. Validate it before importing.");
-    } catch {
-      setMessage("The YAML file could not be read.");
-    }
+  // Select a freshly imported draft and reload its version history.
+  async function handleImported(productCode: string) {
+    setSelectedCode(productCode);
+    setProductRefresh((current) => current + 1);
+    await refreshHistory(productCode);
   }
 
-  // Validate local YAML without persisting a configuration version.
-  async function handleValidate() {
-    if (!yamlText.trim()) {
-      setMessage("Paste or choose a YAML configuration first.");
-      return;
-    }
-    setWorking("validate");
-    setMessage("");
-    setNotice("");
-    try {
-      const result = await validateProductConfiguration(token, yamlText);
-      setNotice(
-        `Configuration ${result.product_code} ${result.version} is valid.`,
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof ApiError
-          ? error.message
-          : "The product configuration could not be validated.",
-      );
-    } finally {
-      setWorking("");
-    }
-  }
-
-  // Preview normalized configuration counts without creating a draft.
-  async function handlePreview() {
-    if (!yamlText.trim()) {
-      setMessage("Paste or choose a YAML configuration first.");
-      return;
-    }
-    setWorking("preview");
-    setMessage("");
-    try {
-      setPreview(await previewProductConfiguration(token, yamlText));
-      setPreviewHash(yamlHash(yamlText));
-    } catch (error) {
-      setMessage(
-        error instanceof ApiError
-          ? error.message
-          : "The product configuration could not be previewed.",
-      );
-    } finally {
-      setWorking("");
-    }
-  }
-
-  // Import local YAML only after an administrator explicitly requests it.
-  async function handleImport() {
-    if (!yamlText.trim()) {
-      setMessage("Paste or choose a YAML configuration first.");
-      return;
-    }
-    setWorking("import");
-    setMessage("");
-    setNotice("");
-    try {
-      const result = await importProductConfiguration(token, yamlText);
-      setSelectedCode(result.product_code);
-      setProductRefresh((current) => current + 1);
-      await refreshHistory(result.product_code);
-      setNotice(
-        `Draft ${result.version} imported for ${result.product_code}.`,
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof ApiError
-          ? error.message
-          : "The product configuration could not be imported.",
-      );
-    } finally {
-      setWorking("");
-    }
+  // Report a nested panel outcome in the screen-level message area.
+  function reportStatus(next: { message?: string; notice?: string }) {
+    if (next.message !== undefined) setMessage(next.message);
+    if (next.notice !== undefined) setNotice(next.notice);
   }
 
   // Activate one draft only after an administrator confirms the action.
@@ -196,8 +112,6 @@ export function ProductConfiguration({ token }: { token: string }) {
   const selectedProduct = products.find(
     (product) => product.product_code === selectedCode,
   );
-  const previewIsCurrent =
-    preview !== null && previewHash === yamlHash(yamlText);
   const activeVersion = history.find(
     (item) => item.version === selectedProduct?.active_version,
   );
@@ -312,80 +226,11 @@ export function ProductConfiguration({ token }: { token: string }) {
           )}
         </Panel>
       </div>
-      <div className="admin-grid">
-        <Panel title="Validate and import YAML">
-          <label className="field" htmlFor="product-yaml">
-            <span>Product configuration YAML</span>
-            <small>
-              Fictional configuration only. Validation and preview do not
-              change the active version.
-            </small>
-            <textarea
-              id="product-yaml"
-              onChange={(event) => setYamlText(event.target.value)}
-              placeholder="product_code: fictional-product\nversion: v2"
-              value={yamlText}
-            />
-          </label>
-          <label className="upload-button">
-            <input
-              accept=".yaml,.yml,text/yaml,application/x-yaml"
-              aria-label="Choose product configuration YAML"
-              onChange={(event) => handleFileChange(event.target.files?.[0])}
-              type="file"
-            />
-            Choose YAML file
-          </label>
-          <div className="form-actions">
-            <Button
-              disabled={Boolean(working)}
-              onClick={handleValidate}
-              variant="secondary"
-            >
-              {working === "validate" ? "Validating…" : "Validate"}
-            </Button>
-            <Button
-              disabled={Boolean(working)}
-              onClick={handlePreview}
-              variant="secondary"
-            >
-              {working === "preview" ? "Previewing…" : "Preview"}
-            </Button>
-            <Button disabled={Boolean(working)} onClick={handleImport}>
-              {working === "import" ? "Importing…" : "Import draft"}
-            </Button>
-          </div>
-        </Panel>
-        <Panel title="Configuration preview">
-          {preview && !previewIsCurrent ? (
-            <p className="muted" role="status">
-              The YAML changed after this preview. Preview again to refresh
-              these counts.
-            </p>
-          ) : null}
-          {previewIsCurrent && preview ? (
-            <div className="metric-strip">
-              <div>
-                <strong>{preview.field_count}</strong>
-                <span>Fields</span>
-              </div>
-              <div>
-                <strong>{preview.document_count}</strong>
-                <span>Documents</span>
-              </div>
-              <div>
-                <strong>{preview.routing_rule_count}</strong>
-                <span>Routing rules</span>
-              </div>
-            </div>
-          ) : (
-            <EmptyState
-              title="No preview yet"
-              detail="Preview valid YAML to inspect its normalized impact."
-            />
-          )}
-        </Panel>
-      </div>
+      <ProductImport
+        onImported={handleImported}
+        onStatus={reportStatus}
+        token={token}
+      />
       <ReferenceDocuments
         productCode={selectedCode}
         token={token}
