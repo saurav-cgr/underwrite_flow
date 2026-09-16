@@ -82,16 +82,32 @@ export interface NextStep {
   screen: Screen;
 }
 
+export interface IntakeAction {
+  label: string;
+  kind: "submit" | "resubmit";
+}
+
+// Decide which intake action one case status allows, if any.
+export function intakeActionFor(status: string): IntakeAction | null {
+  if (status === "new") {
+    return { label: "Submit for review", kind: "submit" };
+  }
+  if (status === "needs_information") {
+    return { label: "Resubmit for review", kind: "resubmit" };
+  }
+  return null;
+}
+
 // Describe the applicant's next action for one case status, including a case
 // whose processing never finished and is therefore still open for submission.
 export function applicantNextStep(status: string): NextStep {
   if (status === "new") {
     return {
-      title: "This case has not finished processing.",
+      title: "This case is ready to submit.",
       detail:
-        "Its documents have not been submitted for review yet, so no "
-        + "recommendation exists. Send the required documents to start.",
-      action: "Continue documents",
+        "Upload the required documents, then submit the case so an "
+        + "underwriter can review the evidence and confirm a route.",
+      action: "Submit for review",
       screen: "documents",
     };
   }
@@ -99,8 +115,9 @@ export function applicantNextStep(status: string): NextStep {
     return {
       title: "More information is needed.",
       detail:
-        "Review is paused until the requested evidence is supplied.",
-      action: "Add information",
+        "Review is paused until the requested evidence is supplied. "
+        + "Upload the missing documents, then resubmit the case.",
+      action: "Upload and resubmit",
       screen: "documents",
     };
   }

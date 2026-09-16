@@ -4,11 +4,13 @@ import {
   ApiError,
   listDocuments,
   removeDocument,
+  resubmitCase,
+  submitCase,
   uploadDocument,
 } from "./api";
 import { Button, Journey, PageHeading } from "./components";
 import { Icon } from "./icons";
-import { requiredDocuments } from "./ui-state";
+import { intakeActionFor, requiredDocuments } from "./ui-state";
 import type {
   CaseRecord,
   DocumentRecord,
@@ -56,21 +58,24 @@ function DocumentRequestRow({
   );
 }
 
-// Let applicants upload and replace pre-review supporting documents.
+// Let applicants upload supporting documents and submit the case for review.
 export function DocumentsScreen({
   product,
   caseRecord,
   token,
   onNavigate,
+  onCaseChange,
 }: {
   product: ProductCatalogItem;
   caseRecord: CaseRecord;
   token: string;
   onNavigate: (screen: Screen) => void;
+  onCaseChange: (caseRecord: CaseRecord) => void;
 }) {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [removingDocumentId, setRemovingDocumentId] = useState<string | null>(
     null,
   );
@@ -88,6 +93,10 @@ export function DocumentsScreen({
     required.length === 0
       ? 100
       : Math.round((receivedCount / required.length) * 100);
+  const intake = intakeActionFor(caseRecord.status);
+  const ready = required.every((document) =>
+    documents.some((stored) => stored.document_code === document.code),
+  );
 
   // Load current document metadata when the screen opens.
   useEffect(() => {
@@ -117,6 +126,27 @@ export function DocumentsScreen({
       );
     } finally {
       setUploading(false);
+    }
+  }
+
+  // Submit or resubmit the case and report the recorded status upward.
+  async function handleIntake(kind: "submit" | "resubmit") {
+    setSubmitting(true);
+    setMessage("");
+    try {
+      const result = kind === "submit"
+        ? await submitCase(token, caseRecord.id)
+        : await resubmitCase(token, caseRecord.id);
+      onCaseChange({ ...caseRecord, status: result.status });
+      onNavigate("tracking");
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "The case could not be submitted.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -257,8 +287,21 @@ export function DocumentsScreen({
               ))}
             </div>
           )}
+          {intake && !ready ? (
+            <p className="muted">
+              Upload every required document to submit this case.
+            </p>
+          ) : null}
           <div className="form-actions">
-            <Button onClick={() => onNavigate("tracking")}>
+            {intake ? (
+              <Button
+                disabled={submitting || !ready}
+                onClick={() => handleIntake(intake.kind)}
+              >
+                {submitting ? "Submitting…" : intake.label}
+              </Button>
+            ) : null}
+            <Button onClick={() => onNavigate("tracking")} variant="quiet">
               Continue to tracking
             </Button>
           </div>

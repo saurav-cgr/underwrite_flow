@@ -145,6 +145,7 @@ export function App() {
     content = (
       <DocumentsScreen
         caseRecord={caseRecord}
+        onCaseChange={setCaseRecord}
         onNavigate={navigate}
         product={selectedProduct}
         token={session.token}

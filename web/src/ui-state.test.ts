@@ -5,6 +5,7 @@ import {
   auditFacts,
   homeScreenForRole,
   identityInitials,
+  intakeActionFor,
   isOpenCase,
   requiredDocuments,
   reviewDecisionBody,
@@ -102,15 +103,20 @@ describe("document intake", () => {
 
 // Verify an unprocessed case is described as unfinished, not as progressing.
 describe("applicant next step", () => {
-  it("tells the applicant an unprocessed case still needs documents", () => {
+  it("tells the applicant to submit an unprocessed case", () => {
     const step = applicantNextStep("new");
 
     expect(step.screen).toBe("documents");
-    expect(step.title).toContain("not finished processing");
+    expect(step.action).toBe("Submit for review");
+    expect(step.detail).toContain("submit");
   });
 
   it("points a needs-information case at the documents screen", () => {
-    expect(applicantNextStep("needs_information").screen).toBe("documents");
+    const step = applicantNextStep("needs_information");
+
+    expect(step.screen).toBe("documents");
+    expect(step.action).toBe("Upload and resubmit");
+    expect(step.detail).toContain("resubmit");
   });
 
   it("asks nothing of the applicant while an underwriter reviews", () => {
@@ -159,6 +165,29 @@ describe("audit facts", () => {
 
   it("drops null values instead of rendering empty rows", () => {
     expect(auditFacts({ absent: null })).toEqual([]);
+  });
+});
+
+// Verify only intake-ready statuses offer a submission action.
+describe("intake action", () => {
+  it("offers submission for a case that was never submitted", () => {
+    expect(intakeActionFor("new")).toEqual({
+      label: "Submit for review",
+      kind: "submit",
+    });
+  });
+
+  it("offers resubmission after a request for information", () => {
+    expect(intakeActionFor("needs_information")).toEqual({
+      label: "Resubmit for review",
+      kind: "resubmit",
+    });
+  });
+
+  it("offers nothing while an underwriter owns the case", () => {
+    expect(intakeActionFor("underwriter_review")).toBeNull();
+    expect(intakeActionFor("completed")).toBeNull();
+    expect(intakeActionFor("manual_review")).toBeNull();
   });
 });
 
