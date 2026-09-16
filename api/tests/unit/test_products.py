@@ -235,3 +235,34 @@ specialist_labels: [synthetic review]
 
     assert response.status_code == 200
     assert response.json() == {"product_code": "synthetic-motor", "version": "v1"}
+
+
+# Verify a configuration cannot advertise an unsupported content type.
+def test_configuration_rejects_unsupported_content_types() -> None:
+    with pytest.raises(ProductConfigurationError):
+        load_configuration(
+            """
+product_code: synthetic-motor
+title: Synthetic Motor
+family: motor
+scope: Fictional demonstration only
+description: Synthetic product configuration
+version: v1
+fields:
+  - key: age
+    label: Age
+    type: integer
+    required: true
+    help_text: Synthetic age
+documents:
+  - code: identity
+    title: Identity
+    requirement: required
+    accepted_types: [text/plain]
+routing_rules:
+  - code: standard
+    condition: {field: age, operator: greater_than, value: 0}
+    route: standard
+specialist_labels: [synthetic review]
+"""
+        )

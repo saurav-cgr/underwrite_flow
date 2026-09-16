@@ -171,6 +171,27 @@ async def test_upload_storage_computes_page_count(tmp_path: Path) -> None:
     assert stored.content_type == "application/pdf"
 
 
+# Verify a configured document code accepts only its advertised content types
+# and leaves nothing on the volume when the type is refused.
+@pytest.mark.asyncio
+async def test_upload_storage_rejects_types_outside_the_configured_set(
+    tmp_path: Path,
+) -> None:
+    storage = UploadStorage(tmp_path)
+    upload = UploadFile(
+        filename="synthetic.pdf",
+        file=BytesIO(synthetic_pdf()),
+        headers={"content-type": "application/pdf"},
+    )
+
+    with pytest.raises(StorageValidationError):
+        await storage.save(
+            upload, "case-123", allowed_types={"image/jpeg", "image/png"}
+        )
+
+    assert list(tmp_path.rglob("*")) == []
+
+
 # Verify missing requirements are derived from codes, not uploaded files.
 def test_missing_document_codes_uses_codes_not_file_count() -> None:
     provided = ["inspection_photo"]

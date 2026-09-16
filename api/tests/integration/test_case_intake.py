@@ -1,5 +1,6 @@
 import hashlib
 from io import BytesIO
+from pathlib import Path
 from uuid import uuid4
 
 import psycopg
@@ -13,6 +14,16 @@ DATABASE_URL = (
     "postgresql://underwriteflow:synthetic-local-password@"
     "db:5433/underwriteflow"
 )
+
+UPLOAD_ROOT = Path("/data/uploads")
+
+
+# List the file names stored on the upload volume for one case.
+def stored_uploads(case_id: str) -> list[str]:
+    directory = UPLOAD_ROOT / case_id
+    if not directory.exists():
+        return []
+    return sorted(path.name for path in directory.iterdir())
 
 
 # Build a minimal single-page synthetic PDF for upload tests.
@@ -260,5 +271,63 @@ def test_document_upload_requires_a_known_code() -> None:
                 headers=headers,
             )
             assert still_open.status_code == 200
+    finally:
+        set_motor_status("draft")
+
+
+# Verify one document code accepts only the content types its product
+# configures, and that a refused upload leaves nothing stored.
+def test_upload_enforces_configured_content_types() -> None:
+    set_motor_status("active")
+    case_id = ""
+    try:
+        application = {
+            "product_code": "motor-private-car",
+            "idempotency_key": str(uuid4()),
+            "payload": {
+                "vehicle_age": 2,
+                "vehicle_use": "personal",
+                "prior_claims": 0,
+            },
+            "document_codes": ["identity_record", "vehicle_record"],
+        }
+        with TestClient(create_app()) as client:
+            login = client.post(
+                "/api/v1/auth/session",
+                json={
+                    "email": "applicant@synthetic.test",
+                    "password": "underwriteflow-demo-applicant",
+                },
+            )
+            headers = {"Authorization": f"Bearer {login.json()['token']}"}
+            created = client.post(
+                "/api/v1/cases",
+                json=application,
+                headers=headers,
+            )
+            assert created.status_code == 200, created.text
+            case_id = created.json()["id"]
+            before = stored_uploads(case_id)
+
+            # inspection_photo is configured for images only.
+            refused = client.post(
+                f"/api/v1/cases/{case_id}/documents",
+                files={
+                    "document": (
+                        "synthetic.pdf",
+                        synthetic_pdf(),
+                        "application/pdf",
+                    )
+                },
+                data={"document_code": "inspection_photo"},
+                headers=headers,
+            )
+
+            assert refused.status_code == 422, refused.text
+            assert stored_uploads(case_id) == before
+            listed = client.get(
+                f"/api/v1/cases/{case_id}/documents", headers=headers
+            )
+            assert listed.json() == []
     finally:
         set_motor_status("draft")

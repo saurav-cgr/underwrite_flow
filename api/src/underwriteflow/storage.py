@@ -1,6 +1,7 @@
 """Local safe storage for untrusted applicant uploads."""
 
 import hashlib
+from collections.abc import Collection
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
@@ -17,6 +18,7 @@ ALLOWED_SUFFIXES = {
     "image/jpeg": {".jpg", ".jpeg"},
     "image/png": {".png"},
 }
+SUPPORTED_CONTENT_TYPES = frozenset(ALLOWED_SUFFIXES)
 MAGIC_SIGNATURES = (
     (b"%PDF-", "application/pdf"),
     (b"\xff\xd8\xff", "image/jpeg"),
@@ -69,7 +71,12 @@ class UploadStorage:
         self.root = root
 
     # Validate and write one upload under a generated case-scoped key.
-    async def save(self, upload: UploadFile, case_id: UUID | str) -> StoredUpload:
+    async def save(
+        self,
+        upload: UploadFile,
+        case_id: UUID | str,
+        allowed_types: Collection[str] | None = None,
+    ) -> StoredUpload:
         declared = upload.content_type or ""
         suffix = Path(upload.filename or "").suffix.lower()
         content = await upload.read(MAX_DOCUMENT_BYTES + 1)
@@ -85,6 +92,12 @@ class UploadStorage:
         if suffix not in ALLOWED_SUFFIXES[detected]:
             raise StorageValidationError(
                 "document extension does not match its content"
+            )
+        # Refuse a type the document code does not accept before any byte of
+        # the upload reaches the volume.
+        if allowed_types is not None and detected not in allowed_types:
+            raise StorageValidationError(
+                "document type is not accepted for this document code"
             )
         page_count = count_pages(content, detected)
         if not 1 <= page_count <= MAX_DOCUMENT_PAGES:

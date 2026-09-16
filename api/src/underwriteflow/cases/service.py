@@ -208,15 +208,26 @@ class CaseService:
         configuration = ProductConfiguration.model_validate(
             product_version.configuration
         )
-        known_codes = {document.code for document in configuration.documents}
-        if document_code not in known_codes:
+        requirement = next(
+            (
+                item
+                for item in configuration.documents
+                if item.code == document_code
+            ),
+            None,
+        )
+        if requirement is None:
             raise CaseValidationError("unsupported document code")
         count = await session.scalar(
             select(func.count(Document.id)).where(Document.case_id == case.id)
         )
         if count >= MAX_DOCUMENT_COUNT:
             raise CaseValidationError("document count limit exceeded")
-        stored = await self.storage.save(upload, case.id)
+        stored = await self.storage.save(
+            upload,
+            case.id,
+            allowed_types=set(requirement.accepted_types),
+        )
         document = Document(
             id=uuid4(),
             case_id=case.id,

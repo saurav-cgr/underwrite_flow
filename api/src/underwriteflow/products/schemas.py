@@ -3,7 +3,15 @@
 import re
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
+
+from underwriteflow.storage import SUPPORTED_CONTENT_TYPES
 
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
@@ -73,6 +81,21 @@ class ProductDocument(BaseModel):
     requirement: Requirement
     accepted_types: list[str] = Field(min_length=1)
     condition: dict[str, Any] | None = None
+
+    # Refuse evidence types the upload path cannot store at all.
+    @field_validator("accepted_types")
+    @classmethod
+    def validate_accepted_types(cls, value: list[str]) -> list[str]:
+        unsupported = sorted(
+            item
+            for item in set(value)
+            if item not in SUPPORTED_CONTENT_TYPES
+        )
+        if unsupported:
+            raise ValueError(
+                "unsupported accepted_types: " + ", ".join(unsupported)
+            )
+        return value
 
     # Require a condition only for conditional evidence requirements.
     @model_validator(mode="after")
