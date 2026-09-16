@@ -1,5 +1,8 @@
 """Evidence worker, fan-out, join, and reconciliation nodes."""
 
+from collections.abc import Mapping
+from typing import Any
+
 from langgraph.types import Send
 
 from underwriteflow.providers.protocol import ExtractionProvider
@@ -9,6 +12,21 @@ from underwriteflow.workflow.reducers import sort_results
 from underwriteflow.workflow.state import DocumentResult, DocumentWorkerState, EvidenceState
 
 MAX_DOCUMENT_BRANCHES = 3
+
+
+# List document branches that produced no usable evidence.
+def branch_failures(
+    evidence_result: Mapping[str, Any],
+) -> list[dict[str, object]]:
+    return [
+        {
+            "document_id": result.get("document_id"),
+            "filename": result.get("filename"),
+            "error_code": result.get("error_code"),
+        }
+        for result in evidence_result.get("results", [])
+        if result.get("error_code")
+    ]
 
 
 # Extract one document branch with retries limited to transient provider failures.

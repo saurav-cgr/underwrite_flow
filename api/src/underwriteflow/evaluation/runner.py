@@ -12,6 +12,7 @@ from underwriteflow.evaluation.tracing import trace_summary
 from underwriteflow.products.service import load_configuration
 from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.graph import build_evidence_graph
+from underwriteflow.workflow.nodes import branch_failures
 from underwriteflow.workflow.product_subgraphs import select_product_subgraph
 from underwriteflow.workflow.triage import (
     has_low_confidence,
@@ -83,6 +84,7 @@ async def run_record(
             "missing_information": missing,
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
+            "processing_failures": branch_failures(evidence_result),
             "low_confidence": has_low_confidence(reconciled),
         }
     )["recommendation"]

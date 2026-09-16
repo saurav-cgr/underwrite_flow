@@ -89,6 +89,7 @@ class TriageState(TypedDict, total=False):
     missing_information: list[str]
     risk_signals: list[dict[str, object]]
     validations: list[dict[str, object]]
+    processing_failures: list[dict[str, object]]
     low_confidence: bool
     unsupported_product: bool
     summary: dict[str, object]

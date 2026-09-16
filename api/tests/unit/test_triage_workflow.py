@@ -289,6 +289,7 @@ def test_build_triage_state_flags_unknown_confidence() -> None:
         [],
         {"reconciled_fields": [{"field_name": "vehicle_age"}]},
         {},
+        [],
     )
     confident = service.build_triage_state(
         case,
@@ -299,10 +300,114 @@ def test_build_triage_state_flags_unknown_confidence() -> None:
             ]
         },
         {},
+        [],
     )
 
     assert unknown["low_confidence"] is True
     assert confident["low_confidence"] is False
+
+
+# Verify both extraction and branch failures reach the triage input.
+def test_build_triage_state_records_processing_failures() -> None:
+    service = SubmissionService(
+        provider=FakeProvider(),
+        upload_root="/tmp/synthetic-uploads",
+        database_url="postgresql://synthetic",
+    )
+    case = SimpleNamespace(id=uuid4())
+
+    state = service.build_triage_state(
+        case,
+        [],
+        {
+            "reconciled_fields": [],
+            "results": [
+                {
+                    "document_id": "synthetic-branch",
+                    "filename": "synthetic.pdf",
+                    "fields": [],
+                    "error_code": "provider_error",
+                },
+                {
+                    "document_id": "synthetic-ok",
+                    "filename": "ok.pdf",
+                    "fields": [],
+                    "error_code": None,
+                },
+            ],
+        },
+        {},
+        [
+            {
+                "document_id": "synthetic-upload",
+                "filename": "upload.pdf",
+                "error_code": "extraction_failed",
+            }
+        ],
+    )
+
+    assert state["processing_failures"] == [
+        {
+            "document_id": "synthetic-upload",
+            "filename": "upload.pdf",
+            "error_code": "extraction_failed",
+        },
+        {
+            "document_id": "synthetic-branch",
+            "filename": "synthetic.pdf",
+            "error_code": "provider_error",
+        },
+    ]
+
+
+# Verify a document branch that produced no evidence routes to specialist.
+@pytest.mark.asyncio
+async def test_processing_failures_route_to_specialist_review() -> None:
+    graph = build_triage_graph(checkpointer=MemorySaver())
+    config = thread_config("triage-processing-failure")
+
+    paused = await graph.ainvoke(
+        {
+            "case_id": "triage-processing-failure",
+            "processing_failures": [
+                {
+                    "document_id": "synthetic-document",
+                    "error_code": "provider_error",
+                }
+            ],
+            "validations": [],
+            "risk_signals": [],
+            "conflicts": [],
+            "missing_information": [],
+            "evidence": [],
+        },
+        config=config,
+    )
+
+    assert paused["recommendation"]["route"] == "specialist"
+    assert paused["recommendation"]["factors"] == ["processing_failure"]
+
+
+# Verify a processing failure never outranks a request for information.
+@pytest.mark.asyncio
+async def test_processing_failures_do_not_outrank_missing_information() -> None:
+    graph = build_triage_graph(checkpointer=MemorySaver())
+    config = thread_config("triage-failure-precedence")
+
+    paused = await graph.ainvoke(
+        {
+            "case_id": "triage-failure-precedence",
+            "processing_failures": [{"error_code": "extraction_failed"}],
+            "missing_information": ["prior_claims"],
+            "validations": [],
+            "risk_signals": [],
+            "conflicts": [],
+            "evidence": [],
+        },
+        config=config,
+    )
+
+    assert paused["recommendation"]["route"] == "needs_information"
 
 
 # Verify an unsupported product configuration outranks every other signal and

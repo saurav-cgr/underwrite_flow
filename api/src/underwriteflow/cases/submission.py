@@ -27,6 +27,7 @@ from underwriteflow.providers.protocol import ExtractionProvider
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.graph import build_evidence_graph
+from underwriteflow.workflow.nodes import branch_failures
 from underwriteflow.workflow.product_subgraphs import build_product_subgraph
 from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import (
@@ -166,6 +167,7 @@ class SubmissionService:
         documents: list[Document],
         evidence_result: dict[str, object],
         product_result: dict[str, object],
+        extraction_failures: list[dict[str, object]],
     ) -> dict[str, object]:
         reconciled = list(evidence_result.get("reconciled_fields", []))
         evidence = [
@@ -196,6 +198,10 @@ class SubmissionService:
             ),
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
+            "processing_failures": [
+                *extraction_failures,
+                *branch_failures(evidence_result),
+            ],
             "low_confidence": has_low_confidence(reconciled),
         }
 
@@ -231,6 +237,7 @@ class SubmissionService:
                 "missing_information": [],
                 "risk_signals": [],
                 "validations": [failure],
+                "processing_failures": [],
                 "low_confidence": False,
                 "unsupported_product": True,
             },
@@ -353,7 +360,11 @@ class SubmissionService:
         triage_values = await self.run_triage_graph(
             case,
             self.build_triage_state(
-                case, documents, evidence_result, product_result
+                case,
+                documents,
+                evidence_result,
+                product_result,
+                extraction_failures,
             ),
         )
         await persist_case_evidence(

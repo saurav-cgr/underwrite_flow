@@ -1,11 +1,16 @@
-"""A pinned configuration that cannot be read routes to manual review."""
+"""Routing that must err toward a human instead of a confident route."""
 
 import json
 from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from synthetic_pdf import blank_pdf
+from synthetic_pdf import (
+    MOTOR_EVIDENCE_LINES,
+    UPLOAD_ROOT,
+    blank_pdf,
+    text_pdf,
+)
 
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
@@ -98,13 +103,17 @@ def prepare_case(client: TestClient, applicant: dict[str, str]) -> str:
     )
     assert created.status_code == 200, created.text
     case_id = created.json()["id"]
-    for code in DOCUMENT_CODES:
+    uploads = [
+        ("identity_record", blank_pdf()),
+        ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
+    ]
+    for code, content in uploads:
         uploaded = client.post(
             f"/api/v1/cases/{case_id}/documents",
             files={
                 "document": (
                     "synthetic.pdf",
-                    blank_pdf(),
+                    content,
                     "application/pdf",
                 )
             },
@@ -113,6 +122,19 @@ def prepare_case(client: TestClient, applicant: dict[str, str]) -> str:
         )
         assert uploaded.status_code == 200, uploaded.text
     return case_id
+
+
+# Delete one uploaded file so its local extraction fails on the volume.
+def remove_upload(case_id: str, document_code: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT storage_key FROM documents WHERE case_id = %s "
+                "AND document_code = %s",
+                (case_id, document_code),
+            )
+            storage_key = cursor.fetchone()[0]
+    (UPLOAD_ROOT / storage_key).unlink()
 
 
 # Read one case's persisted status and recommended route.
@@ -197,4 +219,36 @@ def test_unreadable_pinned_configuration_routes_to_manual_review() -> None:
     finally:
         if original is not None:
             write_motor_configuration(original)
+        set_motor_status("draft")
+
+
+# Verify a failed document branch routes to specialist review even when a
+# sibling document supplies every requested field.
+def test_failed_branch_routes_to_specialist_review() -> None:
+    set_motor_status("active")
+    case_id = ""
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            applicant = login(
+                client,
+                "applicant@synthetic.test",
+                "underwriteflow-demo-applicant",
+            )
+            case_id = prepare_case(client, applicant)
+
+            # Only the identity branch fails, and the vehicle record still
+            # supplies vehicle_age, vehicle_use, and prior_claims.
+            remove_upload(case_id, "identity_record")
+
+            submitted = client.post(
+                f"/api/v1/cases/{case_id}/submit", headers=applicant
+            )
+            assert submitted.status_code == 200, submitted.text
+            recommendation = submitted.json()["recommendation"]
+            assert recommendation["route"] == "specialist"
+            assert recommendation["factors"] == ["processing_failure"]
+
+        assert read_case(case_id) == ("underwriter_review", "specialist")
+    finally:
         set_motor_status("draft")

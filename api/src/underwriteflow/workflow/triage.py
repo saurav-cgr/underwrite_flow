@@ -53,6 +53,10 @@ def recommend_triage_route(state: TriageState) -> dict[str, dict[str, object]]:
         or any(item.get("status") == "error" for item in validations)
     ):
         route, factor = "specialist", "specialist_signal"
+    elif state.get("processing_failures"):
+        # A branch that produced no evidence leaves an unverified gap, even
+        # when a sibling document supplied the same fields.
+        route, factor = "specialist", "processing_failure"
     elif any(
         item.get("status") == "triggered" and item.get("route") == "standard"
         for item in validations
