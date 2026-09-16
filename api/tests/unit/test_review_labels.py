@@ -5,7 +5,11 @@ from fastapi import HTTPException
 
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.products.service import load_configuration
-from underwriteflow.reviews.router import require_specialist_label
+from underwriteflow.reviews.router import (
+    FALLBACK_SPECIALIST_LABEL,
+    recover_review_command,
+    require_specialist_label,
+)
 from underwriteflow.reviews.schemas import ReviewCommand
 
 SPECIALIST_CONFIGURATION = """
@@ -98,12 +102,144 @@ def test_unreadable_configuration_still_requires_a_label() -> None:
     assert error.value.status_code == 422
 
 
-# Verify an unreadable configuration cannot reject an unknown label.
-def test_unreadable_configuration_accepts_any_label() -> None:
+# Verify an unreadable configuration accepts only its fixed fallback label.
+def test_unreadable_configuration_accepts_fallback_label() -> None:
+    command = ReviewCommand(
+        action="confirm",
+        specialist_label=FALLBACK_SPECIALIST_LABEL,
+        evidence_acknowledged=True,
+    )
+
+    require_specialist_label(command, "manual", None)
+
+
+# Verify an unreadable configuration rejects an arbitrary specialist label.
+def test_unreadable_configuration_rejects_unknown_label() -> None:
     command = ReviewCommand(
         action="confirm",
         specialist_label="unverifiable desk",
         evidence_acknowledged=True,
     )
 
-    require_specialist_label(command, "manual", None)
+    with pytest.raises(HTTPException) as error:
+        require_specialist_label(command, "manual", None)
+
+    assert error.value.status_code == 422
+
+
+# Verify a retry can repair only a missing legacy specialist label.
+def test_recovered_command_repairs_missing_specialist_label() -> None:
+    stored = ReviewCommand(action="confirm", evidence_acknowledged=True)
+    retry = ReviewCommand(
+        action="override",
+        selected_route="standard",
+        specialist_label="synthetic desk",
+        reason="This retry must not replace the stored decision.",
+        evidence_acknowledged=True,
+    )
+
+    recovered = recover_review_command(
+        stored,
+        retry,
+        "specialist",
+        specialist_configuration(),
+    )
+
+    assert recovered.action == "confirm"
+    assert recovered.selected_route is None
+    assert recovered.reason is None
+    assert recovered.specialist_label == "synthetic desk"
+
+
+# Verify a valid checkpoint label remains authoritative during recovery.
+def test_recovered_command_keeps_valid_specialist_label() -> None:
+    stored = ReviewCommand(
+        action="confirm",
+        specialist_label="motor inspection",
+        evidence_acknowledged=True,
+    )
+    retry = ReviewCommand(
+        action="confirm",
+        specialist_label="synthetic desk",
+        evidence_acknowledged=True,
+    )
+
+    recovered = recover_review_command(
+        stored,
+        retry,
+        "specialist",
+        specialist_configuration(),
+    )
+
+    assert recovered.specialist_label == "motor inspection"
+
+
+# Verify a retry replaces an invalid legacy label without changing the decision.
+def test_recovered_command_repairs_invalid_specialist_label() -> None:
+    stored = ReviewCommand(
+        action="confirm",
+        specialist_label="retired desk",
+        evidence_acknowledged=True,
+    )
+    retry = ReviewCommand(
+        action="confirm",
+        specialist_label="motor inspection",
+        evidence_acknowledged=True,
+    )
+
+    recovered = recover_review_command(
+        stored,
+        retry,
+        "specialist",
+        specialist_configuration(),
+    )
+
+    assert recovered.action == "confirm"
+    assert recovered.selected_route is None
+    assert recovered.specialist_label == "motor inspection"
+
+
+# Verify a retry cannot alter a recovered non-specialist decision.
+def test_recovered_command_keeps_non_specialist_decision() -> None:
+    stored = ReviewCommand(
+        action="override",
+        selected_route="standard",
+        reason="Stored checkpoint decision.",
+        evidence_acknowledged=True,
+    )
+    retry = ReviewCommand(
+        action="override",
+        selected_route="specialist",
+        specialist_label="synthetic desk",
+        reason="Different retry decision.",
+        evidence_acknowledged=True,
+    )
+
+    recovered = recover_review_command(
+        stored,
+        retry,
+        "expedited",
+        specialist_configuration(),
+    )
+
+    assert recovered == stored
+
+
+# Verify recovery refuses an invalid replacement specialist label.
+def test_recovered_command_rejects_invalid_replacement_label() -> None:
+    stored = ReviewCommand(action="confirm", evidence_acknowledged=True)
+    retry = ReviewCommand(
+        action="confirm",
+        specialist_label="unknown desk",
+        evidence_acknowledged=True,
+    )
+
+    with pytest.raises(HTTPException) as error:
+        recover_review_command(
+            stored,
+            retry,
+            "specialist",
+            specialist_configuration(),
+        )
+
+    assert error.value.status_code == 422

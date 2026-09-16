@@ -5,9 +5,11 @@ a process that goes away mid-review, and replaying that resume must never
 rewrite the audit history the first decision wrote.
 """
 
-from uuid import uuid4
+import asyncio
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
+from langgraph.types import Command
 
 from fixtures.records import (
     count_handoffs,
@@ -19,6 +21,40 @@ from fixtures.records import (
 from fixtures.support import APPLICANT, UNDERWRITER, login
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
+from underwriteflow.workflow.checkpoint import postgres_checkpointer
+from underwriteflow.workflow.state import thread_config
+from underwriteflow.workflow.triage import build_triage_graph
+
+
+# Create a completed legacy specialist checkpoint without a database review.
+async def complete_legacy_specialist_checkpoint(
+    case_id: UUID,
+    database_url: str,
+) -> None:
+    config = thread_config(str(case_id), 0)
+    async with postgres_checkpointer(database_url) as checkpointer:
+        graph = build_triage_graph(checkpointer=checkpointer)
+        await graph.ainvoke(
+            {
+                "case_id": str(case_id),
+                "evidence": [],
+                "conflicts": [],
+                "missing_information": [],
+                "risk_signals": [],
+                "validations": [],
+                "low_confidence": True,
+            },
+            config=config,
+        )
+        await graph.ainvoke(
+            Command(
+                resume={
+                    "action": "confirm",
+                    "evidence_acknowledged": True,
+                }
+            ),
+            config=config,
+        )
 
 
 # Verify a review decision resumes from a checkpoint another process wrote.
@@ -108,5 +144,53 @@ def test_repeated_resume_cannot_rewrite_audit_history() -> None:
 
         assert read_audit(case_id) == history
         assert read_decisions(case_id) == [(0, "override", "standard")]
+    finally:
+        remove_case(case_id)
+
+
+# Verify a retry repairs only the label on a completed legacy checkpoint.
+def test_recovered_checkpoint_requires_a_valid_specialist_label() -> None:
+    case_id = uuid4()
+    seed_case(case_id)
+    settings = Settings(generation_provider="fake")
+    try:
+        asyncio.run(
+            complete_legacy_specialist_checkpoint(
+                case_id,
+                settings.database_url,
+            )
+        )
+        with TestClient(create_app(settings)) as client:
+            underwriter = login(client, UNDERWRITER)
+            invalid = client.post(
+                f"/api/v1/reviews/{case_id}",
+                json={
+                    "action": "override",
+                    "selected_route": "standard",
+                    "specialist_label": "unknown desk",
+                    "reason": "This retry cannot replace the decision.",
+                    "evidence_acknowledged": True,
+                },
+                headers=underwriter,
+            )
+            assert invalid.status_code == 422, invalid.text
+            assert read_decisions(case_id) == []
+
+            repaired = client.post(
+                f"/api/v1/reviews/{case_id}",
+                json={
+                    "action": "override",
+                    "selected_route": "standard",
+                    "specialist_label": "motor inspection",
+                    "reason": "This retry cannot replace the decision.",
+                    "evidence_acknowledged": True,
+                },
+                headers=underwriter,
+            )
+            assert repaired.status_code == 200, repaired.text
+            assert repaired.json()["action"] == "confirm"
+            assert repaired.json()["selected_route"] == "specialist"
+
+        assert read_decisions(case_id) == [(0, "confirm", "specialist")]
     finally:
         remove_case(case_id)

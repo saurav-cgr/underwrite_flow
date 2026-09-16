@@ -33,6 +33,7 @@ from underwriteflow.workflow.triage import (
 )
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
+FALLBACK_SPECIALIST_LABEL = "Manual configuration review"
 
 
 # Reconstruct the public response from an idempotent persisted review record.
@@ -71,14 +72,45 @@ def require_specialist_label(
             status_code=422,
             detail="A specialist label is required for specialist review",
         )
-    if (
-        configuration is not None
-        and command.specialist_label not in configuration.specialist_labels
-    ):
+    allowed_labels = (
+        configuration.specialist_labels
+        if configuration is not None
+        else [FALLBACK_SPECIALIST_LABEL]
+    )
+    if command.specialist_label not in allowed_labels:
         raise HTTPException(
             status_code=422,
             detail="Specialist label is not configured for this product",
         )
+
+
+# Repair only invalid specialist metadata from a completed legacy checkpoint.
+def recover_review_command(
+    stored: ReviewCommand,
+    retry: ReviewCommand,
+    recommended_route: str | None,
+    configuration: ProductConfiguration | None,
+) -> ReviewCommand:
+    try:
+        require_specialist_label(
+            stored,
+            recommended_route,
+            configuration,
+        )
+        return stored
+    except HTTPException:
+        repaired = ReviewCommand.model_validate(
+            {
+                **stored.model_dump(),
+                "specialist_label": retry.specialist_label,
+            }
+        )
+        require_specialist_label(
+            repaired,
+            recommended_route,
+            configuration,
+        )
+        return repaired
 
 
 # Return the persisted pending review without starting any workflow work.
@@ -201,7 +233,7 @@ async def start_review(
             for failure in failures
         ],
         specialist_options=(
-            []
+            [FALLBACK_SPECIALIST_LABEL]
             if configuration is None
             else list(configuration.specialist_labels)
         ),
@@ -272,7 +304,14 @@ async def resume_review(
                 Command(resume=command.model_dump(exclude_none=True)), config=config
             )
         elif "review_command" in snapshot.values:
-            command_to_persist = ReviewCommand.model_validate(snapshot.values["review_command"])
+            command_to_persist = recover_review_command(
+                ReviewCommand.model_validate(
+                    snapshot.values["review_command"]
+                ),
+                command,
+                recommendation.get("route"),
+                configuration,
+            )
             result = {
                 "final_route": snapshot.values.get("final_route"),
                 "review_status": snapshot.values.get("review_status"),

@@ -15,6 +15,7 @@ from fixtures.synthetic_pdf import (
 
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
+from underwriteflow.reviews.router import FALLBACK_SPECIALIST_LABEL
 
 DATABASE_URL = (
     "postgresql://underwriteflow:synthetic-local-password@"
@@ -174,7 +175,9 @@ def test_unreadable_pinned_configuration_routes_to_manual_review() -> None:
             assert opened.status_code == 200, opened.text
             pack = opened.json()
             assert pack["recommendation"]["route"] == "manual"
-            assert pack["specialist_options"] == []
+            assert pack["specialist_options"] == [
+                FALLBACK_SPECIALIST_LABEL
+            ]
             assert pack["missing_information"] == []
             assert pack["extraction_failures"] == [
                 {
@@ -194,7 +197,7 @@ def test_unreadable_pinned_configuration_routes_to_manual_review() -> None:
                 headers=underwriter,
                 json={
                     "action": "confirm",
-                    "specialist_label": "manual review desk",
+                    "specialist_label": FALLBACK_SPECIALIST_LABEL,
                     "evidence_acknowledged": True,
                 },
             )
