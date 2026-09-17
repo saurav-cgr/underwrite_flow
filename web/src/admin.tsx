@@ -14,6 +14,7 @@ import {
   PageHeading,
   Panel,
 } from "./components";
+import { AccessAdministration } from "./access-admin";
 import { EvaluationPanel } from "./evaluation-panel";
 import { Icon } from "./icons";
 import { auditFacts } from "./ui-state";
@@ -86,6 +87,7 @@ export function AdminWorkspace({
         }
       />
       <EvaluationPanel token={token} />
+      <AccessAdministration token={token} />
       <div className="admin-grid">
         <Panel title="Queue pulse">
           <div className="metric-strip">

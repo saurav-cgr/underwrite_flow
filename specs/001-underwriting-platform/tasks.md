@@ -86,34 +86,34 @@ the current database assignments.
 
 ### Tests for User Story 1
 
-- [ ] T011 [P] [US1] Add failing login, refresh, me, users, roles, and
+- [X] T011 [P] [US1] Add failing login, refresh, me, users, roles, and
   permission contract tests in `api/tests/contract/test_auth_rbac_contract.py`
-- [ ] T012 [P] [US1] Add failing admin journey and audit tests in
+- [X] T012 [P] [US1] Add failing admin journey and audit tests in
   `api/tests/integration/test_user_role_management.py`
 - [ ] T013 [P] [US1] Add failing refresh and role-management UI tests in
   `web/src/admin.test.tsx` and `web/src/api.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Add narrow user, role, and permission queries in
+- [X] T014 [US1] Add narrow user, role, and permission queries in
   `api/src/underwriteflow/auth/repository.py`
-- [ ] T015 [US1] Implement transactional user creation, deactivation, role
+- [X] T015 [US1] Implement transactional user creation, deactivation, role
   replacement, permission replacement, and last-admin guard in
   `api/src/underwriteflow/auth/admin_service.py`
-- [ ] T016 [US1] Implement `/auth/login`, `/auth/refresh`, `/auth/me`, and the
+- [X] T016 [US1] Implement `/auth/login`, `/auth/refresh`, `/auth/me`, and the
   temporary `/auth/session` alias in `api/src/underwriteflow/auth/router.py`
-- [ ] T017 [US1] Add scoped `/users`, `/roles`, and `/permissions` routes in
+- [X] T017 [US1] Add scoped `/users`, `/roles`, and `/permissions` routes in
   `api/src/underwriteflow/auth/admin_router.py`
-- [ ] T018 [US1] Append sanitized login, refresh, denial, user, role, and
+- [X] T018 [US1] Append sanitized login, refresh, denial, user, role, and
   permission events through `api/src/underwriteflow/audit/events.py`
-- [ ] T019 [US1] Replace literal-role guards with scope dependencies while
+- [X] T019 [US1] Replace literal-role guards with scope dependencies while
   retaining ownership and underwriter-only finalization in
   `api/src/underwriteflow/{cases,reviews,queues,products,evaluation}/router.py`
-- [ ] T020 [US1] Add typed login, refresh, me, user, and role calls in
+- [X] T020 [US1] Add typed login, refresh, me, user, and role calls in
   `web/src/api-core.ts` and `web/src/api-staff.ts`
-- [ ] T021 [US1] Add in-memory refresh recovery and current-scope state in
+- [X] T021 [US1] Add in-memory refresh recovery and current-scope state in
   `web/src/app.tsx`
-- [ ] T022 [US1] Extend accessible user and role management controls in
+- [X] T022 [US1] Extend accessible user and role management controls in
   `web/src/admin.tsx` and `web/src/admin.css`
 
 **Checkpoint**: US1 works independently; no token, digest, password, or

@@ -198,8 +198,13 @@ def test_evaluation_endpoint_is_administrator_only() -> None:
     app = create_app()
 
     # Supply a synthetic underwriter identity to the authorization dependency.
-    async def underwriter_session() -> dict[str, str]:
-        return {"sub": "synthetic-underwriter", "role": "Underwriter"}
+    async def underwriter_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-underwriter",
+            "role": "Underwriter",
+            "role_code": "underwriter",
+            "permissions": ["cases:read", "reviews:read", "reviews:write"],
+        }
 
     app.dependency_overrides[get_current_session] = underwriter_session
     response = TestClient(app).post("/api/v1/evaluation/run", json={})
@@ -212,8 +217,13 @@ def test_administrator_can_run_full_evaluation() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    async def administrator_session() -> dict[str, str]:
-        return {"sub": "synthetic-administrator", "role": "Administrator"}
+    async def administrator_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-administrator",
+            "role": "Administrator",
+            "role_code": "administrator",
+            "permissions": ["evaluation:run"],
+        }
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post("/api/v1/evaluation/run", json={})
@@ -243,8 +253,13 @@ def test_evaluation_endpoint_accepts_a_known_split() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    async def administrator_session() -> dict[str, str]:
-        return {"sub": "synthetic-administrator", "role": "Administrator"}
+    async def administrator_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-administrator",
+            "role": "Administrator",
+            "role_code": "administrator",
+            "permissions": ["evaluation:run"],
+        }
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post(
@@ -261,8 +276,13 @@ def test_evaluation_endpoint_rejects_an_unknown_split() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    async def administrator_session() -> dict[str, str]:
-        return {"sub": "synthetic-administrator", "role": "Administrator"}
+    async def administrator_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-administrator",
+            "role": "Administrator",
+            "role_code": "administrator",
+            "permissions": ["evaluation:run"],
+        }
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post(

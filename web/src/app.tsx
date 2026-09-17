@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
   listCases,
   listCatalog,
   readCaseConfiguration,
+  refreshSession,
   setUnauthorizedHandler,
 } from "./api";
 import { AdminWorkspace } from "./admin";
@@ -30,6 +31,7 @@ import type {
 // Coordinate authenticated role screens and typed API state.
 export function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const sessionRef = useRef<Session | null>(null);
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [catalog, setCatalog] = useState<ProductCatalogItem[]>([]);
   const [selectedProduct, setSelectedProduct] =
@@ -42,18 +44,40 @@ export function App() {
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
 
-  // Return to the role entry screen when a session stops being valid.
+  // Drop every role-scoped view and return to the entry screen.
+  function resetToEntry(noticeText: string) {
+    setSession(null);
+    setSelectedProduct(null);
+    setCaseRecord(null);
+    setConfiguration(null);
+    setQueueItem(null);
+    setAuditCaseId("");
+    setMessage("");
+    setScreen("dashboard");
+    setNotice(noticeText);
+  }
+
+  // Keep the recovery path able to read the current in-memory credentials.
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  // Rotate the refresh credential once, then sign out only if that fails.
   useEffect(() => {
     setUnauthorizedHandler(() => {
-      setSession(null);
-      setSelectedProduct(null);
-      setCaseRecord(null);
-      setConfiguration(null);
-      setQueueItem(null);
-      setAuditCaseId("");
-      setMessage("");
-      setScreen("dashboard");
-      setNotice("Your session expired. Sign in again to continue.");
+      const current = sessionRef.current;
+      if (!current) return;
+      refreshSession(current.refreshToken)
+        .then((issued) => {
+          setSession({
+            ...current,
+            token: issued.access_token,
+            refreshToken: issued.refresh_token,
+          });
+        })
+        .catch(() => {
+          resetToEntry("Your session expired. Sign in again to continue.");
+        });
     });
     return () => setUnauthorizedHandler(null);
   }, []);

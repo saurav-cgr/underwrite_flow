@@ -12,6 +12,7 @@ from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
 from underwriteflow.api.v1.router import router as api_v1_router
+from underwriteflow.auth.admin_router import router as admin_router
 from underwriteflow.auth.router import router as auth_router
 from underwriteflow.cases.router import router as cases_router
 from underwriteflow.config import Settings, get_settings
@@ -24,7 +25,11 @@ from underwriteflow.errors import (
 from underwriteflow.evaluation.router import router as evaluation_router
 from underwriteflow.products.router import router as products_router
 from underwriteflow.reviews.router import router as reviews_router
-from underwriteflow.queues.router import router as queues_router
+from underwriteflow.queues.router import (
+    audit_router,
+    completion_router,
+    queues_router,
+)
 
 
 # Return an existing request ID or create one for an early failure.
@@ -132,9 +137,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(api_v1_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(admin_router, prefix="/api/v1")
     app.include_router(cases_router, prefix="/api/v1")
     app.include_router(products_router, prefix="/api/v1")
     app.include_router(reviews_router, prefix="/api/v1")
     app.include_router(queues_router, prefix="/api/v1")
+    app.include_router(audit_router, prefix="/api/v1")
+    app.include_router(completion_router, prefix="/api/v1")
     app.include_router(evaluation_router, prefix="/api/v1")
     return app

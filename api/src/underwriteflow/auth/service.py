@@ -16,7 +16,7 @@ import secrets
 import time
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum
 from uuid import UUID, uuid4
 
@@ -27,8 +27,11 @@ from argon2.exceptions import (
     VerifyMismatchError,
 )
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from underwriteflow.auth import repository
 from underwriteflow.auth.schemas import AccessTokenClaims
+from underwriteflow.persistence.models import RefreshSession
 
 ACCESS_TOKEN_ALGORITHM = "HS256"
 ACCESS_TOKEN_JWT_TYPE = "JWT"
@@ -45,6 +48,24 @@ class RefreshOutcome(StrEnum):
     REPLAY = "replay"
     EXPIRED = "expired"
     UNKNOWN = "unknown"
+
+
+class RefreshError(Exception):
+    """A refused refresh attempt carrying its stable client-facing code."""
+
+    # Capture the stable error code and the user it applies to, if known.
+    def __init__(self, code: str, user_id: UUID | None = None) -> None:
+        super().__init__(code)
+        self.code = code
+        self.user_id = user_id
+
+
+@dataclass(frozen=True)
+class IssuedCredentials:
+    """One rotated access and refresh credential pair."""
+
+    access_token: str
+    refresh_token: str
 
 
 @dataclass(frozen=True)
@@ -110,6 +131,17 @@ def replacement_chain(
         seen.add(current)
         current = successors.get(current)
     return tuple(chain)
+
+
+# Convert one persisted refresh row into the pure planning record.
+def as_refresh_record(record: RefreshSession) -> RefreshSessionRecord:
+    return RefreshSessionRecord(
+        id=record.id,
+        user_id=record.user_id,
+        expires_at=record.expires_at,
+        revoked_at=record.revoked_at,
+        replaced_by_id=record.replaced_by_id,
+    )
 
 
 class AuthService:
@@ -208,6 +240,86 @@ class AuthService:
         return hmac.new(
             self.refresh_pepper, credential.encode(), hashlib.sha256
         ).hexdigest()
+
+    # Start one persisted refresh session and return its new credential.
+    async def start_refresh_session(
+        self, session: AsyncSession, user_id: UUID, ttl_seconds: int
+    ) -> str:
+        credential = self.issue_refresh_credential()
+        await repository.create_refresh_session(
+            session,
+            user_id=user_id,
+            token_digest=self.refresh_digest(credential),
+            expires_at=repository.utcnow() + timedelta(seconds=ttl_seconds),
+        )
+        return credential
+
+    # Rotate one presented credential, refusing expiry and detecting replay.
+    async def rotate_refresh_session(
+        self,
+        session: AsyncSession,
+        credential: str,
+        ttl_seconds: int,
+    ) -> tuple[UUID, str]:
+        now = repository.utcnow()
+        record = await repository.find_refresh_session_by_digest(
+            session, self.refresh_digest(credential)
+        )
+        plan = plan_refresh_rotation(
+            None if record is None else as_refresh_record(record), now
+        )
+        if plan.outcome is RefreshOutcome.UNKNOWN:
+            raise RefreshError("invalid_refresh")
+        if plan.outcome is RefreshOutcome.EXPIRED:
+            raise RefreshError("invalid_refresh", plan.user_id)
+        if plan.outcome is RefreshOutcome.REPLAY:
+            await self._revoke_replacement_chain(session, plan, now)
+            raise RefreshError("refresh_reuse_detected", plan.user_id)
+        return await self._rotate(session, record, ttl_seconds, now)
+
+    # Revoke every session that descended from one replayed credential.
+    async def _revoke_replacement_chain(
+        self,
+        session: AsyncSession,
+        plan: RotationPlan,
+        now: datetime,
+    ) -> None:
+        successors: dict[UUID, UUID | None] = {}
+        frontier = [plan.session_id]
+        while frontier:
+            found = await repository.find_replacement_successors(
+                session, frontier
+            )
+            successors.update(found)
+            frontier = [
+                successor
+                for successor in found.values()
+                if successor is not None and successor not in successors
+            ]
+        chain = replacement_chain(plan.session_id, successors)
+        await repository.revoke_refresh_sessions(session, chain, now)
+        await session.commit()
+
+    # Issue the successor credential and retire the presented session.
+    async def _rotate(
+        self,
+        session: AsyncSession,
+        record: RefreshSession,
+        ttl_seconds: int,
+        now: datetime,
+    ) -> tuple[UUID, str]:
+        credential = self.issue_refresh_credential()
+        successor_id = await repository.create_refresh_session(
+            session,
+            user_id=record.user_id,
+            token_digest=self.refresh_digest(credential),
+            expires_at=now + timedelta(seconds=ttl_seconds),
+        )
+        await repository.link_refresh_successor(
+            session, record.id, successor_id, now
+        )
+        await session.commit()
+        return record.user_id, credential
 
     # Verify the token signature and decode its header and claims.
     def _verified_segments(self, token: str) -> tuple[dict, dict]:

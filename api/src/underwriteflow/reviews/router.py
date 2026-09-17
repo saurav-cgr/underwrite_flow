@@ -11,8 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.audit.events import build_audit_event
-from underwriteflow.auth.dependencies import require_permission, require_role
-from underwriteflow.auth.schemas import Permission, UserRole
+from underwriteflow.auth.dependencies import (
+    require_permission,
+    require_underwriter,
+)
+from underwriteflow.auth.schemas import Permission
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
     Case,
@@ -208,9 +211,8 @@ async def read_review_document(
     case_id: UUID,
     document_id: UUID,
     request: Request,
-    reviewer: dict[str, str] = Depends(
-        require_role(UserRole.UNDERWRITER.value)
-    ),
+    reviewer: dict[str, str] = Depends(require_underwriter()),
+    _: dict[str, str] = Depends(require_permission(Permission.REVIEW_READ)),
     session: AsyncSession = Depends(get_session),
 ) -> FileResponse:
     del reviewer
@@ -249,8 +251,9 @@ async def resume_review(
     case_id: UUID,
     command: ReviewCommand,
     request: Request,
-    reviewer: dict[str, str] = Depends(
-        require_role(UserRole.UNDERWRITER.value)
+    reviewer: dict[str, str] = Depends(require_underwriter()),
+    _: dict[str, str] = Depends(
+        require_permission(Permission.CASES_OVERRIDE)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewResponse:

@@ -8,8 +8,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.audit.events import build_audit_event
-from underwriteflow.auth.dependencies import require_permission, require_role
-from underwriteflow.auth.schemas import Permission, UserRole
+from underwriteflow.auth.dependencies import (
+    require_permission,
+    require_underwriter,
+)
+from underwriteflow.auth.schemas import Permission
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
     AuditEvent,
@@ -22,11 +25,13 @@ from underwriteflow.persistence.models import (
 )
 from underwriteflow.queues.schemas import AuditEventResponse, CompletionResponse, QueueItem
 
-router = APIRouter(tags=["queues"])
+queues_router = APIRouter(prefix="/queues", tags=["queues"])
+audit_router = APIRouter(prefix="/audit", tags=["audit"])
+completion_router = APIRouter(prefix="/completion", tags=["completion"])
 
 
 # List safe queue summaries with optional status, product, and route filters.
-@router.get("/queues", response_model=list[QueueItem])
+@queues_router.get("", response_model=list[QueueItem])
 async def list_queue(
     status: str | None = Query(default=None, max_length=50),
     product_code: str | None = Query(default=None, max_length=100),
@@ -124,7 +129,7 @@ def final_route_for(review: Review | None) -> str | None:
 
 
 # Return immutable audit events for an administrator without exposing raw payloads.
-@router.get("/audit/cases/{case_id}", response_model=list[AuditEventResponse])
+@audit_router.get("/cases/{case_id}", response_model=list[AuditEventResponse])
 async def list_audit_events(
     case_id: UUID,
     _: dict[str, str] = Depends(require_permission(Permission.AUDIT_READ)),
@@ -139,10 +144,11 @@ async def list_audit_events(
 
 
 # Finalize one confirmed route exactly once with an atomic queue and audit handoff.
-@router.post("/completion/{case_id}", response_model=CompletionResponse)
+@completion_router.post("/{case_id}", response_model=CompletionResponse)
 async def complete_case(
     case_id: UUID,
-    operator: dict[str, str] = Depends(require_role(UserRole.UNDERWRITER.value)),
+    operator: dict[str, str] = Depends(require_underwriter()),
+    _: dict[str, str] = Depends(require_permission(Permission.CASES_OVERRIDE)),
     session: AsyncSession = Depends(get_session),
 ) -> CompletionResponse:
     case = await session.scalar(select(Case).where(Case.id == case_id))

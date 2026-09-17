@@ -17,6 +17,10 @@ from fixtures.synthetic_pdf import (
 
 APPLICANT = ("applicant@synthetic.test", "underwriteflow-demo-applicant")
 UNDERWRITER = ("underwriter@synthetic.test", "underwriteflow-demo-underwriter")
+ADMINISTRATOR = (
+    "administrator@synthetic.test",
+    "underwriteflow-demo-administrator",
+)
 
 MOTOR_PAYLOAD = {
     "vehicle_age": 2,
@@ -30,15 +34,23 @@ DOCUMENT_CODES = ["identity_record", "vehicle_record"]
 RECOMMENDATION_KEYS = {"route", "factors"}
 
 
-# Log in one fictional demo role and return bearer headers.
-def login(client: TestClient, account: tuple[str, str]) -> dict[str, str]:
+# Log in one fictional demo role and return the parsed credential response.
+def login_credentials(
+    client: TestClient, account: tuple[str, str]
+) -> dict[str, object]:
     email, password = account
     response = client.post(
-        "/api/v1/auth/session",
+        "/api/v1/auth/login",
         json={"email": email, "password": password},
     )
     assert response.status_code == 200, response.text
-    return {"Authorization": f"Bearer {response.json()['token']}"}
+    return response.json()
+
+
+# Log in one fictional demo role and return bearer headers.
+def login(client: TestClient, account: tuple[str, str]) -> dict[str, str]:
+    credentials = login_credentials(client, account)
+    return {"Authorization": f"Bearer {credentials['access_token']}"}
 
 
 # Create one applicant-owned motor case and return the parsed response.

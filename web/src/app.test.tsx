@@ -164,12 +164,18 @@ beforeEach(() => {
 describe("administrator queue inspection", () => {
   it("opens the selected case audit history", async () => {
     vi.mocked(createSession).mockResolvedValue({
-      token: "session",
+      access_token: "session",
+      refresh_token: "refresh",
+      token_type: "bearer",
       expires_in: 900,
+      refresh_expires_in: 28800,
     });
     vi.mocked(readSession).mockResolvedValue({
-      sub: "administrator-id",
-      role: "Administrator",
+      id: "administrator-id",
+      email: "administrator@synthetic.test",
+      display_name: "Synthetic Administrator",
+      role: { id: "role-administrator", code: "administrator" },
+      permissions: ["users:manage"],
     });
     vi.mocked(listQueue).mockImplementation(async (_token, status) =>
       status === "underwriter_review" ? [REVIEW_ITEM] : [],
@@ -200,12 +206,18 @@ describe("administrator queue inspection", () => {
 describe("applicant document requirements", () => {
   it("shows the pinned version instead of the active catalogue", async () => {
     vi.mocked(createSession).mockResolvedValue({
-      token: "session",
+      access_token: "session",
+      refresh_token: "refresh",
+      token_type: "bearer",
       expires_in: 900,
+      refresh_expires_in: 28800,
     });
     vi.mocked(readSession).mockResolvedValue({
-      sub: "applicant-id",
-      role: "Applicant",
+      id: "applicant-id",
+      email: "applicant@synthetic.test",
+      display_name: "Synthetic Applicant",
+      role: { id: "role-applicant", code: "applicant" },
+      permissions: ["cases:read", "cases:write"],
     });
     vi.mocked(listCatalog).mockResolvedValue([ACTIVE_CATALOGUE]);
     vi.mocked(listCases).mockResolvedValue([PINNED_CASE]);
@@ -232,12 +244,18 @@ describe("applicant document requirements", () => {
 
   it("still opens documents when no version is active", async () => {
     vi.mocked(createSession).mockResolvedValue({
-      token: "session",
+      access_token: "session",
+      refresh_token: "refresh",
+      token_type: "bearer",
       expires_in: 900,
+      refresh_expires_in: 28800,
     });
     vi.mocked(readSession).mockResolvedValue({
-      sub: "applicant-id",
-      role: "Applicant",
+      id: "applicant-id",
+      email: "applicant@synthetic.test",
+      display_name: "Synthetic Applicant",
+      role: { id: "role-applicant", code: "applicant" },
+      permissions: ["cases:read", "cases:write"],
     });
     vi.mocked(listCatalog).mockResolvedValue([]);
     vi.mocked(listCases).mockResolvedValue([PINNED_CASE]);

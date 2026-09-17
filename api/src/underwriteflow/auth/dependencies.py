@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from underwriteflow.auth.schemas import (
     LEGACY_ROLE_VALUES,
     Permission,
+    RoleCode,
     UserRole,
 )
 from underwriteflow.auth.service import AuthService, authorization_version
@@ -122,20 +123,25 @@ async def get_current_session(
         "role": LEGACY_ROLE_VALUES.get(resolved.role_code, resolved.role_code),
         "role_code": resolved.role_code,
         "role_id": str(resolved.role_id),
+        "email": user.email,
+        "display_name": user.display_name,
         "permissions": list(resolved.permissions),
         "authz_version": resolved.version,
     }
 
 
-# Require a signed bearer session with one accepted legacy role value.
-def require_role(*roles: str):
-    accepted_roles = {UserRole(role).value for role in roles}
-
-    # Authorize a request from its bearer session.
+# Require the current role to be the underwriter role itself.
+#
+# Confirming, overriding, and completing a route stays underwriter-only even
+# for broad administrator scope sets, so this is an identity rule rather than
+# a permission. The comparison uses the stable role code the database granted,
+# never a permission name or a legacy label.
+def require_underwriter():
+    # Authorize a request that only the underwriter role may perform.
     def dependency(
         session: dict[str, object] = Depends(get_current_session),
     ) -> dict[str, object]:
-        if session["role"] not in accepted_roles:
+        if session["role_code"] != RoleCode.UNDERWRITER.value:
             raise HTTPException(status_code=403, detail="Forbidden")
         return session
 

@@ -1,5 +1,6 @@
 """Typed authentication contracts."""
 
+from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 from uuid import UUID
@@ -98,3 +99,88 @@ class AccessTokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     refresh_expires_in: int
+
+
+class RoleSummary(BaseModel):
+    """Stable role identity attached to an authenticated user."""
+
+    id: UUID
+    code: str
+
+
+class CurrentUser(BaseModel):
+    """Identity and current authorization served by `GET /auth/me`."""
+
+    id: UUID
+    email: str
+    display_name: str
+    role: RoleSummary
+    permissions: list[str]
+
+
+class UserRecord(BaseModel):
+    """Administrable user record carrying no credential material."""
+
+    id: UUID
+    email: str
+    display_name: str
+    is_active: bool
+    role: RoleSummary | None
+    created_at: datetime
+
+
+class RoleRecord(BaseModel):
+    """Configured role with its resolved permission scopes."""
+
+    id: UUID
+    code: str
+    title: str
+    description: str | None
+    is_active: bool
+    is_system: bool
+    permissions: list[str]
+
+
+class PermissionSummary(BaseModel):
+    """One entry of the fixed permission catalogue."""
+
+    code: str
+    title: str
+    description: str | None
+
+
+class CreateUserRequest(BaseModel):
+    """Administrator request to create one synthetic user."""
+
+    email: str = Field(min_length=3, max_length=320)
+    display_name: str = Field(min_length=1, max_length=200)
+    password: str = Field(min_length=8, max_length=512)
+    role_id: UUID
+
+
+class UpdateUserRequest(BaseModel):
+    """Administrator request to change one user's mutable fields."""
+
+    display_name: str | None = Field(
+        default=None, min_length=1, max_length=200
+    )
+    is_active: bool | None = None
+    role_id: UUID | None = None
+
+
+class CreateRoleRequest(BaseModel):
+    """Administrator request to create one configurable role."""
+
+    code: str = Field(min_length=2, max_length=64)
+    title: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=500)
+    permissions: list[str] = Field(default_factory=list)
+
+
+class UpdateRoleRequest(BaseModel):
+    """Administrator request to change one role and its scope list."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=500)
+    is_active: bool | None = None
+    permissions: list[str] | None = None

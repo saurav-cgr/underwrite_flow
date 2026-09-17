@@ -4,9 +4,12 @@ import type {
   CompletionResult,
   EvaluationSplit,
   EvaluationSummary,
+  PermissionSummary,
   QueueItem,
   ReviewResult,
   ReviewStart,
+  RoleRecord,
+  UserRecord,
 } from "./types";
 import { request, requestBlob } from "./api-core";
 
@@ -89,4 +92,90 @@ export async function runEvaluation(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ split: split ?? null }),
   });
+}
+
+// Load administrable users with their current role assignments.
+export async function listUsers(token: string): Promise<UserRecord[]> {
+  return request("/admin/users", token);
+}
+
+// Create one synthetic user with a single role assignment.
+export async function createUser(
+  token: string,
+  payload: {
+    email: string;
+    display_name: string;
+    password: string;
+    role_id: string;
+  },
+): Promise<UserRecord> {
+  return request("/admin/users", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+// Change one user's display name, active state, or role.
+export async function updateUser(
+  token: string,
+  userId: string,
+  payload: {
+    display_name?: string;
+    is_active?: boolean;
+    role_id?: string;
+  },
+): Promise<UserRecord> {
+  return request(`/admin/users/${userId}`, token, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+// Load every configured role with its sorted permission scopes.
+export async function listRoles(token: string): Promise<RoleRecord[]> {
+  return request("/admin/roles", token);
+}
+
+// Create one configurable role from the fixed permission catalogue.
+export async function createRole(
+  token: string,
+  payload: {
+    code: string;
+    title: string;
+    description?: string;
+    permissions: string[];
+  },
+): Promise<RoleRecord> {
+  return request("/admin/roles", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+// Replace one role's metadata, active state, or complete scope list.
+export async function updateRole(
+  token: string,
+  roleId: string,
+  payload: {
+    title?: string;
+    description?: string;
+    is_active?: boolean;
+    permissions?: string[];
+  },
+): Promise<RoleRecord> {
+  return request(`/admin/roles/${roleId}`, token, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+// Load the fixed permission catalogue available to compose roles from.
+export async function listPermissions(
+  token: string,
+): Promise<PermissionSummary[]> {
+  return request("/admin/permissions", token);
 }

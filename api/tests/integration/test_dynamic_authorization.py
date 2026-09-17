@@ -17,7 +17,6 @@ from fixtures.records import (
 )
 
 from underwriteflow.app import create_app
-from underwriteflow.auth.schemas import LEGACY_ROLE_VALUES
 
 UNDERWRITER = ("underwriter@synthetic.test", "underwriteflow-demo-underwriter")
 
@@ -34,18 +33,18 @@ def read_me(client: TestClient, token: str):
 def test_login_and_current_user_agree_with_the_database() -> None:
     with TestClient(create_app()) as client:
         response = client.post(
-            "/api/v1/auth/session",
+            "/api/v1/auth/login",
             json={"email": UNDERWRITER[0], "password": UNDERWRITER[1]},
         )
         assert response.status_code == 200, response.text
-        me = read_me(client, response.json()["token"])
+        me = read_me(client, response.json()["access_token"])
 
     assert me.status_code == 200, me.text
     body = me.json()
-    assert body["role"] == LEGACY_ROLE_VALUES["underwriter"]
-    assert body["role_code"] == "underwriter"
+    assert body["email"] == UNDERWRITER[0]
+    assert body["role"]["code"] == "underwriter"
     assert body["permissions"] == sorted(role_scopes("underwriter"))
-    assert body["authz_version"]
+    assert body["id"]
 
 
 # Verify a token claiming a role the user never held is refused.

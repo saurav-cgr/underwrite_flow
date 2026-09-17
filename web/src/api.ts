@@ -2,8 +2,9 @@ import type {
   CaseConfiguration,
   CaseRecord,
   CaseSubmissionResult,
+  Credentials,
+  CurrentUser,
   DocumentRecord,
-  Role,
 } from "./types";
 import { request } from "./api-core";
 
@@ -11,22 +12,31 @@ export * from "./api-core";
 export * from "./api-products";
 export * from "./api-staff";
 
-// Create a short-lived session for a synthetic demo account.
+// Create a session for a synthetic demo account.
 export async function createSession(
   email: string,
   password: string,
-): Promise<{ token: string; expires_in: number }> {
-  return request("/auth/session", undefined, {
+): Promise<Credentials> {
+  return request("/auth/login", undefined, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 }
 
-// Resolve the persisted role behind a signed session.
-export async function readSession(
-  token: string,
-): Promise<{ sub: string; role: Role }> {
+// Rotate the in-memory refresh credential for a new credential pair.
+export async function refreshSession(
+  refreshToken: string,
+): Promise<Credentials> {
+  return request("/auth/refresh", undefined, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+}
+
+// Resolve the persisted identity and current scopes behind an access token.
+export async function readSession(token: string): Promise<CurrentUser> {
   return request("/auth/me", token);
 }
 

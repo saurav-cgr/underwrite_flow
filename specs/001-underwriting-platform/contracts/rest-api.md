@@ -77,8 +77,12 @@ Response `200`:
 
 Errors: `401 invalid_credentials`, `403 inactive_user`.
 
-`POST /auth/session` remains a temporary compatibility alias with the same
-request and response. It is removed only in a later contract change.
+### `POST /auth/session`
+
+Temporary compatibility alias for the current web client. It authenticates the
+same request and returns the legacy `{token, token_type, expires_in}` body so
+the running client keeps working until it migrates to `/auth/login`. It is
+removed only in a later contract change.
 
 ### `POST /auth/refresh`
 
@@ -117,12 +121,12 @@ Response `200`:
 
 All operations require `users:manage`.
 
-### `GET /users`
+### `GET /admin/users`
 
 Returns active and inactive users. Query parameters: `status`, `limit`, and
 opaque `cursor`. Default limit 50, maximum 100.
 
-### `POST /users`
+### `POST /admin/users`
 
 ```json
 {
@@ -136,16 +140,16 @@ opaque `cursor`. Default limit 50, maximum 100.
 Creates an active user, hashes the password with Argon2, assigns one role, and
 appends audit in one transaction. Response `201` excludes password material.
 
-### `PATCH /users/{user_id}`
+### `PATCH /admin/users/{user_id}`
 
 Allows `display_name`, `is_active`, and `role_id`. Deactivation revokes active
 refresh sessions. Rejects removal of the final active administrator.
 
-### `GET /roles`
+### `GET /admin/roles`
 
 Returns role metadata and sorted permission scopes.
 
-### `POST /roles`
+### `POST /admin/roles`
 
 ```json
 {
@@ -158,12 +162,12 @@ Returns role metadata and sorted permission scopes.
 
 Creates one role and its permission mappings transactionally. Response `201`.
 
-### `PATCH /roles/{role_id}`
+### `PATCH /admin/roles/{role_id}`
 
 Allows `title`, `description`, `is_active`, and complete replacement of the
 permission list. Unknown permission codes fail with `422`.
 
-### `GET /permissions`
+### `GET /admin/permissions`
 
 Returns the fixed permission catalogue. This feature does not allow runtime
 creation of executable permission codes.

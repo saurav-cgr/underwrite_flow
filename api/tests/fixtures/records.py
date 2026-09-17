@@ -71,6 +71,31 @@ def remove_user(user_id: UUID) -> None:
             cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
 
 
+# Delete one synthetic user together with the audit rows it authored.
+#
+# Audit events are append-only and hold a foreign key to their actor, so a
+# user that signed in cannot be removed until its own events are. The guard is
+# lifted only for this deletion, mirroring `remove_case`.
+def remove_user_with_audit(user_id: UUID) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "ALTER TABLE audit_events DISABLE TRIGGER "
+                "audit_events_append_only"
+            )
+            try:
+                cursor.execute(
+                    "DELETE FROM audit_events WHERE actor_user_id = %s",
+                    (user_id,),
+                )
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            finally:
+                cursor.execute(
+                    "ALTER TABLE audit_events ENABLE TRIGGER "
+                    "audit_events_append_only"
+                )
+
+
 # Create a synthetic user for one test and always delete it afterwards.
 @contextmanager
 def synthetic_user(
@@ -117,6 +142,13 @@ def role_scopes(role_code: str) -> tuple[str, ...]:
                 (role_code,),
             )
             return tuple(row[0] for row in cursor.fetchall())
+
+
+# Delete one role created through the API, cascading its mappings.
+def remove_role_by_code(code: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM roles WHERE code = %s", (code,))
 
 
 # Create one synthetic non-system role for a test and always delete it.

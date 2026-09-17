@@ -1,5 +1,33 @@
 export type Role = "Applicant" | "Underwriter" | "Administrator";
 
+// Stable lowercase role codes owned by the backend's database-backed RBAC.
+const ROLE_LABELS: Record<string, Role> = {
+  applicant: "Applicant",
+  underwriter: "Underwriter",
+  administrator: "Administrator",
+};
+
+// Resolve a role code to its screen label, or null when it is unsupported.
+export function roleLabelFor(code: string): Role | null {
+  return ROLE_LABELS[code] ?? null;
+}
+
+export interface Credentials {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_expires_in: number;
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  display_name: string;
+  role: { id: string; code: string };
+  permissions: string[];
+}
+
 export type Screen =
   | "dashboard"
   | "products"
@@ -11,11 +39,38 @@ export type Screen =
   | "admin"
   | "product_config";
 
+export interface PermissionSummary {
+  code: string;
+  title: string;
+  description: string | null;
+}
+
+export interface UserRecord {
+  id: string;
+  email: string;
+  display_name: string;
+  is_active: boolean;
+  role: { id: string; code: string } | null;
+  created_at: string;
+}
+
+export interface RoleRecord {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+  is_system: boolean;
+  permissions: string[];
+}
+
 export interface Session {
   token: string;
+  refreshToken: string;
   role: Role;
   sub: string;
   email: string;
+  permissions: string[];
 }
 
 export interface ProductField {
