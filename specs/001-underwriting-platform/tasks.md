@@ -90,7 +90,7 @@ the current database assignments.
   permission contract tests in `api/tests/contract/test_auth_rbac_contract.py`
 - [X] T012 [P] [US1] Add failing admin journey and audit tests in
   `api/tests/integration/test_user_role_management.py`
-- [ ] T013 [P] [US1] Add failing refresh and role-management UI tests in
+- [X] T013 [P] [US1] Add failing refresh and role-management UI tests in
   `web/src/admin.test.tsx` and `web/src/api.test.ts`
 
 ### Implementation for User Story 1
