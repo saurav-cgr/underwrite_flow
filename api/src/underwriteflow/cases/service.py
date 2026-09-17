@@ -27,6 +27,7 @@ from underwriteflow.products.schemas import (
     ProductDocument,
     ProductField,
 )
+from underwriteflow.workflow.reconciliation import APPLICATION_SOURCE
 from underwriteflow.cases.schemas import CaseCreate
 from underwriteflow.storage import StorageValidationError, UploadStorage
 
@@ -72,18 +73,58 @@ def field_is_visible(field: ProductField, payload: Mapping[str, Any]) -> bool:
     )
 
 
+# List the document evidence fields the configured checks read.
+def reconciliation_evidence_fields(
+    configuration: ProductConfiguration,
+) -> list[str]:
+    return sorted(
+        {
+            field_name
+            for check in configuration.reconciliations
+            for source, field_name in check.inputs.items()
+            if source != APPLICATION_SOURCE
+        }
+    )
+
+
 # List the fields whose values an application must evidence.
 #
-# Only visible fields the applicant answered are requested: an optional field
-# nobody filled in is unanswered by choice, so its absence is not missing
-# information.
+# Only visible fields the applicant answered are requested, because an optional
+# field nobody filled in is unanswered by choice. Evidence fields a configured
+# check reads are always requested, so a comparison has something to read.
 def requested_field_keys(
     configuration: ProductConfiguration, payload: Mapping[str, Any]
 ) -> list[str]:
-    return [
+    answered = [
         field.key
         for field in configuration.fields
         if field.key in payload and field_is_visible(field, payload)
+    ]
+    evidence_fields = reconciliation_evidence_fields(configuration)
+    return answered + [
+        key for key in evidence_fields if key not in answered
+    ]
+
+
+# Describe the value shape a provider must return for each requested field.
+#
+# Evidence fields a check reads have no declared application type, so they are
+# requested as text rather than rejected as undeclared.
+def field_specifications(
+    configuration: ProductConfiguration, requested_fields: list[str]
+) -> list[dict[str, object]]:
+    declared = {field.key: field for field in configuration.fields}
+    return [
+        {
+            "field_key": key,
+            "value_type": (
+                declared[key].type if key in declared else "text"
+            ),
+            "allowed_values": (
+                list(declared[key].options) if key in declared else []
+            ),
+        }
+        for key in requested_fields
     ]
 
 

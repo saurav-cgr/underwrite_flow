@@ -2,7 +2,12 @@
 
 import httpx
 
-from underwriteflow.providers.schemas import ExtractionRequest, ExtractionResult
+from underwriteflow.providers.redaction import redacted_request
+from underwriteflow.providers.schemas import (
+    ExtractionRequest,
+    ExtractionResult,
+    ProviderUsage,
+)
 from underwriteflow.providers.service import (
     ProviderError,
     TransientProviderError,
@@ -10,6 +15,22 @@ from underwriteflow.providers.service import (
     is_transient_status,
     parse_result,
 )
+
+
+# Read Gemini's reported token counts, or mark them unavailable.
+def gemini_usage(model: str, metadata: dict) -> ProviderUsage:
+    prompt = metadata.get("promptTokenCount")
+    completion = metadata.get("candidatesTokenCount")
+    if not isinstance(prompt, int) and not isinstance(completion, int):
+        return ProviderUsage(model=model)
+    return ProviderUsage(
+        model=model,
+        prompt_tokens=prompt if isinstance(prompt, int) else None,
+        completion_tokens=(
+            completion if isinstance(completion, int) else None
+        ),
+        unavailable=False,
+    )
 
 
 class GeminiProvider:
@@ -25,7 +46,9 @@ class GeminiProvider:
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:
         if not self.api_key:
             raise ProviderError("Gemini provider is not configured")
-        messages = build_messages(request)
+        # An external provider never receives raw personal identifiers.
+        safe_request = redacted_request(request)
+        messages = build_messages(safe_request)
         payload = {
             "systemInstruction": {"parts": [{"text": messages[0]["content"]}]},
             "contents": [{"role": "user", "parts": [{"text": messages[1]["content"]}]}],
@@ -39,7 +62,11 @@ class GeminiProvider:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
                 response = await client.post(url, params={"key": self.api_key}, json=payload)
                 response.raise_for_status()
-                raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                body = response.json()
+                raw = body["candidates"][0]["content"]["parts"][0]["text"]
+                usage = gemini_usage(
+                    self.model, body.get("usageMetadata") or {}
+                )
         except (httpx.TimeoutException, httpx.NetworkError) as error:
             raise TransientProviderError("Gemini provider is temporarily unavailable") from error
         except httpx.HTTPStatusError as error:
@@ -48,4 +75,9 @@ class GeminiProvider:
             raise ProviderError("Gemini provider failed") from error
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
             raise ProviderError("Gemini provider failed") from error
-        return parse_result(raw, "gemini")
+        return parse_result(
+            raw,
+            "gemini",
+            request.field_specifications,
+            usage,
+        )

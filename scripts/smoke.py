@@ -12,10 +12,13 @@ SMOKE_DOCUMENTS = (
 
 # Field lines the fictional motor configuration requests. Extraction reads the
 # document text layer, so a blank PDF yields no evidence and no final route.
+# The last two lines are the evidence the configured reconciliation reads.
 MOTOR_EVIDENCE_LINES = [
     "vehicle_age: 4",
     "vehicle_use: personal",
     "prior_claims: 0",
+    "ncb_percent: 0",
+    "policy_expiry: 2026-01-05",
 ]
 
 

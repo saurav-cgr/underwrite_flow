@@ -13,6 +13,7 @@ from underwriteflow.cases.evidence_persistence import (
 )
 from underwriteflow.cases.service import (
     CaseValidationError,
+    field_specifications,
     missing_document_codes,
     requested_field_keys,
 )
@@ -28,6 +29,7 @@ from underwriteflow.providers.extraction import (
     LocalDocumentExtractor,
 )
 from underwriteflow.providers.protocol import ExtractionProvider
+from underwriteflow.providers.service import document_content
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.graph import build_evidence_graph
@@ -61,9 +63,9 @@ class SubmissionService:
     # Read local text for every document, recording typed extraction failures.
     def extract_documents(
         self, documents: list[Document]
-    ) -> tuple[list[dict[str, str]], list[dict[str, object]]]:
+    ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
         extractor = LocalDocumentExtractor()
-        inputs: list[dict[str, str]] = []
+        inputs: list[dict[str, object]] = []
         failures: list[dict[str, object]] = []
         for document in documents:
             try:
@@ -83,8 +85,15 @@ class SubmissionService:
             inputs.append(
                 {
                     "document_id": str(document.id),
+                    "document_code": document.document_code or "",
                     "filename": document.filename,
-                    "content": "\n".join(page.text for page in local.pages),
+                    # Page locators stay in the content so a provider line
+                    # number can be mapped back to trusted page evidence.
+                    "content": document_content(local.pages),
+                    "pages": [
+                        page.model_dump(mode="json")
+                        for page in local.pages
+                    ],
                 }
             )
         return inputs, failures
@@ -93,9 +102,11 @@ class SubmissionService:
     async def run_evidence_graph(
         self,
         case: Case,
-        document_inputs: list[dict[str, str]],
+        document_inputs: list[dict[str, object]],
         requested_fields: list[str],
         reference_content: str = "",
+        application: dict[str, object] | None = None,
+        configuration: ProductConfiguration | None = None,
     ) -> dict[str, object]:
         graph = build_evidence_graph(
             self.provider, retry_count=self.retry_count
@@ -105,7 +116,26 @@ class SubmissionService:
                 "case_id": str(case.id),
                 "documents": document_inputs,
                 "requested_fields": requested_fields,
+                "field_specifications": (
+                    field_specifications(configuration, requested_fields)
+                    if configuration is not None
+                    else []
+                ),
                 "reference_content": reference_content,
+                "application": application or {},
+                "reconciliation_checks": (
+                    [
+                        check.model_dump(mode="json")
+                        for check in configuration.reconciliations
+                    ]
+                    if configuration is not None
+                    else []
+                ),
+                "rule_version": (
+                    configuration.version
+                    if configuration is not None
+                    else ""
+                ),
                 "results": [],
             },
             config=thread_config(str(case.id), case.review_cycle),
@@ -199,6 +229,12 @@ class SubmissionService:
             "conflicts": list(evidence_result.get("conflicts", [])),
             "missing_information": list(
                 evidence_result.get("missing_information", [])
+            ),
+            "reconciliation_results": list(
+                evidence_result.get("reconciliation_results", [])
+            ),
+            "reconciliation_status": str(
+                evidence_result.get("reconciliation_status", "")
             ),
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
@@ -359,7 +395,12 @@ class SubmissionService:
         )
         reference_content = await self.load_reference_content(session, case)
         evidence_result = await self.run_evidence_graph(
-            case, document_inputs, requested_fields, reference_content
+            case,
+            document_inputs,
+            requested_fields,
+            reference_content,
+            application=payload,
+            configuration=configuration,
         )
         triage_values = await self.run_triage_graph(
             case,

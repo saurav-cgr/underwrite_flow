@@ -6,8 +6,17 @@ from typing import Any
 from langgraph.types import Send
 
 from underwriteflow.providers.protocol import ExtractionProvider
-from underwriteflow.providers.schemas import ExtractionRequest
-from underwriteflow.providers.service import ProviderError, TransientProviderError
+from underwriteflow.providers.schemas import (
+    DocumentPage,
+    ExtractionRequest,
+    FieldSpecification,
+)
+from underwriteflow.providers.service import (
+    ProviderError,
+    TransientProviderError,
+    trusted_page_locator,
+)
+from underwriteflow.workflow.reconciliation import reconcile
 from underwriteflow.workflow.reducers import sort_results
 from underwriteflow.workflow.state import DocumentResult, DocumentWorkerState, EvidenceState
 
@@ -36,11 +45,21 @@ async def extract_document(
     retry_count: int,
 ) -> dict[str, list[DocumentResult]]:
     document = state["document"]
+    # Trusted page boundaries let a provider line number become a page locator.
+    pages = [
+        DocumentPage.model_validate(page)
+        for page in document.get("pages", [])
+    ]
     request = ExtractionRequest(
         document_name=document["document_id"],
         content=document["content"],
         requested_fields=state["requested_fields"],
         reference_content=state.get("reference_content", ""),
+        field_specifications=[
+            FieldSpecification.model_validate(specification)
+            for specification in state.get("field_specifications", [])
+        ],
+        pages=pages,
     )
     attempts = 0
     while True:
@@ -59,12 +78,22 @@ async def extract_document(
                 "results": [
                     {
                         "document_id": document["document_id"],
+                        "document_code": document.get("document_code"),
                         "filename": document["filename"],
                         "fields": (
                             []
                             if unrequested
                             else [
-                                field.model_dump(mode="json")
+                                field.model_copy(
+                                    update={
+                                        "source_locator": (
+                                            trusted_page_locator(
+                                                pages,
+                                                field.source_locator,
+                                            )
+                                        )
+                                    }
+                                ).model_dump(mode="json")
                                 for field in accepted
                             ]
                         ),
@@ -85,6 +114,7 @@ async def extract_document(
             "results": [
                 {
                     "document_id": document["document_id"],
+                    "document_code": document.get("document_code"),
                     "filename": document["filename"],
                     "fields": [],
                     "error_code": error_code,
@@ -110,6 +140,9 @@ def fan_out_documents(state: EvidenceState) -> list[Send] | str:
             {
                 "document": document,
                 "requested_fields": state.get("requested_fields", []),
+                "field_specifications": state.get(
+                    "field_specifications", []
+                ),
                 "reference_content": state.get("reference_content", ""),
             },
         )
@@ -194,13 +227,25 @@ def reconcile_evidence(state: EvidenceState) -> dict[str, object]:
             reconciled.append(
                 {
                     "document_id": result["document_id"],
+                    "document_code": result.get("document_code"),
                     **field,
                 }
             )
+    checks = state.get("reconciliation_checks", [])
+    # Reconciliation is a pure step, so it runs inside the join and never
+    # performs its own database, provider, or audit work.
+    outcome = reconcile(
+        checks=checks,
+        application=state.get("application", {}),
+        evidence=reconciled,
+        rule_version=state.get("rule_version", ""),
+    )
     return {
         "reconciled_fields": reconciled,
         "conflicts": conflicting_fields(reconciled),
         "missing_information": absent_requested_fields(
             reconciled, state.get("requested_fields", [])
         ),
+        "reconciliation_results": outcome["results"],
+        "reconciliation_status": outcome["overall_status"],
     }

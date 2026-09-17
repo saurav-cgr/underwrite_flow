@@ -6,7 +6,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from underwriteflow.cases.service import requested_field_keys
+from underwriteflow.cases.service import (
+    field_specifications,
+    requested_field_keys,
+)
 from underwriteflow.evaluation.dataset import load_dataset
 from underwriteflow.evaluation.metrics import evaluate_records
 from underwriteflow.evaluation.tracing import trace_summary
@@ -44,12 +47,14 @@ def load_configurations() -> dict[str, Any]:
 
 
 # Read the documents a reference case supplies as evidence input.
-def document_inputs(record: dict[str, Any]) -> list[dict[str, str]]:
+def document_inputs(record: dict[str, Any]) -> list[dict[str, object]]:
     return [
         {
             "document_id": document["document_id"],
+            "document_code": document["document_id"],
             "filename": document["filename"],
             "content": "\n".join(document["lines"]),
+            "pages": [],
         }
         for document in record["documents"]
     ]
@@ -60,16 +65,26 @@ async def run_record(
     record: dict[str, Any], configurations: dict[str, Any]
 ) -> dict[str, Any]:
     configuration = configurations[record["product_code"]]
+    requested_fields = requested_field_keys(
+        configuration, record["workflow_input"]["payload"]
+    )
     evidence_result = await build_evidence_graph(
         FakeProvider(), retry_count=0
     ).ainvoke(
         {
             "case_id": record["case_id"],
             "documents": document_inputs(record),
-            "requested_fields": requested_field_keys(
-                configuration, record["workflow_input"]["payload"]
+            "requested_fields": requested_fields,
+            "field_specifications": field_specifications(
+                configuration, requested_fields
             ),
             "reference_content": "",
+            "application": record["workflow_input"]["payload"],
+            "reconciliation_checks": [
+                check.model_dump(mode="json")
+                for check in configuration.reconciliations
+            ],
+            "rule_version": configuration.version,
             "results": [],
         }
     )

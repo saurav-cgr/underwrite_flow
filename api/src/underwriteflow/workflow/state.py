@@ -9,14 +9,17 @@ class DocumentInput(TypedDict):
     """Text-only document input; file bytes remain outside graph state."""
 
     document_id: str
+    document_code: str
     filename: str
     content: str
+    pages: list[dict[str, object]]
 
 
 class DocumentResult(TypedDict):
     """Serializable result for one document branch."""
 
     document_id: str
+    document_code: str | None
     filename: str
     fields: list[dict[str, object]]
     error_code: str | None
@@ -29,12 +32,18 @@ class EvidenceState(TypedDict, total=False):
     case_id: str
     documents: list[DocumentInput]
     requested_fields: list[str]
+    field_specifications: list[dict[str, object]]
     reference_content: str
+    application: dict[str, object]
+    reconciliation_checks: list[dict[str, object]]
+    rule_version: str
     results: Annotated[list[DocumentResult], append_results]
     ordered_results: list[DocumentResult]
     reconciled_fields: list[dict[str, object]]
     conflicts: list[dict[str, object]]
     missing_information: list[str]
+    reconciliation_results: list[dict[str, object]]
+    reconciliation_status: str
 
 
 class DocumentWorkerState(TypedDict):
@@ -42,6 +51,7 @@ class DocumentWorkerState(TypedDict):
 
     document: DocumentInput
     requested_fields: list[str]
+    field_specifications: list[dict[str, object]]
     reference_content: str
 
 
@@ -87,6 +97,8 @@ class TriageState(TypedDict, total=False):
     evidence: list[dict[str, object]]
     conflicts: list[dict[str, object]]
     missing_information: list[str]
+    reconciliation_results: list[dict[str, object]]
+    reconciliation_status: str
     risk_signals: list[dict[str, object]]
     validations: list[dict[str, object]]
     processing_failures: list[dict[str, object]]

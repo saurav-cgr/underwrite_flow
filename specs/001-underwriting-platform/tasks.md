@@ -175,44 +175,44 @@ known matches, mismatches, lapse, and omissions; verify exact ordered results.
 
 ### Tests for User Story 3
 
-- [ ] T031 [P] [US3] Add failing 100% branch tests for NCB, asset, lapse,
+- [X] T031 [P] [US3] Add failing 100% branch tests for NCB, asset, lapse,
   missing inputs, normalization, leap day, and ordering in
   `api/tests/unit/test_reconciliation.py`
-- [ ] T032 [P] [US3] Add failing field-schema, page-locator, PII-redaction,
+- [X] T032 [P] [US3] Add failing field-schema, page-locator, PII-redaction,
   usage, hash, and invalid-output tests in `api/tests/unit/test_providers.py`
-- [ ] T033 [P] [US3] Add failing sibling-failure, three-branch, deterministic
+- [X] T033 [P] [US3] Add failing sibling-failure, three-branch, deterministic
   join, and delta-resume tests in `api/tests/unit/test_workflow.py`
-- [ ] T034 [P] [US3] Add failing end-to-end synthetic motor evidence tests in
+- [X] T034 [P] [US3] Add failing end-to-end synthetic motor evidence tests in
   `api/tests/integration/test_evidence_reconciliation.py`
 
 ### Implementation for User Story 3
 
-- [ ] T035 [US3] Add `FieldComparison`, `ReconciliationResult`, and pure NCB,
+- [X] T035 [US3] Add `FieldComparison`, `ReconciliationResult`, and pure NCB,
   asset, and lapse checks in `api/src/underwriteflow/workflow/reconciliation.py`
   - Status is exactly `CLEARED`, `FLAGGED_DISCREPANCY`, or
     `MISSING_EVIDENCE`.
   - Sort checks by code, comparisons by field key, and evidence by document ID
     plus source locator.
   - No database, provider, file, log, audit, or routing side effect is allowed.
-- [ ] T036 [US3] Extend requested field specifications and provider usage
+- [X] T036 [US3] Extend requested field specifications and provider usage
   metadata in `api/src/underwriteflow/providers/schemas.py`
-- [ ] T037 [US3] Validate scalar/enum types and canonical result hashes in
+- [X] T037 [US3] Validate scalar/enum types and canonical result hashes in
   `api/src/underwriteflow/providers/service.py`
-- [ ] T038 [US3] Add configured Aadhaar, PAN, and contact redaction before
+- [X] T038 [US3] Add configured Aadhaar, PAN, and contact redaction before
   Gemini only in `api/src/underwriteflow/providers/redaction.py`
-- [ ] T039 [US3] Reuse the existing adapters while returning shared metadata in
+- [X] T039 [US3] Reuse the existing adapters while returning shared metadata in
   `api/src/underwriteflow/providers/gemini.py`,
   `api/src/underwriteflow/providers/ollama.py`, and
   `api/src/underwriteflow/providers/fake.py`
-- [ ] T040 [US3] Preserve trusted local page boundaries in provider input in
+- [X] T040 [US3] Preserve trusted local page boundaries in provider input in
   `api/src/underwriteflow/cases/submission.py`
-- [ ] T041 [US3] Invoke configured reconciliation after the existing join and
+- [X] T041 [US3] Invoke configured reconciliation after the existing join and
   map results to triage state in `api/src/underwriteflow/workflow/nodes.py` and
   `api/src/underwriteflow/workflow/state.py`
-- [ ] T042 [US3] Persist ordered results through existing validations and
+- [X] T042 [US3] Persist ordered results through existing validations and
   recommendation summaries in
   `api/src/underwriteflow/cases/evidence_persistence.py`
-- [ ] T043 [US3] Keep missing evidence as queue state and flagged results as a
+- [X] T043 [US3] Keep missing evidence as queue state and flagged results as a
   specialist signal in `api/src/underwriteflow/workflow/triage.py`
 
 **Checkpoint**: US3 works with FakeProvider; Gemini/Ollama contract tests are

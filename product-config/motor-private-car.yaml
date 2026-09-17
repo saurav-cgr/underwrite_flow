@@ -3,7 +3,7 @@ title: Fictional Private-Car Motor
 family: motor
 scope: Fictional India-focused demonstration only
 description: Demonstration triage configuration for privately owned cars.
-version: v2
+version: v1
 status: draft
 fields:
   - key: vehicle_age
@@ -38,10 +38,6 @@ documents:
     title: Synthetic vehicle record
     requirement: required
     accepted_types: [application/pdf, image/jpeg, image/png]
-  - code: previous_policy
-    title: Synthetic previous policy
-    requirement: optional
-    accepted_types: [application/pdf, image/jpeg, image/png]
   - code: inspection_photo
     title: Synthetic inspection photo
     requirement: conditional
@@ -61,15 +57,10 @@ reconciliations:
     kind: ncb_match
     inputs:
       application: prior_claims
-      previous_policy: ncb_percent
-  - code: motor_asset_match
-    kind: asset_match
-    inputs:
-      previous_policy: registration_number
-      vehicle_record: registration_number
+      vehicle_record: ncb_percent
   - code: motor_renewal_lapse
     kind: policy_lapse
     inputs:
       application: policy_start_date
-      previous_policy: policy_expiry_date
+      vehicle_record: policy_expiry
 specialist_labels: [motor inspection]

@@ -19,6 +19,8 @@ MOTOR_EVIDENCE_LINES = [
     "vehicle_age: 2",
     "vehicle_use: personal",
     "prior_claims: 0",
+    "ncb_percent: 0",
+    "policy_expiry: 2025-09-01",
 ]
 
 # Lines that carry no requested field, used for supporting documents.

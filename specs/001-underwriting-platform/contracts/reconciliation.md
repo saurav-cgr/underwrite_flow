@@ -72,6 +72,7 @@ database access, provider call, file access, logging, audit write, or routing.
           "source_locator": "page:1"
         }
       ],
+      "missing_inputs": [],
       "rule_version": "1.0.0"
     }
   ],
@@ -82,6 +83,9 @@ database access, provider call, file access, logging, audit write, or routing.
 ## Status Rules
 
 - `MISSING_EVIDENCE`: at least one required input is absent or unusable.
+  `missing_inputs` lists the source keys with no usable value, so a caller can
+  tell an unanswered optional claim (`application`) from a claim the configured
+  documents cannot verify.
 - `FLAGGED_DISCREPANCY`: all required inputs exist and deterministic comparison
   finds a mismatch or a configured threshold breach.
 - `CLEARED`: all required inputs exist and every comparison passes.

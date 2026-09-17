@@ -1,6 +1,11 @@
 """Deterministic provider used by normal tests and local smoke checks."""
 
-from underwriteflow.providers.schemas import ExtractedField, ExtractionRequest, ExtractionResult
+from underwriteflow.providers.schemas import (
+    ExtractedField,
+    ExtractionRequest,
+    ExtractionResult,
+)
+from underwriteflow.providers.service import parse_result
 
 
 class FakeProvider:
@@ -24,4 +29,9 @@ class FakeProvider:
                         extraction_method="fake",
                     )
                 )
-        return ExtractionResult(fields=fields)
+        # Local extraction reports no token usage, so it stays unavailable.
+        return parse_result(
+            [field.model_dump(mode="json") for field in fields],
+            "fake",
+            request.field_specifications,
+        )

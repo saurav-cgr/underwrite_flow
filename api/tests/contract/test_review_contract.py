@@ -45,6 +45,8 @@ SUMMARY_KEYS = {
     "evidence",
     "conflicts",
     "missing_information",
+    "reconciliation_results",
+    "reconciliation_status",
     "risk_signals",
     "open_questions",
 }
@@ -155,7 +157,14 @@ def test_review_start_response_keys_are_stable() -> None:
                 else:
                     assert set(item) == FIELD_EVIDENCE_KEYS, item
                     assert item["field_label"]
-                    assert item["field_type"] in {"integer", "enum"}
+                    # Evidence fields a configured check reads have no
+                    # declared application type, so they report as unknown.
+                    assert item["field_type"] in {
+                        "integer",
+                        "enum",
+                        "date",
+                        "unknown",
+                    }
                     assert item["extraction_method"] == "fake"
                     assert item["conflict_status"] == "clear"
 

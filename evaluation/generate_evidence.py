@@ -59,12 +59,54 @@ def conflicting_value(value: Any) -> str:
     return "other"
 
 
+# Read the reconciliation checks each fictional product configures.
+def product_checks() -> dict[str, list[dict[str, Any]]]:
+    checks: dict[str, list[dict[str, Any]]] = {}
+    for path in sorted(PRODUCT_CONFIG_DIR.glob("*.yaml")):
+        configuration = yaml.safe_load(path.read_text())
+        checks[configuration["product_code"]] = configuration.get(
+            "reconciliations", []
+        )
+    return checks
+
+
+# Derive one agreeing value for every evidence field a check reads.
+def agreed_evidence(
+    checks: list[dict[str, Any]], payload: dict[str, Any]
+) -> dict[str, list[tuple[str, Any]]]:
+    supplied: dict[str, list[tuple[str, Any]]] = {}
+    derived: dict[str, Any] = {}
+    for check in checks:
+        claimed = check.get("inputs", {}).get("application")
+        for source, field_name in check.get("inputs", {}).items():
+            if source == "application":
+                continue
+            if field_name not in derived:
+                if claimed is not None and claimed in payload:
+                    derived[field_name] = payload[claimed]
+                elif field_name.endswith("_date"):
+                    # An unanswered renewal date leaves the check missing.
+                    derived[field_name] = "2026-01-01"
+                else:
+                    derived[field_name] = "SYNTHETIC-AGREED"
+            supplied.setdefault(source, []).append(
+                (field_name, derived[field_name])
+            )
+    return supplied
+
+
 # Build the document set that produces the labelled evidence state.
 def build_documents(
-    record: dict[str, Any], fields: list[str]
+    record: dict[str, Any],
+    fields: list[str],
+    checks: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     codes: list[str] = list(record["expected"]["evidence"])
     payload: dict[str, Any] = record["workflow_input"]["payload"]
+    supplied = agreed_evidence(checks, payload)
+    for source in supplied:
+        if source not in codes:
+            codes.append(source)
     primary_code = codes[-1]
     conflict_code = codes[0]
     absent_field = fields[-1] if record["expected"]["missing"] else None
@@ -83,6 +125,10 @@ def build_documents(
                 f"{conflict_field}: "
                 f"{conflicting_value(payload.get(conflict_field))}"
             ]
+        lines.extend(
+            f"{field_name}: {render(value)}"
+            for field_name, value in supplied.get(code, [])
+        )
         if not lines:
             lines = [f"document_reference: {code}"]
         documents.append(
@@ -92,6 +138,11 @@ def build_documents(
                 "lines": lines,
             }
         )
+    # The reference evidence label is exactly the document set the case
+    # carries, so regenerating after a configuration change stays stable.
+    record["expected"]["evidence"] = sorted(
+        document["document_id"] for document in documents
+    )
     return documents
 
 
@@ -103,10 +154,12 @@ def main() -> None:
         else EVALUATION_DIR / "cases.json"
     )
     fields = product_fields()
+    checks = product_checks()
     records: list[dict[str, Any]] = json.loads(cases_path.read_text())
     for record in records:
+        product = record["product_code"]
         record["documents"] = build_documents(
-            record, fields[record["product_code"]]
+            record, fields[product], checks[product]
         )
     cases_path.write_text(json.dumps(records, indent=2) + "\n")
     print(f"wrote {len(records)} records with document material")

@@ -3,7 +3,7 @@ title: Fictional Individual Term Life
 family: life
 scope: Fictional India-focused demonstration only
 description: Demonstration triage configuration for individual term life.
-version: v2
+version: v1
 status: draft
 fields:
   - key: requested_cover

@@ -131,6 +131,7 @@ def test_case_configuration_resolves_requirements() -> None:
                 "vehicle_age",
                 "vehicle_use",
                 "prior_claims",
+                "policy_start_date",
             ]
             assert all(field["help_text"] for field in pack["fields"])
 

@@ -160,6 +160,31 @@ async def persist_case_evidence(
                 details=validation,
             )
         )
+    # Reconciliation results persist as validations, and each flagged
+    # discrepancy also becomes a deterministic specialist signal.
+    for result in evidence_result.get("reconciliation_results", []):
+        session.add(
+            Validation(
+                case_id=case.id,
+                rule_code=f"reconciliation:{result['check_code']}",
+                status=str(result.get("status", "")).lower(),
+                details=result,
+            )
+        )
+        for discrepancy in result.get("discrepancies", []):
+            session.add(
+                RiskSignal(
+                    case_id=case.id,
+                    code=f"reconciliation_{discrepancy.get('code')}",
+                    severity="medium",
+                    explanation=(
+                        "A configured reconciliation check found a "
+                        "discrepancy between the application and its "
+                        "evidence."
+                    ),
+                    source_type="deterministic",
+                )
+            )
     for signal in product_result.get("risk_signals", []):
         session.add(
             RiskSignal(
