@@ -45,6 +45,7 @@ export function CaseReview({
   const [result, setResult] = useState<ReviewResult | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState(item.route ?? "standard");
+  const [overriding, setOverriding] = useState(false);
   const [specialistLabel, setSpecialistLabel] = useState("");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
@@ -82,7 +83,9 @@ export function CaseReview({
         setStart(response);
         const route = response.recommendation.route;
         setSelectedRoute(
-          route === "manual"
+          route === "needs_information"
+            ? ""
+            : route === "manual"
             ? "specialist"
             : route === "expedited" ||
                 route === "standard" ||
@@ -108,6 +111,10 @@ export function CaseReview({
     if (!canReview) return;
     if (!acknowledged) {
       setMessage("Acknowledge the evidence before submitting a decision.");
+      return;
+    }
+    if (action === "override" && !selectedRoute) {
+      setMessage("Select a final route for this override.");
       return;
     }
     if (
@@ -161,6 +168,8 @@ export function CaseReview({
   const factors = recommendation?.factors ?? [];
   const route =
     recommendation?.route ?? item.route ?? "unavailable";
+  const needsInformation = route === "needs_information";
+  const showRouteOptions = !needsInformation || overriding;
   const decided = Boolean(result);
   return (
     <>
@@ -226,7 +235,7 @@ export function CaseReview({
                 <span className="specialist-tag">Specialist</span>
               ) : null}
             </div>
-            {factors.length > 0 ? (
+            {factors.length > 0 && !needsInformation ? (
               <div className="reason-box">
                 <Icon name="alert" />
                 <div>
@@ -265,31 +274,36 @@ export function CaseReview({
         <aside className="decision-panel">
           <h2>Your decision</h2>
           <p className="muted">
-            Pick the route this case should follow, then confirm or override.
+            {needsInformation && !overriding
+              ? "Request the missing information, or override to a final route."
+              : "Pick the route this case should follow, then confirm or "
+                + "override."}
           </p>
-          <fieldset className="route-options">
-            <legend className="sr-only">Final triage route</legend>
-            {ROUTES.map((option) => (
-              <label
-                className={selectedRoute === option.value ? "selected" : ""}
-                key={option.value}
-              >
-                <input
-                  checked={selectedRoute === option.value}
-                  disabled={locked}
-                  name="route"
-                  onChange={() => setSelectedRoute(option.value)}
-                  type="radio"
-                  value={option.value}
-                />
-                <span>
-                  <b>{option.label}</b>
-                  <small>{option.detail}</small>
-                </span>
-              </label>
-            ))}
-          </fieldset>
-          {selectedRoute === "specialist" ? (
+          {showRouteOptions ? (
+            <fieldset className="route-options">
+              <legend className="sr-only">Final triage route</legend>
+              {ROUTES.map((option) => (
+                <label
+                  className={selectedRoute === option.value ? "selected" : ""}
+                  key={option.value}
+                >
+                  <input
+                    checked={selectedRoute === option.value}
+                    disabled={locked}
+                    name="route"
+                    onChange={() => setSelectedRoute(option.value)}
+                    type="radio"
+                    value={option.value}
+                  />
+                  <span>
+                    <b>{option.label}</b>
+                    <small>{option.detail}</small>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+          {showRouteOptions && selectedRoute === "specialist" ? (
             <label className="field">
               <span>Specialist label</span>
               <select
@@ -315,26 +329,56 @@ export function CaseReview({
             />
           </label>
           <div className="decision-actions">
-            <Button
-              disabled={locked || decided}
-              onClick={() => handleDecision("confirm")}
-            >
-              Confirm recommendation
-            </Button>
-            <Button
-              disabled={locked || decided}
-              onClick={() => handleDecision("override")}
-              variant="secondary"
-            >
-              Override route
-            </Button>
-            <Button
-              disabled={locked || decided}
-              onClick={() => handleDecision("request_information")}
-              variant="quiet"
-            >
-              Request information
-            </Button>
+            {needsInformation && !overriding ? (
+              <>
+                <Button
+                  disabled={locked || decided}
+                  onClick={() => handleDecision("request_information")}
+                >
+                  Request information
+                </Button>
+                <Button
+                  disabled={locked || decided}
+                  onClick={() => setOverriding(true)}
+                  variant="secondary"
+                >
+                  Override route
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  disabled={locked || decided}
+                  onClick={() =>
+                    handleDecision(needsInformation ? "override" : "confirm")
+                  }
+                >
+                  {needsInformation
+                    ? "Confirm override"
+                    : "Confirm recommendation"}
+                </Button>
+                <Button
+                  disabled={locked || decided}
+                  onClick={() =>
+                    needsInformation
+                      ? setOverriding(false)
+                      : handleDecision("override")
+                  }
+                  variant="secondary"
+                >
+                  {needsInformation ? "Cancel override" : "Override route"}
+                </Button>
+                {!needsInformation ? (
+                  <Button
+                    disabled={locked || decided}
+                    onClick={() => handleDecision("request_information")}
+                    variant="quiet"
+                  >
+                    Request information
+                  </Button>
+                ) : null}
+              </>
+            )}
           </div>
           <p className="audit-hint">
             <Icon name="log" />

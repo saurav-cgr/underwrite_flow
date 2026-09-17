@@ -115,6 +115,42 @@ describe("review evidence pack", () => {
   });
 });
 
+// Verify missing-information recommendations lead with requesting evidence.
+describe("needs-information recommendation", () => {
+  it(
+    "hides final routes until the underwriter starts an override",
+    async () => {
+      vi.mocked(startReview).mockResolvedValue({
+        ...PACK,
+        recommendation: {
+          route: "needs_information",
+          factors: ["missing_information"],
+        },
+      });
+      renderReview({ ...ITEM, route: "needs_information" });
+      const user = userEvent.setup();
+
+      await screen.findByRole("heading", { name: "Your decision" });
+
+      expect(
+        screen.getByRole("button", { name: "Request information" }),
+      ).toBeTruthy();
+      expect(screen.queryByText("Why this route")).toBeNull();
+      expect(screen.queryByText("missing_information")).toBeNull();
+      expect(screen.queryByRole("radio")).toBeNull();
+      expect(screen.queryByRole("combobox")).toBeNull();
+
+      await user.click(
+        screen.getByRole("button", { name: "Override route" }),
+      );
+
+      expect(
+        screen.getByRole("radio", { name: /Expedited review/i }),
+      ).toBeTruthy();
+    },
+  );
+});
+
 // Verify manual recommendations become explicit specialist decisions.
 describe("manual recommendation", () => {
   const fallback = "Manual configuration review";
