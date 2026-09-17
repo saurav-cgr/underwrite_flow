@@ -26,6 +26,9 @@ const ITEM: QueueItem = {
   specialist_label: null,
   specialist: true,
   awaiting_handoff: false,
+  reconciliation_status: "FLAGGED_DISCREPANCY",
+  discrepancy_count: 1,
+  missing_evidence_count: 0,
 };
 
 const PACK: ReviewStart = {
@@ -55,6 +58,28 @@ const PACK: ReviewStart = {
   submitted_facts: [],
   conflicts: [],
   missing_information: [],
+  reconciliation: [
+    {
+      check_code: "motor_ncb_match",
+      kind: "ncb_match",
+      status: "FLAGGED_DISCREPANCY",
+      comparisons: [
+        {
+          field_key: "ncb_percent",
+          left: 35,
+          right: 20,
+          matched: false,
+          evidence: [{ document_id: "document-1", source_locator: "page:1" }],
+          explanation_code: "ncb_mismatch",
+          confidence_source: "deterministic",
+        },
+      ],
+      discrepancies: [],
+      evidence: [{ document_id: "document-1", source_locator: "page:1" }],
+      missing_inputs: [],
+      rule_version: "v1",
+    },
+  ],
   extraction_failures: [],
   specialist_options: ["motor inspection"],
 };
@@ -99,6 +124,15 @@ describe("review evidence pack", () => {
       screen.getByText("Evidence requires specialist review."),
     ).toBeTruthy();
     expect(screen.queryByText("specialist_signal")).toBeNull();
+  });
+
+  it("shows a flagged check with its provenance", async () => {
+    renderReview();
+
+    expect(await screen.findByText("motor_ncb_match")).toBeTruthy();
+    expect(screen.getByText("flagged discrepancy")).toBeTruthy();
+    expect(screen.getByText(/35 versus 20/)).toBeTruthy();
+    expect(screen.getByText(/from deterministic/)).toBeTruthy();
   });
 
   it("blocks a decision until the evidence is acknowledged", async () => {

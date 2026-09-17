@@ -164,6 +164,38 @@ export interface DocumentRecord {
   page_count: number | null;
 }
 
+export type ReconciliationStatus =
+  | "CLEARED"
+  | "FLAGGED_DISCREPANCY"
+  | "MISSING_EVIDENCE"
+  | "";
+
+export interface ReconciliationReference {
+  document_id: string;
+  source_locator: string;
+}
+
+export interface ReconciliationComparison {
+  field_key: string;
+  left: unknown;
+  right: unknown;
+  matched: boolean;
+  evidence: ReconciliationReference[];
+  explanation_code: string;
+  confidence_source: string;
+}
+
+export interface ReconciliationCheck {
+  check_code: string;
+  kind: ReconciliationKind;
+  status: ReconciliationStatus;
+  comparisons: ReconciliationComparison[];
+  discrepancies: Record<string, unknown>[];
+  evidence: ReconciliationReference[];
+  missing_inputs: string[];
+  rule_version: string;
+}
+
 export interface QueueItem {
   case_id: string;
   product_code: string;
@@ -173,6 +205,9 @@ export interface QueueItem {
   specialist_label: string | null;
   specialist: boolean;
   awaiting_handoff: boolean;
+  reconciliation_status: ReconciliationStatus;
+  discrepancy_count: number;
+  missing_evidence_count: number;
 }
 
 export interface AuditEvent {
@@ -269,6 +304,7 @@ export interface ReviewStart {
   evidence: EvidenceItem[];
   conflicts: ConflictEvidence[];
   missing_information: string[];
+  reconciliation: ReconciliationCheck[];
   extraction_failures: Record<string, unknown>[];
   specialist_options: string[];
 }

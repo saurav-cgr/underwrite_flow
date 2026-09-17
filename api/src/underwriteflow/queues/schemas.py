@@ -22,6 +22,9 @@ class QueueItem(BaseModel):
     specialist_label: str | None = None
     specialist: bool
     awaiting_handoff: bool = False
+    reconciliation_status: str = ""
+    discrepancy_count: int = 0
+    missing_evidence_count: int = 0
 
 
 class AuditEventResponse(BaseModel):

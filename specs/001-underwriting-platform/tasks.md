@@ -230,32 +230,32 @@ reject missing rationale, accept an authorized rationale, and finalize once.
 
 ### Tests for User Story 4
 
-- [ ] T044 [P] [US4] Add failing queue/review contract tests for result counts,
+- [X] T044 [P] [US4] Add failing queue/review contract tests for result counts,
   provenance, confidence source, and scope denial in
   `api/tests/contract/test_review_contract.py`
-- [ ] T045 [P] [US4] Add failing override and duplicate-completion tests
+- [X] T045 [P] [US4] Add failing override and duplicate-completion tests
   in `api/tests/integration/test_review_workflow.py`
-- [ ] T046 [P] [US4] Add failing accessible discrepancy and rationale tests in
+- [X] T046 [P] [US4] Add failing accessible discrepancy and rationale tests in
   `web/src/case-review.test.tsx` and `web/src/confirm.test.tsx`
 
 ### Implementation for User Story 4
 
-- [ ] T047 [US4] Add reconciliation counts and status filters to
+- [X] T047 [US4] Add reconciliation counts and status filters to
   `api/src/underwriteflow/queues/schemas.py` and
   `api/src/underwriteflow/queues/router.py`
-- [ ] T048 [US4] Add ordered comparisons, provenance, and confidence source to
+- [X] T048 [US4] Add ordered comparisons, provenance, and confidence source to
   `api/src/underwriteflow/reviews/evidence.py` and
   `api/src/underwriteflow/reviews/schemas.py`
-- [ ] T049 [US4] Enforce `cases:override`, underwriter identity, rationale,
+- [X] T049 [US4] Enforce `cases:override`, underwriter identity, rationale,
   row locking, review-cycle uniqueness, and idempotency in
   `api/src/underwriteflow/reviews/router.py` and
   `api/src/underwriteflow/queues/router.py`
-- [ ] T050 [US4] Extend review and queue response types in
+- [X] T050 [US4] Extend review and queue response types in
   `web/src/types.ts` and `web/src/api-staff.ts`
-- [ ] T051 [US4] Render non-color discrepancy status, provenance, and required
+- [X] T051 [US4] Render non-color discrepancy status, provenance, and required
   rationale in `web/src/case-review.tsx`, `web/src/confirm.tsx`, and
   `web/src/review.css`
-- [ ] T052 [US4] Render queue discrepancy/missing counts in
+- [X] T052 [US4] Render queue discrepancy/missing counts in
   `web/src/queue.tsx` and `web/src/queue.css`
 
 **Checkpoint**: US4 independently proves human-only final authority and

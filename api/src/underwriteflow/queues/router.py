@@ -22,8 +22,10 @@ from underwriteflow.persistence.models import (
     ProductVersion,
     Recommendation,
     Review,
+    Validation,
 )
 from underwriteflow.queues.schemas import AuditEventResponse, CompletionResponse, QueueItem
+from underwriteflow.workflow.reconciliation import check_applies
 
 queues_router = APIRouter(prefix="/queues", tags=["queues"])
 audit_router = APIRouter(prefix="/audit", tags=["audit"])
@@ -38,6 +40,7 @@ async def list_queue(
     route: str | None = Query(default=None, max_length=50),
     specialist: bool | None = Query(default=None),
     awaiting_handoff: bool | None = Query(default=None),
+    reconciliation_status: str | None = Query(default=None, max_length=50),
     _: dict[str, str] = Depends(require_permission(Permission.REVIEW_READ)),
     session: AsyncSession = Depends(get_session),
 ) -> list[QueueItem]:
@@ -68,6 +71,7 @@ async def list_queue(
     case_ids = [case.id for case, _product, _recommendation in rows]
     reviews = await latest_reviews(session, case_ids)
     handoffs = await completed_case_ids(session, case_ids)
+    checks = await reconciliation_counts(session, case_ids)
     items = [
         QueueItem(
             case_id=case.id,
@@ -81,13 +85,63 @@ async def list_queue(
                 case.status in {"confirmed", "overridden"}
                 and case.id not in handoffs
             ),
+            reconciliation_status=checks.get(case.id, ("", 0, 0))[0],
+            discrepancy_count=checks.get(case.id, ("", 0, 0))[1],
+            missing_evidence_count=checks.get(case.id, ("", 0, 0))[2],
         )
         for case, product, recommendation in rows
         for review in [reviews.get(case.id)]
     ]
     if awaiting_handoff is True:
         return [item for item in items if item.awaiting_handoff]
+    if reconciliation_status is not None:
+        return [
+            item
+            for item in items
+            if item.reconciliation_status == reconciliation_status
+        ]
     return items
+
+
+# Summarize each case's configured check status, discrepancies, and gaps.
+async def reconciliation_counts(
+    session: AsyncSession, case_ids: list[UUID]
+) -> dict[UUID, tuple[str, int, int]]:
+    if not case_ids:
+        return {}
+    rows = await session.execute(
+        select(Validation.case_id, Validation.status, Validation.details).where(
+            Validation.case_id.in_(case_ids),
+            Validation.rule_code.like("reconciliation:%"),
+        )
+    )
+    grouped: dict[UUID, list[str]] = {}
+    for case_id, status, details in rows.all():
+        # A claim the applicant never made needs no verification.
+        if not check_applies(dict(details or {})):
+            continue
+        grouped.setdefault(case_id, []).append(str(status))
+    # Most cautious status wins, matching the pure reconciliation precedence.
+    precedence = (
+        "missing_evidence",
+        "flagged_discrepancy",
+        "cleared",
+    )
+    return {
+        case_id: (
+            next(
+                (
+                    status.upper()
+                    for status in precedence
+                    if status in statuses
+                ),
+                "",
+            ),
+            statuses.count("flagged_discrepancy"),
+            statuses.count("missing_evidence"),
+        )
+        for case_id, statuses in grouped.items()
+    }
 
 
 # Return the latest persisted review for each requested case.

@@ -18,6 +18,7 @@ export async function listQueue(
   token: string,
   status?: string,
   awaitingHandoff?: boolean,
+  reconciliationStatus?: string,
 ): Promise<QueueItem[]> {
   const params = new URLSearchParams();
   if (status) {
@@ -25,6 +26,9 @@ export async function listQueue(
   }
   if (awaitingHandoff) {
     params.set("awaiting_handoff", "true");
+  }
+  if (reconciliationStatus) {
+    params.set("reconciliation_status", reconciliationStatus);
   }
   const query = params.size > 0 ? `?${params.toString()}` : "";
   return request(`/queues${query}`, token);

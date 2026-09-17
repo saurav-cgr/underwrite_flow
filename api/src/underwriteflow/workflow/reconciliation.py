@@ -323,6 +323,15 @@ def run_check(
     }
 
 
+# Report whether one check applies: an unanswered optional claim does not.
+#
+# A claim the applicant never made needs no verification, so it neither
+# decides the overall status nor queues the case for missing evidence.
+def check_applies(result: dict[str, Any]) -> bool:
+    missing_inputs = result.get("missing_inputs") or []
+    return set(missing_inputs) != {APPLICATION_SOURCE}
+
+
 # Reconcile every configured check and report the overall evidence state.
 def reconcile(
     checks: list[dict[str, Any]],
@@ -334,7 +343,9 @@ def reconcile(
         run_check(check, application, evidence, rule_version)
         for check in sorted(checks, key=lambda item: str(item.get("code")))
     ]
-    statuses = {result["status"] for result in results}
+    statuses = {
+        result["status"] for result in results if check_applies(result)
+    }
     overall = next(
         (
             status

@@ -194,6 +194,16 @@ async def start_review(
     application = (
         stored_application if isinstance(stored_application, dict) else {}
     )
+    reconciliation = list(
+        await session.scalars(
+            select(Validation)
+            .where(
+                Validation.case_id == case_id,
+                Validation.rule_code.like("reconciliation:%"),
+            )
+            .order_by(Validation.rule_code)
+        )
+    )
     return build_review_start_response(
         case_id,
         recommendation,
@@ -202,6 +212,7 @@ async def start_review(
         extracted_fields,
         failures,
         configuration,
+        reconciliation,
     )
 
 

@@ -19,7 +19,56 @@ import type {
   FactStatus,
 } from "./evidence";
 import { DocumentPreview } from "./document-preview";
-import type { ReviewStart } from "./types";
+import type { ReconciliationCheck, ReviewStart } from "./types";
+
+// Describe one configured check status in words rather than colour alone.
+function checkStatusLabel(check: ReconciliationCheck): string {
+  if (!check.status) {
+    return "not evaluated";
+  }
+  return check.status.replaceAll("_", " ").toLowerCase();
+}
+
+// Render the comparisons of one configured check with their provenance.
+function CheckComparisons({ check }: { check: ReconciliationCheck }) {
+  if (check.comparisons.length === 0) {
+    const missing = check.missing_inputs.join(", ");
+    return (
+      <small>
+        {missing
+          ? `No usable value for: ${missing}`
+          : "No comparison was possible."}
+      </small>
+    );
+  }
+  return (
+    <>
+      {check.comparisons.map((comparison) => (
+        <div className="check-comparison" key={comparison.field_key}>
+          <span>
+            <code>{comparison.field_key}</code>{" "}
+            {comparison.matched ? "matches" : "differs"}:{" "}
+            {String(comparison.left ?? "not supplied")} versus{" "}
+            {String(comparison.right ?? "not extracted")}
+          </span>
+          <small>
+            {comparison.explanation_code} · from {" "}
+            {comparison.confidence_source}
+            {comparison.evidence.length > 0
+              ? " · " +
+                comparison.evidence
+                  .map(
+                    (reference) =>
+                      `${reference.document_id} ${reference.source_locator}`,
+                  )
+                  .join(", ")
+              : ""}
+          </small>
+        </div>
+      ))}
+    </>
+  );
+}
 
 // Render the evidence an underwriter must review before recording a decision.
 export function EvidencePanel({
@@ -136,6 +185,27 @@ export function EvidencePanel({
             />
           ) : null}
         </div>
+      </Panel>
+      <Panel title="Configured checks">
+        {pack.reconciliation.length === 0 ? (
+          <p className="muted">
+            The pinned configuration defines no reconciliation check.
+          </p>
+        ) : (
+          <ul className="check-list">
+            {pack.reconciliation.map((check) => (
+              <li className="check-item" key={check.check_code}>
+                <header>
+                  <b>{check.check_code}</b>
+                  <Badge tone={check.status}>
+                    {checkStatusLabel(check)}
+                  </Badge>
+                </header>
+                <CheckComparisons check={check} />
+              </li>
+            ))}
+          </ul>
+        )}
       </Panel>
       <Panel title="Recorded risk signals">
         {signals.length === 0 ? (

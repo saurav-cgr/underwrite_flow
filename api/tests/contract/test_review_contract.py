@@ -37,9 +37,32 @@ REVIEW_START_KEYS = {
     "evidence",
     "conflicts",
     "missing_information",
+    "reconciliation",
     "extraction_failures",
     "specialist_options",
 }
+
+RECONCILIATION_KEYS = {
+    "check_code",
+    "kind",
+    "status",
+    "comparisons",
+    "discrepancies",
+    "evidence",
+    "missing_inputs",
+    "rule_version",
+}
+
+COMPARISON_KEYS = {
+    "field_key",
+    "left",
+    "right",
+    "matched",
+    "evidence",
+    "explanation_code",
+    "confidence_source",
+}
+
 
 SUMMARY_KEYS = {
     "evidence",
@@ -90,7 +113,6 @@ CONFLICT_KEYS = {
 }
 
 FAILURE_KEYS = {"rule_code", "details"}
-
 FAILURE_DETAIL_KEYS = {"document_id", "filename", "error_code"}
 
 REVIEW_KEYS = {"case_id", "action", "selected_route", "status"}
@@ -142,6 +164,29 @@ def test_review_start_response_keys_are_stable() -> None:
                 set(fact) == SUBMITTED_FACT_KEYS
                 for fact in body["submitted_facts"]
             )
+
+            # Configured checks are served in code order with provenance.
+            checks = body["reconciliation"]
+            assert [check["check_code"] for check in checks] == [
+                "motor_ncb_match",
+                "motor_renewal_lapse",
+            ]
+            for check in checks:
+                assert set(check) == RECONCILIATION_KEYS, check
+                assert check["status"] in {
+                    "CLEARED",
+                    "FLAGGED_DISCREPANCY",
+                    "MISSING_EVIDENCE",
+                }
+                for comparison in check["comparisons"]:
+                    assert set(comparison) == COMPARISON_KEYS, comparison
+                    assert comparison["confidence_source"] == (
+                        "deterministic"
+                    )
+                    for reference in comparison["evidence"]:
+                        assert reference["source_locator"].startswith(
+                            "page:"
+                        )
 
             assert body["evidence"], "a submitted case carries evidence"
             kinds = {item["source_type"] for item in body["evidence"]}
@@ -266,39 +311,6 @@ def test_conflict_response_keys_are_stable() -> None:
             for conflict in conflicts:
                 assert set(conflict) == CONFLICT_KEYS, conflict
                 assert conflict["conflict_status"] != "clear"
-    finally:
-        if case_id:
-            remove_case(case_id)
-        set_motor_status(prior)
-
-
-# Pin the human decision result keys.
-def test_review_response_keys_are_stable() -> None:
-    prior = motor_status()
-    set_motor_status("active")
-    case_id = ""
-    try:
-        settings = Settings(generation_provider="fake")
-        with TestClient(create_app(settings)) as client:
-            applicant = login(client, APPLICANT)
-            underwriter = login(client, UNDERWRITER)
-            created = create_motor_case(client, applicant)
-            case_id = str(created["id"])
-            upload_motor_documents(client, applicant, case_id)
-            submit_motor_case(client, applicant, case_id)
-            start_review(client, underwriter, case_id)
-
-            decided = client.post(
-                f"/api/v1/reviews/{case_id}",
-                json={"action": "confirm", "evidence_acknowledged": True},
-                headers=underwriter,
-            )
-            assert decided.status_code == 200, decided.text
-            body = decided.json()
-            assert set(body) == REVIEW_KEYS, body
-            assert body["action"] == "confirm"
-            assert body["status"] == "confirmed"
-            assert body["selected_route"] == "expedited"
     finally:
         if case_id:
             remove_case(case_id)

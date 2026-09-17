@@ -407,3 +407,41 @@
   padding: 24px;
   text-align: center;
 }
+
+.check-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.check-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.check-item header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.check-item small {
+  color: var(--muted);
+}
+
+.check-comparison {
+  display: grid;
+  font-size: .82rem;
+  gap: 2px;
+}
+
+.check-comparison code {
+  overflow-wrap: anywhere;
+}

@@ -319,6 +319,37 @@ def test_results_are_deterministically_ordered() -> None:
     ]
 
 
+# Verify an unanswered optional claim does not decide the overall status.
+def test_unanswered_claim_does_not_decide_overall_status() -> None:
+    result = run(
+        [NCB_CHECK, LAPSE_CHECK],
+        {"claimed_ncb_percent": 20},
+        [
+            evidence("ncb_percent", 20, "previous_policy"),
+            evidence(
+                "policy_expiry_date", "2024-02-28", "previous_policy"
+            ),
+        ],
+    )
+
+    lapse = next(
+        item
+        for item in result["results"]
+        if item["check_code"] == "motor_renewal_lapse"
+    )
+    assert lapse["status"] == "MISSING_EVIDENCE"
+    assert lapse["missing_inputs"] == ["application"]
+    assert result["overall_status"] == "CLEARED"
+
+
+# Verify absent document evidence still decides the overall status.
+def test_absent_document_evidence_decides_overall_status() -> None:
+    result = run([NCB_CHECK], {"claimed_ncb_percent": 20}, [])
+
+    assert result["results"][0]["missing_inputs"] == ["previous_policy"]
+    assert result["overall_status"] == "MISSING_EVIDENCE"
+
+
 # Verify identical inputs always produce identical serialized output.
 def test_reconciliation_is_repeatable() -> None:
     items = [evidence("ncb_percent", 20, "previous_policy")]

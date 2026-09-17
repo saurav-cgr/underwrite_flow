@@ -96,6 +96,26 @@ def build_review_evidence(
     return facts, evidence
 
 
+# Assemble configured check results with ordered provenance for review.
+#
+# The comparison values come from deterministic code, never from a model, so
+# every comparison reports its confidence source explicitly.
+def reconciliation_view(
+    validations: list[Validation],
+) -> list[dict[str, object]]:
+    results: list[dict[str, object]] = []
+    for validation in sorted(
+        validations, key=lambda item: item.rule_code
+    ):
+        details = dict(validation.details or {})
+        details["comparisons"] = [
+            {**comparison, "confidence_source": "deterministic"}
+            for comparison in details.get("comparisons", [])
+        ]
+        results.append(details)
+    return results
+
+
 # Assemble the complete public evidence pack for one pending review.
 def build_review_start_response(
     case_id: UUID,
@@ -105,6 +125,7 @@ def build_review_start_response(
     extracted_fields: list[ExtractedField],
     failures: list[Validation],
     configuration: ProductConfiguration | None,
+    reconciliation: list[Validation] | None = None,
 ) -> ReviewStartResponse:
     summary = dict(recommendation.summary or {})
     submitted_facts, evidence = build_review_evidence(
@@ -149,6 +170,7 @@ def build_review_start_response(
                 application,
             )
         ),
+        reconciliation=reconciliation_view(reconciliation or []),
         extraction_failures=[
             {"rule_code": failure.rule_code, "details": failure.details}
             for failure in failures

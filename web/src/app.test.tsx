@@ -110,6 +110,9 @@ const REVIEW_ITEM: QueueItem = {
   specialist_label: null,
   specialist: false,
   awaiting_handoff: false,
+  reconciliation_status: "CLEARED",
+  discrepancy_count: 0,
+  missing_evidence_count: 0,
 };
 
 const AUDIT_EVENT: AuditEvent = {

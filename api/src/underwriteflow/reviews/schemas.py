@@ -68,5 +68,6 @@ class ReviewStartResponse(BaseModel):
     evidence: list[dict[str, object]]
     conflicts: list[dict[str, object]]
     missing_information: list[str]
+    reconciliation: list[dict[str, object]] = Field(default_factory=list)
     extraction_failures: list[dict[str, object]]
     specialist_options: list[str]

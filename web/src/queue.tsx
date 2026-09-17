@@ -28,6 +28,29 @@ function routeLabel(item: QueueItem): string {
     : item.selected_route;
 }
 
+// Describe the configured reconciliation state in words, never by colour.
+function evidenceLabel(item: QueueItem): string {
+  if (!item.reconciliation_status) {
+    return "No configured checks";
+  }
+  return item.reconciliation_status.replaceAll("_", " ").toLowerCase();
+}
+
+// Summarize how many checks flagged a discrepancy or lacked evidence.
+function evidenceDetail(item: QueueItem): string {
+  if (!item.reconciliation_status) {
+    return "Not evaluated";
+  }
+  const parts: string[] = [];
+  if (item.discrepancy_count > 0) {
+    parts.push(`${item.discrepancy_count} flagged`);
+  }
+  if (item.missing_evidence_count > 0) {
+    parts.push(`${item.missing_evidence_count} missing evidence`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : "All checks cleared";
+}
+
 // Load and filter the underwriter queue with safe server-side rows.
 export function UnderwriterQueue({
   token,
@@ -125,6 +148,7 @@ export function UnderwriterQueue({
                   <th scope="col">Case</th>
                   <th scope="col">Product</th>
                   <th scope="col">Route</th>
+                  <th scope="col">Evidence checks</th>
                   <th scope="col">Status</th>
                   <th scope="col">
                     <span className="sr-only">Actions</span>
@@ -151,6 +175,12 @@ export function UnderwriterQueue({
                           {item.specialist ? (
                             <Badge tone="specialist">Specialist</Badge>
                           ) : null}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="evidence-cell">
+                          <span>{evidenceLabel(item)}</span>
+                          <small>{evidenceDetail(item)}</small>
                         </span>
                       </td>
                       <td>
