@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-from underwriteflow.products.service import load_configuration
+import yaml
+
+from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.product_subgraphs import build_product_subgraph
@@ -13,9 +15,8 @@ PRODUCT_CONFIG_ROOT = Path("/app/product-config")
 
 # Compile one fictional product graph for interactive local inspection.
 def development_product_graph(filename: str):
-    configuration = load_configuration(
-        (PRODUCT_CONFIG_ROOT / filename).read_text()
-    )
+    raw = yaml.safe_load((PRODUCT_CONFIG_ROOT / filename).read_text())
+    configuration = ProductConfiguration.model_validate(raw)
     return build_product_subgraph(configuration)
 
 

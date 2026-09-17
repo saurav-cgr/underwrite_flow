@@ -11,6 +11,8 @@ from fastapi import UploadFile
 from PIL import Image
 from pypdf import PdfReader
 
+from underwriteflow.document_types import SUPPORTED_CONTENT_TYPES
+
 MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
 MAX_DOCUMENT_PAGES = 50
 ALLOWED_SUFFIXES = {
@@ -18,7 +20,6 @@ ALLOWED_SUFFIXES = {
     "image/jpeg": {".jpg", ".jpeg"},
     "image/png": {".png"},
 }
-SUPPORTED_CONTENT_TYPES = frozenset(ALLOWED_SUFFIXES)
 MAGIC_SIGNATURES = (
     (b"%PDF-", "application/pdf"),
     (b"\xff\xd8\xff", "image/jpeg"),

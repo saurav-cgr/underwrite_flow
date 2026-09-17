@@ -92,6 +92,7 @@ services:
   langgraph-dev:
     build:
       context: ./api
+      dockerfile: Dockerfile.langgraph-dev
     command:
       - langgraph
       - dev
@@ -103,7 +104,10 @@ services:
       - "2024"
       - --no-browser
     environment:
-      LANGSMITH_TRACING: "false"
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_ENDPOINT: https://apac.api.smith.langchain.com
+      LANGSMITH_PROJECT: underwriteflow-langgraph-dev
+      LANGSMITH_TRACING: "true"
     profiles: ["langgraph-dev"]
     ports:
       - "2024:2024"

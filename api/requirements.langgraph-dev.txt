@@ -1,0 +1,4 @@
+langgraph==1.2.11
+langgraph-api==0.14.1
+langgraph-cli[inmem]==0.4.31
+PyYAML==6.0.3

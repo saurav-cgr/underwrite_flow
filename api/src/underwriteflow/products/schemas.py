@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from underwriteflow.storage import SUPPORTED_CONTENT_TYPES
+from underwriteflow.document_types import SUPPORTED_CONTENT_TYPES
 
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
