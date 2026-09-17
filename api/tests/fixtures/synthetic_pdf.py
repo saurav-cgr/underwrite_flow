@@ -24,6 +24,35 @@ MOTOR_EVIDENCE_LINES = [
 # Lines that carry no requested field, used for supporting documents.
 IDENTITY_ONLY_LINES = ["identity_reference: SYNTHETIC-0001"]
 
+# Prior-policy facts the configured no-claim-bonus and lapse checks read.
+PREVIOUS_POLICY_LINES = [
+    "ncb_percent: 20",
+    "policy_expiry: 2025-09-01",
+]
+
+# Registration identifiers the configured asset match compares.
+REGISTRATION_CERTIFICATE_LINES = [
+    "engine_number: SYNTH-ENG-0001",
+    "chassis_number: SYNTH-CHS-0001",
+    "registration_number: SYNTH-RC-0001",
+]
+
+# Claims facts the configured no-claim-bonus check adjusts against.
+CLAIMS_HISTORY_LINES = ["claim_count: 0"]
+
+# One line set per fictional motor document code, so a test can seed any
+# document combination without restating the field vocabulary.
+MOTOR_DOCUMENT_LINES: dict[str, list[str]] = {
+    "identity_record": IDENTITY_ONLY_LINES,
+    "vehicle_record": MOTOR_EVIDENCE_LINES,
+    "previous_policy": PREVIOUS_POLICY_LINES,
+    "registration_certificate": REGISTRATION_CERTIFICATE_LINES,
+    "claims_history": CLAIMS_HISTORY_LINES,
+}
+
+# The motor documents every submittable synthetic case starts with.
+DEFAULT_DOCUMENT_CODES = ("identity_record", "vehicle_record")
+
 
 # Assemble the object table, cross-reference table, and trailer for one page.
 def _assemble(content_stream: bytes) -> bytes:

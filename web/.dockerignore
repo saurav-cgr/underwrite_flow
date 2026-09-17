@@ -1,0 +1,16 @@
+# Host dependencies and build output. `COPY . .` runs after `npm ci`, so a
+# mounted host `node_modules` would otherwise clobber the image's install.
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Local secrets and environment overrides
+.env
+.env.*
+
+# Local runtime and operating-system artifacts
+*.log
+*.tmp
+.DS_Store

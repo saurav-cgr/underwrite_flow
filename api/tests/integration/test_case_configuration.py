@@ -1,9 +1,10 @@
 """The pinned case configuration an applicant's documents screen needs."""
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
+from fixtures.records import create_user, remove_case, remove_user
 from fixtures.records import set_motor_status
 
 from underwriteflow.app import create_app
@@ -60,22 +61,7 @@ def create_case(client: TestClient, headers: dict[str, str], age: int) -> str:
 
 # Insert one extra synthetic applicant so ownership can be tested.
 def create_second_applicant() -> str:
-    user_id = uuid4()
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO users (id, email, display_name, role, "
-                "password_hash, is_active) VALUES (%s, %s, %s, %s, %s, %s)",
-                (
-                    user_id,
-                    f"second-{user_id}@synthetic.test",
-                    "Second Synthetic Applicant",
-                    "Applicant",
-                    "synthetic-demonstration-hash",
-                    True,
-                ),
-            )
-    return str(user_id)
+    return str(create_user(display_name="Second Synthetic Applicant"))
 
 
 # Insert one synthetic motor case owned by the supplied applicant.
@@ -176,12 +162,8 @@ def test_case_configuration_resolves_requirements() -> None:
 def remove_case_and_applicant(case_id: str, applicant_user_id: str) -> None:
     if not case_id or not applicant_user_id:
         return
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM cases WHERE id = %s", (case_id,))
-            cursor.execute(
-                "DELETE FROM users WHERE id = %s", (applicant_user_id,)
-            )
+    remove_case(UUID(case_id))
+    remove_user(UUID(applicant_user_id))
 
 
 # Verify one applicant cannot read another applicant's pinned configuration.

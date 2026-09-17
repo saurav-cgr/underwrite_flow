@@ -6,13 +6,15 @@ drive the API live beside this module in `fixtures.support`.
 """
 
 import shutil
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from uuid import UUID, uuid4
 
 import psycopg
 
 from fixtures.synthetic_pdf import (
-    IDENTITY_ONLY_LINES,
-    MOTOR_EVIDENCE_LINES,
+    DEFAULT_DOCUMENT_CODES,
+    MOTOR_DOCUMENT_LINES,
     UPLOAD_ROOT,
     text_pdf,
     write_upload,
@@ -22,6 +24,71 @@ DATABASE_URL = (
     "postgresql://underwriteflow:synthetic-local-password@"
     "db:5433/underwriteflow"
 )
+
+# Legacy `users.role` values mapped to the stable lowercase role codes that
+# dynamic roles replace them with, one mapping per known role.
+ROLE_CODES: dict[str, str] = {
+    "Applicant": "applicant",
+    "Underwriter": "underwriter",
+    "Administrator": "administrator",
+}
+
+# Placeholder Argon2-shaped hash for synthetic users that never log in.
+SYNTHETIC_PASSWORD_HASH = "synthetic-demonstration-hash"
+
+
+# Insert one fictional synthetic user and return its generated identifier.
+def create_user(
+    role: str = "Applicant",
+    email: str | None = None,
+    display_name: str = "Synthetic Test User",
+    is_active: bool = True,
+) -> UUID:
+    user_id = uuid4()
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO users (id, email, display_name, role, "
+                "password_hash, is_active) VALUES (%s, %s, %s, %s, %s, %s)",
+                (
+                    user_id,
+                    email or f"synthetic-{user_id}@example.test",
+                    display_name,
+                    role,
+                    SYNTHETIC_PASSWORD_HASH,
+                    is_active,
+                ),
+            )
+    return user_id
+
+
+# Delete one synthetic user, which requires every row it owns to be gone
+# first, because `cases.applicant_user_id` and the seeded demo accounts must
+# stay exactly as the migration left them.
+def remove_user(user_id: UUID) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+
+
+# Create a synthetic user for one test and always delete it afterwards.
+@contextmanager
+def synthetic_user(
+    role: str = "Applicant",
+    email: str | None = None,
+    display_name: str = "Synthetic Test User",
+    is_active: bool = True,
+) -> Iterator[UUID]:
+    user_id = create_user(
+        role=role,
+        email=email,
+        display_name=display_name,
+        is_active=is_active,
+    )
+    try:
+        yield user_id
+    finally:
+        remove_user(user_id)
 
 
 # Read the current status of the built-in synthetic motor product.
@@ -77,7 +144,12 @@ def remove_upload(case_id: str, document_code: str) -> None:
 
 
 # Write the rows and upload files a submittable synthetic motor case needs.
-def seed_case(case_id: UUID) -> None:
+def seed_case(
+    case_id: UUID, document_codes: Sequence[str] = DEFAULT_DOCUMENT_CODES
+) -> None:
+    uploads = {
+        code: text_pdf(MOTOR_DOCUMENT_LINES[code]) for code in document_codes
+    }
     with psycopg.connect(DATABASE_URL) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -123,7 +195,7 @@ def seed_case(case_id: UUID) -> None:
                 """,
                 (uuid4(), case_id, '{"application": {"vehicle_age": 2}}'),
             )
-            for code in ("identity_record", "vehicle_record"):
+            for code, content in uploads.items():
                 cursor.execute(
                     """
                     INSERT INTO documents (
@@ -139,17 +211,14 @@ def seed_case(case_id: UUID) -> None:
                         "application/pdf",
                         f"{case_id}/{code}.pdf",
                         f"synthetic-{code}",
-                        32,
+                        len(content),
                         1,
                     ),
                 )
     # The workflow extracts from the volume, so the referenced files must
     # exist and carry the configured field lines.
-    for document_code, lines in (
-        ("identity_record", IDENTITY_ONLY_LINES),
-        ("vehicle_record", MOTOR_EVIDENCE_LINES),
-    ):
-        write_upload(case_id, document_code, text_pdf(lines))
+    for code, content in uploads.items():
+        write_upload(case_id, code, content)
 
 
 # Read one case's recorded decisions, oldest review cycle first.

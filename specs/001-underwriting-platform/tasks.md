@@ -28,9 +28,9 @@ authentication. Obtain provider-change approval before T035.
 
 **Purpose**: Prove existing behavior and reuse shared synthetic fixtures.
 
-- [ ] T001 Verify current auth, product, provider, workflow, review, and audit
+- [X] T001 Verify current auth, product, provider, workflow, review, and audit
   baselines in `api/tests/` and `web/src/*.test.ts*` through Docker Compose
-- [ ] T002 [P] Extend synthetic builders for users, roles, policies, RCs, and
+- [X] T002 [P] Extend synthetic builders for users, roles, policies, RCs, and
   claims in `api/tests/fixtures/records.py`
 
 **Checkpoint**: Baseline green; synthetic fixture vocabulary ready.
