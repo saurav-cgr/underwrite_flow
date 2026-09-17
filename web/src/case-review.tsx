@@ -242,7 +242,11 @@ export function CaseReview({
                   <b>Why this route</b>
                   <ul>
                     {factors.map((entry) => (
-                      <li key={entry}>{entry}</li>
+                      <li key={entry}>
+                        {entry === "specialist_signal"
+                          ? "Evidence requires specialist review."
+                          : entry.replaceAll("_", " ")}
+                      </li>
                     ))}
                   </ul>
                 </div>

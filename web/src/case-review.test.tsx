@@ -91,11 +91,14 @@ describe("review evidence pack", () => {
     ).toBeTruthy();
   });
 
-  it("explains the route from its recorded factors", async () => {
+  it("explains the route without exposing workflow codes", async () => {
     renderReview();
 
     expect(await screen.findByText("Why this route")).toBeTruthy();
-    expect(screen.getAllByText("specialist_signal").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Evidence requires specialist review."),
+    ).toBeTruthy();
+    expect(screen.queryByText("specialist_signal")).toBeNull();
   });
 
   it("blocks a decision until the evidence is acknowledged", async () => {
