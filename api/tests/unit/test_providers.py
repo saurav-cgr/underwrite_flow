@@ -77,6 +77,24 @@ def test_provider_output_requires_valid_evidence() -> None:
         parse_result('{"fields":[{"field_name":"age","value":2}]}', "gemini")
 
 
+# Verify Gemini's valid top-level field array is normalized to the contract.
+def test_provider_output_accepts_field_array() -> None:
+    result = parse_result(
+        [
+            {
+                "field_name": "vehicle_use",
+                "value": "personal",
+                "source_locator": "page:1",
+                "confidence": 1.0,
+            }
+        ],
+        "gemini",
+    )
+
+    assert result.fields[0].field_name == "vehicle_use"
+    assert result.fields[0].extraction_method == "gemini"
+
+
 # Verify the default Gemini adapter fails closed when no credential is configured.
 @pytest.mark.asyncio
 async def test_gemini_provider_requires_configuration() -> None:

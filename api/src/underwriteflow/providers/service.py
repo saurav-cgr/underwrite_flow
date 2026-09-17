@@ -49,9 +49,14 @@ def build_messages(request: ExtractionRequest) -> list[dict[str, str]]:
 
 
 # Validate provider JSON and assign the adapter-owned extraction method.
-def parse_result(payload: str | dict[str, Any], extraction_method: str) -> ExtractionResult:
+def parse_result(
+    payload: str | dict[str, Any] | list[dict[str, Any]],
+    extraction_method: str,
+) -> ExtractionResult:
     try:
         raw = json.loads(payload) if isinstance(payload, str) else payload
+        if isinstance(raw, list):
+            raw = {"fields": raw}
         result = ExtractionResult.model_validate(raw)
     except (TypeError, ValueError, ValidationError) as error:
         raise ProviderError("provider returned invalid structured output") from error
