@@ -1,0 +1,10 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "evidence": "./src/underwriteflow/workflow/dev.py:evidence_graph",
+    "triage": "./src/underwriteflow/workflow/dev.py:triage_graph",
+    "motor": "./src/underwriteflow/workflow/dev.py:motor_graph",
+    "life": "./src/underwriteflow/workflow/dev.py:life_graph",
+    "health": "./src/underwriteflow/workflow/dev.py:health_graph"
+  }
+}

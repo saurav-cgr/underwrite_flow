@@ -89,6 +89,28 @@ services:
       - ./scripts:/app/scripts:ro
       - uploads_data:/data/uploads
 
+  langgraph-dev:
+    build:
+      context: ./api
+    command:
+      - langgraph
+      - dev
+      - --config
+      - /app/langgraph.json
+      - --host
+      - 0.0.0.0
+      - --port
+      - "2024"
+      - --no-browser
+    environment:
+      LANGSMITH_TRACING: "false"
+    profiles: ["langgraph-dev"]
+    ports:
+      - "2024:2024"
+    volumes:
+      - ./api:/app
+      - ./product-config:/app/product-config:ro
+
   web:
     build:
       context: ./web

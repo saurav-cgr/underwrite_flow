@@ -42,6 +42,7 @@ yarn-error.log*
 uploads/
 tmp/
 output/
+.langgraph_api/
 *.log
 *.pid
 
