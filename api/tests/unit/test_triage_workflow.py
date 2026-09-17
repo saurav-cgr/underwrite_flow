@@ -6,6 +6,8 @@ from pydantic import ValidationError
 from types import SimpleNamespace
 from uuid import uuid4
 
+from fixtures.auth import session_for
+
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
 from underwriteflow.cases.submission import SubmissionService
@@ -189,8 +191,8 @@ def test_review_endpoint_requires_review_permission() -> None:
     app = create_app()
 
     # Supply a synthetic applicant identity without opening the database.
-    async def applicant_session() -> dict[str, str]:
-        return {"sub": str(uuid4()), "role": "Applicant"}
+    async def applicant_session() -> dict[str, object]:
+        return session_for("applicant")
 
     app.dependency_overrides[get_current_session] = applicant_session
     response = TestClient(app).post(

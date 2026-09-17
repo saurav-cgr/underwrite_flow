@@ -24,7 +24,13 @@ class Settings(BaseSettings):
     provider_timeout_seconds: float = Field(default=30, gt=0)
     provider_retry_count: int = Field(default=2, ge=0, le=5)
     session_secret: str = "synthetic-local-session-secret"
-    session_ttl_seconds: int = Field(default=900, gt=0, le=86_400)
+    jwt_issuer: str = "underwriteflow"
+    jwt_audience: str = "underwriteflow-web"
+    access_token_ttl_seconds: int = Field(default=900, gt=0, le=86_400)
+    refresh_token_ttl_seconds: int = Field(
+        default=28_800, gt=0, le=2_592_000
+    )
+    refresh_token_pepper: str = "synthetic-local-refresh-pepper"
     upload_root: str = "/data/uploads"
     cors_origins: tuple[str, ...] = (
         "http://localhost:5173",

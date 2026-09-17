@@ -1,61 +1,140 @@
-"""Role and ownership dependencies for protected API routes."""
+"""Scope and ownership dependencies for protected API routes.
 
+Authorization is never taken from the token alone. Every protected request
+re-verifies the access token, reloads the active user, and resolves the role
+and permission scopes that the database currently grants. A token whose role
+or authorization version no longer matches that state is refused, so a
+permission change takes effect on the next request instead of at expiry.
+"""
+
+from dataclasses import dataclass
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.auth.schemas import Permission, UserRole
-from underwriteflow.auth.service import AuthService
+from underwriteflow.auth.schemas import (
+    LEGACY_ROLE_VALUES,
+    Permission,
+    UserRole,
+)
+from underwriteflow.auth.service import AuthService, authorization_version
 from underwriteflow.database import get_session
-from underwriteflow.persistence.models import User
+from underwriteflow.persistence.models import Permission as PermissionRecord
+from underwriteflow.persistence.models import (
+    Role,
+    RolePermission,
+    User,
+    UserRoleMapping,
+)
 
 
-ROLE_PERMISSIONS: dict[UserRole, frozenset[Permission]] = {
-    UserRole.APPLICANT: frozenset({Permission.CASE_READ, Permission.CASE_WRITE}),
-    UserRole.UNDERWRITER: frozenset(
-        {Permission.CASE_READ, Permission.REVIEW_READ, Permission.REVIEW_WRITE}
-    ),
-    UserRole.ADMINISTRATOR: frozenset(Permission),
-}
+@dataclass(frozen=True)
+class ResolvedAuthorization:
+    """The current database authorization behind one authenticated user."""
+
+    role_id: UUID
+    role_code: str
+    permissions: tuple[str, ...]
+
+    # Derive the version a matching access token must already carry.
+    @property
+    def version(self) -> str:
+        return authorization_version(self.role_code, self.permissions)
 
 
-# Read and validate the configured bearer session.
+# Resolve one user's active role and its current permission scopes.
+async def load_authorization(
+    session: AsyncSession, user_id: UUID
+) -> ResolvedAuthorization | None:
+    rows = (
+        await session.execute(
+            select(Role.id, Role.code, PermissionRecord.code)
+            .join(UserRoleMapping, UserRoleMapping.role_id == Role.id)
+            .outerjoin(RolePermission, RolePermission.role_id == Role.id)
+            .outerjoin(
+                PermissionRecord,
+                PermissionRecord.id == RolePermission.permission_id,
+            )
+            .where(
+                UserRoleMapping.user_id == user_id,
+                Role.is_active.is_(True),
+            )
+        )
+    ).all()
+    if not rows:
+        return None
+    scopes = tuple(sorted({row[2] for row in rows if row[2] is not None}))
+    return ResolvedAuthorization(rows[0][0], rows[0][1], scopes)
+
+
+# Read the bearer credential from one Authorization header.
+def bearer_token(authorization: str | None) -> str:
+    try:
+        scheme, token = (authorization or "").split(" ", 1)
+        if scheme.lower() != "bearer" or not token:
+            raise ValueError("invalid scheme")
+        return token
+    except (AttributeError, ValueError) as error:
+        raise HTTPException(
+            status_code=401, detail="Invalid session"
+        ) from error
+
+
+# Verify the bearer token and re-resolve its current authorization.
 async def get_current_session(
     request: Request,
     authorization: str | None = Header(default=None),
     session: AsyncSession = Depends(get_session),
-) -> dict[str, str]:
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Invalid session")
+) -> dict[str, object]:
+    settings = request.app.state.settings
+    service = AuthService(
+        settings.session_secret,
+        issuer=settings.jwt_issuer,
+        audience=settings.jwt_audience,
+        refresh_pepper=settings.refresh_token_pepper,
+    )
     try:
-        scheme, token = authorization.split(" ", 1)
-        if scheme.lower() != "bearer":
-            raise ValueError("invalid scheme")
-        signed_session = AuthService(request.app.state.settings.session_secret).read_session(token)
-    except (ValueError, TypeError, AttributeError):
+        claims = service.read_access_token(bearer_token(authorization))
+    except ValueError:
         raise HTTPException(status_code=401, detail="Invalid session") from None
     user = await session.scalar(
-        select(User).where(User.id == UUID(signed_session["sub"]), User.is_active.is_(True))
+        select(User).where(
+            User.id == claims.sub, User.is_active.is_(True)
+        )
     )
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid session")
-    try:
-        role = UserRole(user.role).value
-    except ValueError:
-        raise HTTPException(status_code=403, detail="Forbidden") from None
-    return {"sub": str(user.id), "role": role}
+    resolved = await load_authorization(session, user.id)
+    if resolved is None:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if (
+        resolved.role_code != claims.role
+        or resolved.version != claims.authz_version
+    ):
+        # The snapshot in the token is stale, so a new token is required.
+        raise HTTPException(
+            status_code=401, detail="Stale authorization"
+        ) from None
+    return {
+        "sub": str(user.id),
+        "role": LEGACY_ROLE_VALUES.get(resolved.role_code, resolved.role_code),
+        "role_code": resolved.role_code,
+        "role_id": str(resolved.role_id),
+        "permissions": list(resolved.permissions),
+        "authz_version": resolved.version,
+    }
 
 
-# Require a signed bearer session with one accepted role.
+# Require a signed bearer session with one accepted legacy role value.
 def require_role(*roles: str):
     accepted_roles = {UserRole(role).value for role in roles}
 
     # Authorize a request from its bearer session.
     def dependency(
-        session: dict[str, str] = Depends(get_current_session),
-    ) -> dict[str, str]:
+        session: dict[str, object] = Depends(get_current_session),
+    ) -> dict[str, object]:
         if session["role"] not in accepted_roles:
             raise HTTPException(status_code=403, detail="Forbidden")
         return session
@@ -63,22 +142,28 @@ def require_role(*roles: str):
     return dependency
 
 
-# Require a role with permission for one protected backend action.
+# Require the resolved database scopes to cover one protected action.
 def require_permission(permission: Permission):
-    # Authorize a session against the explicit permission matrix.
+    # Authorize a session against its resolved scope list.
     def dependency(
-        session: dict[str, str] = Depends(get_current_session),
-    ) -> dict[str, str]:
-        role = UserRole(session["role"])
-        if permission not in ROLE_PERMISSIONS[role]:
+        session: dict[str, object] = Depends(get_current_session),
+    ) -> dict[str, object]:
+        granted = session.get("permissions") or ()
+        if permission.value not in granted:
             raise HTTPException(status_code=403, detail="Forbidden")
         return session
 
     return dependency
 
 
-# Allow applicants to access only their own case while staff can review all cases.
-def authorize_case_access(session: dict[str, str], applicant_user_id: UUID) -> bool:
-    if session["role"] in {UserRole.UNDERWRITER.value, UserRole.ADMINISTRATOR.value}:
+# Let applicants reach only their own case while staff review every case.
+def authorize_case_access(
+    session: dict[str, object], applicant_user_id: UUID
+) -> bool:
+    role = session["role"]
+    if role in {UserRole.UNDERWRITER.value, UserRole.ADMINISTRATOR.value}:
         return True
-    return session["role"] == UserRole.APPLICANT.value and session["sub"] == str(applicant_user_id)
+    return role == UserRole.APPLICANT.value and session["sub"] == str(
+        applicant_user_id
+    )
+

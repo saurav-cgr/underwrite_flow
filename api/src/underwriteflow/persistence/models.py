@@ -47,6 +47,89 @@ class User(IdentifiedRecord, TimestampedRecord, Base):
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
 
+class Role(IdentifiedRecord, TimestampedRecord, Base):
+    """Administrator-configurable named permission set."""
+
+    __tablename__ = "roles"
+
+    code: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500))
+    is_active: Mapped[bool] = mapped_column(
+        default=True, server_default=text("true"), nullable=False
+    )
+    is_system: Mapped[bool] = mapped_column(
+        default=False, server_default=text("false"), nullable=False
+    )
+    created_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id")
+    )
+
+
+class Permission(IdentifiedRecord, TimestampedRecord, Base):
+    """Stable scope catalogue enforced by backend dependencies."""
+
+    __tablename__ = "permissions"
+
+    code: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500))
+
+
+class RolePermission(TimestampedRecord, Base):
+    """Membership between one role and one permission scope."""
+
+    __tablename__ = "role_permissions"
+
+    role_id: Mapped[UUID] = mapped_column(
+        ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True
+    )
+    permission_id: Mapped[UUID] = mapped_column(
+        ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True
+    )
+    assigned_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id")
+    )
+
+
+class UserRoleMapping(TimestampedRecord, Base):
+    """Assign exactly one configured role to one user in this MVP."""
+
+    __tablename__ = "user_role_mappings"
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    role_id: Mapped[UUID] = mapped_column(
+        ForeignKey("roles.id", ondelete="CASCADE"), nullable=False
+    )
+    assigned_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id")
+    )
+
+
+class RefreshSession(IdentifiedRecord, TimestampedRecord, Base):
+    """Rotatable refresh credential retained only as a keyed digest."""
+
+    __tablename__ = "refresh_sessions"
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    token_digest: Mapped[str] = mapped_column(
+        String(128), unique=True, nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    replaced_by_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("refresh_sessions.id")
+    )
+
+
 class Product(IdentifiedRecord, TimestampedRecord, Base):
     """Supported fictional insurance product."""
 

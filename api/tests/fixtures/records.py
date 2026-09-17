@@ -91,6 +91,63 @@ def synthetic_user(
         remove_user(user_id)
 
 
+# Attach one seeded role to a synthetic user, replacing any existing mapping.
+def assign_role(user_id: UUID, role_code: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO user_role_mappings (user_id, role_id) "
+                "SELECT %s, roles.id FROM roles WHERE roles.code = %s "
+                "ON CONFLICT (user_id) DO UPDATE SET role_id = "
+                "EXCLUDED.role_id",
+                (user_id, role_code),
+            )
+
+
+# Read the permission scopes one configured role currently grants.
+def role_scopes(role_code: str) -> tuple[str, ...]:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT permissions.code FROM role_permissions "
+                "JOIN permissions ON permissions.id = "
+                "role_permissions.permission_id "
+                "JOIN roles ON roles.id = role_permissions.role_id "
+                "WHERE roles.code = %s ORDER BY permissions.code",
+                (role_code,),
+            )
+            return tuple(row[0] for row in cursor.fetchall())
+
+
+# Create one synthetic non-system role for a test and always delete it.
+@contextmanager
+def synthetic_role(
+    code: str, scopes: Sequence[str], is_active: bool = True
+) -> Iterator[str]:
+    role_id = uuid4()
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO roles (id, code, title, is_active, is_system) "
+                "VALUES (%s, %s, %s, %s, false)",
+                (role_id, code, f"Synthetic {code}", is_active),
+            )
+            for scope in scopes:
+                cursor.execute(
+                    "INSERT INTO role_permissions (role_id, permission_id) "
+                    "SELECT %s, permissions.id FROM permissions "
+                    "WHERE permissions.code = %s",
+                    (role_id, scope),
+                )
+    try:
+        yield code
+    finally:
+        # Deleting the role cascades its mappings and permission pairs.
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM roles WHERE id = %s", (role_id,))
+
+
 # Read the current status of the built-in synthetic motor product.
 def motor_status() -> str:
     with psycopg.connect(DATABASE_URL) as connection:

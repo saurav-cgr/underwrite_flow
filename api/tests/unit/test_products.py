@@ -3,6 +3,8 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
+from fixtures.auth import session_for
+
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
 from underwriteflow.persistence.models import AuditEvent, Product, ProductVersion
@@ -193,8 +195,8 @@ def test_product_validation_is_administrator_only() -> None:
     app = create_app()
 
     # Supply a synthetic applicant identity to the authorization dependency.
-    def applicant_session() -> dict[str, str]:
-        return {"sub": str(uuid4()), "role": "Applicant"}
+    def applicant_session() -> dict[str, object]:
+        return session_for("applicant")
 
     app.dependency_overrides[get_current_session] = applicant_session
     response = TestClient(app).post(
@@ -210,8 +212,8 @@ def test_administrator_can_validate_product() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    def administrator_session() -> dict[str, str]:
-        return {"sub": str(uuid4()), "role": "Administrator"}
+    def administrator_session() -> dict[str, object]:
+        return session_for("administrator")
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post(

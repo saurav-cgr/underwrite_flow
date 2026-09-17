@@ -43,9 +43,9 @@ authentication. Obtain provider-change approval before T035.
 
 **Critical**: Requires explicit schema and authentication approval first.
 
-- [ ] T003 Add failing RBAC migration and constraint tests in
+- [X] T003 Add failing RBAC migration and constraint tests in
   `api/tests/integration/test_dynamic_rbac_migration.py`
-- [ ] T004 Extend RBAC and refresh-session models without removing legacy
+- [X] T004 Extend RBAC and refresh-session models without removing legacy
   fields in `api/src/underwriteflow/persistence/models.py`
   - Preserve `users.role`; backfill exactly one mapping for each known role.
   - `roles.code` is unique and stable; `title` is 1-200 characters;
@@ -54,19 +54,19 @@ authentication. Obtain provider-change approval before T035.
   - `user_role_mappings.user_id` is unique: one role per user in this MVP.
   - Refresh digests are unique; expiry is required; revocation and replacement
     links are nullable; raw credentials are never stored.
-- [ ] T005 Add revision 07 for roles, permissions, role-permission mappings,
+- [X] T005 Add revision 07 for roles, permissions, role-permission mappings,
   user-role mappings, refresh sessions, seeds, and backfill in
   `api/alembic/versions/07_dynamic_rbac.py`
-- [ ] T006 [P] Add failing strict-JWT, refresh rotation, replay, issuer,
+- [X] T006 [P] Add failing strict-JWT, refresh rotation, replay, issuer,
   audience, expiry, and tamper tests in `api/tests/unit/test_auth.py`
-- [ ] T007 Extend access JWT and refresh credential contracts in
+- [X] T007 Extend access JWT and refresh credential contracts in
   `api/src/underwriteflow/auth/schemas.py` and
   `api/src/underwriteflow/auth/service.py`
-- [ ] T008 Add failing current-user, stale-claim, disabled-user, ownership, and
+- [X] T008 Add failing current-user, stale-claim, disabled-user, ownership, and
   scope tests in `api/tests/integration/test_dynamic_authorization.py`
-- [ ] T009 Replace static role authorization with database scope resolution in
+- [X] T009 Replace static role authorization with database scope resolution in
   `api/src/underwriteflow/auth/dependencies.py`
-- [ ] T010 Add JWT issuer, audience, access TTL, refresh TTL, and refresh
+- [X] T010 Add JWT issuer, audience, access TTL, refresh TTL, and refresh
   pepper settings in `api/src/underwriteflow/config.py`, `.env.example`, and
   `compose.yaml` without logging their values
 
