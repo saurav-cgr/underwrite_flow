@@ -72,6 +72,21 @@ def field_is_visible(field: ProductField, payload: Mapping[str, Any]) -> bool:
     )
 
 
+# List the fields whose values an application must evidence.
+#
+# Only visible fields the applicant answered are requested: an optional field
+# nobody filled in is unanswered by choice, so its absence is not missing
+# information.
+def requested_field_keys(
+    configuration: ProductConfiguration, payload: Mapping[str, Any]
+) -> list[str]:
+    return [
+        field.key
+        for field in configuration.fields
+        if field.key in payload and field_is_visible(field, payload)
+    ]
+
+
 # Return the required document codes that are not yet attached to the case.
 def missing_document_codes(
     configuration: ProductConfiguration,

@@ -115,10 +115,10 @@ async def list_catalog(
 def parse_configuration(payload: YamlPayload):
     try:
         return load_configuration(payload.yaml_text)
-    except ProductConfigurationError:
+    except ProductConfigurationError as error:
         raise HTTPException(
             status_code=422,
-            detail="Invalid product configuration",
+            detail=f"Invalid product configuration: {error}",
         ) from None
 
 
@@ -127,7 +127,7 @@ def parse_configuration(payload: YamlPayload):
 async def validate_configuration(
     payload: YamlPayload,
     _: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
 ) -> dict[str, str]:
     configuration = parse_configuration(payload)
@@ -142,7 +142,7 @@ async def validate_configuration(
 async def preview_configuration(
     payload: YamlPayload,
     _: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
 ) -> dict:
     return ProductService().preview(parse_configuration(payload))
@@ -153,7 +153,7 @@ async def preview_configuration(
 async def import_configuration(
     payload: YamlPayload,
     admin: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
@@ -207,7 +207,7 @@ async def activate_configuration(
     product_code: str,
     payload: VersionPayload,
     admin: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
@@ -235,7 +235,7 @@ async def retire_configuration(
     product_code: str,
     payload: VersionPayload,
     admin: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
@@ -263,7 +263,7 @@ async def upload_reference_document(
     reference: UploadFile = File(...),
     version: str = Form(..., max_length=100),
     admin: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, object]:
@@ -304,7 +304,7 @@ async def delete_reference_document(
     reference_id: UUID,
     request: Request,
     admin: dict[str, str] = Depends(
-        require_permission(Permission.PRODUCT_CONFIG_WRITE)
+        require_permission(Permission.SCHEMAS_EDIT)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> Response:

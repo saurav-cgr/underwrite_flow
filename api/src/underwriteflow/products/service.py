@@ -38,13 +38,57 @@ class ProductConflictError(ProductConfigurationError):
     """Raised when a concurrent activation change loses its race."""
 
 
-# Parse and validate one YAML document against the product contract.
-def load_configuration(yaml_text: str) -> ProductConfiguration:
+# Report whether one configuration document begins as a JSON object or array.
+def looks_like_json(text: str) -> bool:
+    return text.lstrip().startswith(("{", "["))
+
+
+# Summarize one validation failure without echoing submitted configuration.
+def validation_reason(error: Exception) -> str:
+    if isinstance(error, ValidationError):
+        issues = error.errors()
+        if issues:
+            issue = issues[0]
+            location = ".".join(
+                str(part) for part in issue.get("loc", ())
+            ) or "configuration"
+            message = str(issue.get("msg", "")).removeprefix(
+                "Value error, "
+            )
+            return f"{location}: {message}"[:200]
+    return "the document is not valid JSON or YAML"
+
+
+# Re-read one persisted configuration so activation re-validates references.
+def configuration_from_payload(
+    payload: dict[str, Any],
+) -> ProductConfiguration | None:
     try:
-        raw = yaml.safe_load(yaml_text)
+        return ProductConfiguration.model_validate(payload)
+    except ValidationError:
+        return None
+
+
+# Parse and validate one configuration document submitted as YAML or JSON.
+#
+# JSON is parsed on its own so a JSON syntax error reports as one, and the
+# accepted formats stay explicit rather than relying on YAML happening to be a
+# JSON superset.
+def load_configuration(text: str) -> ProductConfiguration:
+    try:
+        raw = (
+            json.loads(text)
+            if looks_like_json(text)
+            else yaml.safe_load(text)
+        )
         return ProductConfiguration.model_validate(raw)
-    except (yaml.YAMLError, TypeError, ValidationError) as error:
-        raise ProductConfigurationError("invalid product configuration") from error
+    except (
+        json.JSONDecodeError,
+        yaml.YAMLError,
+        TypeError,
+        ValidationError,
+    ) as error:
+        raise ProductConfigurationError(validation_reason(error)) from error
 
 
 # Produce a stable JSON payload for persistence and hashing.
@@ -80,6 +124,15 @@ class ProductService:
             "field_count": len(configuration.fields),
             "document_count": len(configuration.documents),
             "routing_rule_count": len(configuration.routing_rules),
+            "reconciliation_count": len(configuration.reconciliations),
+            "reconciliations": [
+                {
+                    "code": check.code,
+                    "kind": check.kind,
+                    "inputs": check.inputs,
+                }
+                for check in configuration.reconciliations
+            ],
             "specialist_labels": configuration.specialist_labels,
         }
 
@@ -159,9 +212,18 @@ class ProductService:
         target = await self.repository.find_version(session, code, version)
         if product is None or target is None:
             raise ProductConfigurationError("product version not found")
+        # Re-validate stored content so a version whose references stopped
+        # resolving can never become the active configuration.
+        if configuration_from_payload(target.configuration) is None:
+            raise ProductConfigurationError(
+                "stored configuration references are no longer valid"
+            )
         for sibling in await self.repository.list_product_versions(session, product.id):
             if sibling.id != target.id and sibling.status == "active":
                 sibling.status = "retired"
+        # Flush the retirement first: the one-active-version index must never
+        # see two active siblings inside the same transaction.
+        await session.flush()
         target.status = "active"
         target.activated_at = datetime.now(timezone.utc)
         target.activated_by_user_id = actor_user_id

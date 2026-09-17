@@ -3140,8 +3140,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3179,8 +3178,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3218,8 +3216,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3257,8 +3254,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3296,8 +3292,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3335,8 +3330,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3374,8 +3368,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3413,8 +3406,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3452,8 +3444,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3491,8 +3482,7 @@
         "filename": "identity_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3541,8 +3531,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3591,8 +3580,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3641,8 +3629,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3691,8 +3678,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3741,8 +3727,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3791,8 +3776,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3841,8 +3825,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3891,8 +3874,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3941,8 +3923,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -3991,8 +3972,7 @@
         "filename": "member_relationship_record.pdf",
         "lines": [
           "member_count: 5",
-          "prior_hospitalization: false",
-          "continuity_months: None"
+          "prior_hospitalization: false"
         ]
       }
     ]
@@ -4053,8 +4033,7 @@
         "document_id": "hospitalization_record",
         "filename": "hospitalization_record.pdf",
         "lines": [
-          "member_count: 1",
-          "prior_hospitalization: true"
+          "member_count: 1"
         ]
       }
     ]
@@ -4118,8 +4097,7 @@
         "filename": "hospitalization_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: true",
-          "continuity_months: None"
+          "prior_hospitalization: true"
         ]
       }
     ]
@@ -4179,8 +4157,7 @@
         "filename": "hospitalization_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: true",
-          "continuity_months: None"
+          "prior_hospitalization: true"
         ]
       }
     ]
@@ -4245,8 +4222,7 @@
         "document_id": "hospitalization_record",
         "filename": "hospitalization_record.pdf",
         "lines": [
-          "member_count: 1",
-          "prior_hospitalization: true"
+          "member_count: 1"
         ]
       }
     ]
@@ -4306,8 +4282,7 @@
         "filename": "hospitalization_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: true",
-          "continuity_months: None"
+          "prior_hospitalization: true"
         ]
       }
     ]
@@ -4371,8 +4346,7 @@
         "filename": "hospitalization_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: true",
-          "continuity_months: None"
+          "prior_hospitalization: true"
         ]
       }
     ]
@@ -4433,8 +4407,7 @@
         "document_id": "hospitalization_record",
         "filename": "hospitalization_record.pdf",
         "lines": [
-          "member_count: 1",
-          "prior_hospitalization: true"
+          "member_count: 1"
         ]
       }
     ]
@@ -4498,8 +4471,7 @@
         "filename": "hospitalization_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: true",
-          "continuity_months: None"
+          "prior_hospitalization: true"
         ]
       }
     ]
@@ -4559,8 +4531,7 @@
         "filename": "hospitalization_record.pdf",
         "lines": [
           "member_count: 1",
-          "prior_hospitalization: true",
-          "continuity_months: None"
+          "prior_hospitalization: true"
         ]
       }
     ]
@@ -4625,8 +4596,7 @@
         "document_id": "hospitalization_record",
         "filename": "hospitalization_record.pdf",
         "lines": [
-          "member_count: 1",
-          "prior_hospitalization: true"
+          "member_count: 1"
         ]
       }
     ]

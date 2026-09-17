@@ -117,6 +117,17 @@ export interface ProductVersionHistoryItem {
   activated_at: string | null;
 }
 
+export type ReconciliationKind =
+  | "ncb_match"
+  | "asset_match"
+  | "policy_lapse";
+
+export interface ReconciliationDefinition {
+  code: string;
+  kind: ReconciliationKind;
+  inputs: Record<string, string>;
+}
+
 export interface ProductConfigurationPreview {
   product_code: string;
   version: string;
@@ -124,6 +135,8 @@ export interface ProductConfigurationPreview {
   field_count: number;
   document_count: number;
   routing_rule_count: number;
+  reconciliation_count: number;
+  reconciliations: ReconciliationDefinition[];
   specialist_labels: string[];
 }
 

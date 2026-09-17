@@ -16,10 +16,14 @@ from underwriteflow.document_types import SUPPORTED_CONTENT_TYPES
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
 Route = Literal["manual", "needs_information", "specialist", "standard", "expedited"]
+ReconciliationKind = Literal["ncb_match", "asset_match", "policy_lapse"]
 
 SUPPORTED_OPERATORS = frozenset({"equals", "greater_than"})
 COMPARABLE_OPERATORS = frozenset({"greater_than"})
 FIELD_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+
+# Source key for values the applicant claimed rather than evidence supplied.
+APPLICATION_SOURCE = "application"
 
 
 # Return the effective operator for a configured condition.
@@ -118,6 +122,21 @@ class RoutingRule(BaseModel):
     specialist_label: str | None = None
 
 
+class ReconciliationCheck(BaseModel):
+    """One configured pure reconciliation check.
+
+    Configuration supplies only the check code, the fixed implementation kind,
+    and the source-to-field mapping. The comparison itself stays in code, so a
+    configuration can never introduce executable behaviour.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(min_length=1, max_length=100)
+    kind: ReconciliationKind
+    inputs: dict[str, str] = Field(min_length=1)
+
+
 class ProductConfiguration(BaseModel):
     """Complete versioned product and rulebook configuration."""
 
@@ -133,6 +152,7 @@ class ProductConfiguration(BaseModel):
     fields: list[ProductField] = Field(min_length=1)
     documents: list[ProductDocument] = Field(min_length=1)
     routing_rules: list[RoutingRule] = Field(min_length=1)
+    reconciliations: list[ReconciliationCheck] = Field(default_factory=list)
     specialist_labels: list[str] = Field(min_length=1)
 
     # Ensure identifiers and specialist references are unambiguous.
@@ -164,7 +184,45 @@ class ProductConfiguration(BaseModel):
                 )
         for rule in self.routing_rules:
             validate_condition(rule.condition, keys, f"rule {rule.code}")
+        self.validate_reconciliations(keys, set(document_codes))
         return self
+
+    # Ensure each reconciliation check names real sources and declared fields.
+    def validate_reconciliations(
+        self, field_keys: set[str], document_codes: set[str]
+    ) -> None:
+        check_codes = [check.code for check in self.reconciliations]
+        if len(check_codes) != len(set(check_codes)):
+            raise ValueError("reconciliation codes must be unique")
+        # A comparison needs two sides. A check therefore reads the
+        # applicant's claim plus a document, or two documents, so every source
+        # key must be `application` or a declared document code.
+        allowed_sources = document_codes | {APPLICATION_SOURCE}
+        for check in self.reconciliations:
+            where = f"reconciliation {check.code}"
+            if not FIELD_NAME_PATTERN.match(check.code):
+                raise ValueError(f"{where}: malformed code")
+            unknown = sorted(set(check.inputs) - allowed_sources)
+            if unknown:
+                raise ValueError(f"{where}: unknown input sources {unknown}")
+            if not set(check.inputs) - {APPLICATION_SOURCE}:
+                raise ValueError(
+                    f"{where}: at least one document source is required"
+                )
+            if len(check.inputs) < 2:
+                raise ValueError(
+                    f"{where}: two comparison sources are required"
+                )
+            for source, field_name in check.inputs.items():
+                if not FIELD_NAME_PATTERN.match(field_name):
+                    raise ValueError(
+                        f"{where}: malformed field name for {source}"
+                    )
+            claimed = check.inputs.get(APPLICATION_SOURCE)
+            if claimed is not None and claimed not in field_keys:
+                raise ValueError(
+                    f"{where}: application field {claimed!r} is not declared"
+                )
 
 
 class YamlPayload(BaseModel):

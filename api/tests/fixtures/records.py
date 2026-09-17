@@ -193,13 +193,17 @@ def motor_status() -> str:
 
 
 # Set the built-in synthetic motor product active or back to draft.
-def set_motor_status(status: str) -> None:
+#
+# Only the named version changes: later built-in versions exist as drafts, and
+# the one-active-version rule allows a single active sibling per product.
+def set_motor_status(status: str, version: str = "v1") -> None:
     with psycopg.connect(DATABASE_URL) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 "UPDATE product_versions SET status = %s WHERE product_id "
-                "= (SELECT id FROM products WHERE code = %s)",
-                (status, "motor-private-car"),
+                "= (SELECT id FROM products WHERE code = %s) "
+                "AND version = %s",
+                (status, "motor-private-car", version),
             )
             cursor.execute(
                 "UPDATE products SET status = %s WHERE code = %s",

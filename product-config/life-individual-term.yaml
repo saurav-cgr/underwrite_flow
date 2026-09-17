@@ -3,7 +3,7 @@ title: Fictional Individual Term Life
 family: life
 scope: Fictional India-focused demonstration only
 description: Demonstration triage configuration for individual term life.
-version: v1
+version: v2
 status: draft
 fields:
   - key: requested_cover
@@ -23,6 +23,11 @@ fields:
     type: boolean
     required: true
     help_text: Confirm the fictional health declaration is complete.
+  - key: cover_start_date
+    label: Cover start date
+    type: date
+    required: false
+    help_text: Enter the fictional cover start date.
 documents:
   - code: identity_record
     title: Synthetic identity record
@@ -38,6 +43,10 @@ documents:
     requirement: conditional
     condition: {field: health_declaration, operator: equals, value: false}
     accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: previous_policy
+    title: Synthetic previous policy
+    requirement: optional
+    accepted_types: [application/pdf, image/jpeg, image/png]
 routing_rules:
   - code: hazardous_occupation_specialist
     condition: {field: occupation_type, operator: equals, value: hazardous}
@@ -46,4 +55,16 @@ routing_rules:
   - code: high_cover_standard
     condition: {field: requested_cover, operator: greater_than, value: 10000000}
     route: standard
+# Fictional checks only. Every comparison stays in backend code.
+reconciliations:
+  - code: life_identity_match
+    kind: asset_match
+    inputs:
+      identity_record: holder_name
+      income_record: holder_name
+  - code: life_renewal_lapse
+    kind: policy_lapse
+    inputs:
+      application: cover_start_date
+      previous_policy: policy_expiry_date
 specialist_labels: [life review]

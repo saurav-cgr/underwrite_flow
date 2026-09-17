@@ -11,7 +11,11 @@ from underwriteflow.cases.evidence_persistence import (
     clear_previous_evidence,
     persist_case_evidence,
 )
-from underwriteflow.cases.service import CaseValidationError, missing_document_codes
+from underwriteflow.cases.service import (
+    CaseValidationError,
+    missing_document_codes,
+    requested_field_keys,
+)
 from underwriteflow.persistence.models import (
     Case,
     Document,
@@ -344,7 +348,7 @@ class SubmissionService:
             )
         if clear_evidence:
             await clear_previous_evidence(session, case)
-        requested_fields = [field.key for field in configuration.fields]
+        requested_fields = requested_field_keys(configuration, payload)
         document_inputs, extraction_failures = self.extract_documents(documents)
         product_result = await build_product_subgraph(configuration).ainvoke(
             {

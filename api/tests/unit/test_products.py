@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from uuid import uuid4
 from fastapi.testclient import TestClient
@@ -84,6 +86,42 @@ class FakeRepository:
         return [self.active, self.target]
 
 
+# Build one small fictional configuration in YAML for lifecycle tests.
+def simple_configuration(version: str = "v1") -> str:
+    return f"""
+product_code: synthetic-motor
+title: Synthetic Motor
+family: motor
+scope: Fictional demonstration only
+description: Synthetic product configuration
+version: {version}
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Enter a fictional vehicle age.
+documents:
+  - code: synthetic_identity
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf]
+routing_rules:
+  - code: synthetic_specialist
+    condition: {{field: vehicle_age, operator: greater_than, value: 12}}
+    route: specialist
+    specialist_label: motor inspection
+specialist_labels: [motor inspection]
+"""
+
+
+# Build the stored configuration payload an activation test needs.
+def stored_configuration(version: str = "v1") -> dict:
+    return load_configuration(simple_configuration(version)).model_dump(
+        mode="json"
+    )
+
+
 # Verify a structured fictional YAML product loads into a typed configuration.
 def test_load_configuration_preserves_version_identity() -> None:
     configuration = load_configuration(
@@ -134,10 +172,20 @@ async def test_activation_replaces_active_version() -> None:
         id=product_id, code="synthetic-motor", title="Synthetic Motor", family="motor", status="active"
     )
     active = ProductVersion(
-        id=uuid4(), product_id=product_id, version="v1", configuration={}, content_hash="one", status="active"
+        id=uuid4(),
+        product_id=product_id,
+        version="v1",
+        configuration=stored_configuration("v1"),
+        content_hash="one",
+        status="active",
     )
     target = ProductVersion(
-        id=uuid4(), product_id=product_id, version="v2", configuration={}, content_hash="two", status="draft"
+        id=uuid4(),
+        product_id=product_id,
+        version="v2",
+        configuration=stored_configuration("v2"),
+        content_hash="two",
+        status="draft",
     )
     session = FakeSession()
     repository = FakeRepository(product, target, active)
@@ -170,7 +218,7 @@ async def test_activation_reports_a_lost_concurrent_race() -> None:
         id=uuid4(),
         product_id=product_id,
         version="v1",
-        configuration={},
+        configuration=stored_configuration("v1"),
         content_hash="one",
         status="active",
     )
@@ -178,7 +226,7 @@ async def test_activation_reports_a_lost_concurrent_race() -> None:
         id=uuid4(),
         product_id=product_id,
         version="v2",
-        configuration={},
+        configuration=stored_configuration("v2"),
         content_hash="two",
         status="draft",
     )
@@ -188,6 +236,42 @@ async def test_activation_reports_a_lost_concurrent_race() -> None:
         await service.activate(
             ConflictSession(), "synthetic-motor", "v2", uuid4()
         )
+
+
+# Verify activation refuses a version whose stored references no longer hold.
+@pytest.mark.asyncio
+async def test_activation_refuses_stale_stored_references() -> None:
+    product_id = uuid4()
+    product = Product(
+        id=product_id,
+        code="synthetic-motor",
+        title="Synthetic Motor",
+        family="motor",
+        status="active",
+    )
+    active = ProductVersion(
+        id=uuid4(),
+        product_id=product_id,
+        version="v1",
+        configuration=stored_configuration("v1"),
+        content_hash="one",
+        status="active",
+    )
+    target = ProductVersion(
+        id=uuid4(),
+        product_id=product_id,
+        version="v2",
+        configuration={"product_code": "synthetic-motor"},
+        content_hash="two",
+        status="draft",
+    )
+    service = ProductService(repository=FakeRepository(product, target, active))
+
+    with pytest.raises(ProductConfigurationError, match="no longer valid"):
+        await service.activate(FakeSession(), "synthetic-motor", "v2", uuid4())
+
+    assert target.status == "draft"
+    assert active.status == "active"
 
 
 # Verify only administrators can validate product configuration.
@@ -268,3 +352,21 @@ routing_rules:
 specialist_labels: [synthetic review]
 """
         )
+
+
+# Verify a configuration submitted as JSON is accepted through the same path.
+def test_json_configuration_is_accepted() -> None:
+    payload = load_configuration(simple_configuration()).model_dump(mode="json")
+
+    configuration = load_configuration(json.dumps(payload))
+
+    assert configuration.product_code == "synthetic-motor"
+    assert configuration.version == "v1"
+
+
+# Verify malformed JSON is refused as an invalid configuration.
+def test_malformed_json_is_refused() -> None:
+    with pytest.raises(ProductConfigurationError) as refused:
+        load_configuration('{"product_code": "synthetic-motor",}')
+
+    assert "not valid JSON or YAML" in str(refused.value)

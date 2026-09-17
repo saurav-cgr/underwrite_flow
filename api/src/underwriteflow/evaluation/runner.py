@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from underwriteflow.cases.service import requested_field_keys
 from underwriteflow.evaluation.dataset import load_dataset
 from underwriteflow.evaluation.metrics import evaluate_records
 from underwriteflow.evaluation.tracing import trace_summary
@@ -28,13 +29,18 @@ def product_config_root() -> Path:
     return Path(__file__).resolve().parents[4] / "product-config"
 
 
-# Load the fictional configurations used by deterministic product subgraphs.
+# Load the earliest published fictional version of each product.
+#
+# The reference dataset was labelled against the first published version, so a
+# later draft file on disk must not change its deterministic outcome.
 def load_configurations() -> dict[str, Any]:
-    return {
-        configuration.product_code: configuration
-        for path in product_config_root().glob("*.yaml")
-        if (configuration := load_configuration(path.read_text()))
-    }
+    configurations: dict[str, Any] = {}
+    for path in sorted(product_config_root().glob("*.yaml")):
+        configuration = load_configuration(path.read_text())
+        current = configurations.get(configuration.product_code)
+        if current is None or configuration.version < current.version:
+            configurations[configuration.product_code] = configuration
+    return configurations
 
 
 # Read the documents a reference case supplies as evidence input.
@@ -60,7 +66,9 @@ async def run_record(
         {
             "case_id": record["case_id"],
             "documents": document_inputs(record),
-            "requested_fields": [field.key for field in configuration.fields],
+            "requested_fields": requested_field_keys(
+                configuration, record["workflow_input"]["payload"]
+            ),
             "reference_content": "",
             "results": [],
         }

@@ -132,32 +132,32 @@ its original product and rulebook versions.
 
 ### Tests for User Story 2
 
-- [ ] T023 [P] [US2] Add failing reconciliation-schema and reference tests in
+- [X] T023 [P] [US2] Add failing reconciliation-schema and reference tests in
   `api/tests/unit/test_products.py`
-- [ ] T024 [P] [US2] Add failing YAML/JSON import, concurrent activation,
+- [X] T024 [P] [US2] Add failing YAML/JSON import, concurrent activation,
   history, and pinning tests in `api/tests/integration/test_product_import.py`
-- [ ] T025 [P] [US2] Add failing configuration preview/editor tests in
+- [X] T025 [P] [US2] Add failing configuration preview/editor tests in
   `web/src/product-configuration.test.tsx` and
   `web/src/product-import.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Add typed reconciliation definitions to
+- [X] T026 [US2] Add typed reconciliation definitions to
   `api/src/underwriteflow/products/schemas.py`
   - Check codes are unique per product version.
   - Kinds are `ncb_match`, `asset_match`, or `policy_lapse`.
   - Input keys reference declared fields and document codes.
   - Activation rejects missing or incompatible references.
-- [ ] T027 [US2] Accept validated YAML or JSON through the existing lifecycle
+- [X] T027 [US2] Accept validated YAML or JSON through the existing lifecycle
   in `api/src/underwriteflow/products/service.py`
-- [ ] T028 [US2] Enforce `schemas:edit`, audited activation, one active product
+- [X] T028 [US2] Enforce `schemas:edit`, audited activation, one active product
   version, and exact case pinning in `api/src/underwriteflow/products/router.py`
   and `api/src/underwriteflow/cases/service.py`
-- [ ] T029 [US2] Add fictional NCB, age, renewal, document, and reconciliation
+- [X] T029 [US2] Add fictional NCB, age, renewal, document, and reconciliation
   settings to `product-config/motor-private-car.yaml`,
   `product-config/life-individual-term.yaml`, and
   `product-config/health-individual-family-floater.yaml`
-- [ ] T030 [US2] Show reconciliation definitions and validation errors in
+- [X] T030 [US2] Show reconciliation definitions and validation errors in
   `web/src/product-configuration.tsx` and `web/src/product-import.tsx`
 
 **Checkpoint**: US2 independently validates and pins configuration; no real

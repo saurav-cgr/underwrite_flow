@@ -27,13 +27,18 @@ EVALUATION_DIR = Path(__file__).resolve().parent
 PRODUCT_CONFIG_DIR = EVALUATION_DIR.parent / "product-config"
 
 
-# Read the requested field keys for each fictional product configuration.
+# Read the required field keys for each fictional product configuration.
+#
+# Optional fields are excluded: the applicant either answered them or left them
+# unanswered, and the pipeline only expects evidence for what was answered.
 def product_fields() -> dict[str, list[str]]:
     fields: dict[str, list[str]] = {}
     for path in sorted(PRODUCT_CONFIG_DIR.glob("*.yaml")):
         configuration = yaml.safe_load(path.read_text())
         fields[configuration["product_code"]] = [
-            field["key"] for field in configuration["fields"]
+            field["key"]
+            for field in configuration["fields"]
+            if field.get("required", True)
         ]
     return fields
 
@@ -69,9 +74,9 @@ def build_documents(
         lines: list[str] = []
         if code == primary_code:
             lines = [
-                f"{key}: {render(payload.get(key))}"
+                f"{key}: {render(payload[key])}"
                 for key in fields
-                if key != absent_field
+                if key in payload and key != absent_field
             ]
         elif code == conflict_code and conflict_field is not None:
             lines = [
