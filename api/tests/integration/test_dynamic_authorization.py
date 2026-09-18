@@ -7,11 +7,15 @@ database must be refused even though its signature is valid.
 
 from uuid import uuid4
 
+import psycopg
 from fastapi.testclient import TestClient
 from fixtures.auth import app_service
 from fixtures.records import (
+    DATABASE_URL,
     assign_role,
+    remove_case,
     role_scopes,
+    seed_case,
     synthetic_role,
     synthetic_user,
 )
@@ -19,6 +23,25 @@ from fixtures.records import (
 from underwriteflow.app import create_app
 
 UNDERWRITER = ("underwriter@synthetic.test", "underwriteflow-demo-underwriter")
+
+
+# Read one denial by its opaque request identifier.
+def authorization_denial(response) -> tuple[str | None, str | None, dict]:
+    request_id = response.headers["X-Request-ID"]
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT actor_user_id, case_id, details FROM audit_events "
+                "WHERE event_type = %s AND details->>'request_id' = %s",
+                ("authorization_denied", request_id),
+            )
+            row = cursor.fetchone()
+    assert row is not None
+    return (
+        str(row[0]) if row[0] else None,
+        str(row[1]) if row[1] else None,
+        row[2],
+    )
 
 
 # Read one token's current identity and resolved authorization.
@@ -57,8 +80,11 @@ def test_stale_role_claim_is_rejected() -> None:
         )
         with TestClient(create_app()) as client:
             response = read_me(client, token)
+            actor, _, denial = authorization_denial(response)
 
     assert response.status_code == 401
+    assert actor == str(user_id)
+    assert denial["reason"] == "stale_authorization"
 
 
 # Verify a token claiming scopes the role does not grant is refused.
@@ -147,16 +173,16 @@ def test_scope_denial_follows_configured_role_scopes() -> None:
             with TestClient(create_app()) as client:
                 me = read_me(client, token)
                 allowed = client.get("/api/v1/cases", headers=headers)
-                denied = client.post(
-                    f"/api/v1/reviews/{uuid4()}",
-                    json={"action": "confirm"},
-                    headers=headers,
-                )
+                denied = client.get("/api/v1/queues", headers=headers)
+                actor, _, denial = authorization_denial(denied)
 
     assert me.status_code == 200, me.text
     assert me.json()["permissions"] == ["cases:read"]
     assert allowed.status_code == 200, allowed.text
     assert denied.status_code == 403
+    assert actor == str(user_id)
+    assert denial["reason"] == "missing_scope"
+    assert denial["required_permission"] == "reviews:read"
 
 
 # Verify a missing or malformed credential never reaches authorization.
@@ -171,7 +197,60 @@ def test_missing_and_malformed_credentials_are_rejected() -> None:
             "/api/v1/auth/me",
             headers={"Authorization": f"Basic {uuid4()}"},
         )
+        denials = [
+            authorization_denial(response)[2]
+            for response in (missing, malformed, wrong_scheme)
+        ]
 
     assert missing.status_code == 401
     assert malformed.status_code == 401
     assert wrong_scheme.status_code == 401
+    assert {item["reason"] for item in denials} == {"invalid_session"}
+    assert all("token" not in str(item).casefold() for item in denials)
+
+
+# Verify applicants are audited when they request another applicant's case.
+def test_case_ownership_denial_is_audited() -> None:
+    case_id = uuid4()
+    seed_case(case_id)
+    service = app_service()
+    try:
+        with synthetic_user() as user_id:
+            assign_role(user_id, "applicant")
+            token = service.issue_access_token(
+                user_id, "applicant", role_scopes("applicant")
+            )
+            with TestClient(create_app()) as client:
+                response = client.get(
+                    f"/api/v1/cases/{case_id}",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                actor, audited_case, denial = authorization_denial(response)
+    finally:
+        remove_case(case_id)
+
+    assert response.status_code == 403
+    assert actor == str(user_id)
+    assert audited_case == str(case_id)
+    assert denial["reason"] == "case_ownership"
+
+
+# Verify a broad administrator scope cannot bypass the underwriter role gate.
+def test_underwriter_role_denial_is_audited() -> None:
+    service = app_service()
+    with synthetic_user() as user_id:
+        assign_role(user_id, "administrator")
+        token = service.issue_access_token(
+            user_id, "administrator", role_scopes("administrator")
+        )
+        with TestClient(create_app()) as client:
+            response = client.post(
+                f"/api/v1/reviews/{uuid4()}",
+                json={"action": "confirm"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            actor, _, denial = authorization_denial(response)
+
+    assert response.status_code == 403
+    assert actor == str(user_id)
+    assert denial["reason"] == "underwriter_role_required"

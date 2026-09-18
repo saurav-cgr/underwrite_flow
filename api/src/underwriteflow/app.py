@@ -13,7 +13,9 @@ from starlette.responses import Response
 
 from underwriteflow.api.v1.router import router as api_v1_router
 from underwriteflow.auth.admin_router import router as admin_router
+from underwriteflow.auth.dependencies import AuthorizationDenied
 from underwriteflow.auth.router import router as auth_router
+from underwriteflow.audit.events import build_audit_event
 from underwriteflow.cases.router import router as cases_router
 from underwriteflow.config import Settings, get_settings
 from underwriteflow.database import Database
@@ -35,6 +37,29 @@ from underwriteflow.queues.router import (
 # Return an existing request ID or create one for an early failure.
 def request_id_for(request: Request) -> str:
     return getattr(request.state, "request_id", None) or str(uuid4())
+
+
+# Persist one safe authorization denial outside the refused transaction.
+async def audit_authorization_denial(
+    request: Request, error: AuthorizationDenied
+) -> None:
+    details = {
+        "reason": error.reason,
+        "request_id": request_id_for(request),
+        "method": request.method,
+        "path": request.url.path,
+        **error.audit_details,
+    }
+    async with request.app.state.database.session_factory() as session:
+        session.add(
+            build_audit_event(
+                "authorization_denied",
+                details,
+                case_id=error.case_id,
+                actor_user_id=error.actor_user_id,
+            )
+        )
+        await session.commit()
 
 
 # Release database resources when the application stops.
@@ -85,6 +110,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def http_error_handler(
         request: Request, error: StarletteHTTPException
     ) -> Response:
+        if isinstance(error, AuthorizationDenied):
+            await audit_authorization_denial(request, error)
         if error.status_code == 404:
             return error_response(
                 status_code=404,

@@ -31,6 +31,30 @@ from underwriteflow.persistence.models import (
 )
 
 
+class AuthorizationDenied(HTTPException):
+    """A refused request carrying only safe audit metadata."""
+
+    # Retain the denial reason and known local record identifiers.
+    def __init__(
+        self,
+        status_code: int,
+        reason: str,
+        *,
+        actor_user_id: UUID | None = None,
+        case_id: UUID | None = None,
+        audit_details: dict[str, str] | None = None,
+    ) -> None:
+        if reason == "stale_authorization":
+            detail = "Stale authorization"
+        else:
+            detail = "Invalid session" if status_code == 401 else "Forbidden"
+        super().__init__(status_code=status_code, detail=detail)
+        self.reason = reason
+        self.actor_user_id = actor_user_id
+        self.case_id = case_id
+        self.audit_details = audit_details or {}
+
+
 @dataclass(frozen=True)
 class ResolvedAuthorization:
     """The current database authorization behind one authenticated user."""
@@ -78,9 +102,7 @@ def bearer_token(authorization: str | None) -> str:
             raise ValueError("invalid scheme")
         return token
     except (AttributeError, ValueError) as error:
-        raise HTTPException(
-            status_code=401, detail="Invalid session"
-        ) from error
+        raise ValueError("invalid bearer credential") from error
 
 
 # Verify the bearer token and re-resolve its current authorization.
@@ -99,24 +121,26 @@ async def get_current_session(
     try:
         claims = service.read_access_token(bearer_token(authorization))
     except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid session") from None
+        raise AuthorizationDenied(401, "invalid_session") from None
     user = await session.scalar(
         select(User).where(
             User.id == claims.sub, User.is_active.is_(True)
         )
     )
     if user is None:
-        raise HTTPException(status_code=401, detail="Invalid session")
+        raise AuthorizationDenied(401, "invalid_session")
     resolved = await load_authorization(session, user.id)
     if resolved is None:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise AuthorizationDenied(
+            403, "no_active_role", actor_user_id=user.id
+        )
     if (
         resolved.role_code != claims.role
         or resolved.version != claims.authz_version
     ):
         # The snapshot in the token is stale, so a new token is required.
-        raise HTTPException(
-            status_code=401, detail="Stale authorization"
+        raise AuthorizationDenied(
+            401, "stale_authorization", actor_user_id=user.id
         ) from None
     return {
         "sub": str(user.id),
@@ -142,7 +166,12 @@ def require_underwriter():
         session: dict[str, object] = Depends(get_current_session),
     ) -> dict[str, object]:
         if session["role_code"] != RoleCode.UNDERWRITER.value:
-            raise HTTPException(status_code=403, detail="Forbidden")
+            raise AuthorizationDenied(
+                403,
+                "underwriter_role_required",
+                actor_user_id=UUID(str(session["sub"])),
+                audit_details={"role_code": str(session["role_code"])},
+            )
         return session
 
     return dependency
@@ -156,7 +185,12 @@ def require_permission(permission: Permission):
     ) -> dict[str, object]:
         granted = session.get("permissions") or ()
         if permission.value not in granted:
-            raise HTTPException(status_code=403, detail="Forbidden")
+            raise AuthorizationDenied(
+                403,
+                "missing_scope",
+                actor_user_id=UUID(str(session["sub"])),
+                audit_details={"required_permission": permission.value},
+            )
         return session
 
     return dependency
@@ -172,4 +206,3 @@ def authorize_case_access(
     return role == UserRole.APPLICANT.value and session["sub"] == str(
         applicant_user_id
     )
-

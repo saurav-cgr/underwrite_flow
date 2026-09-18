@@ -17,7 +17,11 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.auth.dependencies import authorize_case_access, require_permission
+from underwriteflow.auth.dependencies import (
+    AuthorizationDenied,
+    authorize_case_access,
+    require_permission,
+)
 from underwriteflow.auth.schemas import Permission
 from underwriteflow.cases.schemas import (
     CaseConfigurationResponse,
@@ -114,7 +118,12 @@ async def get_authorized_case(
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     if not authorize_case_access(current, case.applicant_user_id):
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise AuthorizationDenied(
+            403,
+            "case_ownership",
+            actor_user_id=UUID(current["sub"]),
+            case_id=case.id,
+        )
     return case
 
 

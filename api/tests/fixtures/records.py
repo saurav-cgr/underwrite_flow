@@ -113,7 +113,7 @@ def synthetic_user(
     try:
         yield user_id
     finally:
-        remove_user(user_id)
+        remove_user_with_audit(user_id)
 
 
 # Attach one seeded role to a synthetic user, replacing any existing mapping.

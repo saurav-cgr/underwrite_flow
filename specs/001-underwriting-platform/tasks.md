@@ -416,7 +416,7 @@ All selected stories -> Phase 8 Polish
   project acknowledgement in `api/src/underwriteflow/config.py`,
   `api/src/underwriteflow/providers/factory.py`, `.env.example`,
   `compose.yaml`, and provider boundary tests per Constitution II (missing)
-- [ ] T069 CRITICAL audit invalid sessions, stale authorization, missing scopes,
+- [X] T069 CRITICAL audit invalid sessions, stale authorization, missing scopes,
   ownership denials, and underwriter-role denials without storing credentials
   in `api/src/underwriteflow/auth/dependencies.py`, protected routers, and
   `api/tests/integration/test_dynamic_authorization.py` per FR-008 and US1/AC3
