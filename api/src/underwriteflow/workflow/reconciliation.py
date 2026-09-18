@@ -11,6 +11,7 @@ from typing import Any
 from underwriteflow.workflow.reconciliation_values import (
     normalized_identifier,
     normalized_number,
+    output_value,
     parsed_date,
     source_evidence,
     value_comparison,
@@ -126,11 +127,12 @@ def ncb_comparisons(
             else tiers[min(tiers.index(prior_value) + 1, len(tiers) - 1)]
         )
         matched = normalized_number(claimed["value"]) == expected
-        expected_value = int(expected)
+        expected_value = output_value(expected)
+        claimed_value = output_value(normalized_number(claimed["value"]))
         comparison = {
             "field_key": claimed["field_name"],
             "left": expected_value,
-            "right": claimed["value"],
+            "right": claimed_value,
             "matched": matched,
             "evidence": source_evidence(prior),
             "explanation_code": (
@@ -143,7 +145,7 @@ def ncb_comparisons(
             "code": "ncb_progression_mismatch",
             "field_key": claimed["field_name"],
             "expected": expected_value,
-            "actual": claimed["value"],
+            "actual": claimed_value,
         }
         return [comparison], [discrepancy] if discrepancy else []
     comparisons: list[dict[str, Any]] = []
@@ -217,8 +219,8 @@ def lapse_comparison(
     matched = 0 <= gap_days and within_maximum
     comparison = {
         "field_key": expiry["field_name"],
-        "left": claimed["value"],
-        "right": expiry["value"],
+        "left": output_value(start),
+        "right": output_value(previous),
         "matched": matched,
         "evidence": source_evidence(expiry),
         "explanation_code": (

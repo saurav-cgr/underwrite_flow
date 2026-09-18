@@ -166,6 +166,18 @@ def read_case_checks(
     return validations, signals
 
 
+# Read one persisted reconciliation result by its stable configured code.
+def read_check_details(case_id: str, code: str) -> dict[str, object]:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT details FROM validations WHERE case_id = %s "
+                "AND rule_code = %s",
+                (case_id, f"reconciliation:{code}"),
+            )
+            return cursor.fetchone()[0]
+
+
 # Run one synthetic case against the check-bearing motor version.
 def run_case(
     claimed_ncb_percent: int,
@@ -202,6 +214,13 @@ def test_agreeing_evidence_clears_all_motor_checks() -> None:
         ]
         assert signals == []
         assert response["recommendation"]["route"] != "needs_information"
+        engine = read_check_details(case_id, "motor_engine_match")
+        comparison = engine["comparisons"][0]
+        assert comparison["left"] == "syntheng0001"
+        assert comparison["right"] == "syntheng0001"
+        assert comparison["explanation_code"] == (
+            "asset_identifiers_match"
+        )
     finally:
         if case_id:
             remove_case(UUID(case_id))

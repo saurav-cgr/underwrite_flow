@@ -1,5 +1,7 @@
 """Pinned fictional NCB and renewal parameter behavior."""
 
+import json
+
 from underwriteflow.workflow.reconciliation import reconcile
 
 NCB_CHECK = {
@@ -104,3 +106,70 @@ def test_policy_lapse_uses_the_pinned_boundary() -> None:
         for check in checks
     ]
     assert results == ["CLEARED", "FLAGGED_DISCREPANCY"]
+
+
+# Verify result values are canonical and explanations ignore input formatting.
+def test_reconciliation_outputs_only_normalized_compared_values() -> None:
+    checks = [
+        {
+            "code": "asset",
+            "kind": "asset_match",
+            "inputs": {
+                "previous_policy": "registration_number",
+                "vehicle_record": "registration_number",
+            },
+        },
+        {
+            "code": "ncb",
+            "kind": "ncb_match",
+            "inputs": {
+                "application": "claimed_ncb_percent",
+                "previous_policy": "ncb_percent",
+            },
+        },
+        {
+            "code": "renewal",
+            "kind": "policy_lapse",
+            "inputs": {
+                "application": "policy_start_date",
+                "previous_policy": "policy_expiry_date",
+            },
+        },
+    ]
+    items = [
+        evidence("registration_number", "mh 12-ab-1234"),
+        evidence("ncb_percent", "20.0%"),
+        evidence("policy_expiry_date", " 2026-01-01 "),
+        {
+            **evidence("registration_number", "MH12AB1234"),
+            "document_code": "vehicle_record",
+            "document_id": "doc-2",
+        },
+    ]
+
+    result = reconcile(
+        checks,
+        {
+            "claimed_ncb_percent": " 20% ",
+            "policy_start_date": " 2026-01-31 ",
+        },
+        items,
+        "v3",
+    )
+
+    comparisons = {
+        item["check_code"]: item["comparisons"][0]
+        for item in result["results"]
+    }
+    assert comparisons["asset"]["left"] == "mh12ab1234"
+    assert comparisons["asset"]["right"] == "mh12ab1234"
+    assert comparisons["asset"]["explanation_code"] == (
+        "asset_identifiers_match"
+    )
+    assert comparisons["ncb"]["left"] == 20
+    assert comparisons["ncb"]["right"] == 20
+    assert comparisons["renewal"]["left"] == "2026-01-31"
+    assert comparisons["renewal"]["right"] == "2026-01-01"
+    serialized = json.dumps(result, sort_keys=True)
+    for raw in ("mh 12-ab-1234", "MH12AB1234", "20.0%", " 20% "):
+        assert raw not in serialized

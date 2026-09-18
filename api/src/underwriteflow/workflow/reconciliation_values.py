@@ -56,6 +56,17 @@ def source_evidence(source: dict[str, Any]) -> list[dict[str, str]]:
     ]
 
 
+# Convert one normalized value to a stable JSON-safe representation.
+def output_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        if value == value.to_integral():
+            return int(value)
+        return format(value.normalize(), "f")
+    if isinstance(value, date):
+        return value.isoformat()
+    return value
+
+
 # Build one value comparison for two resolved sources.
 def value_comparison(
     left: dict[str, Any],
@@ -64,11 +75,13 @@ def value_comparison(
     match_code: str,
     mismatch_code: str,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    matched = normalize(left["value"]) == normalize(right["value"])
+    left_value = output_value(normalize(left["value"]))
+    right_value = output_value(normalize(right["value"]))
+    matched = left_value == right_value
     comparison = {
         "field_key": right["field_name"],
-        "left": left["value"],
-        "right": right["value"],
+        "left": left_value,
+        "right": right_value,
         "matched": matched,
         "evidence": source_evidence(right),
         "explanation_code": match_code if matched else mismatch_code,
@@ -78,6 +91,6 @@ def value_comparison(
     return comparison, {
         "code": mismatch_code,
         "field_key": right["field_name"],
-        "expected": left["value"],
-        "actual": right["value"],
+        "expected": left_value,
+        "actual": right_value,
     }

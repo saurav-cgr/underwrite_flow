@@ -147,7 +147,7 @@ async def test_evidence_graph_flags_configured_discrepancy() -> None:
             "code": "ncb_mismatch",
             "field_key": "ncb_percent",
             "expected": 35,
-            "actual": "20",
+            "actual": 20,
         }
     ]
 

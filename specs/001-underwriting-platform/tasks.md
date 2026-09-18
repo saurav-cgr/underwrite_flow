@@ -430,7 +430,7 @@ All selected stories -> Phase 8 Polish
   comparisons to
   `product-config/motor-private-car.yaml` and prove them end to end in
   `api/tests/integration/test_evidence_reconciliation.py` per FR-017 (missing)
-- [ ] T072 return normalized compared values and stable explanations without
+- [X] T072 return normalized compared values and stable explanations without
   retaining formatting-dependent raw values in
   `api/src/underwriteflow/workflow/reconciliation.py` and its unit and
   integration tests per FR-019 and FR-020 (partial)
