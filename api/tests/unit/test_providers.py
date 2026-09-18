@@ -96,6 +96,37 @@ async def test_gemini_hashes_exact_payloads(
     assert result.result_hash == hashlib.sha256(raw.encode()).hexdigest()
 
 
+# Verify configured literal PII is removed before Gemini transmission.
+@pytest.mark.asyncio
+async def test_gemini_redacts_configured_literal_terms(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    raw = '{"fields": []}'
+    captured: dict[str, object] = {}
+    body = {"candidates": [{"content": {"parts": [{"text": raw}]}}]}
+    monkeypatch.setattr(
+        "underwriteflow.providers.gemini.httpx.AsyncClient",
+        successful_client(body, captured),
+    )
+
+    await GeminiProvider(
+        "synthetic-key",
+        "synthetic-model",
+        pii_redaction_terms=("SYNTHETIC-MEMBER-42",),
+    ).extract(
+        ExtractionRequest(
+            document_name="synthetic.pdf",
+            content="member reference SYNTHETIC-MEMBER-42",
+            requested_fields=[],
+        )
+    )
+
+    transmitted = captured["content"]
+    assert isinstance(transmitted, bytes)
+    assert b"SYNTHETIC-MEMBER-42" not in transmitted
+    assert b"[redacted]" in transmitted
+
+
 # Verify Ollama hashes exact transmitted and returned payload bytes.
 @pytest.mark.asyncio
 async def test_ollama_hashes_exact_payloads(

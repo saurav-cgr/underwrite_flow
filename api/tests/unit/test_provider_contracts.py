@@ -2,6 +2,7 @@
 
 import pytest
 
+from underwriteflow.config import Settings
 from underwriteflow.providers.redaction import redact_personal_data
 from underwriteflow.providers.schemas import (
     DocumentPage,
@@ -204,3 +205,20 @@ def test_redaction_removes_aadhaar_pan_email_and_phone() -> None:
     assert "synthetic@example.test" not in redacted
     assert "9876543210" not in redacted
     assert redacted.count("[redacted]") == 4
+
+
+# Verify local configuration can add deployment-specific literal PII.
+def test_redaction_removes_configured_literal_terms() -> None:
+    redacted = redact_personal_data(
+        "member reference SYNTHETIC-MEMBER-42",
+        ("SYNTHETIC-MEMBER-42",),
+    )
+
+    assert redacted == "member reference [redacted]"
+
+
+# Verify empty or unbounded configured literals are rejected.
+@pytest.mark.parametrize("term", ["", "x" * 201])
+def test_redaction_terms_are_bounded(term: str) -> None:
+    with pytest.raises(ValueError):
+        Settings(pii_redaction_terms=(term,))

@@ -21,4 +21,5 @@ def build_provider(settings: Settings) -> ExtractionProvider:
         settings.gemini_api_key,
         settings.gemini_model,
         timeout_seconds=settings.provider_timeout_seconds,
+        pii_redaction_terms=settings.pii_redaction_terms,
     )

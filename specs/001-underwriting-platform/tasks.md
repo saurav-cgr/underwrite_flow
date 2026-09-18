@@ -406,7 +406,7 @@ All selected stories -> Phase 8 Polish
   `api/src/underwriteflow/providers/ollama.py`,
   `api/src/underwriteflow/providers/service.py`, and provider audit tests per
   Constitution V and FR-028 (contradicts)
-- [ ] T067 CRITICAL make the local PII redaction policy validated and
+- [X] T067 CRITICAL make the local PII redaction policy validated and
   configurable in `api/src/underwriteflow/config.py`,
   `api/src/underwriteflow/providers/redaction.py`,
   `api/src/underwriteflow/providers/gemini.py`, and provider boundary tests per

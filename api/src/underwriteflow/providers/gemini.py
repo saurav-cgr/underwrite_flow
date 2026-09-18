@@ -41,17 +41,26 @@ class GeminiProvider:
     name = "gemini"
 
     # Configure the Gemini endpoint without retaining request content.
-    def __init__(self, api_key: str, model: str, timeout_seconds: float = 30) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        timeout_seconds: float = 30,
+        pii_redaction_terms: tuple[str, ...] = (),
+    ) -> None:
         self.api_key = api_key
         self.model = model
         self.timeout_seconds = timeout_seconds
+        self.pii_redaction_terms = pii_redaction_terms
 
     # Extract fields through Gemini while keeping document content isolated.
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:
         if not self.api_key:
             raise ProviderError("Gemini provider is not configured")
         # An external provider never receives raw personal identifiers.
-        safe_request = redacted_request(request)
+        safe_request = redacted_request(
+            request, self.pii_redaction_terms
+        )
         messages = build_messages(safe_request)
         payload = {
             "systemInstruction": {"parts": [{"text": messages[0]["content"]}]},
