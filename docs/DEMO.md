@@ -54,7 +54,8 @@ drafts; Administrator activation is required before applicants can see them.
 4. Show that a later cycle links back to the event it supersedes.
 5. Show the synthetic evaluation metrics and the 30-case holdout split.
 6. Run `make smoke` for the deterministic end-to-end flow, and `make probe`
-   for the bounded ten-case synthetic load probe.
+   for fresh bounded 10-case and 100-case synthetic pilot probes. Recorded
+   local measures are in `docs/PILOT_PROBE.md`.
 
 ## Demo boundaries
 

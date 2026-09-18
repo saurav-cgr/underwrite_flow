@@ -437,7 +437,7 @@ All selected stories -> Phase 8 Polish
 - [X] T073 after test-dependency approval, enforce 100% statement and branch
   coverage for `api/src/underwriteflow/workflow/reconciliation.py` in the
   Docker API test command per SC-011 (partial)
-- [ ] T074 replace reused sequential cases in `scripts/pilot_load_probe.py`
+- [X] T074 replace reused sequential cases in `scripts/pilot_load_probe.py`
   with fresh bounded concurrent probes and record the 10-case and 100-case
   latency, OCR, provider concurrency, database pool, checkpoint, queue, and
   storage measures required by the plan evaluation decision (partial)
