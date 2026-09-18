@@ -58,6 +58,21 @@ AGREEING_VEHICLE_LINES = [
 ]
 
 
+# Remove generated hashes and identifiers before shape-based PII checks.
+def without_opaque_values(value: object) -> object:
+    if isinstance(value, list):
+        return [without_opaque_values(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            key: without_opaque_values(item)
+            for key, item in value.items()
+            if key != "id"
+            and not key.endswith("_id")
+            and not key.endswith("_hash")
+        }
+    return value
+
+
 # Process one synthetic motor case and return its immutable audit trail.
 def processed_case_events(
     client: TestClient, vehicle_lines: list[str]
@@ -115,8 +130,9 @@ def test_audit_never_stores_document_text_or_identifiers() -> None:
     ), serialized[:200]
     for value in FORBIDDEN_VALUES:
         assert value not in serialized, value
+    searchable = json.dumps(without_opaque_values(events))
     for pattern in FORBIDDEN_PATTERNS:
-        assert re.search(pattern, serialized) is None, pattern
+        assert re.search(pattern, searchable) is None, pattern
     # Only bounded identifiers and hashes are persisted, never raw content.
     assert "identity_reference" not in serialized
     assert "SYNTHETIC-0001" not in serialized

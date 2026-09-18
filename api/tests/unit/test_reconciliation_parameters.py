@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from underwriteflow.workflow.reconciliation import reconcile
 
 NCB_CHECK = {
@@ -173,3 +175,110 @@ def test_reconciliation_outputs_only_normalized_compared_values() -> None:
     serialized = json.dumps(result, sort_keys=True)
     for raw in ("mh 12-ab-1234", "MH12AB1234", "20.0%", " 20% "):
         assert raw not in serialized
+
+
+# Verify every unusable configured claim count becomes missing evidence.
+@pytest.mark.parametrize("claim_count", ["invalid", -1, 0.5])
+def test_ncb_rejects_unusable_claim_counts(claim_count: object) -> None:
+    result = run(
+        [NCB_CHECK],
+        {"claimed_ncb_percent": 25, "prior_claims": claim_count},
+    )
+
+    assert result["results"][0]["status"] == "MISSING_EVIDENCE"
+
+
+# Verify a missing configured claim count names the missing application field.
+def test_ncb_requires_the_configured_claim_count() -> None:
+    result = run([NCB_CHECK], {"claimed_ncb_percent": 25})
+
+    assert result["results"][0]["missing_inputs"] == [
+        "application.prior_claims"
+    ]
+
+
+# Verify an unconfigured previous-policy tier cannot drive progression.
+def test_ncb_rejects_an_unconfigured_prior_tier() -> None:
+    result = reconcile(
+        [NCB_CHECK],
+        {"claimed_ncb_percent": 25, "prior_claims": 0},
+        [evidence("ncb_percent", 30)],
+        "v2",
+    )
+
+    assert result["results"][0]["status"] == "MISSING_EVIDENCE"
+
+
+# Verify an unusable legacy NCB evidence value becomes missing evidence.
+def test_legacy_ncb_rejects_unusable_policy_value() -> None:
+    check = {
+        "code": "legacy_ncb",
+        "kind": "ncb_match",
+        "inputs": {
+            "application": "claimed_ncb_percent",
+            "previous_policy": "ncb_percent",
+        },
+    }
+    result = reconcile(
+        [check],
+        {"claimed_ncb_percent": 20},
+        [evidence("ncb_percent", "invalid")],
+        "v1",
+    )
+
+    assert result["results"][0]["status"] == "MISSING_EVIDENCE"
+
+
+# Verify either unusable asset identifier makes the check missing evidence.
+@pytest.mark.parametrize(
+    ("left", "right"),
+    [({}, "SYNTH-RC-1"), ("SYNTH-RC-1", {})],
+)
+def test_asset_match_rejects_unusable_identifiers(
+    left: object, right: object
+) -> None:
+    check = {
+        "code": "asset",
+        "kind": "asset_match",
+        "inputs": {
+            "previous_policy": "registration_number",
+            "vehicle_record": "registration_number",
+        },
+    }
+    vehicle = {
+        **evidence("registration_number", right),
+        "document_code": "vehicle_record",
+    }
+    result = reconcile(
+        [check],
+        {},
+        [evidence("registration_number", left), vehicle],
+        "v1",
+    )
+
+    assert result["results"][0]["status"] == "MISSING_EVIDENCE"
+
+
+# Verify a document-only NCB check fails closed instead of guessing semantics.
+def test_document_only_ncb_check_is_missing_evidence() -> None:
+    check = {
+        "code": "document_ncb",
+        "kind": "ncb_match",
+        "inputs": {
+            "previous_policy": "ncb_percent",
+            "vehicle_record": "ncb_percent",
+        },
+    }
+    vehicle = {
+        **evidence("ncb_percent", 20),
+        "document_code": "vehicle_record",
+    }
+
+    result = reconcile(
+        [check],
+        {},
+        [evidence("ncb_percent", 20), vehicle],
+        "v1",
+    )
+
+    assert result["results"][0]["status"] == "MISSING_EVIDENCE"

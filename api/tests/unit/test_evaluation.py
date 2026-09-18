@@ -2,6 +2,7 @@ import asyncio
 
 import pytest
 from fastapi.testclient import TestClient
+from fixtures.records import synthetic_user
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
@@ -197,17 +198,22 @@ def test_opt_in_trace_uses_apac_endpoint(
 def test_evaluation_endpoint_is_administrator_only() -> None:
     app = create_app()
 
-    # Supply a synthetic underwriter identity to the authorization dependency.
-    async def underwriter_session() -> dict[str, object]:
-        return {
-            "sub": "synthetic-underwriter",
-            "role": "Underwriter",
-            "role_code": "underwriter",
-            "permissions": ["cases:read", "reviews:read", "reviews:write"],
-        }
+    with synthetic_user(role="Underwriter") as user_id:
+        # Supply an existing actor to the authorization dependency.
+        async def underwriter_session() -> dict[str, object]:
+            return {
+                "sub": str(user_id),
+                "role": "Underwriter",
+                "role_code": "underwriter",
+                "permissions": [
+                    "cases:read",
+                    "reviews:read",
+                    "reviews:write",
+                ],
+            }
 
-    app.dependency_overrides[get_current_session] = underwriter_session
-    response = TestClient(app).post("/api/v1/evaluation/run", json={})
+        app.dependency_overrides[get_current_session] = underwriter_session
+        response = TestClient(app).post("/api/v1/evaluation/run", json={})
 
     assert response.status_code == 403
 

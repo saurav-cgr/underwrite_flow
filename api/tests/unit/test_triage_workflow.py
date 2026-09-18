@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from fixtures.auth import session_for
+from fixtures.records import synthetic_user
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
@@ -190,15 +191,16 @@ async def test_triage_graph_honors_internal_rule_routes(route: str, expected: st
 def test_review_endpoint_requires_review_permission() -> None:
     app = create_app()
 
-    # Supply a synthetic applicant identity without opening the database.
-    async def applicant_session() -> dict[str, object]:
-        return session_for("applicant")
+    with synthetic_user() as user_id:
+        # Supply an existing applicant actor to the authorization dependency.
+        async def applicant_session() -> dict[str, object]:
+            return session_for("applicant", str(user_id))
 
-    app.dependency_overrides[get_current_session] = applicant_session
-    response = TestClient(app).post(
-        f"/api/v1/reviews/{uuid4()}",
-        json={"action": "confirm"},
-    )
+        app.dependency_overrides[get_current_session] = applicant_session
+        response = TestClient(app).post(
+            f"/api/v1/reviews/{uuid4()}",
+            json={"action": "confirm"},
+        )
 
     assert response.status_code == 403
 

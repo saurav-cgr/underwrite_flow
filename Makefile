@@ -1,7 +1,10 @@
 .PHONY: test-api test-web smoke probe
 
 test-api:
-	docker compose run --rm api sh -c 'pytest -q; test $$? -eq 0 -o $$? -eq 5'
+	docker compose run --rm api sh -c 'pytest -q \
+		--cov=underwriteflow.workflow.reconciliation --cov-branch \
+		--cov-report=term-missing --cov-fail-under=100; \
+		test $$? -eq 0 -o $$? -eq 5'
 
 test-web:
 	docker compose run --rm web npm test -- --run

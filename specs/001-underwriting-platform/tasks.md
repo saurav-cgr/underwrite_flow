@@ -434,7 +434,7 @@ All selected stories -> Phase 8 Polish
   retaining formatting-dependent raw values in
   `api/src/underwriteflow/workflow/reconciliation.py` and its unit and
   integration tests per FR-019 and FR-020 (partial)
-- [ ] T073 after test-dependency approval, enforce 100% statement and branch
+- [X] T073 after test-dependency approval, enforce 100% statement and branch
   coverage for `api/src/underwriteflow/workflow/reconciliation.py` in the
   Docker API test command per SC-011 (partial)
 - [ ] T074 replace reused sequential cases in `scripts/pilot_load_probe.py`
