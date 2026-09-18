@@ -14,6 +14,7 @@ from underwriteflow.products.service import ProductService, load_configuration
 CONFIGURATION_FILES = (
     "motor-private-car.yaml",
     "motor-private-car-v2.yaml",
+    "motor-private-car-v3.yaml",
     "life-individual-term.yaml",
     "life-individual-term-v2.yaml",
     "health-individual-family-floater.yaml",

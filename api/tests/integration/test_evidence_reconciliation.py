@@ -21,7 +21,11 @@ ADMINISTRATOR = (
 )
 APPLICANT = ("applicant@synthetic.test", "underwriteflow-demo-applicant")
 
-DOCUMENT_CODES = ["identity_record", "vehicle_record"]
+DOCUMENT_CODES = [
+    "identity_record",
+    "vehicle_record",
+    "registration_certificate",
+]
 
 APPLICATION_FIELDS = ["vehicle_age: 2", "vehicle_use: personal"]
 
@@ -75,7 +79,9 @@ def create_case(
 
 # Build the synthetic uploads whose evidence either agrees or disagrees.
 def uploads(
-    claimed_ncb_percent: int, check_fields: bool = True
+    claimed_ncb_percent: int,
+    check_fields: bool = True,
+    matching_assets: bool = True,
 ) -> list[tuple]:
     items = [
         (
@@ -94,9 +100,25 @@ def uploads(
             [
                 "ncb_percent: 20",
                 "policy_expiry: 2026-01-05",
+                "engine_number: SYNTH ENG 0001",
+                "chassis_number: synth-chs-0001",
+                "registration_number: SYNTH RC 0001",
             ]
         )
     items.append(("vehicle_record", text_pdf(lines)))
+    suffix = "0001" if matching_assets else "0002"
+    items.append(
+        (
+            "registration_certificate",
+            text_pdf(
+                [
+                    f"engine_number: SYNTH-ENG-{suffix}",
+                    f"chassis_number: SYNTH-CHS-{suffix}",
+                    f"registration_number: SYNTH-RC-{suffix}",
+                ]
+            ),
+        )
+    )
     return items
 
 
@@ -146,18 +168,20 @@ def read_case_checks(
 
 # Run one synthetic case against the check-bearing motor version.
 def run_case(
-    claimed_ncb_percent: int, check_fields: bool = True
+    claimed_ncb_percent: int,
+    check_fields: bool = True,
+    matching_assets: bool = True,
 ) -> tuple[str, dict[str, object]]:
     settings = Settings(generation_provider="fake")
     with TestClient(create_app(settings)) as client:
-        activate(client, "v2")
+        activate(client, "v3")
         headers = login(client, APPLICANT)
         case_id = create_case(client, headers, claimed_ncb_percent)
         response = submit_case(
             client,
             headers,
             case_id,
-            uploads(claimed_ncb_percent, check_fields),
+            uploads(claimed_ncb_percent, check_fields, matching_assets),
         )
     return case_id, response
 
@@ -170,7 +194,10 @@ def test_agreeing_evidence_clears_all_motor_checks() -> None:
         validations, signals = read_case_checks(case_id)
 
         assert validations == [
+            ("reconciliation:motor_chassis_match", "cleared"),
+            ("reconciliation:motor_engine_match", "cleared"),
             ("reconciliation:motor_ncb_match", "cleared"),
+            ("reconciliation:motor_registration_match", "cleared"),
             ("reconciliation:motor_renewal_lapse", "cleared"),
         ]
         assert signals == []
@@ -182,18 +209,29 @@ def test_agreeing_evidence_clears_all_motor_checks() -> None:
             activate(client, "v1")
 
 
-# Verify a mismatched claim is flagged and routed to specialist review.
+# Verify every configured asset conflict is flagged end to end.
 def test_disagreeing_evidence_flags_the_case() -> None:
     case_id = ""
     try:
-        case_id, response = run_case(20)
+        case_id, response = run_case(20, matching_assets=False)
         validations, signals = read_case_checks(case_id)
 
         assert validations == [
+            ("reconciliation:motor_chassis_match", "flagged_discrepancy"),
+            ("reconciliation:motor_engine_match", "flagged_discrepancy"),
             ("reconciliation:motor_ncb_match", "flagged_discrepancy"),
+            (
+                "reconciliation:motor_registration_match",
+                "flagged_discrepancy",
+            ),
             ("reconciliation:motor_renewal_lapse", "cleared"),
         ]
-        assert signals == ["reconciliation_ncb_progression_mismatch"]
+        assert signals == [
+            "reconciliation_asset_mismatch",
+            "reconciliation_asset_mismatch",
+            "reconciliation_asset_mismatch",
+            "reconciliation_ncb_progression_mismatch",
+        ]
         assert response["recommendation"]["route"] == "specialist"
     finally:
         if case_id:
@@ -210,7 +248,13 @@ def test_absent_evidence_queues_the_case() -> None:
         validations, signals = read_case_checks(case_id)
 
         assert validations == [
+            ("reconciliation:motor_chassis_match", "missing_evidence"),
+            ("reconciliation:motor_engine_match", "missing_evidence"),
             ("reconciliation:motor_ncb_match", "missing_evidence"),
+            (
+                "reconciliation:motor_registration_match",
+                "missing_evidence",
+            ),
             ("reconciliation:motor_renewal_lapse", "missing_evidence"),
         ]
         assert signals == []

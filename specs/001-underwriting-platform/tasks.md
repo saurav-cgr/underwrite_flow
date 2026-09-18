@@ -426,7 +426,7 @@ All selected stories -> Phase 8 Polish
   boundary parameters to `api/src/underwriteflow/products/schemas.py`,
   `api/src/underwriteflow/workflow/reconciliation.py`, all three files under
   `product-config/`, and focused tests per FR-010 (missing)
-- [ ] T071 CRITICAL add configured engine, chassis, and registration
+- [X] T071 CRITICAL add configured engine, chassis, and registration
   comparisons to
   `product-config/motor-private-car.yaml` and prove them end to end in
   `api/tests/integration/test_evidence_reconciliation.py` per FR-017 (missing)
