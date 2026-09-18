@@ -18,6 +18,8 @@ from underwriteflow.providers.service import (
     provider_payload_hash,
 )
 
+GEMINI_HOST = "generativelanguage.googleapis.com"
+
 
 # Read Gemini's reported token counts, or mark them unavailable.
 def gemini_usage(model: str, metadata: dict) -> ProviderUsage:
@@ -69,7 +71,7 @@ class GeminiProvider:
         }
         request_payload = provider_payload_bytes(payload)
         url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"https://{GEMINI_HOST}/v1beta/models/"
             f"{self.model}:generateContent"
         )
         try:

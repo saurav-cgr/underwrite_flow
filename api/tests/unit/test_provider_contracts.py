@@ -3,6 +3,7 @@
 import pytest
 
 from underwriteflow.config import Settings
+from underwriteflow.providers.factory import build_provider
 from underwriteflow.providers.redaction import redact_personal_data
 from underwriteflow.providers.schemas import (
     DocumentPage,
@@ -222,3 +223,48 @@ def test_redaction_removes_configured_literal_terms() -> None:
 def test_redaction_terms_are_bounded(term: str) -> None:
     with pytest.raises(ValueError):
         Settings(pii_redaction_terms=(term,))
+
+
+# Verify Gemini cannot run without an explicit no-training acknowledgement.
+def test_gemini_requires_no_training_acknowledgement() -> None:
+    with pytest.raises(ProviderError, match="no-training"):
+        build_provider(Settings(generation_provider="gemini"))
+
+
+# Verify a configured provider host must appear in the deployment allowlist.
+def test_gemini_requires_an_approved_host() -> None:
+    settings = Settings(
+        generation_provider="gemini",
+        gemini_no_training_acknowledged=True,
+        provider_allowed_hosts=("synthetic.invalid",),
+    )
+
+    with pytest.raises(ProviderError, match="not approved"):
+        build_provider(settings)
+
+
+# Verify Ollama cannot be redirected outside the local environment.
+@pytest.mark.parametrize(
+    "base_url",
+    ["https://example.test:11434", "http://ollama.example.test:11434"],
+)
+def test_ollama_rejects_non_local_urls(base_url: str) -> None:
+    settings = Settings(
+        generation_provider="ollama",
+        ollama_base_url=base_url,
+        provider_allowed_hosts=("example.test", "ollama.example.test"),
+    )
+
+    with pytest.raises(ProviderError, match="local"):
+        build_provider(settings)
+
+
+# Verify approved Gemini and local Ollama configurations remain available.
+@pytest.mark.parametrize("provider", ["gemini", "ollama"])
+def test_approved_provider_boundaries_pass(provider: str) -> None:
+    settings = Settings(
+        generation_provider=provider,
+        gemini_no_training_acknowledged=True,
+    )
+
+    assert build_provider(settings).name == provider

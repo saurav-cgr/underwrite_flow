@@ -10,6 +10,10 @@ PiiRedactionTerm = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
 ]
+ProviderHost = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=253),
+]
 
 
 class Settings(BaseSettings):
@@ -24,6 +28,12 @@ class Settings(BaseSettings):
     generation_provider: Literal["fake", "gemini", "ollama"] = "gemini"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.1-flash-lite"
+    gemini_no_training_acknowledged: bool = False
+    provider_allowed_hosts: tuple[ProviderHost, ...] = Field(
+        default=("generativelanguage.googleapis.com", "ollama"),
+        min_length=1,
+        max_length=10,
+    )
     pii_redaction_terms: tuple[PiiRedactionTerm, ...] = Field(
         default=(), max_length=50
     )

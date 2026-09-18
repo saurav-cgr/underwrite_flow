@@ -411,7 +411,7 @@ All selected stories -> Phase 8 Polish
   `api/src/underwriteflow/providers/redaction.py`,
   `api/src/underwriteflow/providers/gemini.py`, and provider boundary tests per
   Constitution II and FR-014 (partial)
-- [ ] T068 CRITICAL fail closed on unapproved provider hosts, non-local Ollama
+- [X] T068 CRITICAL fail closed on unapproved provider hosts, non-local Ollama
   URLs, and Gemini configurations without an explicit approved no-training
   project acknowledgement in `api/src/underwriteflow/config.py`,
   `api/src/underwriteflow/providers/factory.py`, `.env.example`,
