@@ -39,6 +39,21 @@ class TransientProviderError(ProviderError):
     """Raised when a provider failure may succeed on a branch-local retry."""
 
 
+# Serialize one provider request once so sent and hashed bytes are identical.
+def provider_payload_bytes(payload: dict[str, Any]) -> bytes:
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode()
+
+
+# Identify exact provider payload bytes without retaining their content.
+def provider_payload_hash(payload: str | bytes) -> str:
+    encoded = payload.encode() if isinstance(payload, str) else payload
+    return hashlib.sha256(encoded).hexdigest()
+
+
 # Classify provider statuses that are safe for a bounded branch retry.
 def is_transient_status(status_code: int) -> bool:
     return status_code in {408, 429} or status_code >= 500
@@ -206,6 +221,7 @@ def parse_result(
     specifications: list[FieldSpecification] | None = None,
     usage: ProviderUsage | None = None,
     request_hash: str = "",
+    result_hash: str | None = None,
 ) -> ExtractionResult:
     try:
         raw = json.loads(payload) if isinstance(payload, str) else payload
@@ -240,7 +256,8 @@ def parse_result(
             "fields": fields,
             "usage": usage or ProviderUsage(),
             "request_hash": request_hash,
-            "result_hash": canonical_result_hash(
+            "result_hash": result_hash
+            or canonical_result_hash(
                 [field.model_dump(mode="json") for field in fields]
             ),
         }

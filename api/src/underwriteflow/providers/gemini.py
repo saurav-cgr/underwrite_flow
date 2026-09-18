@@ -12,9 +12,10 @@ from underwriteflow.providers.service import (
     ProviderError,
     TransientProviderError,
     build_messages,
-    canonical_request_hash,
     is_transient_status,
     parse_result,
+    provider_payload_bytes,
+    provider_payload_hash,
 )
 
 
@@ -57,13 +58,19 @@ class GeminiProvider:
             "contents": [{"role": "user", "parts": [{"text": messages[1]["content"]}]}],
             "generationConfig": {"responseMimeType": "application/json"},
         }
+        request_payload = provider_payload_bytes(payload)
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.model}:generateContent"
         )
         try:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                response = await client.post(url, params={"key": self.api_key}, json=payload)
+                response = await client.post(
+                    url,
+                    params={"key": self.api_key},
+                    content=request_payload,
+                    headers={"Content-Type": "application/json"},
+                )
                 response.raise_for_status()
                 body = response.json()
                 raw = body["candidates"][0]["content"]["parts"][0]["text"]
@@ -83,7 +90,6 @@ class GeminiProvider:
             "gemini",
             request.field_specifications,
             usage,
-            # Only the redacted payload can reach an external provider, so
-            # the recorded request hash identifies the redacted content.
-            request_hash=canonical_request_hash(safe_request),
+            request_hash=provider_payload_hash(request_payload),
+            result_hash=provider_payload_hash(raw),
         )

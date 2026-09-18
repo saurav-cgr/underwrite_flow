@@ -396,3 +396,53 @@ All selected stories -> Phase 8 Polish
 - Use bound SQLAlchemy expressions; never interpolate user input into SQL.
 - Default tests use FakeProvider and visibly synthetic fixtures.
 - Commit only after phase review and explicit `continue`.
+
+---
+
+## Phase 9: Convergence
+
+- [X] T066 CRITICAL hash the exact redacted provider request and exact raw
+  completion bytes in `api/src/underwriteflow/providers/gemini.py`,
+  `api/src/underwriteflow/providers/ollama.py`,
+  `api/src/underwriteflow/providers/service.py`, and provider audit tests per
+  Constitution V and FR-028 (contradicts)
+- [ ] T067 CRITICAL make the local PII redaction policy validated and
+  configurable in `api/src/underwriteflow/config.py`,
+  `api/src/underwriteflow/providers/redaction.py`,
+  `api/src/underwriteflow/providers/gemini.py`, and provider boundary tests per
+  Constitution II and FR-014 (partial)
+- [ ] T068 CRITICAL fail closed on unapproved provider hosts, non-local Ollama
+  URLs, and Gemini configurations without an explicit approved no-training
+  project acknowledgement in `api/src/underwriteflow/config.py`,
+  `api/src/underwriteflow/providers/factory.py`, `.env.example`,
+  `compose.yaml`, and provider boundary tests per Constitution II (missing)
+- [ ] T069 CRITICAL audit invalid sessions, stale authorization, missing scopes,
+  ownership denials, and underwriter-role denials without storing credentials
+  in `api/src/underwriteflow/auth/dependencies.py`, protected routers, and
+  `api/tests/integration/test_dynamic_authorization.py` per FR-008 and US1/AC3
+  (missing)
+- [ ] T070 CRITICAL add pinned NCB tier progression, claims adjustment, and
+  renewal
+  boundary parameters to `api/src/underwriteflow/products/schemas.py`,
+  `api/src/underwriteflow/workflow/reconciliation.py`, all three files under
+  `product-config/`, and focused tests per FR-010 (missing)
+- [ ] T071 CRITICAL add configured engine, chassis, and registration
+  comparisons to
+  `product-config/motor-private-car.yaml` and prove them end to end in
+  `api/tests/integration/test_evidence_reconciliation.py` per FR-017 (missing)
+- [ ] T072 return normalized compared values and stable explanations without
+  retaining formatting-dependent raw values in
+  `api/src/underwriteflow/workflow/reconciliation.py` and its unit and
+  integration tests per FR-019 and FR-020 (partial)
+- [ ] T073 after test-dependency approval, enforce 100% statement and branch
+  coverage for `api/src/underwriteflow/workflow/reconciliation.py` in the
+  Docker API test command per SC-011 (partial)
+- [ ] T074 replace reused sequential cases in `scripts/pilot_load_probe.py`
+  with fresh bounded concurrent probes and record the 10-case and 100-case
+  latency, OCR, provider concurrency, database pool, checkpoint, queue, and
+  storage measures required by the plan evaluation decision (partial)
+- [ ] T075 split `web/src/access-admin.tsx`,
+  `api/tests/unit/test_triage_workflow.py`, and `web/src/review.css` below 400
+  lines and wrap over-80 hand-written lines in `api/`, `web/`,
+  `product-config/`, and `scripts/` per T064 and the task constraints
+  (contradicts)

@@ -1,3 +1,5 @@
+import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -15,6 +17,112 @@ from underwriteflow.providers.service import (
     build_messages,
     parse_result,
 )
+
+
+# Build one successful provider client and retain exact request bytes.
+def successful_client(body: dict, captured: dict[str, object]):
+    class Response:
+        # Return the synthetic response without an HTTP failure.
+        def raise_for_status(self) -> None:
+            return None
+
+        # Return the configured provider response body.
+        def json(self) -> dict:
+            return body
+
+    class Client:
+        # Accept the adapter timeout without changing the fixture.
+        def __init__(self, **kwargs: object) -> None:
+            del kwargs
+
+        # Enter the synthetic async client context.
+        async def __aenter__(self) -> "Client":
+            return self
+
+        # Exit the synthetic async client context.
+        async def __aexit__(self, *args: object) -> None:
+            del args
+
+        # Retain the exact body sent by the adapter.
+        async def post(self, *args: object, **kwargs: object) -> Response:
+            del args
+            captured.update(kwargs)
+            return Response()
+
+    return Client
+
+
+# Verify Gemini hashes exact transmitted and returned payload bytes.
+@pytest.mark.asyncio
+async def test_gemini_hashes_exact_payloads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    raw = json.dumps(
+        {
+            "fields": [
+                {
+                    "field_name": "vehicle_age",
+                    "value": 2,
+                    "source_locator": "page:1",
+                    "confidence": 1.0,
+                }
+            ]
+        },
+        separators=(",", ":"),
+    )
+    captured: dict[str, object] = {}
+    body = {
+        "candidates": [{"content": {"parts": [{"text": raw}]}}],
+        "usageMetadata": {},
+    }
+    monkeypatch.setattr(
+        "underwriteflow.providers.gemini.httpx.AsyncClient",
+        successful_client(body, captured),
+    )
+
+    result = await GeminiProvider(
+        "synthetic-key", "synthetic-model"
+    ).extract(
+        ExtractionRequest(
+            document_name="synthetic.pdf",
+            content="vehicle_age: 2",
+            requested_fields=["vehicle_age"],
+        )
+    )
+
+    transmitted = captured["content"]
+    assert isinstance(transmitted, bytes)
+    assert result.request_hash == hashlib.sha256(transmitted).hexdigest()
+    assert result.result_hash == hashlib.sha256(raw.encode()).hexdigest()
+
+
+# Verify Ollama hashes exact transmitted and returned payload bytes.
+@pytest.mark.asyncio
+async def test_ollama_hashes_exact_payloads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    raw = "{\"fields\": []}"
+    captured: dict[str, object] = {}
+    body = {"message": {"content": raw}}
+    monkeypatch.setattr(
+        "underwriteflow.providers.ollama.httpx.AsyncClient",
+        successful_client(body, captured),
+    )
+
+    result = await OllamaProvider(
+        "http://ollama:11434", "synthetic-model"
+    ).extract(
+        ExtractionRequest(
+            document_name="synthetic.pdf",
+            content="synthetic",
+            requested_fields=[],
+        )
+    )
+
+    transmitted = captured["content"]
+    assert isinstance(transmitted, bytes)
+    assert result.request_hash == hashlib.sha256(transmitted).hexdigest()
+    assert result.result_hash == hashlib.sha256(raw.encode()).hexdigest()
 
 
 # Verify reference material is sent as background data, never as instructions.

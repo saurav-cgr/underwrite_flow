@@ -11,9 +11,10 @@ from underwriteflow.providers.service import (
     ProviderError,
     TransientProviderError,
     build_messages,
-    canonical_request_hash,
     is_transient_status,
     parse_result,
+    provider_payload_bytes,
+    provider_payload_hash,
 )
 
 
@@ -46,16 +47,19 @@ class OllamaProvider:
 
     # Extract fields through Ollama with JSON response enforcement.
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:
+        payload = {
+            "model": self.model,
+            "messages": build_messages(request),
+            "format": "json",
+            "stream": False,
+        }
+        request_payload = provider_payload_bytes(payload)
         try:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
                 response = await client.post(
                     f"{self.base_url}/api/chat",
-                    json={
-                        "model": self.model,
-                        "messages": build_messages(request),
-                        "format": "json",
-                        "stream": False,
-                    },
+                    content=request_payload,
+                    headers={"Content-Type": "application/json"},
                 )
                 response.raise_for_status()
                 body = response.json()
@@ -74,5 +78,6 @@ class OllamaProvider:
             "ollama",
             request.field_specifications,
             usage,
-            request_hash=canonical_request_hash(request),
+            request_hash=provider_payload_hash(request_payload),
+            result_hash=provider_payload_hash(raw),
         )
