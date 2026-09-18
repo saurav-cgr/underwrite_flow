@@ -6,7 +6,12 @@ from uuid import UUID
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.audit.events import build_audit_event, version_details
+from underwriteflow.audit.events import (
+    build_audit_event,
+    provider_activity,
+    supersedes_details,
+    version_details,
+)
 from underwriteflow.persistence.models import (
     Case,
     Document,
@@ -17,8 +22,12 @@ from underwriteflow.persistence.models import (
     RulebookVersion,
     Validation,
 )
+from underwriteflow.persistence.repositories import AuditRepository
 
 WORKFLOW_VERSION = "evidence-v1"
+
+# Event types that one processing cycle replaces when it starts again.
+SUBMISSION_EVENT_TYPES = ("case_submitted", "case_resubmitted")
 
 
 # Remove the previous cycle's derived evidence before a new run.
@@ -99,6 +108,12 @@ async def cycle_details(
             item.get("code") for item in product_result.get("risk_signals", [])
         ],
         "documents": document_identity(documents),
+        "provider_calls": provider_activity(
+            list(
+                evidence_result.get("ordered_results")
+                or evidence_result.get("results", [])
+            )
+        ),
         "failed_documents": [
             {
                 "document_id": failure.get("document_id"),
@@ -249,10 +264,13 @@ async def persist_case_evidence(
         extraction_failures,
         documents,
     )
+    superseded = await AuditRepository().latest_event_id(
+        session, SUBMISSION_EVENT_TYPES, case_id=case.id
+    )
     session.add(
         build_audit_event(
             event_type,
-            details,
+            {**details, **supersedes_details(superseded)},
             case_id=case.id,
             actor_user_id=actor_user_id,
         )

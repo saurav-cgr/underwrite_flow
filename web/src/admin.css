@@ -43,6 +43,34 @@
   display: block;
   text-transform: capitalize;
 }
+.audit-list li:target {
+  background: var(--primary-soft);
+}
+.audit-supersedes {
+  color: var(--primary);
+  display: inline-block;
+  font-size: .74rem;
+  margin-top: 4px;
+}
+.provider-calls {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+}
+.audit-list .provider-calls > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.provider-calls dt {
+  color: var(--muted);
+  font-size: .72rem;
+}
+.provider-calls dd {
+  color: var(--muted);
+  font-size: .74rem;
+  margin: 0;
+}
 .audit-time {
   color: var(--muted);
   display: block;

@@ -210,12 +210,28 @@ export interface QueueItem {
   missing_evidence_count: number;
 }
 
+export interface ProviderCall {
+  document_id: string | null;
+  document_code: string | null;
+  provider: string | null;
+  model: string | null;
+  attempts: number | null;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  usage_unavailable: boolean;
+  request_hash: string | null;
+  result_hash: string | null;
+  error_code: string | null;
+}
+
 export interface AuditEvent {
   id: string;
+  case_id: string | null;
   actor_user_id: string | null;
   event_type: string;
   details: Record<string, unknown>;
   occurred_at: string;
+  supersedes_event_id: string | null;
 }
 
 export type EvaluationSplit = "development" | "holdout";

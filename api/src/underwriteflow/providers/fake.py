@@ -5,11 +5,16 @@ from underwriteflow.providers.schemas import (
     ExtractionRequest,
     ExtractionResult,
 )
-from underwriteflow.providers.service import parse_result
+from underwriteflow.providers.service import (
+    canonical_request_hash,
+    parse_result,
+)
 
 
 class FakeProvider:
     """Extract simple synthetic key-value lines without a remote model."""
+
+    name = "fake"
 
     # Extract requested fields from deterministic synthetic lines.
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:
@@ -34,4 +39,5 @@ class FakeProvider:
             [field.model_dump(mode="json") for field in fields],
             "fake",
             request.field_specifications,
+            request_hash=canonical_request_hash(request),
         )

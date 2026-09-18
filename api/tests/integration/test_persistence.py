@@ -30,6 +30,31 @@ def test_version_pins_and_audit_events_are_immutable() -> None:
     connection.close()
 
 
+# Prove an append-only audit row also survives a deletion attempt.
+def test_audit_event_rows_reject_deletion() -> None:
+    connection = psycopg.connect(DATABASE_URL)
+    cursor = connection.cursor()
+    cursor.execute("BEGIN")
+    cursor.execute(
+        "INSERT INTO audit_events (id, event_type, details) VALUES "
+        "('00000000-0000-0000-0000-000000000007', 'synthetic', '{}')"
+    )
+    cursor.execute("SAVEPOINT audit_removal")
+    with pytest.raises(psycopg.errors.RaiseException):
+        cursor.execute(
+            "DELETE FROM audit_events WHERE id = "
+            "'00000000-0000-0000-0000-000000000007'"
+        )
+    cursor.execute("ROLLBACK TO SAVEPOINT audit_removal")
+    cursor.execute(
+        "SELECT count(*) FROM audit_events WHERE id = "
+        "'00000000-0000-0000-0000-000000000007'"
+    )
+    assert cursor.fetchone()[0] == 1
+    connection.rollback()
+    connection.close()
+
+
 # Prove idempotency keys are scoped to one applicant, not globally unique.
 def test_case_idempotency_keys_are_applicant_scoped() -> None:
     connection = psycopg.connect(DATABASE_URL)

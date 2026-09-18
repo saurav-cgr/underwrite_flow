@@ -11,6 +11,7 @@ from underwriteflow.providers.service import (
     ProviderError,
     TransientProviderError,
     build_messages,
+    canonical_request_hash,
     is_transient_status,
     parse_result,
 )
@@ -34,6 +35,8 @@ def ollama_usage(model: str, body: dict) -> ProviderUsage:
 
 class OllamaProvider:
     """Call a local Ollama chat endpoint for structured extraction."""
+
+    name = "ollama"
 
     # Configure the local Ollama endpoint and model.
     def __init__(self, base_url: str, model: str, timeout_seconds: float = 30) -> None:
@@ -71,4 +74,5 @@ class OllamaProvider:
             "ollama",
             request.field_specifications,
             usage,
+            request_hash=canonical_request_hash(request),
         )

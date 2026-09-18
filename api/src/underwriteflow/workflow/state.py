@@ -1,6 +1,6 @@
 """Serializable state and stable result reducers for evidence processing."""
 
-from typing import Annotated, TypedDict
+from typing import Annotated, NotRequired, TypedDict
 
 from underwriteflow.workflow.reducers import append_product_results, append_results
 
@@ -24,6 +24,13 @@ class DocumentResult(TypedDict):
     fields: list[dict[str, object]]
     error_code: str | None
     attempts: int
+    provider: NotRequired[str]
+    model: NotRequired[str | None]
+    prompt_tokens: NotRequired[int | None]
+    completion_tokens: NotRequired[int | None]
+    usage_unavailable: NotRequired[bool]
+    request_hash: NotRequired[str]
+    result_hash: NotRequired[str]
 
 
 class EvidenceState(TypedDict, total=False):

@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.audit.events import build_audit_event
+from underwriteflow.audit.events import build_audit_event, supersedes_details
 from underwriteflow.auth.dependencies import (
     require_permission,
     require_underwriter,
@@ -27,6 +27,7 @@ from underwriteflow.persistence.models import (
     Submission,
     Validation,
 )
+from underwriteflow.persistence.repositories import AuditRepository
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.reviews.evidence import (
     FALLBACK_SPECIALIST_LABEL,
@@ -366,6 +367,9 @@ async def resume_review(
         override_reason=command_to_persist.reason,
     )
     session.add(review)
+    superseded = await AuditRepository().latest_event_id(
+        session, ("underwriter_reviewed",), case_id=case_id
+    )
     session.add(
         build_audit_event(
             "underwriter_reviewed",
@@ -378,6 +382,7 @@ async def resume_review(
                 "specialist_label": command_to_persist.specialist_label,
                 "status": result["review_status"],
                 "reason": command_to_persist.reason,
+                **supersedes_details(superseded),
             },
             case_id=case_id,
             actor_user_id=UUID(reviewer["sub"]),

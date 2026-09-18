@@ -182,19 +182,29 @@ def final_route_for(review: Review | None) -> str | None:
     return None
 
 
-# Return immutable audit events for an administrator without exposing raw payloads.
+# Return immutable audit events for an administrator without raw payloads.
 @audit_router.get("/cases/{case_id}", response_model=list[AuditEventResponse])
 async def list_audit_events(
     case_id: UUID,
+    event_type: str | None = Query(default=None, max_length=200),
+    limit: int | None = Query(default=None, ge=1, le=500),
     _: dict[str, str] = Depends(require_permission(Permission.AUDIT_READ)),
     session: AsyncSession = Depends(get_session),
 ) -> list[AuditEventResponse]:
-    events = await session.scalars(
+    statement = (
         select(AuditEvent)
         .where(AuditEvent.case_id == case_id)
         .order_by(AuditEvent.occurred_at.asc(), AuditEvent.id.asc())
     )
-    return [AuditEventResponse.model_validate(event, from_attributes=True) for event in events]
+    if event_type is not None:
+        statement = statement.where(AuditEvent.event_type == event_type)
+    if limit is not None:
+        statement = statement.limit(limit)
+    events = await session.scalars(statement)
+    return [
+        AuditEventResponse.model_validate(event, from_attributes=True)
+        for event in events
+    ]
 
 
 # Finalize one confirmed route exactly once with an atomic queue and audit handoff.

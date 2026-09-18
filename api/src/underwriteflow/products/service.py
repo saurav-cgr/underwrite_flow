@@ -15,7 +15,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.audit.events import build_audit_event, version_details
+from underwriteflow.audit.events import (
+    build_audit_event,
+    supersedes_details,
+    version_details,
+)
 from underwriteflow.persistence.models import (
     Product,
     ProductVersion,
@@ -228,11 +232,18 @@ class ProductService:
         target.activated_at = datetime.now(timezone.utc)
         target.activated_by_user_id = actor_user_id
         product.status = "active"
+        previous = await self.audit_repository.latest_event_id(
+            session, ("configuration_activated",), product_code=code
+        )
         self.audit_repository.append(
             session,
             build_audit_event(
                 "configuration_activated",
-                {"product_code": code, **version_details(target)},
+                {
+                    "product_code": code,
+                    **version_details(target),
+                    **supersedes_details(previous),
+                },
                 actor_user_id=actor_user_id,
             ),
         )

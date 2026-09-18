@@ -168,12 +168,44 @@ def canonical_result_hash(fields: list[dict[str, Any]]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+# Hash the exact request a provider received, so an audit keeps identity only.
+def canonical_request_hash(request: ExtractionRequest) -> str:
+    payload = json.dumps(
+        {
+            "document_name": request.document_name,
+            "content": request.content,
+            "reference_content": request.reference_content,
+            "requested_fields": sorted(request.requested_fields),
+            "field_specifications": sorted(
+                (
+                    specification.model_dump(mode="json")
+                    for specification in request.field_specifications
+                ),
+                key=lambda item: item["field_key"],
+            ),
+            "pages": [
+                {
+                    "page_number": page.page_number,
+                    "source_locator": page.source_locator,
+                    "text": page.text,
+                }
+                for page in request.pages
+            ],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
 # Validate provider JSON and assign the adapter-owned extraction method.
 def parse_result(
     payload: str | dict[str, Any] | list[dict[str, Any]],
     extraction_method: str,
     specifications: list[FieldSpecification] | None = None,
     usage: ProviderUsage | None = None,
+    request_hash: str = "",
 ) -> ExtractionResult:
     try:
         raw = json.loads(payload) if isinstance(payload, str) else payload
@@ -207,6 +239,7 @@ def parse_result(
         update={
             "fields": fields,
             "usage": usage or ProviderUsage(),
+            "request_hash": request_hash,
             "result_hash": canonical_result_hash(
                 [field.model_dump(mode="json") for field in fields]
             ),

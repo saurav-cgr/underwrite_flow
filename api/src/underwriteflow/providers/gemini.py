@@ -12,6 +12,7 @@ from underwriteflow.providers.service import (
     ProviderError,
     TransientProviderError,
     build_messages,
+    canonical_request_hash,
     is_transient_status,
     parse_result,
 )
@@ -35,6 +36,8 @@ def gemini_usage(model: str, metadata: dict) -> ProviderUsage:
 
 class GeminiProvider:
     """Call Gemini's structured JSON generation endpoint."""
+
+    name = "gemini"
 
     # Configure the Gemini endpoint without retaining request content.
     def __init__(self, api_key: str, model: str, timeout_seconds: float = 30) -> None:
@@ -80,4 +83,7 @@ class GeminiProvider:
             "gemini",
             request.field_specifications,
             usage,
+            # Only the redacted payload can reach an external provider, so
+            # the recorded request hash identifies the redacted content.
+            request_hash=canonical_request_hash(safe_request),
         )

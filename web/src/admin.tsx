@@ -6,7 +6,7 @@ import {
   listAudit,
   listQueue,
 } from "./api";
-import type { AuditEvent, QueueItem, Screen } from "./types";
+import type { AuditEvent, ProviderCall, QueueItem, Screen } from "./types";
 import {
   Badge,
   Button,
@@ -17,7 +17,91 @@ import {
 import { AccessAdministration } from "./access-admin";
 import { EvaluationPanel } from "./evaluation-panel";
 import { Icon } from "./icons";
-import { auditFacts } from "./ui-state";
+import { auditFacts, auditLabel } from "./ui-state";
+
+// Read the bounded provider calls one event recorded, if any.
+function providerCalls(event: AuditEvent): ProviderCall[] {
+  const value = event.details.provider_calls;
+  return Array.isArray(value) ? (value as ProviderCall[]) : [];
+}
+
+// Summarize one provider call without exposing any document content.
+function providerCallSummary(call: ProviderCall): string {
+  const parts = [call.provider ?? "unknown provider"];
+  if (call.model) parts.push(`model ${call.model}`);
+  const attempts = call.attempts ?? 0;
+  parts.push(attempts === 1 ? "1 attempt" : `${attempts} attempts`);
+  if (call.usage_unavailable) {
+    parts.push("usage unavailable");
+  } else {
+    parts.push(`${call.prompt_tokens ?? 0} prompt tokens`);
+    parts.push(`${call.completion_tokens ?? 0} completion tokens`);
+  }
+  if (call.error_code) parts.push(`failed: ${call.error_code}`);
+  return parts.join(" · ");
+}
+
+// Name the event a later event replaced, when the timeline still holds it.
+function supersededLabel(event: AuditEvent, events: AuditEvent[]): string {
+  const replaced = events.find(
+    (candidate) => candidate.id === event.supersedes_event_id,
+  );
+  return replaced ? auditLabel(replaced.event_type) : "an earlier event";
+}
+
+// Render one immutable audit event as an anchored chronology entry.
+function AuditEventItem({
+  event,
+  events,
+}: {
+  event: AuditEvent;
+  events: AuditEvent[];
+}) {
+  const calls = providerCalls(event);
+  return (
+    <li id={`event-${event.id}`}>
+      <span aria-hidden="true" className="audit-icon">
+        <Icon name="log" />
+      </span>
+      <div>
+        <strong>{auditLabel(event.event_type)}</strong>
+        <span className="audit-time">
+          {new Date(event.occurred_at).toLocaleString()}
+        </span>
+        {event.supersedes_event_id ? (
+          <a
+            className="audit-supersedes"
+            href={`#event-${event.supersedes_event_id}`}
+          >
+            {`Supersedes: ${supersededLabel(event, events)}`}
+          </a>
+        ) : null}
+        <dl className="audit-facts">
+          {auditFacts(event.details).map((fact) => (
+            <div key={fact.label}>
+              <dt>{fact.label}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+        {calls.length > 0 ? (
+          <dl className="provider-calls">
+            {calls.map((call) => (
+              <div key={`${call.document_id}-${call.document_code}`}>
+                <dt>{call.document_code ?? "document"}</dt>
+                <dd>{providerCallSummary(call)}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+        <details className="audit-raw">
+          <summary>Raw event payload</summary>
+          <code>{JSON.stringify(event.details, null, 2)}</code>
+        </details>
+      </div>
+    </li>
+  );
+}
 
 // Give administrators an inspectable queue and audit lookup workspace.
 export function AdminWorkspace({
@@ -150,31 +234,9 @@ export function AdminWorkspace({
               }
             />
           ) : (
-            <ol className="audit-list">
+            <ol className="audit-list" aria-label="Audit chronology">
               {events.map((event) => (
-                <li key={event.id}>
-                  <span aria-hidden="true" className="audit-icon">
-                    <Icon name="log" />
-                  </span>
-                  <div>
-                    <strong>{event.event_type.replaceAll("_", " ")}</strong>
-                    <span className="audit-time">
-                      {new Date(event.occurred_at).toLocaleString()}
-                    </span>
-                    <dl className="audit-facts">
-                      {auditFacts(event.details).map((fact) => (
-                        <div key={fact.label}>
-                          <dt>{fact.label}</dt>
-                          <dd>{fact.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                    <details className="audit-raw">
-                      <summary>Raw event payload</summary>
-                      <code>{JSON.stringify(event.details, null, 2)}</code>
-                    </details>
-                  </div>
-                </li>
+                <AuditEventItem key={event.id} event={event} events={events} />
               ))}
             </ol>
           )}

@@ -64,6 +64,7 @@ class ExtractionResult(BaseModel):
     warnings: list[str] = Field(default_factory=list, max_length=20)
     usage: ProviderUsage = Field(default_factory=ProviderUsage)
     result_hash: str = Field(default="", max_length=64)
+    request_hash: str = Field(default="", max_length=64)
 
 
 class LocalDocument(BaseModel):

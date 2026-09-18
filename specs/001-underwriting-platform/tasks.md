@@ -274,28 +274,28 @@ prove update/delete fail.
 
 ### Tests for User Story 5
 
-- [ ] T053 [P] [US5] Add failing audit hash, token usage, unavailable marker,
+- [X] T053 [P] [US5] Add failing audit hash, token usage, unavailable marker,
   supersession, and PII-leak tests in `api/tests/unit/test_audit_events.py`
-- [ ] T054 [P] [US5] Add failing reconstruction and database immutability tests
+- [X] T054 [P] [US5] Add failing reconstruction and database immutability tests
   in `api/tests/integration/test_audit_enrichment.py` and
   `api/tests/integration/test_persistence.py`
-- [ ] T055 [P] [US5] Add failing audit chronology UI tests in
+- [X] T055 [P] [US5] Add failing audit chronology UI tests in
   `web/src/admin.test.tsx`
 
 ### Implementation for User Story 5
 
-- [ ] T056 [US5] Append provider/model, attempts, token counts or unavailable,
+- [X] T056 [US5] Append provider/model, attempts, token counts or unavailable,
   redacted request hash, result hash, schema/rulebook versions, and evidence
   links through `api/src/underwriteflow/audit/events.py`
-- [ ] T057 [US5] Link automated verdicts, configuration changes, and human
+- [X] T057 [US5] Link automated verdicts, configuration changes, and human
   rationale to immutable events in
   `api/src/underwriteflow/cases/evidence_persistence.py`,
   `api/src/underwriteflow/products/service.py`, and
   `api/src/underwriteflow/reviews/router.py`
-- [ ] T058 [US5] Extend authorized audit filtering without mutation routes in
+- [X] T058 [US5] Extend authorized audit filtering without mutation routes in
   `api/src/underwriteflow/queues/router.py` and
   `api/src/underwriteflow/queues/schemas.py`
-- [ ] T059 [US5] Render safe immutable chronology and supersession links in
+- [X] T059 [US5] Render safe immutable chronology and supersession links in
   `web/src/admin.tsx`
 
 **Checkpoint**: US5 reconstructs every decision while exposing no raw prompt,

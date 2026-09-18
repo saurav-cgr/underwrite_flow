@@ -9,6 +9,7 @@ from underwriteflow.providers.protocol import ExtractionProvider
 from underwriteflow.providers.schemas import (
     DocumentPage,
     ExtractionRequest,
+    ExtractionResult,
     FieldSpecification,
 )
 from underwriteflow.providers.service import (
@@ -36,6 +37,27 @@ def branch_failures(
         for result in evidence_result.get("results", [])
         if result.get("error_code")
     ]
+
+
+# Report one branch's provider metadata without copying document content.
+def provider_metadata(
+    provider: ExtractionProvider,
+    result: ExtractionResult | None,
+    attempts: int,
+    error_code: str | None,
+) -> dict[str, object]:
+    usage = result.usage if result is not None else None
+    return {
+        "attempts": attempts,
+        "provider": provider.name,
+        "model": usage.model if usage else None,
+        "prompt_tokens": usage.prompt_tokens if usage else None,
+        "completion_tokens": usage.completion_tokens if usage else None,
+        "usage_unavailable": usage.unavailable if usage else True,
+        "request_hash": result.request_hash if result else "",
+        "result_hash": result.result_hash if result else "",
+        "error_code": error_code,
+    }
 
 
 # Extract one document branch with retries limited to transient provider failures.
@@ -97,10 +119,12 @@ async def extract_document(
                                 for field in accepted
                             ]
                         ),
-                        "error_code": (
-                            "unrequested_field" if unrequested else None
+                        **provider_metadata(
+                            provider,
+                            result,
+                            attempts,
+                            "unrequested_field" if unrequested else None,
                         ),
-                        "attempts": attempts,
                     }
                 ]
             }
@@ -117,8 +141,9 @@ async def extract_document(
                     "document_code": document.get("document_code"),
                     "filename": document["filename"],
                     "fields": [],
-                    "error_code": error_code,
-                    "attempts": attempts,
+                    **provider_metadata(
+                        provider, None, attempts, error_code
+                    ),
                 }
             ]
         }

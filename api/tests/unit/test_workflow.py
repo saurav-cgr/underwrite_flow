@@ -12,6 +12,8 @@ from underwriteflow.workflow.graph import build_evidence_graph, thread_config
 class RecordingProvider:
     """Deterministic provider that records branch calls for graph tests."""
 
+    name = "recording"
+
     # Configure synthetic failures and concurrency counters for a test run.
     def __init__(self, failures: set[str] | None = None, transient_once: str | None = None) -> None:
         self.failures = failures or set()
@@ -51,6 +53,8 @@ class RecordingProvider:
 # Return the same field value for every document so nothing conflicts.
 class AgreeingProvider:
     """Deterministic provider returning one shared value for each field."""
+
+    name = "agreeing"
 
     # Return one synthetic field with a value every document agrees on.
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:

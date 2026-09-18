@@ -36,6 +36,11 @@ class FakeSession:
     async def commit(self) -> None:
         return None
 
+    # Report that no earlier audit event exists in the fake transaction.
+    async def scalar(self, statement: object) -> None:
+        del statement
+        return None
+
 
 class ConflictSession(FakeSession):
     """Represent a commit that loses the concurrent activation race."""

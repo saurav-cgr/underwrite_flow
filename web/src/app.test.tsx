@@ -117,10 +117,12 @@ const REVIEW_ITEM: QueueItem = {
 
 const AUDIT_EVENT: AuditEvent = {
   id: "audit-id",
+  case_id: "case-id",
   actor_user_id: "administrator-id",
   event_type: "case_created",
   details: { status: "new" },
   occurred_at: "2026-09-16T08:00:00Z",
+  supersedes_event_id: null,
 };
 
 // Sign in as the demo applicant through the rendered role entry screen.
@@ -201,7 +203,7 @@ describe("administrator queue inspection", () => {
         REVIEW_ITEM.case_id,
       ),
     );
-    expect(await screen.findByText("case created")).toBeTruthy();
+    expect(await screen.findByText("Case created")).toBeTruthy();
   });
 });
 
