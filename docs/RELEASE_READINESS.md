@@ -285,3 +285,110 @@ Ordered by the risk each poses to a real deployment.
   inserts, and no code path updates or deletes an `AuditEvent`.
 - No real personal, medical, financial, vehicle, or insurer data is present
   anywhere in the repository.
+
+## Amendment, 18 September 2026 — governed platform acceptance run
+
+**Branch state:** `phase2`, one commit ahead of `origin/phase2`, with this
+phase's changes uncommitted when the run below was taken.
+**Verdict:** unchanged. The governed platform is demonstrable end to end on
+synthetic data. It is **not** pilot-ready or PRD-complete.
+
+| Requirement | Result |
+| --- | --- |
+| API tests | 343 passed, 0 failed |
+| API contract tests | Satisfied — 25 of those, across 5 files |
+| Web tests | 141 passed across 16 files |
+| Production web build | Passed; 267.33 kB JS (80.43 kB gzip) |
+| Migrations | Single head `07`; linear from `<base>` through 8 |
+| Migration upgrade and current | At `head`, no pending upgrade |
+| Deterministic smoke path | Passed |
+| Ten-case synthetic load probe | Passed; 10 cases, 2 of 3 branches |
+| Staged-file secret scan | Clean |
+| Synthetic-data compliance | Clean |
+| Line-length rule | 506 pre-existing over-80 lines, 0 added here |
+| File-size rule | 3 pre-existing files at or over 400 lines |
+
+### Quickstart scenario results
+
+| # | Scenario | Result |
+| --- | --- | --- |
+| 1 | Deterministic baseline | Passed, coverage unmeasured |
+| 2 | Migration validation | Passed |
+| 3 | Authentication and dynamic RBAC | Passed as automated equivalent |
+| 4 | Configuration validation | Partial — check set differs |
+| 5 | Evidence and reconciliation | Partial — check set differs |
+| 6 | Provider boundary | Fake passed, Ollama and Gemini not run |
+| 7 | Human review and audit | Passed |
+| 8 | Pilot-scale probe | Partial — ten-case bound only |
+
+Detail behind the table:
+
+- **Scenario 1** — `make test-api` 343 passed, `make test-web` 141 passed, and
+  the production build is clean. Every default test used the fake provider and
+  no test needed host Python, Node, Ollama, Gemini, or LangSmith. Neither
+  `coverage` nor `pytest-cov` is installed, so the quickstart's "100% statement
+  and branch coverage" target for the pure reconciliation functions is
+  **unverified**. The behaviour it would measure is covered by
+  `api/tests/unit/test_reconciliation.py`, which exercises all three kinds, all
+  three statuses, missing inputs, normalization, leap-day handling, and
+  ordering.
+- **Scenario 2** — one head, `07`, linear from `<base>` through eight
+  revisions; `01_initial.py` is unchanged. The append-only trigger now has a
+  delete test next to its update test in
+  `api/tests/integration/test_persistence.py`.
+- **Scenario 3** — executed as the automated equivalent of the eight listed
+  steps, across `api/tests/contract/test_auth_rbac_contract.py`,
+  `api/tests/integration/test_dynamic_authorization.py`, and
+  `api/tests/integration/test_user_role_management.py`. The browser journey was
+  not re-run by hand in this pass.
+- **Scenarios 4 and 5** — **divergence.** The shipped motor configuration
+  declares two checks: `motor_ncb_match` (`ncb_match`) and
+  `motor_renewal_lapse` (`policy_lapse`). The quickstart names a third,
+  `asset_match`, over engine, chassis, and registration identifiers, and its
+  expected-results table lists an asset engine row and an asset chassis row.
+  The `asset_match` kind is implemented, validated at activation, and covered
+  by `api/tests/unit/test_reconciliation.py` and by the synthetic version in
+  `api/tests/integration/test_product_activation.py`, but no shipped demo
+  product activates it. The quickstart text, not the code, is out of date.
+- **Scenario 6** — `make smoke` passed. Ollama and live Gemini were not run:
+  both are opt-in and neither is deterministic acceptance. The audit
+  enrichment this scenario expects — provider, model, attempts, request and
+  result hashes, and token usage or the unavailable marker — is now recorded
+  and asserted by `api/tests/integration/test_audit_enrichment.py`.
+- **Scenario 7** — passed across `test_review_contract.py`,
+  `test_review_workflow.py`, `test_flagged_override.py`, and
+  `test_audit_enrichment.py`, including the scope denial, the missing-rationale
+  rejection, exactly-once completion, and supersession links.
+- **Scenario 8** — a bounded ten-case probe was added
+  (`scripts/pilot_load_probe.py`, `make probe`). It processed ten synthetic
+  motor cases with the fake provider, kept every case at two provider calls
+  against the three-branch bound, and reported `expedited` for all ten. The
+  100-case daily sample, OCR seconds per page, provider latency and maximum
+  concurrent calls, PostgreSQL pool use, stored and uploaded bytes per case,
+  and queue-query p95 are **not measured**. The probe is a bounded local check,
+  not a load generator, and those figures need a benchmark harness that does
+  not exist. Resume after restart is covered separately by
+  `test_checkpoint_audit_separation.py` and `test_workflow_checkpoint.py`.
+
+### New findings
+
+15. **The quickstart's reconciliation scenarios outrun the shipped demo
+    configuration.** See scenarios 4 and 5. Either the quickstart or the motor
+    configuration must change, and changing configuration needs approval.
+16. **Branch coverage for the reconciliation module is unverified** because no
+    coverage tool is installed. Adding one is a new test dependency and needs
+    approval.
+17. **Three files remain at or over the 400-line cap**, all predating this
+    work: `web/src/access-admin.tsx` (465),
+    `api/tests/unit/test_triage_workflow.py` (452), and
+    `web/src/review.css` (447). `api/src/underwriteflow/cases/submission.py`
+    crossed the cap during this work and was split to 351 lines, with local
+    document reading moved to
+    `api/src/underwriteflow/cases/local_reading.py`.
+    `web/src/product-configuration.tsx`, recorded at 396, is unchanged.
+18. **Line-length debt is larger than previously recorded.** 506 lines exceed
+    80 columns across hand-written tracked files, including `docs/PRD.md` (99)
+    and `docs/IMPLEMENTATION_PLAN.md` (90). No line added by this work exceeds
+    the limit.
+19. **The pilot probe reuses ten deterministic cases.** A repeated run measures
+    idempotent re-processing rather than fresh throughput, by design.

@@ -98,3 +98,90 @@ underwriter can confirm or override that recommendation. A decision that routes
 a case to specialist must name a label from the case's pinned configuration; a
 missing or unknown label is refused, and a `manual` outcome resolves to
 `specialist` rather than becoming a fourth route.
+
+## Dynamic authorization
+
+Authorization is database-backed, not hard-coded. Roles own permission sets,
+users hold exactly one role in this MVP, and every secured route depends on a
+resolved scope such as `cases:override`, `schemas:edit`, `review:write`, or
+`audit:read`. Access tokens are issued with an issuer and audience and a short
+TTL; refresh credentials are stored as digests, rotate on every use, and record
+revocation and replacement links. A claim carried by a token never widens
+access on its own: the current role and scope set are read per request, so a
+disabled user or a re-assigned role takes effect immediately. A change that
+would leave no active holder of `users:manage` is refused.
+
+## Configured evidence reconciliation
+
+Reconciliation checks are configuration, not code. Each check is declared in
+the pinned product version as one of `ncb_match`, `asset_match`, or
+`policy_lapse`, names the application field and the document code it reads, and
+is validated at import and activation so a check cannot reference a field or
+document that does not exist. The checks run as a pure step after the document
+fan-out and join: no database, provider, file, log, audit, or routing work.
+Results are ordered deterministically by check code, comparison field key, and
+document id plus locator, and each result is exactly `CLEARED`,
+`FLAGGED_DISCREPANCY`, or `MISSING_EVIDENCE`.
+
+A flagged discrepancy is a deterministic specialist signal and is recorded with
+its provenance. Missing document evidence keeps the case in the needs
+information queue, which is a queue state and never a fourth triage route. A
+check whose only missing input is an optional claim the applicant never made
+does not apply, so it cannot decide the queue state on its own.
+
+## Audit trail and privacy
+
+Every business decision appends an immutable event: `audit_events` carries a
+database trigger that rejects both update and delete. Events record identity,
+pinned product and rulebook version identifiers with their content hashes,
+document identifiers and content hashes, evidence provenance as field names
+with document id and locator, the automated recommendation, configured
+validation codes, risk signal codes, and the recorded human rationale. Each
+processing cycle records one entry per document branch with the provider name,
+the model, the attempt count, prompt and completion token counts or an explicit
+unavailable marker, the hash of the request the adapter actually sent, and the
+canonical hash of the validated result. A later cycle, review decision, or
+configuration activation records the identifier of the event it supersedes, so
+a reader can follow the effective decision instead of only the newest one.
+
+What never reaches an event is as important as what does. The builder drops
+secret-shaped keys (`password`, `token`, `credential`, `authorization`,
+`api_key`, `session`, and similar) at every nesting level, drops any key that
+would carry raw prompt or document text (`content`, `text`, `prompt`, `pages`,
+`message`, and similar), bounds every free-text value, collection, and nesting
+depth, and coerces non-finite numbers. Token counts are the one deliberate
+exception to the token-shaped rule and are named explicitly. Extracted values
+are represented by locators and hashes rather than copied text. On the external
+Gemini path the recorded request hash is computed after the configured Aadhaar,
+PAN, email, and phone redaction, so it identifies the redacted payload that
+actually left the process.
+
+Audit history is served read-only, is scoped by `audit:read`, and supports an
+event-type filter and a bounded limit. No mutation route exists on the audit
+surface: the only supported removal path is the operator cleanup used by
+integration tests, which disables the append-only guard for that transaction.
+
+## Known limits
+
+- Local-first and single-node: one FastAPI service, one web application, one
+  PostgreSQL instance, and one upload volume. There is no queue broker,
+  scheduler, or object storage, and the probe timings are local synthetic
+  numbers rather than a capacity claim.
+- Synthetic only: every applicant, document, product rule, specialist label,
+  and evaluation label is fictional demonstration data. No real insurer,
+  applicant, medical, financial, or vehicle data is present, and the routing
+  rules are not genuine Indian underwriting guidance.
+- Providers are optional: Gemini is the configured default and Ollama is behind
+  a Compose profile, but both are disabled in normal verification. Only the
+  deterministic fake provider participates in tests, smoke, and the probe, so
+  provider latency and quota behavior are untested here.
+- One role per user, one active version per product, and one recommendation per
+  case. Multi-role assignment, version rollback, and concurrent active
+  processing of a single case are out of scope.
+- Document intake covers digital PDF text plus local OCR for scanned PDF, JPEG,
+  and PNG at demonstration scale. Upload count, size, and page bounds are
+  configuration constants, not tuned production limits.
+- Tracing stays off by default and is development-only, redacted, and
+  synthetic-data-only when enabled. No retention or deletion policy is
+  implemented beyond the append-only guarantee, and the development reset
+  procedure deletes project volumes.

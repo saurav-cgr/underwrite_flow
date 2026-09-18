@@ -308,17 +308,17 @@ file, credential, Aadhaar, PAN, or contact value.
 **Purpose**: Prove security, accessibility, deterministic behavior, scale, and
 documentation across completed stories.
 
-- [ ] T060 [P] Add a bounded ten-case synthetic load probe in
+- [X] T060 [P] Add a bounded ten-case synthetic load probe in
   `scripts/pilot_load_probe.py`
-- [ ] T061 [P] Update architecture, privacy, RBAC, reconciliation, and known
+- [X] T061 [P] Update architecture, privacy, RBAC, reconciliation, and known
   limits in `docs/ARCHITECTURE.md` and `docs/DEMO.md`
-- [ ] T062 Run full API, migration, and deterministic smoke verification for
+- [X] T062 Run full API, migration, and deterministic smoke verification for
   `api/tests/`, `api/alembic/`, and `scripts/smoke.py`
-- [ ] T063 Run full web tests, accessibility checks, and production build for
+- [X] T063 Run full web tests, accessibility checks, and production build for
   `web/src/` and `web/package.json`
-- [ ] T064 Run secret, synthetic-data, line-length, file-size, and diff checks
+- [X] T064 Run secret, synthetic-data, line-length, file-size, and diff checks
   across `.env.example`, `api/`, `web/`, `product-config/`, and `scripts/`
-- [ ] T065 Execute every scenario in
+- [X] T065 Execute every scenario in
   `specs/001-underwriting-platform/quickstart.md` and record actual results in
   `docs/RELEASE_READINESS.md`
 
