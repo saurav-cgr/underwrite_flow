@@ -29,8 +29,20 @@ def evidence(
 
 
 # Build one configured check as the pinned configuration would supply it.
-def check(code: str, kind: str, inputs: dict[str, str]) -> dict[str, object]:
-    return {"code": code, "kind": kind, "inputs": inputs}
+def check(
+    code: str,
+    kind: str,
+    inputs: dict[str, str],
+    parameters: dict[str, object] | None = None,
+) -> dict[str, object]:
+    configured: dict[str, object] = {
+        "code": code,
+        "kind": kind,
+        "inputs": inputs,
+    }
+    if parameters is not None:
+        configured["parameters"] = parameters
+    return configured
 
 
 # Reconcile one synthetic case with the pinned rulebook version.
@@ -52,7 +64,6 @@ NCB_CHECK = check(
     "ncb_match",
     {"application": "claimed_ncb_percent", "previous_policy": "ncb_percent"},
 )
-
 
 # Verify a claimed NCB that equals the policy evidence is cleared.
 def test_ncb_match_is_cleared_when_values_agree() -> None:

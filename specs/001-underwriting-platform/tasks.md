@@ -421,7 +421,7 @@ All selected stories -> Phase 8 Polish
   in `api/src/underwriteflow/auth/dependencies.py`, protected routers, and
   `api/tests/integration/test_dynamic_authorization.py` per FR-008 and US1/AC3
   (missing)
-- [ ] T070 CRITICAL add pinned NCB tier progression, claims adjustment, and
+- [X] T070 CRITICAL add pinned NCB tier progression, claims adjustment, and
   renewal
   boundary parameters to `api/src/underwriteflow/products/schemas.py`,
   `api/src/underwriteflow/workflow/reconciliation.py`, all three files under

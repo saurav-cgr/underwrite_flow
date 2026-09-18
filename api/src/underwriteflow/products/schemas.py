@@ -122,6 +122,37 @@ class RoutingRule(BaseModel):
     specialist_label: str | None = None
 
 
+class NcbParameters(BaseModel):
+    """Pinned fictional NCB progression and claims adjustment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tiers: list[int] = Field(min_length=2, max_length=20)
+    claim_count_field: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
+    claims_reset_threshold: int = Field(ge=1)
+    claims_reset_tier: int = Field(ge=0, le=100)
+
+    # Require unique ascending percentage tiers and a reachable reset tier.
+    @model_validator(mode="after")
+    def validate_progression(self) -> "NcbParameters":
+        if self.tiers != sorted(set(self.tiers)):
+            raise ValueError("NCB tiers must be strictly increasing")
+        if any(tier < 0 or tier > 100 for tier in self.tiers):
+            raise ValueError("NCB tiers must be percentages from 0 to 100")
+        if self.claims_reset_tier not in self.tiers:
+            raise ValueError("claims reset tier must be a configured NCB tier")
+        return self
+
+
+class RenewalParameters(BaseModel):
+    """Pinned fictional policy-renewal boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    maximum_gap_days: int = Field(ge=0, le=3660)
+    boundary: Literal["inclusive", "exclusive"]
+
+
 class ReconciliationCheck(BaseModel):
     """One configured pure reconciliation check.
 
@@ -135,6 +166,20 @@ class ReconciliationCheck(BaseModel):
     code: str = Field(min_length=1, max_length=100)
     kind: ReconciliationKind
     inputs: dict[str, str] = Field(min_length=1)
+    parameters: NcbParameters | RenewalParameters | None = None
+
+    # Match optional pinned parameters to the implemented check kind.
+    @model_validator(mode="after")
+    def validate_parameters(self) -> "ReconciliationCheck":
+        if self.parameters is None:
+            return self
+        expected = {
+            "ncb_match": NcbParameters,
+            "policy_lapse": RenewalParameters,
+        }.get(self.kind)
+        if expected is None or not isinstance(self.parameters, expected):
+            raise ValueError("parameters do not match reconciliation kind")
+        return self
 
 
 class ProductConfiguration(BaseModel):
@@ -222,6 +267,20 @@ class ProductConfiguration(BaseModel):
             if claimed is not None and claimed not in field_keys:
                 raise ValueError(
                     f"{where}: application field {claimed!r} is not declared"
+                )
+            if isinstance(check.parameters, NcbParameters) and (
+                claimed is None
+                or len(set(check.inputs) - {APPLICATION_SOURCE}) != 1
+            ):
+                raise ValueError(
+                    f"{where}: parameterized NCB requires one document source"
+                )
+            if (
+                isinstance(check.parameters, NcbParameters)
+                and check.parameters.claim_count_field not in field_keys
+            ):
+                raise ValueError(
+                    f"{where}: claim count field is not declared"
                 )
 
 

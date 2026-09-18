@@ -26,7 +26,7 @@ from underwriteflow.workflow.nodes import MAX_DOCUMENT_BRANCHES
 CASE_COUNT = 10
 
 # Deterministic idempotency keys, so repeated runs reuse the same ten cases.
-PROBE_KEY = "synthetic-pilot-probe-v1"
+PROBE_KEY = "synthetic-pilot-probe-v2"
 
 # Wall-clock budget for the whole probe, as a bound rather than a benchmark.
 BUDGET_SECONDS = 300.0
@@ -39,6 +39,7 @@ PROBE_PAYLOAD = {
     "vehicle_age": 4,
     "vehicle_use": "personal",
     "prior_claims": 0,
+    "claimed_ncb_percent": 20,
 }
 
 # Documents the fictional motor configuration requires for submission.
@@ -145,7 +146,7 @@ def run_probe() -> None:
         activation = client.post(
             "/api/v1/products/motor-private-car/activate",
             headers=login(client, *ADMINISTRATOR),
-            json={"version": "v1"},
+            json={"version": "v2"},
         )
         assert activation.status_code == 200, activation.text
         applicant = login(client, *APPLICANT)

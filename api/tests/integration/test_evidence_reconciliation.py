@@ -48,7 +48,11 @@ def activate(client: TestClient, version: str) -> None:
 
 
 # Create one applicant-owned motor case against the active version.
-def create_case(client: TestClient, headers: dict[str, str]) -> str:
+def create_case(
+    client: TestClient,
+    headers: dict[str, str],
+    claimed_ncb_percent: int,
+) -> str:
     created = client.post(
         "/api/v1/cases",
         json={
@@ -58,6 +62,7 @@ def create_case(client: TestClient, headers: dict[str, str]) -> str:
                 "vehicle_age": 2,
                 "vehicle_use": "personal",
                 "prior_claims": 2,
+                "claimed_ncb_percent": claimed_ncb_percent,
                 "policy_start_date": "2026-01-15",
             },
             "document_codes": DOCUMENT_CODES,
@@ -70,7 +75,7 @@ def create_case(client: TestClient, headers: dict[str, str]) -> str:
 
 # Build the synthetic uploads whose evidence either agrees or disagrees.
 def uploads(
-    ncb_percent: str, check_fields: bool = True
+    claimed_ncb_percent: int, check_fields: bool = True
 ) -> list[tuple]:
     items = [
         (
@@ -81,12 +86,13 @@ def uploads(
     lines = [
         *APPLICATION_FIELDS,
         "prior_claims: 2",
+        f"claimed_ncb_percent: {claimed_ncb_percent}",
         "policy_start_date: 2026-01-15",
     ]
     if check_fields:
         lines.extend(
             [
-                f"ncb_percent: {ncb_percent}",
+                "ncb_percent: 20",
                 "policy_expiry: 2026-01-05",
             ]
         )
@@ -140,15 +146,18 @@ def read_case_checks(
 
 # Run one synthetic case against the check-bearing motor version.
 def run_case(
-    ncb_percent: str, check_fields: bool = True
+    claimed_ncb_percent: int, check_fields: bool = True
 ) -> tuple[str, dict[str, object]]:
     settings = Settings(generation_provider="fake")
     with TestClient(create_app(settings)) as client:
-        activate(client, "v1")
+        activate(client, "v2")
         headers = login(client, APPLICANT)
-        case_id = create_case(client, headers)
+        case_id = create_case(client, headers, claimed_ncb_percent)
         response = submit_case(
-            client, headers, case_id, uploads(ncb_percent, check_fields)
+            client,
+            headers,
+            case_id,
+            uploads(claimed_ncb_percent, check_fields),
         )
     return case_id, response
 
@@ -157,7 +166,7 @@ def run_case(
 def test_agreeing_evidence_clears_all_motor_checks() -> None:
     case_id = ""
     try:
-        case_id, response = run_case("2")
+        case_id, response = run_case(0)
         validations, signals = read_case_checks(case_id)
 
         assert validations == [
@@ -177,14 +186,14 @@ def test_agreeing_evidence_clears_all_motor_checks() -> None:
 def test_disagreeing_evidence_flags_the_case() -> None:
     case_id = ""
     try:
-        case_id, response = run_case("0")
+        case_id, response = run_case(20)
         validations, signals = read_case_checks(case_id)
 
         assert validations == [
             ("reconciliation:motor_ncb_match", "flagged_discrepancy"),
             ("reconciliation:motor_renewal_lapse", "cleared"),
         ]
-        assert signals == ["reconciliation_ncb_mismatch"]
+        assert signals == ["reconciliation_ncb_progression_mismatch"]
         assert response["recommendation"]["route"] == "specialist"
     finally:
         if case_id:
@@ -197,7 +206,7 @@ def test_disagreeing_evidence_flags_the_case() -> None:
 def test_absent_evidence_queues_the_case() -> None:
     case_id = ""
     try:
-        case_id, response = run_case("2", check_fields=False)
+        case_id, response = run_case(0, check_fields=False)
         validations, signals = read_case_checks(case_id)
 
         assert validations == [

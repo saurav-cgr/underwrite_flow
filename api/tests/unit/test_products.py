@@ -285,7 +285,9 @@ def test_product_validation_is_administrator_only() -> None:
 
     # Supply a synthetic applicant identity to the authorization dependency.
     def applicant_session() -> dict[str, object]:
-        return session_for("applicant")
+        return session_for(
+            "applicant", "00000000-0000-0000-0000-000000000101"
+        )
 
     app.dependency_overrides[get_current_session] = applicant_session
     response = TestClient(app).post(

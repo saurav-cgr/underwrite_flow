@@ -37,6 +37,11 @@ fields:
     type: integer
     required: true
     help_text: Enter the fictional vehicle age in years.
+  - key: prior_claims
+    label: Prior claims
+    type: integer
+    required: true
+    help_text: Enter the fictional prior claim count.
 documents:
   - code: previous_policy
     title: Synthetic previous policy
@@ -66,6 +71,27 @@ VALID_RECONCILIATIONS = """
       claims_history: claim_count
 """
 
+PARAMETERIZED_RECONCILIATIONS = """
+  - code: motor_ncb_match
+    kind: ncb_match
+    inputs:
+      application: claimed_ncb_percent
+      previous_policy: ncb_percent
+    parameters:
+      tiers: [0, 20, 25, 35, 45, 50]
+      claim_count_field: prior_claims
+      claims_reset_threshold: 1
+      claims_reset_tier: 0
+  - code: motor_renewal_lapse
+    kind: policy_lapse
+    inputs:
+      application: claimed_ncb_percent
+      previous_policy: policy_expiry_date
+    parameters:
+      maximum_gap_days: 30
+      boundary: inclusive
+"""
+
 
 # Load one fictional configuration carrying the supplied reconciliation block.
 def load_reconciliations(reconciliations: str) -> ProductConfiguration:
@@ -85,6 +111,53 @@ def test_reconciliation_check_is_accepted() -> None:
     assert configuration.reconciliations[0].inputs["previous_policy"] == (
         "ncb_percent"
     )
+
+
+# Verify NCB and renewal parameters survive validated configuration parsing.
+def test_reconciliation_parameters_are_pinned() -> None:
+    configuration = load_reconciliations(PARAMETERIZED_RECONCILIATIONS)
+
+    ncb, renewal = configuration.reconciliations
+    assert ncb.parameters.tiers == [0, 20, 25, 35, 45, 50]
+    assert ncb.parameters.claim_count_field == "prior_claims"
+    assert renewal.parameters.maximum_gap_days == 30
+    assert renewal.parameters.boundary == "inclusive"
+    preview = ProductService().preview(configuration)
+    assert preview["reconciliations"][0]["parameters"]["tiers"] == [
+        0,
+        20,
+        25,
+        35,
+        45,
+        50,
+    ]
+
+
+# Verify invalid NCB progression cannot be activated.
+def test_ncb_tiers_must_be_strictly_increasing() -> None:
+    malformed = PARAMETERIZED_RECONCILIATIONS.replace(
+        "[0, 20, 25, 35, 45, 50]", "[0, 25, 20]"
+    )
+
+    with pytest.raises(Exception) as refused:
+        load_reconciliations(malformed)
+
+    assert "strictly increasing" in str(refused.value)
+
+
+# Verify parameterized NCB has one claim and one previous-policy source.
+def test_parameterized_ncb_requires_one_document_source() -> None:
+    malformed = PARAMETERIZED_RECONCILIATIONS.replace(
+        "      previous_policy: ncb_percent\n",
+        "      previous_policy: ncb_percent\n"
+        "      claims_history: claim_count\n",
+        1,
+    )
+
+    with pytest.raises(Exception) as refused:
+        load_reconciliations(malformed)
+
+    assert "one document source" in str(refused.value)
 
 
 # Verify a configuration without checks stays valid for earlier versions.

@@ -97,7 +97,11 @@ def load_configuration(text: str) -> ProductConfiguration:
 
 # Produce a stable JSON payload for persistence and hashing.
 def configuration_payload(configuration: ProductConfiguration) -> dict[str, Any]:
-    return configuration.model_dump(mode="json")
+    payload = configuration.model_dump(mode="json")
+    for check in payload["reconciliations"]:
+        if check.get("parameters") is None:
+            check.pop("parameters")
+    return payload
 
 
 # Hash normalized configuration content for immutable version identity.
@@ -130,11 +134,7 @@ class ProductService:
             "routing_rule_count": len(configuration.routing_rules),
             "reconciliation_count": len(configuration.reconciliations),
             "reconciliations": [
-                {
-                    "code": check.code,
-                    "kind": check.kind,
-                    "inputs": check.inputs,
-                }
+                check.model_dump(mode="json", exclude_none=True)
                 for check in configuration.reconciliations
             ],
             "specialist_labels": configuration.specialist_labels,

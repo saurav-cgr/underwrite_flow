@@ -5,10 +5,16 @@ performs no database access, provider call, file access, logging, audit write,
 or routing, so identical inputs always produce identical output.
 """
 
-import unicodedata
-from datetime import date
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from typing import Any
+
+from underwriteflow.workflow.reconciliation_values import (
+    normalized_identifier,
+    normalized_number,
+    parsed_date,
+    source_evidence,
+    value_comparison,
+)
 
 STATUS_CLEARED = "CLEARED"
 STATUS_FLAGGED = "FLAGGED_DISCREPANCY"
@@ -26,47 +32,6 @@ APPLICATION_SOURCE = "application"
 # the previous expiry counts as continuous cover. It is a demonstration
 # constant, never genuine Indian underwriting guidance.
 MAX_LAPSE_DAYS = 30
-
-# Characters ignored when identifier values are compared.
-IDENTIFIER_SEPARATORS = frozenset({" ", "-", "_", ".", ",", "/"})
-
-
-# Normalize one identifier for comparison, or report it as unusable.
-def normalized_identifier(value: Any) -> str | None:
-    if isinstance(value, bool) or not isinstance(value, (str, int)):
-        return None
-    folded = unicodedata.normalize("NFKC", str(value)).casefold()
-    cleaned = "".join(
-        character
-        for character in folded
-        if character not in IDENTIFIER_SEPARATORS
-    )
-    return cleaned or None
-
-
-# Normalize one numeric value, accepting a trailing percentage sign.
-def normalized_number(value: Any) -> Decimal | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return Decimal(str(value))
-    if not isinstance(value, str):
-        return None
-    try:
-        return Decimal(value.strip().removesuffix("%").strip())
-    except (InvalidOperation, ValueError):
-        return None
-
-
-# Parse one ISO calendar date, rejecting any other format.
-def parsed_date(value: Any) -> date | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        return date.fromisoformat(value.strip())
-    except ValueError:
-        return None
-
 
 # Report whether one supplied value can be compared at all.
 def is_present(value: Any) -> bool:
@@ -115,17 +80,6 @@ def resolve_inputs(
     return resolved, missing_inputs
 
 
-# Describe the evidence references one resolved source contributed.
-def source_evidence(source: dict[str, Any]) -> list[dict[str, str]]:
-    return [
-        {
-            "document_id": str(item.get("document_id")),
-            "source_locator": str(item.get("source_locator")),
-        }
-        for item in source.get("items", [])
-    ]
-
-
 # List every evidence reference once, ordered by document then locator.
 def unique_evidence(
     resolved: dict[str, dict[str, Any]],
@@ -141,40 +95,57 @@ def unique_evidence(
     ]
 
 
-# Build one value comparison for two resolved sources.
-def value_comparison(
-    left: dict[str, Any],
-    right: dict[str, Any],
-    normalize,
-    match_code: str,
-    mismatch_code: str,
-) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    matched = normalize(left["value"]) == normalize(right["value"])
-    comparison = {
-        "field_key": right["field_name"],
-        "left": left["value"],
-        "right": right["value"],
-        "matched": matched,
-        "evidence": source_evidence(right),
-        "explanation_code": match_code if matched else mismatch_code,
-    }
-    if matched:
-        return comparison, None
-    return comparison, {
-        "code": mismatch_code,
-        "field_key": right["field_name"],
-        "expected": left["value"],
-        "actual": right["value"],
-    }
-
-
 # Compare the claimed no-claim bonus with the previous policy evidence.
 def ncb_comparisons(
     resolved: dict[str, dict[str, Any]],
+    application: dict[str, Any],
+    parameters: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     claimed = resolved[APPLICATION_SOURCE]
     if normalized_number(claimed["value"]) is None:
         return [], []
+    if parameters:
+        claims = normalized_number(
+            application.get(str(parameters["claim_count_field"]))
+        )
+        prior = next(
+            item
+            for source, item in resolved.items()
+            if source != APPLICATION_SOURCE
+        )
+        prior_value = normalized_number(prior["value"])
+        if claims is None or claims < 0 or claims != claims.to_integral():
+            return [], []
+        tiers = [Decimal(str(tier)) for tier in parameters["tiers"]]
+        if prior_value not in tiers:
+            return [], []
+        threshold = Decimal(str(parameters["claims_reset_threshold"]))
+        expected = (
+            Decimal(str(parameters["claims_reset_tier"]))
+            if claims >= threshold
+            else tiers[min(tiers.index(prior_value) + 1, len(tiers) - 1)]
+        )
+        matched = normalized_number(claimed["value"]) == expected
+        expected_value = int(expected)
+        comparison = {
+            "field_key": claimed["field_name"],
+            "left": expected_value,
+            "right": claimed["value"],
+            "matched": matched,
+            "evidence": source_evidence(prior),
+            "explanation_code": (
+                "ncb_progression_matches"
+                if matched
+                else "ncb_progression_mismatch"
+            ),
+        }
+        discrepancy = None if matched else {
+            "code": "ncb_progression_mismatch",
+            "field_key": claimed["field_name"],
+            "expected": expected_value,
+            "actual": claimed["value"],
+        }
+        return [comparison], [discrepancy] if discrepancy else []
     comparisons: list[dict[str, Any]] = []
     discrepancies: list[dict[str, Any]] = []
     for source, item in resolved.items():
@@ -231,13 +202,19 @@ def identifier_comparisons(
 def lapse_comparison(
     claimed: dict[str, Any],
     expiry: dict[str, Any],
+    parameters: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     start = parsed_date(claimed["value"])
     previous = parsed_date(expiry["value"])
     if start is None or previous is None:
         return [], []
     gap_days = (start - previous).days
-    matched = 0 <= gap_days <= MAX_LAPSE_DAYS
+    maximum = int((parameters or {}).get("maximum_gap_days", MAX_LAPSE_DAYS))
+    boundary = (parameters or {}).get("boundary", "inclusive")
+    within_maximum = gap_days <= maximum
+    if boundary == "exclusive":
+        within_maximum = gap_days < maximum
+    matched = 0 <= gap_days and within_maximum
     comparison = {
         "field_key": expiry["field_name"],
         "left": claimed["value"],
@@ -254,7 +231,7 @@ def lapse_comparison(
         {
             "code": "policy_lapse_gap",
             "field_key": expiry["field_name"],
-            "expected": MAX_LAPSE_DAYS,
+            "expected": maximum,
             "actual": gap_days,
         }
     ]
@@ -272,6 +249,11 @@ def run_check(
         raise ValueError(f"unsupported reconciliation kind: {kind}")
     code = str(check.get("code"))
     resolved, missing_inputs = resolve_inputs(check, application, evidence)
+    parameters = check.get("parameters") or {}
+    if kind == "ncb_match" and parameters:
+        claim_field = str(parameters.get("claim_count_field"))
+        if not is_present(application.get(claim_field)):
+            missing_inputs.append(f"application.{claim_field}")
     if missing_inputs:
         return {
             "check_code": code,
@@ -290,10 +272,14 @@ def run_check(
     ]
     if kind == "policy_lapse" and document_sources:
         comparisons, discrepancies = lapse_comparison(
-            resolved[APPLICATION_SOURCE], resolved[document_sources[0]]
+            resolved[APPLICATION_SOURCE],
+            resolved[document_sources[0]],
+            parameters,
         )
     elif kind == "ncb_match" and APPLICATION_SOURCE in resolved:
-        comparisons, discrepancies = ncb_comparisons(resolved)
+        comparisons, discrepancies = ncb_comparisons(
+            resolved, application, parameters
+        )
     elif kind == "asset_match":
         comparisons, discrepancies = identifier_comparisons(kind, resolved)
     else:

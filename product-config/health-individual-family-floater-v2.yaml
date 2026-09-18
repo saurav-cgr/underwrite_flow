@@ -1,0 +1,81 @@
+product_code: health-individual-family-floater
+title: Fictional Individual and Family Floater Health
+family: health
+scope: Fictional India-focused demonstration only
+description: >-
+  Demonstration triage configuration for individual and family floater health.
+version: v2
+status: draft
+fields:
+  - key: member_count
+    label: Covered member count
+    type: integer
+    required: true
+    help_text: Enter the fictional number of covered members.
+    validation: {minimum: 1, maximum: 8}
+  - key: prior_hospitalization
+    label: Prior hospitalization
+    type: boolean
+    required: true
+    help_text: Indicate whether fictional prior hospitalization exists.
+  - key: continuity_months
+    label: Continuity months
+    type: integer
+    required: false
+    help_text: Enter fictional continuity months when applicable.
+    visible_when: {field: prior_hospitalization, equals: true}
+    validation: {minimum: 0}
+  - key: policy_start_date
+    label: Policy start date
+    type: date
+    required: false
+    help_text: Enter the fictional renewal start date.
+documents:
+  - code: identity_record
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: member_relationship_record
+    title: Synthetic member relationship record
+    requirement: conditional
+    condition: {field: member_count, operator: greater_than, value: 1}
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: hospitalization_record
+    title: Synthetic hospitalization record
+    requirement: conditional
+    condition:
+      field: prior_hospitalization
+      operator: equals
+      value: true
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: previous_policy
+    title: Synthetic previous policy
+    requirement: optional
+    accepted_types: [application/pdf, image/jpeg, image/png]
+routing_rules:
+  - code: prior_hospitalization_specialist
+    condition:
+      field: prior_hospitalization
+      operator: equals
+      value: true
+    route: specialist
+    specialist_label: health review
+  - code: large_floater_standard
+    condition: {field: member_count, operator: greater_than, value: 4}
+    route: standard
+# Fictional checks only. Every comparison stays in backend code.
+reconciliations:
+  - code: health_identity_match
+    kind: asset_match
+    inputs:
+      identity_record: holder_name
+      member_relationship_record: holder_name
+  - code: health_renewal_lapse
+    kind: policy_lapse
+    inputs:
+      application: policy_start_date
+      previous_policy: policy_expiry_date
+    parameters:
+      maximum_gap_days: 30
+      boundary: inclusive
+specialist_labels: [health review]
