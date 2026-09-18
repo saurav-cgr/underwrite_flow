@@ -16,7 +16,10 @@ depends_on = None
 
 # Mark task_path DDL already present in the fresh checkpoint table definition.
 def upgrade() -> None:
-    op.execute("INSERT INTO checkpoint_migrations (v) VALUES (9) ON CONFLICT DO NOTHING")
+    op.execute(
+        "INSERT INTO checkpoint_migrations (v) "
+        "VALUES (9) ON CONFLICT DO NOTHING"
+    )
 
 
 # Remove the marker only when rolling back this compatibility revision.

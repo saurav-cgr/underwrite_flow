@@ -19,7 +19,11 @@ from underwriteflow.providers.service import (
 )
 from underwriteflow.workflow.reconciliation import reconcile
 from underwriteflow.workflow.reducers import sort_results
-from underwriteflow.workflow.state import DocumentResult, DocumentWorkerState, EvidenceState
+from underwriteflow.workflow.state import (
+    DocumentResult,
+    DocumentWorkerState,
+    EvidenceState,
+)
 
 MAX_DOCUMENT_BRANCHES = 3
 
@@ -60,7 +64,7 @@ def provider_metadata(
     }
 
 
-# Extract one document branch with retries limited to transient provider failures.
+# Extract one document branch; retry only transient provider failures.
 async def extract_document(
     state: DocumentWorkerState,
     provider: ExtractionProvider,
@@ -246,7 +250,9 @@ def absent_requested_fields(
 # Reconcile successful fields sequentially after all document branches finish.
 def reconcile_evidence(state: EvidenceState) -> dict[str, object]:
     reconciled: list[dict[str, object]] = []
-    ordered_results = state.get("ordered_results") or sort_results(state.get("results", []))
+    ordered_results = state.get("ordered_results") or sort_results(
+        state.get("results", [])
+    )
     for result in ordered_results:
         for field in result["fields"]:
             reconciled.append(

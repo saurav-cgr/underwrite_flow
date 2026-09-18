@@ -344,7 +344,9 @@ function FactCardView({
           {fact.entries.map((entry, index) => (
             <div key={index}>
               <dt>
-                {fact.entries.length > 1 ? `Extracted ${index + 1}` : "Extracted"}
+                {fact.entries.length > 1
+                  ? `Extracted ${index + 1}`
+                  : "Extracted"}
               </dt>
               <dd>
                 {[

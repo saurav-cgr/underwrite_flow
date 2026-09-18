@@ -57,13 +57,20 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 # Build the safe case response from its pinned product version.
 async def case_response(session: AsyncSession, case: Case) -> CaseResponse:
     product_version = await session.scalar(
-        select(ProductVersion).where(ProductVersion.id == case.product_version_id)
+        select(ProductVersion).where(
+            ProductVersion.id == case.product_version_id
+        )
     )
     rulebook = await session.scalar(
-        select(RulebookVersion).where(RulebookVersion.id == case.rulebook_version_id)
+        select(RulebookVersion).where(
+            RulebookVersion.id == case.rulebook_version_id
+        )
     )
     if product_version is None or rulebook is None:
-        raise HTTPException(status_code=500, detail="Case configuration is unavailable")
+        raise HTTPException(
+            status_code=500,
+            detail="Case configuration is unavailable",
+        )
     return CaseResponse(
         id=case.id,
         product_code=product_version.configuration["product_code"],
@@ -89,7 +96,10 @@ async def create_case(
         ).create_case(session, UUID(current["sub"]), application)
         return await case_response(session, case)
     except CaseValidationError:
-        raise HTTPException(status_code=422, detail="Invalid case submission") from None
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid case submission",
+        ) from None
 
 
 # List every case owned by the authenticated identity, newest first.
@@ -134,7 +144,8 @@ async def read_case(
     current: dict[str, str] = Depends(require_permission(Permission.CASE_READ)),
     session: AsyncSession = Depends(get_session),
 ) -> CaseResponse:
-    return await case_response(session, await get_authorized_case(case_id, current, session))
+    case = await get_authorized_case(case_id, current, session)
+    return await case_response(session, case)
 
 
 # Return the pinned configuration and resolved requirements for one case.
@@ -272,8 +283,13 @@ async def list_documents(
     session: AsyncSession = Depends(get_session),
 ) -> list[DocumentResponse]:
     await get_authorized_case(case_id, current, session)
-    documents = await session.scalars(select(Document).where(Document.case_id == case_id))
-    return [DocumentResponse.model_validate(document, from_attributes=True) for document in documents]
+    documents = await session.scalars(
+        select(Document).where(Document.case_id == case_id)
+    )
+    return [
+        DocumentResponse.model_validate(document, from_attributes=True)
+        for document in documents
+    ]
 
 
 # Store one supported applicant document for an owned case.
@@ -283,7 +299,9 @@ async def upload_document(
     request: Request,
     document: UploadFile = File(...),
     document_code: str = Form(...),
-    current: dict[str, str] = Depends(require_permission(Permission.CASE_WRITE)),
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> DocumentResponse:
     case = await get_authorized_case(case_id, current, session)
@@ -294,7 +312,10 @@ async def upload_document(
             session, case, document, document_code, UUID(current["sub"])
         )
     except (CaseValidationError, StorageValidationError):
-        raise HTTPException(status_code=422, detail="Invalid document upload") from None
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid document upload",
+        ) from None
     return DocumentResponse.model_validate(stored, from_attributes=True)
 
 

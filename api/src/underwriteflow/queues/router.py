@@ -24,7 +24,11 @@ from underwriteflow.persistence.models import (
     Review,
     Validation,
 )
-from underwriteflow.queues.schemas import AuditEventResponse, CompletionResponse, QueueItem
+from underwriteflow.queues.schemas import (
+    AuditEventResponse,
+    CompletionResponse,
+    QueueItem,
+)
 from underwriteflow.workflow.reconciliation import check_applies
 
 queues_router = APIRouter(prefix="/queues", tags=["queues"])
@@ -61,7 +65,10 @@ async def list_queue(
         statement = statement.where(Recommendation.route == "specialist")
     elif specialist is False:
         statement = statement.where(
-            or_(Recommendation.route != "specialist", Recommendation.route.is_(None))
+            or_(
+                Recommendation.route != "specialist",
+                Recommendation.route.is_(None),
+            )
         )
     if awaiting_handoff is True:
         statement = statement.where(
@@ -80,7 +87,9 @@ async def list_queue(
             route=recommendation.route if recommendation else None,
             selected_route=final_route_for(review),
             specialist_label=review.specialist_label if review else None,
-            specialist=bool(recommendation and recommendation.route == "specialist"),
+            specialist=bool(
+                recommendation and recommendation.route == "specialist"
+            ),
             awaiting_handoff=(
                 case.status in {"confirmed", "overridden"}
                 and case.id not in handoffs
@@ -207,7 +216,7 @@ async def list_audit_events(
     ]
 
 
-# Finalize one confirmed route exactly once with an atomic queue and audit handoff.
+# Finalize one confirmed route with an atomic queue and audit handoff.
 @completion_router.post("/{case_id}", response_model=CompletionResponse)
 async def complete_case(
     case_id: UUID,
@@ -228,7 +237,10 @@ async def complete_case(
         or review is None
         or review.selected_route not in {"specialist", "standard", "expedited"}
     ):
-        raise HTTPException(status_code=409, detail="Case has no confirmed final route")
+        raise HTTPException(
+            status_code=409,
+            detail="Case has no confirmed final route",
+        )
     idempotency_key = f"case-{case_id}-completion"
     existing = await session.scalar(
         select(Handoff).where(Handoff.idempotency_key == idempotency_key)

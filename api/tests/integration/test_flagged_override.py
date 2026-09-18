@@ -46,7 +46,13 @@ def upload_disagreeing_vehicle_record(
     for code, lines in items.items():
         uploaded = client.post(
             f"/api/v1/cases/{case_id}/documents",
-            files={"document": ("synthetic.pdf", text_pdf(lines), "application/pdf")},
+            files={
+                "document": (
+                    "synthetic.pdf",
+                    text_pdf(lines),
+                    "application/pdf",
+                )
+            },
             data={"document_code": code},
             headers=headers,
         )

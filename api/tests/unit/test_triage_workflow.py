@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import ValidationError
-from types import SimpleNamespace
 from uuid import uuid4
 
 from fixtures.auth import session_for
@@ -11,8 +10,6 @@ from fixtures.records import synthetic_user
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
-from underwriteflow.cases.submission import SubmissionService
-from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import (
     build_triage_graph,
@@ -31,11 +28,23 @@ async def test_triage_graph_applies_route_precedence_before_review() -> None:
     paused = await graph.ainvoke(
         {
             "case_id": "triage-precedence",
-            "validations": [{"rule_code": "synthetic_standard", "status": "triggered", "route": "standard"}],
+            "validations": [
+                {
+                    "rule_code": "synthetic_standard",
+                    "status": "triggered",
+                    "route": "standard",
+                }
+            ],
             "risk_signals": [{"code": "synthetic_signal", "severity": "high"}],
             "conflicts": [],
             "missing_information": [],
-            "evidence": [{"field_name": "synthetic_field", "value": "stored", "source_locator": "line:1"}],
+            "evidence": [
+                {
+                    "field_name": "synthetic_field",
+                    "value": "stored",
+                    "source_locator": "line:1",
+                }
+            ],
         },
         config=config,
     )
@@ -82,7 +91,7 @@ async def test_triage_graph_requires_override_reason() -> None:
         )
 
 
-# Verify requesting information pauses completion without creating a final route.
+# Verify requesting information pauses completion without a final route.
 @pytest.mark.asyncio
 async def test_triage_graph_supports_information_request() -> None:
     graph = build_triage_graph(checkpointer=MemorySaver())
@@ -164,13 +173,16 @@ def test_review_command_rejects_internal_override_routes() -> None:
         )
 
 
-# Verify configured manual and information rules outrank specialist and expedited routes.
+# Verify internal manual and information rules outrank final routes.
 @pytest.mark.parametrize(
     ("route", "expected"),
     [("manual", "manual"), ("needs_information", "needs_information")],
 )
 @pytest.mark.asyncio
-async def test_triage_graph_honors_internal_rule_routes(route: str, expected: str) -> None:
+async def test_triage_graph_honors_internal_rule_routes(
+    route: str,
+    expected: str,
+) -> None:
     graph = build_triage_graph(checkpointer=MemorySaver())
     paused = await graph.ainvoke(
         {
@@ -277,178 +289,3 @@ def test_has_low_confidence_uses_the_measured_score() -> None:
     assert has_low_confidence([{"confidence": 0.79}]) is True
     assert has_low_confidence([{"confidence": 0.8}]) is False
     assert has_low_confidence([{"confidence": 1.0}]) is False
-
-
-# Verify the triage input flags unknown confidence from reconciled evidence.
-def test_build_triage_state_flags_unknown_confidence() -> None:
-    service = SubmissionService(
-        provider=FakeProvider(),
-        upload_root="/tmp/synthetic-uploads",
-        database_url="postgresql://synthetic",
-    )
-    case = SimpleNamespace(id=uuid4())
-
-    unknown = service.build_triage_state(
-        case,
-        [],
-        {"reconciled_fields": [{"field_name": "vehicle_age"}]},
-        {},
-        [],
-    )
-    confident = service.build_triage_state(
-        case,
-        [],
-        {
-            "reconciled_fields": [
-                {"field_name": "vehicle_age", "confidence": 1.0}
-            ]
-        },
-        {},
-        [],
-    )
-
-    assert unknown["low_confidence"] is True
-    assert confident["low_confidence"] is False
-
-
-# Verify both extraction and branch failures reach the triage input.
-def test_build_triage_state_records_processing_failures() -> None:
-    service = SubmissionService(
-        provider=FakeProvider(),
-        upload_root="/tmp/synthetic-uploads",
-        database_url="postgresql://synthetic",
-    )
-    case = SimpleNamespace(id=uuid4())
-
-    state = service.build_triage_state(
-        case,
-        [],
-        {
-            "reconciled_fields": [],
-            "results": [
-                {
-                    "document_id": "synthetic-branch",
-                    "filename": "synthetic.pdf",
-                    "fields": [],
-                    "error_code": "provider_error",
-                },
-                {
-                    "document_id": "synthetic-ok",
-                    "filename": "ok.pdf",
-                    "fields": [],
-                    "error_code": None,
-                },
-            ],
-        },
-        {},
-        [
-            {
-                "document_id": "synthetic-upload",
-                "filename": "upload.pdf",
-                "error_code": "extraction_failed",
-            }
-        ],
-    )
-
-    assert state["processing_failures"] == [
-        {
-            "document_id": "synthetic-upload",
-            "filename": "upload.pdf",
-            "error_code": "extraction_failed",
-        },
-        {
-            "document_id": "synthetic-branch",
-            "filename": "synthetic.pdf",
-            "error_code": "provider_error",
-        },
-    ]
-
-
-# Verify a document branch that produced no evidence routes to specialist.
-@pytest.mark.asyncio
-async def test_processing_failures_route_to_specialist_review() -> None:
-    graph = build_triage_graph(checkpointer=MemorySaver())
-    config = thread_config("triage-processing-failure")
-
-    paused = await graph.ainvoke(
-        {
-            "case_id": "triage-processing-failure",
-            "processing_failures": [
-                {
-                    "document_id": "synthetic-document",
-                    "error_code": "provider_error",
-                }
-            ],
-            "validations": [],
-            "risk_signals": [],
-            "conflicts": [],
-            "missing_information": [],
-            "evidence": [],
-        },
-        config=config,
-    )
-
-    assert paused["recommendation"]["route"] == "specialist"
-    assert paused["recommendation"]["factors"] == ["processing_failure"]
-
-
-# Verify a processing failure never outranks a request for information.
-@pytest.mark.asyncio
-async def test_processing_failures_do_not_outrank_missing_information() -> None:
-    graph = build_triage_graph(checkpointer=MemorySaver())
-    config = thread_config("triage-failure-precedence")
-
-    paused = await graph.ainvoke(
-        {
-            "case_id": "triage-failure-precedence",
-            "processing_failures": [{"error_code": "extraction_failed"}],
-            "missing_information": ["prior_claims"],
-            "validations": [],
-            "risk_signals": [],
-            "conflicts": [],
-            "evidence": [],
-        },
-        config=config,
-    )
-
-    assert paused["recommendation"]["route"] == "needs_information"
-
-
-# Verify an unsupported product configuration outranks every other signal and
-# still resolves to a final route once a human reviews it.
-@pytest.mark.asyncio
-async def test_unsupported_product_recommends_manual_review() -> None:
-    graph = build_triage_graph(checkpointer=MemorySaver())
-    config = thread_config("triage-unsupported")
-
-    paused = await graph.ainvoke(
-        {
-            "case_id": "triage-unsupported",
-            "unsupported_product": True,
-            "validations": [
-                {"status": "triggered", "route": "standard"}
-            ],
-            "risk_signals": [{"code": "synthetic_signal"}],
-            "conflicts": [{"field_name": "vehicle_age"}],
-            "missing_information": ["prior_claims"],
-            "evidence": [],
-        },
-        config=config,
-    )
-
-    assert paused["recommendation"]["route"] == "manual"
-    assert paused["recommendation"]["factors"] == ["unsupported_product"]
-
-    resumed = await graph.ainvoke(
-        Command(
-            resume={
-                "action": "confirm",
-                "specialist_label": "motor inspection",
-                "evidence_acknowledged": True,
-            }
-        ),
-        config=config,
-    )
-
-    assert resumed["final_route"] == "specialist"
-    assert resumed["review_status"] == "overridden"

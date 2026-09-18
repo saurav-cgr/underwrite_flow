@@ -40,7 +40,12 @@ class OllamaProvider:
     name = "ollama"
 
     # Configure the local Ollama endpoint and model.
-    def __init__(self, base_url: str, model: str, timeout_seconds: float = 30) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        timeout_seconds: float = 30,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout_seconds = timeout_seconds
@@ -55,7 +60,9 @@ class OllamaProvider:
         }
         request_payload = provider_payload_bytes(payload)
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            async with httpx.AsyncClient(
+                timeout=self.timeout_seconds
+            ) as client:
                 response = await client.post(
                     f"{self.base_url}/api/chat",
                     content=request_payload,
@@ -66,10 +73,14 @@ class OllamaProvider:
                 raw = body["message"]["content"]
                 usage = ollama_usage(self.model, body)
         except (httpx.TimeoutException, httpx.NetworkError) as error:
-            raise TransientProviderError("Ollama provider is temporarily unavailable") from error
+            raise TransientProviderError(
+                "Ollama provider is temporarily unavailable"
+            ) from error
         except httpx.HTTPStatusError as error:
             if is_transient_status(error.response.status_code):
-                raise TransientProviderError("Ollama provider is temporarily unavailable") from error
+                raise TransientProviderError(
+                    "Ollama provider is temporarily unavailable"
+                ) from error
             raise ProviderError("Ollama provider failed") from error
         except (httpx.HTTPError, KeyError, TypeError, ValueError) as error:
             raise ProviderError("Ollama provider failed") from error

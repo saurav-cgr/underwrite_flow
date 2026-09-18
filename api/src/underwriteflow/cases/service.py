@@ -36,10 +36,8 @@ LOGGER = logging.getLogger(__name__)
 MAX_DOCUMENT_COUNT = 10
 MUTABLE_DOCUMENT_STATUSES = frozenset({"new", "needs_information"})
 
-
 class CaseValidationError(ValueError):
     """Raised when intake data does not satisfy the pinned product."""
-
 
 # Read one stored product configuration or report it as unavailable.
 def read_stored_configuration(
@@ -54,7 +52,6 @@ def read_stored_configuration(
         # intake, so the caller is told rather than the request failing open.
         raise CaseValidationError("case configuration is unavailable") from None
 
-
 # Decide whether one configured document is required for this application.
 def document_is_required(
     document: ProductDocument, payload: Mapping[str, Any]
@@ -65,13 +62,11 @@ def document_is_required(
         document.condition or {}, payload
     )
 
-
 # Decide whether one configured field applies to this application.
 def field_is_visible(field: ProductField, payload: Mapping[str, Any]) -> bool:
     return field.visible_when is None or condition_matches(
         field.visible_when, payload
     )
-
 
 # List the document evidence fields the configured checks read.
 def reconciliation_evidence_fields(
@@ -85,7 +80,6 @@ def reconciliation_evidence_fields(
             if source != APPLICATION_SOURCE
         }
     )
-
 
 # List the fields whose values an application must evidence.
 #
@@ -104,7 +98,6 @@ def requested_field_keys(
     return answered + [
         key for key in evidence_fields if key not in answered
     ]
-
 
 # Describe the value shape a provider must return for each requested field.
 #
@@ -127,7 +120,6 @@ def field_specifications(
         for key in requested_fields
     ]
 
-
 # Return the required document codes that are not yet attached to the case.
 def missing_document_codes(
     configuration: ProductConfiguration,
@@ -142,7 +134,6 @@ def missing_document_codes(
         and document.code not in provided
     )
 
-
 # Validate required fields and documents against the selected product version.
 def validate_application(
     application: CaseCreate, configuration: ProductConfiguration
@@ -152,11 +143,16 @@ def validate_application(
     for field in configuration.fields:
         visible = field_is_visible(field, application.payload)
         if field.required and visible:
-            if field.key not in application.payload or application.payload[field.key] in (None, ""):
+            if (
+                field.key not in application.payload
+                or application.payload[field.key] in (None, "")
+            ):
                 raise CaseValidationError(f"missing field: {field.key}")
         if field.key in application.payload:
             value = application.payload[field.key]
-            if field.type == "integer" and (not isinstance(value, int) or isinstance(value, bool)):
+            if field.type == "integer" and (
+                not isinstance(value, int) or isinstance(value, bool)
+            ):
                 raise CaseValidationError(f"invalid field type: {field.key}")
             if field.type == "number" and (
                 not isinstance(value, (int, float)) or isinstance(value, bool)
@@ -187,12 +183,15 @@ def validate_application(
         ):
             raise CaseValidationError(f"missing document: {document.code}")
 
-
 class CaseService:
     """Persist cases pinned to exact product and rulebook versions."""
 
     # Configure storage and append-only audit recording for case operations.
-    def __init__(self, storage: UploadStorage, audit: AuditRepository | None = None) -> None:
+    def __init__(
+        self,
+        storage: UploadStorage,
+        audit: AuditRepository | None = None,
+    ) -> None:
         self.storage = storage
         self.audit = audit or AuditRepository()
 

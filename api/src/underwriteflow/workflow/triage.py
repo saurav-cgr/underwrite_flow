@@ -53,7 +53,9 @@ def assemble_case_summary(state: TriageState) -> dict[str, dict[str, object]]:
         "summary": {
             "evidence": state.get("evidence", []),
             "conflicts": state.get("conflicts", []),
-            "missing_information": sorted(set(state.get("missing_information", []))),
+            "missing_information": sorted(
+                set(state.get("missing_information", []))
+            ),
             "reconciliation_results": state.get("reconciliation_results", []),
             "reconciliation_status": state.get("reconciliation_status", ""),
             "risk_signals": state.get("risk_signals", []),
@@ -66,7 +68,9 @@ def assemble_case_summary(state: TriageState) -> dict[str, dict[str, object]]:
 def recommend_triage_route(state: TriageState) -> dict[str, dict[str, object]]:
     validations = state.get("validations", [])
     triggered_routes = {
-        item.get("route") for item in validations if item.get("status") == "triggered"
+        item.get("route")
+        for item in validations
+        if item.get("status") == "triggered"
     }
     if state.get("unsupported_product"):
         route, factor = "manual", "unsupported_product"
@@ -112,7 +116,12 @@ def human_review(state: TriageState) -> dict[str, dict[str, object]]:
         }
     )
     command = ReviewCommand.model_validate(decision)
-    return {"review_command": command.model_dump(mode="json", exclude_none=True)}
+    return {
+        "review_command": command.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
+    }
 
 
 # Resolve one human command into the final route and the review status.

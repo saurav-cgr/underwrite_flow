@@ -6,7 +6,10 @@ from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.state import thread_config
 
 
-DATABASE_URL = "postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow"
+DATABASE_URL = (
+    "postgresql+asyncpg://underwriteflow:synthetic-local-password"
+    "@db:5433/underwriteflow"
+)
 
 
 # Verify the supported PostgreSQL saver resumes a case by its stable thread ID.
@@ -22,7 +25,10 @@ async def test_postgres_checkpoint_round_trip() -> None:
                     {
                         "document_id": "doc-1",
                         "filename": "doc-1",
-                        "content": "SYNTHETIC - FOR DEMONSTRATION ONLY\nsynthetic_field: value",
+                        "content": (
+                            "SYNTHETIC - FOR DEMONSTRATION ONLY\n"
+                            "synthetic_field: value"
+                        ),
                     }
                 ],
                 "requested_fields": ["synthetic_field"],

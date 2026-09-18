@@ -33,19 +33,15 @@ from underwriteflow.storage import StorageValidationError, UploadStorage
 
 LOGGER = logging.getLogger(__name__)
 
-
 class ProductConfigurationError(ValueError):
     """Raised when product configuration content is invalid or inconsistent."""
-
 
 class ProductConflictError(ProductConfigurationError):
     """Raised when a concurrent activation change loses its race."""
 
-
 # Report whether one configuration document begins as a JSON object or array.
 def looks_like_json(text: str) -> bool:
     return text.lstrip().startswith(("{", "["))
-
 
 # Summarize one validation failure without echoing submitted configuration.
 def validation_reason(error: Exception) -> str:
@@ -62,7 +58,6 @@ def validation_reason(error: Exception) -> str:
             return f"{location}: {message}"[:200]
     return "the document is not valid JSON or YAML"
 
-
 # Re-read one persisted configuration so activation re-validates references.
 def configuration_from_payload(
     payload: dict[str, Any],
@@ -71,7 +66,6 @@ def configuration_from_payload(
         return ProductConfiguration.model_validate(payload)
     except ValidationError:
         return None
-
 
 # Parse and validate one configuration document submitted as YAML or JSON.
 #
@@ -94,23 +88,24 @@ def load_configuration(text: str) -> ProductConfiguration:
     ) as error:
         raise ProductConfigurationError(validation_reason(error)) from error
 
-
 # Produce a stable JSON payload for persistence and hashing.
-def configuration_payload(configuration: ProductConfiguration) -> dict[str, Any]:
+def configuration_payload(
+    configuration: ProductConfiguration,
+) -> dict[str, Any]:
     payload = configuration.model_dump(mode="json")
     for check in payload["reconciliations"]:
         if check.get("parameters") is None:
             check.pop("parameters")
     return payload
 
-
 # Hash normalized configuration content for immutable version identity.
 def configuration_hash(configuration: ProductConfiguration) -> str:
     payload = json.dumps(
-        configuration_payload(configuration), sort_keys=True, separators=(",", ":")
+        configuration_payload(configuration),
+        sort_keys=True,
+        separators=(",", ":"),
     ).encode()
     return hashlib.sha256(payload).hexdigest()
-
 
 class ProductService:
     """Apply versioned product configuration lifecycle rules."""
@@ -122,7 +117,6 @@ class ProductService:
     ) -> None:
         self.repository = repository or ProductRepository()
         self.audit_repository = audit_repository or AuditRepository()
-
     # Summarize validated configuration impact without persisting it.
     def preview(self, configuration: ProductConfiguration) -> dict[str, Any]:
         return {
@@ -139,7 +133,6 @@ class ProductService:
             ],
             "specialist_labels": configuration.specialist_labels,
         }
-
     # Import one validated configuration as an immutable draft version.
     async def import_configuration(
         self,
@@ -148,7 +141,10 @@ class ProductService:
         actor_user_id: UUID | None = None,
     ) -> ProductVersion:
         content_hash = configuration_hash(configuration)
-        product = await self.repository.find_product(session, configuration.product_code)
+        product = await self.repository.find_product(
+            session,
+            configuration.product_code,
+        )
         if product is None:
             product = Product(
                 code=configuration.product_code,
@@ -165,7 +161,9 @@ class ProductService:
         )
         if existing is not None:
             if existing.content_hash != content_hash:
-                raise ProductConfigurationError("version identity already exists")
+                raise ProductConfigurationError(
+                    "version identity already exists"
+                )
             return existing
         payload = configuration_payload(configuration)
         version = ProductVersion(
@@ -183,7 +181,8 @@ class ProductService:
                 version=configuration.version,
                 rules={
                     "routing_rules": [
-                        rule.model_dump(mode="json") for rule in configuration.routing_rules
+                        rule.model_dump(mode="json")
+                        for rule in configuration.routing_rules
                     ],
                     "specialist_labels": configuration.specialist_labels,
                 },
@@ -203,7 +202,6 @@ class ProductService:
         )
         await session.commit()
         return version
-
     # Activate one version and retire its previous active sibling.
     async def activate(
         self,
@@ -222,7 +220,11 @@ class ProductService:
             raise ProductConfigurationError(
                 "stored configuration references are no longer valid"
             )
-        for sibling in await self.repository.list_product_versions(session, product.id):
+        siblings = await self.repository.list_product_versions(
+            session,
+            product.id,
+        )
+        for sibling in siblings:
             if sibling.id != target.id and sibling.status == "active":
                 sibling.status = "retired"
         # Flush the retirement first: the one-active-version index must never
@@ -257,7 +259,6 @@ class ProductService:
                 "another version is already active"
             ) from None
         return target
-
     # Store one administrator reference document with storage metadata.
     async def add_reference_document(
         self,
@@ -300,7 +301,6 @@ class ProductService:
         )
         await session.commit()
         return document
-
     # List administrator reference documents for one product version.
     async def list_reference_documents(
         self,
@@ -317,7 +317,6 @@ class ProductService:
         if version is not None:
             statement = statement.where(ReferenceDocument.version == version)
         return list(await session.scalars(statement))
-
     # Delete one administrator reference document and its stored file.
     async def remove_reference_document(
         self,
@@ -362,7 +361,6 @@ class ProductService:
             LOGGER.warning(
                 "orphaned reference upload retained: %s", storage_key
             )
-
     # Retire one version and record the administrator action.
     async def retire(
         self,
@@ -376,8 +374,16 @@ class ProductService:
         if product is None or target is None:
             raise ProductConfigurationError("product version not found")
         target.status = "retired"
-        siblings = await self.repository.list_product_versions(session, product.id)
-        if not any(sibling.status == "active" for sibling in siblings if sibling.id != target.id):
+        siblings = await self.repository.list_product_versions(
+            session,
+            product.id,
+        )
+        other_active = any(
+            sibling.status == "active"
+            for sibling in siblings
+            if sibling.id != target.id
+        )
+        if not other_active:
             product.status = "draft"
         self.audit_repository.append(
             session,

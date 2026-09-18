@@ -2,7 +2,10 @@
 
 from typing import Annotated, NotRequired, TypedDict
 
-from underwriteflow.workflow.reducers import append_product_results, append_results
+from underwriteflow.workflow.reducers import (
+    append_product_results,
+    append_results,
+)
 
 
 class DocumentInput(TypedDict):

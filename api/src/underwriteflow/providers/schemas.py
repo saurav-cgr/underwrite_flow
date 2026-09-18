@@ -35,7 +35,7 @@ class DocumentPage(BaseModel):
 
 
 class ExtractionRequest(BaseModel):
-    """Untrusted document content and explicit fields requested by the application."""
+    """Untrusted content and fields explicitly requested by the application."""
 
     document_name: str = Field(min_length=1, max_length=500)
     content: str = Field(max_length=10_000_000)

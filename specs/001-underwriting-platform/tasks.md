@@ -441,7 +441,7 @@ All selected stories -> Phase 8 Polish
   with fresh bounded concurrent probes and record the 10-case and 100-case
   latency, OCR, provider concurrency, database pool, checkpoint, queue, and
   storage measures required by the plan evaluation decision (partial)
-- [ ] T075 split `web/src/access-admin.tsx`,
+- [X] T075 split `web/src/access-admin.tsx`,
   `api/tests/unit/test_triage_workflow.py`, and `web/src/review.css` below 400
   lines and wrap over-80 hand-written lines in `api/`, `web/`,
   `product-config/`, and `scripts/` per T064 and the task constraints

@@ -66,7 +66,12 @@ class GeminiProvider:
         messages = build_messages(safe_request)
         payload = {
             "systemInstruction": {"parts": [{"text": messages[0]["content"]}]},
-            "contents": [{"role": "user", "parts": [{"text": messages[1]["content"]}]}],
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": messages[1]["content"]}],
+                }
+            ],
             "generationConfig": {"responseMimeType": "application/json"},
         }
         request_payload = provider_payload_bytes(payload)
@@ -75,7 +80,9 @@ class GeminiProvider:
             f"{self.model}:generateContent"
         )
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            async with httpx.AsyncClient(
+                timeout=self.timeout_seconds
+            ) as client:
                 response = await client.post(
                     url,
                     params={"key": self.api_key},
@@ -89,12 +96,22 @@ class GeminiProvider:
                     self.model, body.get("usageMetadata") or {}
                 )
         except (httpx.TimeoutException, httpx.NetworkError) as error:
-            raise TransientProviderError("Gemini provider is temporarily unavailable") from error
+            raise TransientProviderError(
+                "Gemini provider is temporarily unavailable"
+            ) from error
         except httpx.HTTPStatusError as error:
             if is_transient_status(error.response.status_code):
-                raise TransientProviderError("Gemini provider is temporarily unavailable") from error
+                raise TransientProviderError(
+                    "Gemini provider is temporarily unavailable"
+                ) from error
             raise ProviderError("Gemini provider failed") from error
-        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
+        except (
+            httpx.HTTPError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValueError,
+        ) as error:
             raise ProviderError("Gemini provider failed") from error
         return parse_result(
             raw,

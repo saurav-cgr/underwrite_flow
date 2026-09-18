@@ -2,7 +2,8 @@ product_code: health-individual-family-floater
 title: Fictional Individual and Family Floater Health
 family: health
 scope: Fictional India-focused demonstration only
-description: Demonstration triage configuration for individual and family floater health.
+description: >-
+  Demonstration triage configuration for individual and family floater health.
 version: v1
 status: draft
 fields:

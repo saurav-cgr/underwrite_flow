@@ -126,7 +126,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             request_id=request_id_for(request),
         )
 
-    # Keep validation details generic until endpoint contracts define safe fields.
+    # Keep details generic until endpoint contracts define safe fields.
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(
         request: Request, error: RequestValidationError
@@ -141,7 +141,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Prevent unhandled exceptions from exposing implementation details.
     @app.exception_handler(Exception)
-    async def unexpected_error_handler(request: Request, error: Exception) -> Response:
+    async def unexpected_error_handler(
+        request: Request,
+        error: Exception,
+    ) -> Response:
         del error
         return error_response(
             status_code=500,

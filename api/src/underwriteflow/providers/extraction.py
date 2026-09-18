@@ -60,7 +60,11 @@ class LocalDocumentExtractor:
                     capture_output=True,
                     timeout=self.timeout_seconds,
                 )
-            except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            except (
+                FileNotFoundError,
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+            ) as error:
                 raise ExtractionError("PDF OCR is unavailable") from error
             image_paths = sorted(Path(directory).glob("page-*.png"))
             if not image_paths:
@@ -70,7 +74,11 @@ class LocalDocumentExtractor:
                 try:
                     with Image.open(image_path) as image:
                         text = pytesseract.image_to_string(image)
-                except (OSError, ValueError, pytesseract.TesseractError) as error:
+                except (
+                    OSError,
+                    ValueError,
+                    pytesseract.TesseractError,
+                ) as error:
                     raise ExtractionError("PDF OCR failed") from error
                 pages.append(
                     DocumentPage(
@@ -89,6 +97,12 @@ class LocalDocumentExtractor:
         except (OSError, ValueError, pytesseract.TesseractError) as error:
             raise ExtractionError("image OCR failed") from error
         return LocalDocument(
-            pages=[DocumentPage(page_number=1, text=text, source_locator="page:1")],
+            pages=[
+                DocumentPage(
+                    page_number=1,
+                    text=text,
+                    source_locator="page:1",
+                )
+            ],
             method="ocr",
         )

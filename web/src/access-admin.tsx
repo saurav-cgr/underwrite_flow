@@ -3,7 +3,6 @@ import type { FormEvent } from "react";
 
 import {
   ApiError,
-  createRole,
   createUser,
   listPermissions,
   listRoles,
@@ -14,6 +13,7 @@ import {
 import type { PermissionSummary, RoleRecord, UserRecord } from "./types";
 import { roleLabelFor } from "./types";
 import { Badge, Button, EmptyState, Panel } from "./components";
+import { CreateRoleForm } from "./access-role-form";
 
 // Read one error into a message an administrator can act on.
 function describe(error: unknown, fallback: string): string {
@@ -40,12 +40,6 @@ export function AccessAdministration({ token }: { token: string }) {
     roleId: "",
   });
   const [scopeDraft, setScopeDraft] = useState<Record<string, string[]>>({});
-  const [roleDraft, setRoleDraft] = useState({
-    code: "",
-    title: "",
-    description: "",
-    permissions: [] as string[],
-  });
 
   // Load users, roles, and the permission catalogue together.
   const load = useCallback(async () => {
@@ -108,27 +102,6 @@ export function AccessAdministration({ token }: { token: string }) {
       displayName: "",
       password: "",
     }));
-  }
-
-  // Create one configurable role from the draft form.
-  async function handleCreateRole(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await apply(
-      () =>
-        createRole(token, {
-          code: roleDraft.code.trim(),
-          title: roleDraft.title.trim(),
-          description: roleDraft.description.trim() || undefined,
-          permissions: [...roleDraft.permissions].sort(),
-        }),
-      `Created the ${roleDraft.title.trim()} role.`,
-    );
-    setRoleDraft({
-      code: "",
-      title: "",
-      description: "",
-      permissions: [],
-    });
   }
 
   // Toggle one scope inside a role's draft scope list.
@@ -387,78 +360,12 @@ export function AccessAdministration({ token }: { token: string }) {
           </fieldset>
         ))}
 
-        <form className="access-form" onSubmit={handleCreateRole}>
-          <h4>Create a role</h4>
-          <label className="field" htmlFor="role-code">
-            <span>Code</span>
-            <small>Lowercase letters, digits, and underscores.</small>
-            <input
-              id="role-code"
-              onChange={(event) =>
-                setRoleDraft((current) => ({
-                  ...current,
-                  code: event.target.value,
-                }))
-              }
-              pattern="[a-z0-9_]{2,64}"
-              required
-              value={roleDraft.code}
-            />
-          </label>
-          <label className="field" htmlFor="role-title">
-            <span>Title</span>
-            <input
-              id="role-title"
-              onChange={(event) =>
-                setRoleDraft((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-              required
-              value={roleDraft.title}
-            />
-          </label>
-          <label className="field" htmlFor="role-description">
-            <span>Description</span>
-            <input
-              id="role-description"
-              onChange={(event) =>
-                setRoleDraft((current) => ({
-                  ...current,
-                  description: event.target.value,
-                }))
-              }
-              value={roleDraft.description}
-            />
-          </label>
-          <fieldset className="access-scopes">
-            <legend>Scopes</legend>
-            {catalogue.map((permission) => (
-              <label key={permission.code}>
-                <input
-                  checked={roleDraft.permissions.includes(permission.code)}
-                  disabled={busy}
-                  onChange={(event) =>
-                    setRoleDraft((current) => ({
-                      ...current,
-                      permissions: event.target.checked
-                        ? [...current.permissions, permission.code].sort()
-                        : current.permissions.filter(
-                            (entry) => entry !== permission.code,
-                          ),
-                    }))
-                  }
-                  type="checkbox"
-                />
-                <span className="mono">{permission.code}</span>
-              </label>
-            ))}
-          </fieldset>
-          <Button disabled={busy} type="submit">
-            Create role
-          </Button>
-        </form>
+        <CreateRoleForm
+          apply={apply}
+          busy={busy}
+          catalogue={catalogue}
+          token={token}
+        />
       </section>
     </Panel>
   );

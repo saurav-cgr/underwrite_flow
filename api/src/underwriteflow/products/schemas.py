@@ -15,7 +15,13 @@ from underwriteflow.document_types import SUPPORTED_CONTENT_TYPES
 
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
-Route = Literal["manual", "needs_information", "specialist", "standard", "expedited"]
+Route = Literal[
+    "manual",
+    "needs_information",
+    "specialist",
+    "standard",
+    "expedited",
+]
 ReconciliationKind = Literal["ncb_match", "asset_match", "policy_lapse"]
 
 SUPPORTED_OPERATORS = frozenset({"equals", "greater_than"})
@@ -107,7 +113,9 @@ class ProductDocument(BaseModel):
         if self.requirement == "conditional" and not self.condition:
             raise ValueError("conditional documents require a condition")
         if self.requirement != "conditional" and self.condition is not None:
-            raise ValueError("only conditional documents may define a condition")
+            raise ValueError(
+                "only conditional documents may define a condition"
+            )
         return self
 
 
@@ -214,7 +222,10 @@ class ProductConfiguration(BaseModel):
             raise ValueError("routing rule codes must be unique")
         labels = set(self.specialist_labels)
         for rule in self.routing_rules:
-            if rule.route == "specialist" and rule.specialist_label not in labels:
+            if (
+                rule.route == "specialist"
+                and rule.specialist_label not in labels
+            ):
                 raise ValueError("specialist rules must use a declared label")
         keys = set(field_keys)
         for field in self.fields:

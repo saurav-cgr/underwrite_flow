@@ -23,7 +23,9 @@ CONFIGURATION_FILES = (
 
 
 # Import every built-in configuration through the same validated service path.
-async def import_configurations(root: Path = Path("/app/product-config")) -> None:
+async def import_configurations(
+    root: Path = Path("/app/product-config"),
+) -> None:
     settings = get_settings()
     database = Database(settings.database_url)
     try:
@@ -32,7 +34,9 @@ async def import_configurations(root: Path = Path("/app/product-config")) -> Non
                 select(User).where(User.role == UserRole.ADMINISTRATOR.value)
             )
             for filename in CONFIGURATION_FILES:
-                configuration = load_configuration((root / filename).read_text())
+                configuration = load_configuration(
+                    (root / filename).read_text()
+                )
                 await ProductService().import_configuration(
                     session, configuration, admin.id if admin else None
                 )

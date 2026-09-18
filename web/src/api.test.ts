@@ -132,7 +132,9 @@ function stubJson(status: number, value: unknown) {
 
 // Verify the credential routes carry the contracted payloads.
 describe("session API", () => {
-  it("signs in through the login route and returns both credentials", async () => {
+  it(
+    "signs in through the login route and returns both credentials",
+    async () => {
     const credentials = {
       access_token: "access",
       refresh_token: "refresh",
@@ -155,7 +157,8 @@ describe("session API", () => {
         }),
       }),
     );
-  });
+    },
+  );
 
   it("rotates the refresh credential through the refresh route", async () => {
     const fetchMock = stubJson(200, {

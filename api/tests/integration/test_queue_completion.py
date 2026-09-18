@@ -7,15 +7,21 @@ from underwriteflow.app import create_app
 from underwriteflow.config import Settings
 
 
-DATABASE_URL = "postgresql://underwriteflow:synthetic-local-password@db:5433/underwriteflow"
+DATABASE_URL = (
+    "postgresql://underwriteflow:synthetic-local-password"
+    "@db:5433/underwriteflow"
+)
 
 
-# Verify completion is idempotent and visible in queues and immutable audit history.
+# Verify completion is idempotent, queued, and present in immutable audit.
 def test_confirmed_case_completes_once_and_is_auditable() -> None:
     case_id = uuid4()
     with psycopg.connect(DATABASE_URL) as connection:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM users WHERE role = %s LIMIT 1", ("Applicant",))
+            cursor.execute(
+                "SELECT id FROM users WHERE role = %s LIMIT 1",
+                ("Applicant",),
+            )
             applicant_id = cursor.fetchone()[0]
             cursor.execute(
                 """
@@ -33,7 +39,8 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
             cursor.execute(
                 """
                 INSERT INTO cases (
-                    id, applicant_user_id, product_version_id, rulebook_version_id,
+                    id, applicant_user_id, product_version_id,
+                    rulebook_version_id,
                     status, workflow_thread_id, idempotency_key
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
@@ -48,11 +55,13 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 ),
             )
             cursor.execute(
-                "INSERT INTO submissions (id, case_id, payload) VALUES (%s, %s, %s)",
+                "INSERT INTO submissions (id, case_id, payload) "
+                "VALUES (%s, %s, %s)",
                 (
                     uuid4(),
                     case_id,
-                    '{"application": {"vehicle_age": 2, "vehicle_use": "personal", "prior_claims": 0}}',
+                    '{"application": {"vehicle_age": 2, '
+                    '"vehicle_use": "personal", "prior_claims": 0}}',
                 ),
             )
             for code in ("identity_record", "vehicle_record"):
@@ -102,7 +111,11 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 },
             )
             headers = {"Authorization": f"Bearer {login.json()['token']}"}
-            assert client.post(f"/api/v1/reviews/{case_id}/start", headers=headers).status_code == 200
+            started = client.post(
+                f"/api/v1/reviews/{case_id}/start",
+                headers=headers,
+            )
+            assert started.status_code == 200
             assert client.post(
                 f"/api/v1/reviews/{case_id}",
                 json={
@@ -119,8 +132,14 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 params={"awaiting_handoff": "true"},
                 headers=headers,
             )
-            completed = client.post(f"/api/v1/completion/{case_id}", headers=headers)
-            repeated = client.post(f"/api/v1/completion/{case_id}", headers=headers)
+            completed = client.post(
+                f"/api/v1/completion/{case_id}",
+                headers=headers,
+            )
+            repeated = client.post(
+                f"/api/v1/completion/{case_id}",
+                headers=headers,
+            )
             handoff_queue = client.get(
                 "/api/v1/queues",
                 params={"awaiting_handoff": "true"},
@@ -144,7 +163,11 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
             )
             audit = client.get(
                 f"/api/v1/audit/cases/{case_id}",
-                headers={"Authorization": f"Bearer {admin_login.json()['token']}"},
+                headers={
+                    "Authorization": (
+                        f"Bearer {admin_login.json()['token']}"
+                    )
+                },
             )
 
         assert completed.status_code == 200
@@ -174,26 +197,44 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
         assert "case_submitted" in event_types
         assert "underwriter_reviewed" in event_types
         assert "case_completed" in event_types
-        assert events["underwriter_reviewed"]["details"]["reason"] == "Synthetic demonstration override"
+        reviewed_details = events["underwriter_reviewed"]["details"]
+        assert reviewed_details["reason"] == (
+            "Synthetic demonstration override"
+        )
         assert events["underwriter_reviewed"]["actor_user_id"] is not None
 
         with psycopg.connect(DATABASE_URL) as connection:
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM handoffs WHERE case_id = %s", (case_id,))
+                cursor.execute(
+                    "DELETE FROM handoffs WHERE case_id = %s",
+                    (case_id,),
+                )
                 cursor.execute(
                     "UPDATE reviews SET selected_route = %s WHERE case_id = %s",
                     ("manual", case_id),
                 )
-                cursor.execute("UPDATE cases SET status = %s WHERE id = %s", ("confirmed", case_id))
+                cursor.execute(
+                    "UPDATE cases SET status = %s WHERE id = %s",
+                    ("confirmed", case_id),
+                )
         with TestClient(create_app()) as client:
-            rejected = client.post(f"/api/v1/completion/{case_id}", headers=headers)
+            rejected = client.post(
+                f"/api/v1/completion/{case_id}",
+                headers=headers,
+            )
 
         assert rejected.status_code == 409
         with psycopg.connect(DATABASE_URL) as connection:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT status FROM cases WHERE id = %s", (case_id,))
+                cursor.execute(
+                    "SELECT status FROM cases WHERE id = %s",
+                    (case_id,),
+                )
                 assert cursor.fetchone()[0] == "confirmed"
-                cursor.execute("SELECT COUNT(*) FROM handoffs WHERE case_id = %s", (case_id,))
+                cursor.execute(
+                    "SELECT COUNT(*) FROM handoffs WHERE case_id = %s",
+                    (case_id,),
+                )
                 assert cursor.fetchone()[0] == 0
     finally:
         with psycopg.connect(DATABASE_URL) as connection:
@@ -210,10 +251,19 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                     "DELETE FROM checkpoints WHERE thread_id = %s",
                     (f"case-{case_id}:cycle-0",),
                 )
-                cursor.execute("DELETE FROM handoffs WHERE case_id = %s", (case_id,))
-                cursor.execute("ALTER TABLE audit_events DISABLE TRIGGER audit_events_append_only")
+                cursor.execute(
+                    "DELETE FROM handoffs WHERE case_id = %s",
+                    (case_id,),
+                )
+                cursor.execute(
+                    "ALTER TABLE audit_events DISABLE TRIGGER "
+                    "audit_events_append_only"
+                )
                 try:
-                    cursor.execute("DELETE FROM audit_events WHERE case_id = %s", (case_id,))
+                    cursor.execute(
+                        "DELETE FROM audit_events WHERE case_id = %s",
+                        (case_id,),
+                    )
                     cursor.execute(
                         "DELETE FROM extracted_fields WHERE case_id = %s",
                         (case_id,),
@@ -226,10 +276,28 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                         "DELETE FROM risk_signals WHERE case_id = %s",
                         (case_id,),
                     )
-                    cursor.execute("DELETE FROM reviews WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM recommendations WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM documents WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM submissions WHERE case_id = %s", (case_id,))
-                    cursor.execute("DELETE FROM cases WHERE id = %s", (case_id,))
+                    cursor.execute(
+                        "DELETE FROM reviews WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
+                        "DELETE FROM recommendations WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
+                        "DELETE FROM documents WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
+                        "DELETE FROM submissions WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
+                        "DELETE FROM cases WHERE id = %s",
+                        (case_id,),
+                    )
                 finally:
-                    cursor.execute("ALTER TABLE audit_events ENABLE TRIGGER audit_events_append_only")
+                    cursor.execute(
+                        "ALTER TABLE audit_events ENABLE TRIGGER "
+                        "audit_events_append_only"
+                    )

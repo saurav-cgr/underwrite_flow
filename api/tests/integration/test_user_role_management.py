@@ -95,7 +95,9 @@ def test_created_user_signs_in_with_the_assigned_role() -> None:
             me = client.get(
                 "/api/v1/auth/me",
                 headers={
-                    "Authorization": f"Bearer {signed_in.json()['access_token']}"
+                    "Authorization": (
+                        f"Bearer {signed_in.json()['access_token']}"
+                    )
                 },
             )
 
@@ -315,7 +317,8 @@ def test_admin_journey_appends_sanitized_audit_events() -> None:
             )
             created_id = created.json()["id"]
             signed_in = client.post(
-                "/api/v1/auth/login", json={"email": email, "password": credential}
+                "/api/v1/auth/login",
+                json={"email": email, "password": credential},
             )
             refresh_token = signed_in.json()["refresh_token"]
             client.patch(

@@ -8,14 +8,21 @@ if TYPE_CHECKING:
 
 # Append branch updates without mutating the prior graph state.
 def append_results(
-    current: list["DocumentResult"] | None, updates: list["DocumentResult"] | None
+    current: list["DocumentResult"] | None,
+    updates: list["DocumentResult"] | None,
 ) -> list["DocumentResult"]:
     return [*(current or []), *(updates or [])]
 
 
 # Sort results by stable document identity before sequential reconciliation.
 def sort_results(results: list["DocumentResult"]) -> list["DocumentResult"]:
-    return sorted(results, key=lambda result: (result["document_id"], result["filename"]))
+    return sorted(
+        results,
+        key=lambda result: (
+            result["document_id"],
+            result["filename"],
+        ),
+    )
 
 
 # Append independent product-rule updates without changing prior state.
