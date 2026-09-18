@@ -326,26 +326,45 @@ def run_probe() -> None:
     ocr_seconds = measure_ocr_seconds_per_page()
     with TestClient(create_app()) as client:
         administrator = login(client, *ADMINISTRATOR)
-        activation = client.post(
-            "/api/v1/products/motor-private-car/activate",
+        products = client.get(
+            "/api/v1/products",
             headers=administrator,
-            json={"version": PRODUCT_VERSION},
         )
-        assert activation.status_code == 200, activation.text
-        applicant = login(client, *APPLICANT)
-        underwriter = login(client, *UNDERWRITER)
-        cohorts = [
-            run_cohort(
-                client,
-                run_id,
-                size,
-                applicant,
-                underwriter,
-                administrator,
-                provider,
+        assert products.status_code == 200, products.text
+        original_version = next(
+            item["active_version"]
+            for item in products.json()
+            if item["product_code"] == "motor-private-car"
+        )
+        try:
+            activation = client.post(
+                "/api/v1/products/motor-private-car/activate",
+                headers=administrator,
+                json={"version": PRODUCT_VERSION},
             )
-            for size in COHORT_SIZES
-        ]
+            assert activation.status_code == 200, activation.text
+            applicant = login(client, *APPLICANT)
+            underwriter = login(client, *UNDERWRITER)
+            cohorts = [
+                run_cohort(
+                    client,
+                    run_id,
+                    size,
+                    applicant,
+                    underwriter,
+                    administrator,
+                    provider,
+                )
+                for size in COHORT_SIZES
+            ]
+        finally:
+            if original_version != PRODUCT_VERSION:
+                restored = client.post(
+                    "/api/v1/products/motor-private-car/activate",
+                    headers=administrator,
+                    json={"version": original_version},
+                )
+                assert restored.status_code == 200, restored.text
     report(cohorts, ocr_seconds)
     for cohort in cohorts:
         assert cohort.elapsed_seconds <= BUDGET_SECONDS
