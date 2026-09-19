@@ -278,9 +278,11 @@ idempotent completion, and unchanged development rows/files.
   that would just re-describe the same system. `pytest.importorskip` keeps
   this module from blocking `make test-api` before T047 adds the runner
   script it targets.
-- [ ] T044 [P] [US3] Add rendered Compose isolation tests for no ports, named
+- [X] T044 [P] [US3] Add rendered Compose isolation tests for no ports, named
   volumes, development network, DB URL in runner, live provider, or tracing in
-  `api/tests/contract/test_evaluation_compose.py`.
+  `api/tests/contract/test_evaluation_compose.py`. Parses the YAML directly
+  (no stack needed); skips cleanly via `pytest.skip` until T048 adds the
+  file, so it doesn't block `make test-api` either.
 
 ### Implementation
 
