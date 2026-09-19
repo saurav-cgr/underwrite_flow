@@ -1,9 +1,7 @@
 """Case intake and document persistence rules."""
 
 import logging
-from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
@@ -21,23 +19,40 @@ from underwriteflow.persistence.models import (
     Submission,
 )
 from underwriteflow.persistence.repositories import AuditRepository
-from underwriteflow.products.rules import condition_matches
 from underwriteflow.products.schemas import (
     ProductConfiguration,
-    ProductDocument,
-    ProductField,
+    filter_configuration_for_journey,
 )
-from underwriteflow.workflow.reconciliation import APPLICATION_SOURCE
-from underwriteflow.cases.schemas import CaseCreate
+from underwriteflow.cases.schemas import ApplicationUpdate, CaseCreate
+from underwriteflow.cases.validation import (
+    CaseValidationError,
+    document_is_required,
+    field_is_visible,
+    field_specifications,
+    missing_document_codes,
+    reconciliation_evidence_fields,
+    requested_field_keys,
+    validate_draft_application,
+)
 from underwriteflow.storage import StorageValidationError, UploadStorage
+
+__all__ = [
+    "CaseService",
+    "CaseValidationError",
+    "document_is_required",
+    "field_is_visible",
+    "field_specifications",
+    "missing_document_codes",
+    "reconciliation_evidence_fields",
+    "requested_field_keys",
+    "read_stored_configuration",
+]
 
 LOGGER = logging.getLogger(__name__)
 
 MAX_DOCUMENT_COUNT = 10
 MUTABLE_DOCUMENT_STATUSES = frozenset({"new", "needs_information"})
 
-class CaseValidationError(ValueError):
-    """Raised when intake data does not satisfy the pinned product."""
 
 # Read one stored product configuration or report it as unavailable.
 def read_stored_configuration(
@@ -52,136 +67,6 @@ def read_stored_configuration(
         # intake, so the caller is told rather than the request failing open.
         raise CaseValidationError("case configuration is unavailable") from None
 
-# Decide whether one configured document is required for this application.
-def document_is_required(
-    document: ProductDocument, payload: Mapping[str, Any]
-) -> bool:
-    if document.requirement == "required":
-        return True
-    return document.requirement == "conditional" and condition_matches(
-        document.condition or {}, payload
-    )
-
-# Decide whether one configured field applies to this application.
-def field_is_visible(field: ProductField, payload: Mapping[str, Any]) -> bool:
-    return field.visible_when is None or condition_matches(
-        field.visible_when, payload
-    )
-
-# List the document evidence fields the configured checks read.
-def reconciliation_evidence_fields(
-    configuration: ProductConfiguration,
-) -> list[str]:
-    return sorted(
-        {
-            field_name
-            for check in configuration.reconciliations
-            for source, field_name in check.inputs.items()
-            if source != APPLICATION_SOURCE
-        }
-    )
-
-# List the fields whose values an application must evidence.
-#
-# Only visible fields the applicant answered are requested, because an optional
-# field nobody filled in is unanswered by choice. Evidence fields a configured
-# check reads are always requested, so a comparison has something to read.
-def requested_field_keys(
-    configuration: ProductConfiguration, payload: Mapping[str, Any]
-) -> list[str]:
-    answered = [
-        field.key
-        for field in configuration.fields
-        if field.key in payload and field_is_visible(field, payload)
-    ]
-    evidence_fields = reconciliation_evidence_fields(configuration)
-    return answered + [
-        key for key in evidence_fields if key not in answered
-    ]
-
-# Describe the value shape a provider must return for each requested field.
-#
-# Evidence fields a check reads have no declared application type, so they are
-# requested as text rather than rejected as undeclared.
-def field_specifications(
-    configuration: ProductConfiguration, requested_fields: list[str]
-) -> list[dict[str, object]]:
-    declared = {field.key: field for field in configuration.fields}
-    return [
-        {
-            "field_key": key,
-            "value_type": (
-                declared[key].type if key in declared else "text"
-            ),
-            "allowed_values": (
-                list(declared[key].options) if key in declared else []
-            ),
-        }
-        for key in requested_fields
-    ]
-
-# Return the required document codes that are not yet attached to the case.
-def missing_document_codes(
-    configuration: ProductConfiguration,
-    provided_codes: Iterable[str],
-    payload: Mapping[str, Any],
-) -> list[str]:
-    provided = set(provided_codes)
-    return sorted(
-        document.code
-        for document in configuration.documents
-        if document_is_required(document, payload)
-        and document.code not in provided
-    )
-
-# Validate required fields and documents against the selected product version.
-def validate_application(
-    application: CaseCreate, configuration: ProductConfiguration
-) -> None:
-    if application.product_code != configuration.product_code:
-        raise CaseValidationError("product code does not match configuration")
-    for field in configuration.fields:
-        visible = field_is_visible(field, application.payload)
-        if field.required and visible:
-            if (
-                field.key not in application.payload
-                or application.payload[field.key] in (None, "")
-            ):
-                raise CaseValidationError(f"missing field: {field.key}")
-        if field.key in application.payload:
-            value = application.payload[field.key]
-            if field.type == "integer" and (
-                not isinstance(value, int) or isinstance(value, bool)
-            ):
-                raise CaseValidationError(f"invalid field type: {field.key}")
-            if field.type == "number" and (
-                not isinstance(value, (int, float)) or isinstance(value, bool)
-            ):
-                raise CaseValidationError(f"invalid field type: {field.key}")
-            if field.type == "boolean" and not isinstance(value, bool):
-                raise CaseValidationError(f"invalid field type: {field.key}")
-            if field.type == "enum" and value not in field.options:
-                raise CaseValidationError(f"invalid field option: {field.key}")
-            minimum = field.validation.get("minimum")
-            maximum = field.validation.get("maximum")
-            try:
-                outside_range = (minimum is not None and value < minimum) or (
-                    maximum is not None and value > maximum
-                )
-            except TypeError:
-                outside_range = True
-            if outside_range:
-                raise CaseValidationError(f"invalid field range: {field.key}")
-    provided_documents = set(application.document_codes)
-    known_documents = {document.code for document in configuration.documents}
-    if not provided_documents.issubset(known_documents):
-        raise CaseValidationError("unsupported document code")
-    for document in configuration.documents:
-        if (
-            document_is_required(document, application.payload)
-            and document.code not in provided_documents
-        ):
-            raise CaseValidationError(f"missing document: {document.code}")
 
 class CaseService:
     """Persist cases pinned to exact product and rulebook versions."""
@@ -218,7 +103,14 @@ class CaseService:
         if product_version is None:
             raise CaseValidationError("active product configuration not found")
         configuration = read_stored_configuration(product_version)
-        validate_application(application, configuration)
+        if application.journey not in configuration.supported_journeys:
+            raise CaseValidationError("unsupported journey")
+        filtered = filter_configuration_for_journey(
+            configuration, application.journey
+        )
+        validate_draft_application(
+            application.payload, application.document_codes, filtered
+        )
         rulebook = await session.scalar(
             select(RulebookVersion).where(
                 RulebookVersion.product_version_id == product_version.id,
@@ -234,6 +126,7 @@ class CaseService:
             product_version_id=product_version.id,
             rulebook_version_id=rulebook.id,
             status="new",
+            journey_type=application.journey,
             workflow_thread_id=f"case-{case_id}",
             idempotency_key=application.idempotency_key,
         )
@@ -284,10 +177,13 @@ class CaseService:
         if product_version is None:
             raise CaseValidationError("case configuration is unavailable")
         configuration = read_stored_configuration(product_version)
+        filtered = filter_configuration_for_journey(
+            configuration, case.journey_type
+        )
         requirement = next(
             (
                 item
-                for item in configuration.documents
+                for item in filtered.documents
                 if item.code == document_code
             ),
             None,
@@ -388,3 +284,52 @@ class CaseService:
                 ),
             )
             await session.commit()
+
+    # Replace an owned, still-mutable case's stored draft answers.
+    async def replace_application(
+        self,
+        session: AsyncSession,
+        case: Case,
+        application: ApplicationUpdate,
+        actor_user_id: UUID,
+    ) -> None:
+        if case.status not in MUTABLE_DOCUMENT_STATUSES:
+            raise CaseValidationError(
+                "application cannot change after review starts"
+            )
+        product_version = await session.scalar(
+            select(ProductVersion).where(
+                ProductVersion.id == case.product_version_id
+            )
+        )
+        if product_version is None:
+            raise CaseValidationError("case configuration is unavailable")
+        configuration = read_stored_configuration(product_version)
+        filtered = filter_configuration_for_journey(
+            configuration, case.journey_type
+        )
+        validate_draft_application(
+            application.payload, application.document_codes, filtered
+        )
+        submission = await session.scalar(
+            select(Submission).where(Submission.case_id == case.id)
+        )
+        if submission is None:
+            raise CaseValidationError("case submission is unavailable")
+        submission.payload = {
+            "application": application.payload,
+            "document_codes": application.document_codes,
+        }
+        self.audit.append(
+            session,
+            build_audit_event(
+                "application_replaced",
+                {
+                    "field_keys": sorted(application.payload),
+                    "document_codes": sorted(application.document_codes),
+                },
+                case_id=case.id,
+                actor_user_id=actor_user_id,
+            ),
+        )
+        await session.commit()

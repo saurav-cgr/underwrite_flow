@@ -24,6 +24,7 @@ from underwriteflow.auth.dependencies import (
 )
 from underwriteflow.auth.schemas import Permission
 from underwriteflow.cases.schemas import (
+    ApplicationUpdate,
     CaseConfigurationResponse,
     CaseCreate,
     CaseDocumentResponse,
@@ -38,7 +39,10 @@ from underwriteflow.cases.service import (
     document_is_required,
     field_is_visible,
 )
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.cases.submission import SubmissionService
 from underwriteflow.providers.factory import build_provider
@@ -77,6 +81,7 @@ async def case_response(session: AsyncSession, case: Case) -> CaseResponse:
         product_version=product_version.version,
         rulebook_version=rulebook.version,
         status=case.status,
+        journey=case.journey_type,
     )
 
 
@@ -174,8 +179,9 @@ async def read_case_configuration(
             detail="Case configuration is unavailable",
         )
     try:
-        configuration = ProductConfiguration.model_validate(
-            product_version.configuration
+        configuration = filter_configuration_for_journey(
+            ProductConfiguration.model_validate(product_version.configuration),
+            case.journey_type,
         )
     except ValidationError:
         raise HTTPException(
@@ -191,6 +197,7 @@ async def read_case_configuration(
         product_code=configuration.product_code,
         product_version=product_version.version,
         rulebook_version=rulebook.version,
+        journey=case.journey_type,
         fields=[
             CaseFieldResponse(
                 key=field.key,
@@ -213,10 +220,46 @@ async def read_case_configuration(
                 required=document_is_required(document, payload),
                 accepted_types=document.accepted_types,
                 condition=document.condition,
+                stage=document.stage,
             )
             for document in configuration.documents
         ],
     )
+
+
+# Replace an owned, still-mutable case's stored draft answers.
+@router.put("/{case_id}/application", response_model=CaseResponse)
+async def replace_application(
+    case_id: UUID,
+    application: ApplicationUpdate,
+    request: Request,
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> CaseResponse:
+    case = await session.scalar(select(Case).where(Case.id == case_id))
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    if case.applicant_user_id != UUID(current["sub"]):
+        raise AuthorizationDenied(
+            403,
+            "case_ownership",
+            actor_user_id=UUID(current["sub"]),
+            case_id=case.id,
+        )
+    try:
+        await CaseService(
+            UploadStorage(Path(request.app.state.settings.upload_root))
+        ).replace_application(
+            session, case, application, UUID(current["sub"])
+        )
+    except CaseValidationError:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid application replacement",
+        ) from None
+    return await case_response(session, case)
 
 
 # Submit an owned case for evidence processing and human review.

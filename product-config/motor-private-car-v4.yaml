@@ -1,0 +1,124 @@
+product_code: motor-private-car
+title: Fictional Private-Car Motor
+family: motor
+scope: Fictional India-focused demonstration only
+description: >-
+  Demonstration triage configuration for privately owned cars.
+version: v4
+status: draft
+supported_journeys: [new_business, renewal]
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Enter the fictional vehicle age in years.
+    validation: {minimum: 0, maximum: 30}
+    applies_to: [new_business, renewal]
+  - key: vehicle_use
+    label: Vehicle use
+    type: enum
+    required: true
+    help_text: Select the fictional primary use.
+    options: [personal, commute]
+    applies_to: [new_business, renewal]
+  - key: prior_claims
+    label: Prior claims
+    type: integer
+    required: true
+    help_text: Enter the number of fictional prior claims.
+    validation: {minimum: 0}
+    applies_to: [new_business, renewal]
+  - key: claimed_ncb_percent
+    label: Claimed NCB percent
+    type: integer
+    required: true
+    help_text: Enter the fictional renewal NCB percentage.
+    validation: {minimum: 0, maximum: 100}
+    applies_to: [renewal]
+  - key: policy_start_date
+    label: Policy start date
+    type: date
+    required: true
+    help_text: Enter the fictional renewal start date.
+    applies_to: [renewal]
+documents:
+  - code: identity_record
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+    applies_to: [new_business, renewal]
+  - code: vehicle_record
+    title: Synthetic vehicle record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+    applies_to: [new_business, renewal]
+  - code: registration_certificate
+    title: Synthetic registration certificate
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+    applies_to: [new_business, renewal]
+  - code: inspection_photo
+    title: Synthetic inspection photo
+    requirement: conditional
+    condition: {field: vehicle_age, operator: greater_than, value: 12}
+    accepted_types: [image/jpeg, image/png]
+    applies_to: [new_business, renewal]
+  - code: previous_policy
+    title: Synthetic previous policy
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+    applies_to: [renewal]
+    required_for: [renewal]
+    stage: prior_policy
+routing_rules:
+  - code: vehicle_age_specialist
+    condition: {field: vehicle_age, operator: greater_than, value: 12}
+    route: specialist
+    specialist_label: motor inspection
+    applies_to: [new_business, renewal]
+  - code: prior_claims_standard
+    condition: {field: prior_claims, operator: greater_than, value: 1}
+    route: standard
+    applies_to: [new_business, renewal]
+# Fictional checks only. Every comparison stays in backend code.
+reconciliations:
+  - code: motor_chassis_match
+    kind: asset_match
+    inputs:
+      vehicle_record: chassis_number
+      registration_certificate: chassis_number
+    applies_to: [new_business, renewal]
+  - code: motor_engine_match
+    kind: asset_match
+    inputs:
+      vehicle_record: engine_number
+      registration_certificate: engine_number
+    applies_to: [new_business, renewal]
+  - code: motor_registration_match
+    kind: asset_match
+    inputs:
+      vehicle_record: registration_number
+      registration_certificate: registration_number
+    applies_to: [new_business, renewal]
+  - code: motor_ncb_match
+    kind: ncb_match
+    inputs:
+      application: claimed_ncb_percent
+      previous_policy: ncb_percent
+    parameters:
+      tiers: [0, 20, 25, 35, 45, 50]
+      claim_count_field: prior_claims
+      claims_reset_threshold: 1
+      claims_reset_tier: 0
+    applies_to: [renewal]
+  - code: motor_renewal_lapse
+    kind: policy_lapse
+    inputs:
+      application: policy_start_date
+      previous_policy: policy_expiry
+    parameters:
+      maximum_gap_days: 30
+      boundary: inclusive
+    applies_to: [renewal]
+specialist_labels: [motor inspection]

@@ -21,6 +21,7 @@ from underwriteflow.cases.service import (
     missing_document_codes,
     requested_field_keys,
 )
+from underwriteflow.cases.validation import validate_complete_application
 from underwriteflow.persistence.models import (
     Case,
     Document,
@@ -28,7 +29,10 @@ from underwriteflow.persistence.models import (
     Submission,
 )
 from underwriteflow.providers.protocol import ExtractionProvider
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.nodes import branch_failures
@@ -263,10 +267,13 @@ class SubmissionService:
         if product_version is None:
             raise CaseValidationError("case configuration is unavailable")
         try:
-            configuration = ProductConfiguration.model_validate(
-                product_version.configuration
+            configuration = filter_configuration_for_journey(
+                ProductConfiguration.model_validate(
+                    product_version.configuration
+                ),
+                case.journey_type,
             )
-        except ValidationError:
+        except (ValidationError, ValueError):
             # A pinned configuration the application can no longer read cannot
             # be processed deterministically, so a human decides the route.
             return await self.route_unsupported_case(
@@ -287,15 +294,13 @@ class SubmissionService:
                 select(Document).where(Document.case_id == case.id)
             )
         )
-        missing = missing_document_codes(
-            configuration,
-            [
-                document.document_code
-                for document in documents
-                if document.document_code
-            ],
-            payload,
-        )
+        document_codes = [
+            document.document_code
+            for document in documents
+            if document.document_code
+        ]
+        validate_complete_application(payload, document_codes, configuration)
+        missing = missing_document_codes(configuration, document_codes, payload)
         if missing:
             raise CaseValidationError(
                 "missing documents: " + ", ".join(missing)

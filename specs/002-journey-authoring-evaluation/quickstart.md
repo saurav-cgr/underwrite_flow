@@ -30,6 +30,37 @@
 - Full `make test-web`: 141 passed, unaffected.
 - No legacy product configuration file was modified.
 
+## 0c. Phase 3a Verification Record (2026-09-19)
+
+Backend slice of US1 only (T011, T012, T013, T016-T021); queue/review
+journey exposure (T014/T022/T023) and all web work (T015/T024-T026)
+remain, to keep this checkpoint reviewable.
+
+- New immutable `motor-private-car-v4` and
+  `health-individual-family-floater-v3` configurations declare
+  `supported_journeys: [new_business, renewal]` and a required
+  `previous_policy` prior-policy document for renewal.
+- Case creation now accepts a `journey` (default `new_business`) and an
+  incomplete draft payload; `PUT /cases/{case_id}/application` lets the
+  owner replace draft answers before review starts.
+- Submission enforces the complete, journey-filtered configuration
+  (required fields and documents) and runs the workflow against that
+  filtered configuration only.
+- The applicant catalogue accepts `?journey=` and excludes products that
+  do not support it.
+- `tests/unit/test_cases.py`: draft vs. complete validation, journey
+  filtering of documents, and the application-replace status guard.
+- `tests/contract/test_journey_api.py`: journey defaulting/persistence,
+  catalogue journey filter, application replace + ownership.
+- `tests/integration/test_journey_workflow.py`: renewal submission is
+  refused without its prior-policy document and succeeds with it;
+  new-business configuration excludes renewal-only requirements.
+- Full `make test-api`: 408 passed (394 baseline + 14 new).
+- Full `make test-web`: 141 passed, unaffected (no web changes yet).
+- `api/tests/fixtures/records.py` split into `records.py` (identity/role)
+  and `case_fixtures.py` (case/product-status/evidence) to stay under the
+  400-line limit; existing imports re-exported unchanged.
+
 ## 1. Static and Deterministic Suites
 
 ```bash

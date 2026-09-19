@@ -20,6 +20,7 @@ CASE_KEYS = {
     "product_version",
     "rulebook_version",
     "status",
+    "journey",
 }
 
 

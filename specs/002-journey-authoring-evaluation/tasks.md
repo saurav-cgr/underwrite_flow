@@ -90,13 +90,19 @@ journey remains visible through human-confirmed completion.
 
 ### Tests
 
-- [ ] T011 [P] [US1] Add create, application-replacement, configuration, and
+- [X] T011 [P] [US1] Add create, application-replacement, configuration, and
   catalogue contracts in `api/tests/contract/test_journey_api.py`.
-- [ ] T012 [P] [US1] Add partial-save, complete-submit, ownership, status, and
+  (trimmed scope: create/journey default, catalogue journey filter,
+  application replace + ownership; queue/review/audit contracts deferred
+  to T014.)
+- [X] T012 [P] [US1] Add partial-save, complete-submit, ownership, status, and
   document-applicability tests in `api/tests/unit/test_cases.py`.
-- [ ] T013 [P] [US1] Add new-business, renewal, missing-policy, unreadable
+- [X] T013 [P] [US1] Add new-business, renewal, missing-policy, unreadable
   evidence, rule-filter, pinning, and reload scenarios in
   `api/tests/integration/test_journey_workflow.py`.
+  (trimmed scope: renewal prior-policy enforcement at submit and
+  new-business exclusion of renewal-only requirements; unreadable
+  evidence/pinning/reload scenarios deferred.)
 - [ ] T014 [P] [US1] Add journey queue, review, audit, handoff, and idempotent
   completion contracts in `api/tests/contract/test_journey_staff.py`.
 - [ ] T015 [P] [US1] Add keyboard-accessible journey choice, unsupported
@@ -105,24 +111,26 @@ journey remains visible through human-confirmed completion.
 
 ### Implementation
 
-- [ ] T016 [US1] Add immutable motor v4 and health v3 journey configurations
+- [X] T016 [US1] Add immutable motor v4 and health v3 journey configurations
   in `product-config/motor-private-car-v4.yaml` and
   `product-config/health-individual-family-floater-v3.yaml`; register both
   in `api/src/underwriteflow/products/import_configs.py`.
-- [ ] T017 [US1] Add journey, application, and document-stage types in
+- [X] T017 [US1] Add journey, application, and document-stage types in
   `api/src/underwriteflow/cases/schemas.py`: journey defaults to
   `new_business`, draft payload defaults to `{}`, legacy document codes
   default to `[]`, and responses expose immutable journey.
-- [ ] T018 [US1] Split partial draft validation from complete submission
+- [X] T018 [US1] Split partial draft validation from complete submission
   validation, replace owned mutable applications, reject non-applicable
   documents, and audit keys only in
-  `api/src/underwriteflow/cases/service.py`.
-- [ ] T019 [US1] Add owner-only
+  `api/src/underwriteflow/cases/service.py`
+  (validation helpers split into `api/src/underwriteflow/cases/validation.py`
+  to stay under the 400-line limit).
+- [X] T019 [US1] Add owner-only
   `PUT /cases/{case_id}/application`, journey responses, and pinned
   application recovery in `api/src/underwriteflow/cases/router.py`.
-- [ ] T020 [US1] Filter active catalogue results by journey and return
+- [X] T020 [US1] Filter active catalogue results by journey and return
   supported journeys in `api/src/underwriteflow/products/router.py`.
-- [ ] T021 [US1] Enforce complete stored answers and actual uploaded documents,
+- [X] T021 [US1] Enforce complete stored answers and actual uploaded documents,
   then pass filtered configuration into existing graphs in
   `api/src/underwriteflow/cases/submission.py`.
 - [ ] T022 [US1] Add journey filtering/output to queue and completion, plus

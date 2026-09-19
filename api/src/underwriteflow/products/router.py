@@ -24,7 +24,12 @@ from underwriteflow.persistence.models import (
     ProductVersion,
     ReferenceDocument,
 )
-from underwriteflow.products.schemas import VersionPayload, YamlPayload
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    VersionPayload,
+    YamlPayload,
+    filter_configuration_for_journey,
+)
 from underwriteflow.products.service import (
     ProductConfigurationError,
     ProductConflictError,
@@ -83,6 +88,7 @@ async def list_products(
 # Return active product fields without exposing routing rules to applicants.
 @router.get("/catalog")
 async def list_catalog(
+    journey: str | None = None,
     _: dict[str, str] = Depends(
         require_permission(Permission.CASE_WRITE)
     ),
@@ -95,17 +101,33 @@ async def list_catalog(
     )
     catalog = []
     for version in versions:
-        configuration = version.configuration
+        configuration = ProductConfiguration.model_validate(
+            version.configuration
+        )
+        supported = configuration.supported_journeys
+        if journey is not None and journey not in supported:
+            continue
+        shown = (
+            filter_configuration_for_journey(configuration, journey)
+            if journey is not None
+            else configuration
+        )
         catalog.append(
             {
-                "product_code": configuration["product_code"],
-                "title": configuration["title"],
-                "family": configuration["family"],
-                "scope": configuration["scope"],
-                "description": configuration["description"],
+                "product_code": shown.product_code,
+                "title": shown.title,
+                "family": shown.family,
+                "scope": shown.scope,
+                "description": shown.description,
                 "version": version.version,
-                "fields": configuration["fields"],
-                "documents": configuration["documents"],
+                "supported_journeys": configuration.supported_journeys,
+                "fields": [
+                    field.model_dump(mode="json") for field in shown.fields
+                ],
+                "documents": [
+                    document.model_dump(mode="json")
+                    for document in shown.documents
+                ],
             }
         )
     return catalog

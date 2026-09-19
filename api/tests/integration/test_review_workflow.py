@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import psycopg
 from fastapi.testclient import TestClient
-from fixtures.records import remove_case
+from fixtures.records import SEED_APPLICATION_PAYLOAD, remove_case
 from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
@@ -66,7 +66,7 @@ def test_review_endpoint_resumes_checkpoint_and_records_decision() -> None:
                 INSERT INTO submissions (id, case_id, payload)
                 VALUES (%s, %s, %s)
                 """,
-                (uuid4(), case_id, '{"application": {"vehicle_age": 2}}'),
+                (uuid4(), case_id, SEED_APPLICATION_PAYLOAD),
             )
             for code in ("identity_record", "vehicle_record"):
                 cursor.execute(
