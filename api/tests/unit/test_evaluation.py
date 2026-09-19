@@ -1,4 +1,5 @@
 import asyncio
+from collections import Counter
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,8 +9,9 @@ from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
 from underwriteflow.evaluation.dataset import load_dataset
 from underwriteflow.evaluation.metrics import evaluate_records
-from underwriteflow.evaluation.runner import run_evaluation
+from underwriteflow.evaluation.runner import product_config_root, run_evaluation
 from underwriteflow.evaluation.tracing import redact_trace, trace_summary
+from underwriteflow.products.service import load_configuration
 
 
 # Verify the reference dataset has the planned synthetic split and balance.
@@ -35,6 +37,69 @@ def test_reference_dataset_has_balanced_synthetic_cases() -> None:
         "life-individual-term": 30,
         "health-individual-family-floater": 30,
     }
+
+
+# Load every published configuration version, keyed by product and version.
+def _all_configurations() -> dict[tuple[str, str], object]:
+    configurations: dict[tuple[str, str], object] = {}
+    for path in product_config_root().glob("*.yaml"):
+        configuration = load_configuration(path.read_text())
+        key = (configuration.product_code, configuration.version)
+        configurations[key] = configuration
+    return configurations
+
+
+# Verify every reference case has a distinct, non-blank case identifier.
+def test_dataset_case_ids_are_unique() -> None:
+    records = load_dataset()
+    case_ids = [record["case_id"] for record in records]
+
+    assert all(case_ids)
+    assert len(set(case_ids)) == len(case_ids)
+
+
+# Verify each product/journey split matches the planned 90-case distribution.
+def test_dataset_journey_distribution_matches_the_plan() -> None:
+    records = load_dataset()
+    counts = Counter(
+        (record["product_code"], record["journey_type"]) for record in records
+    )
+
+    assert counts == {
+        ("motor-private-car", "new_business"): 15,
+        ("motor-private-car", "renewal"): 15,
+        ("health-individual-family-floater", "new_business"): 15,
+        ("health-individual-family-floater", "renewal"): 15,
+        ("life-individual-term", "new_business"): 30,
+    }
+
+
+# Verify expected routes remain balanced across the full reference set.
+def test_dataset_route_balance_is_thirty_each() -> None:
+    records = load_dataset()
+    counts = Counter(record["expected"]["route"] for record in records)
+
+    assert counts == {"expedited": 30, "standard": 30, "specialist": 30}
+
+
+# Verify every declared configuration version is actually mounted.
+def test_dataset_versions_are_in_the_configuration_manifest() -> None:
+    records = load_dataset()
+    configurations = _all_configurations()
+
+    for record in records:
+        key = (record["product_code"], record["configuration_version"])
+        assert key in configurations, key
+
+
+# Verify every declared version supports the case's named journey.
+def test_dataset_versions_support_their_named_journey() -> None:
+    records = load_dataset()
+    configurations = _all_configurations()
+
+    for record in records:
+        key = (record["product_code"], record["configuration_version"])
+        assert record["journey_type"] in configurations[key].supported_journeys
 
 
 # Verify evaluator reports route, detection, provenance, and workflow metrics.
