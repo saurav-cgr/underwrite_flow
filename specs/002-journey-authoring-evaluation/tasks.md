@@ -307,11 +307,21 @@ idempotent completion, and unchanged development rows/files.
   the existing `filter_configuration_for_journey` before evaluating. No
   metrics/router change, so the in-process admin evaluation endpoint is
   untouched.
-- [ ] T047 [US3] Implement dataset preflight, public HTTP orchestration,
+- [X] T047 [US3] Implement dataset preflight, public HTTP orchestration,
   synthetic PDF reuse, representative reviews, double completion, queue/audit
   checks, and atomic success/failure output in `scripts/evaluate_e2e.py`;
   include schema version, pass flag, provider, hashes, counts, metrics,
   reviewed/completed counts, sorted failures, and elapsed seconds only.
+  Reuses `underwriteflow.evaluation.dataset` loaders (no separate manifest
+  logic). Trimmed: `metrics` reports one honest field, `route_agreement`
+  over cases whose full create/upload/submit/route-match succeeded — the
+  public submit response only returns `{route, factors}`, not evidence or
+  conflict detail, so richer per-field metrics would be fabricated; the
+  in-process fast evaluator already covers those. "Synthetic PDF reuse"
+  means the dataset's own text lines as document content (matching the
+  offline runner's fake-provider contract), not real PDF file generation.
+  All 6 of T043's mocked tests now pass for real (no more skip). Full API
+  suite: 429 passed, 6 skipped (T044, pending T048's compose file).
 - [ ] T048 [US3] Add standalone tmpfs database, bootstrap, API, and runner with
   fake provider, tracing disabled, internal network, no ports, and no named
   volumes in `compose.evaluation.yaml`.
