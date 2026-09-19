@@ -199,7 +199,7 @@ beforeEach(() => {
   vi.mocked(submitCase).mockResolvedValue({
     id: "case-id",
     status: "underwriter_review",
-    recommendation: {},
+    recommendation: { route: "standard" },
   });
 });
 
