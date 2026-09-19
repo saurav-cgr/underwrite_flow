@@ -226,6 +226,12 @@ class Case(IdentifiedRecord, TimestampedRecord, Base):
         ForeignKey("rulebook_versions.id"), nullable=False
     )
     status: Mapped[str] = mapped_column(String(50), nullable=False)
+    journey_type: Mapped[str] = mapped_column(
+        String(32),
+        default="new_business",
+        server_default=text("'new_business'"),
+        nullable=False,
+    )
     review_cycle: Mapped[int] = mapped_column(
         default=0, server_default=text("0"), nullable=False
     )

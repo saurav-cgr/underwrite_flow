@@ -15,6 +15,21 @@
   TypeScript or bundling errors.
 - No blockers found before feature edits.
 
+## 0b. Phase 2 Verification Record (2026-09-19)
+
+- Migration 08 applied: `alembic current` reports `08`.
+- `tests/integration/test_journey_migration.py`: upgrade, backfill,
+  constraint, and downgrade all verified against the live database.
+- `tests/unit/test_journey_configuration.py`: 15 tests covering
+  defaults, subsets, document stage, cross-reference validation, and
+  the pure journey filter.
+- `tests/unit/test_product_legacy_import.py`: legacy semantic
+  re-import is idempotent and never rewrites a stored hash; a truly
+  different configuration still conflicts.
+- Full `make test-api`: 394 passed (376 baseline + 18 new).
+- Full `make test-web`: 141 passed, unaffected.
+- No legacy product configuration file was modified.
+
 ## 1. Static and Deterministic Suites
 
 ```bash

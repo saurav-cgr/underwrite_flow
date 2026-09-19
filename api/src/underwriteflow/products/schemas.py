@@ -12,6 +12,13 @@ from pydantic import (
 )
 
 from underwriteflow.document_types import SUPPORTED_CONTENT_TYPES
+from underwriteflow.products.journey import (
+    DocumentStage,
+    JourneyType,
+    default_journeys,
+    filter_configuration_for_journey as _filter_configuration_for_journey,
+    validate_journeys as _validate_journeys,
+)
 
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
@@ -79,6 +86,9 @@ class ProductField(BaseModel):
     validation: dict[str, Any] = Field(default_factory=dict)
     visible_when: dict[str, Any] | None = None
     options: list[str] = Field(default_factory=list)
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
 
 
 class ProductDocument(BaseModel):
@@ -91,6 +101,11 @@ class ProductDocument(BaseModel):
     requirement: Requirement
     accepted_types: list[str] = Field(min_length=1)
     condition: dict[str, Any] | None = None
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
+    required_for: list[JourneyType] | None = None
+    stage: DocumentStage = "supporting"
 
     # Refuse evidence types the upload path cannot store at all.
     @field_validator("accepted_types")
@@ -116,6 +131,10 @@ class ProductDocument(BaseModel):
             raise ValueError(
                 "only conditional documents may define a condition"
             )
+        if self.requirement == "not_applicable" and self.required_for:
+            raise ValueError(
+                "not_applicable documents cannot declare required_for"
+            )
         return self
 
 
@@ -128,6 +147,9 @@ class RoutingRule(BaseModel):
     condition: dict[str, Any] = Field(min_length=1)
     route: Route
     specialist_label: str | None = None
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
 
 
 class NcbParameters(BaseModel):
@@ -175,6 +197,9 @@ class ReconciliationCheck(BaseModel):
     kind: ReconciliationKind
     inputs: dict[str, str] = Field(min_length=1)
     parameters: NcbParameters | RenewalParameters | None = None
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
 
     # Match optional pinned parameters to the implemented check kind.
     @model_validator(mode="after")
@@ -207,6 +232,19 @@ class ProductConfiguration(BaseModel):
     routing_rules: list[RoutingRule] = Field(min_length=1)
     reconciliations: list[ReconciliationCheck] = Field(default_factory=list)
     specialist_labels: list[str] = Field(min_length=1)
+    supported_journeys: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
+
+    # Reject an unsupported, empty, or duplicate declared journey list.
+    @field_validator("supported_journeys")
+    @classmethod
+    def validate_supported_journeys(
+        cls, value: list[str]
+    ) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("supported_journeys must be unique")
+        return value
 
     # Ensure identifiers and specialist references are unambiguous.
     @model_validator(mode="after")
@@ -241,6 +279,7 @@ class ProductConfiguration(BaseModel):
         for rule in self.routing_rules:
             validate_condition(rule.condition, keys, f"rule {rule.code}")
         self.validate_reconciliations(keys, set(document_codes))
+        _validate_journeys(self, APPLICATION_SOURCE)
         return self
 
     # Ensure each reconciliation check names real sources and declared fields.
@@ -293,6 +332,15 @@ class ProductConfiguration(BaseModel):
                 raise ValueError(
                     f"{where}: claim count field is not declared"
                 )
+
+
+# Return the same configuration shape containing only items that apply to
+# the given journey. Never mutates the input; the input remains reusable for
+# any other journey.
+def filter_configuration_for_journey(
+    configuration: ProductConfiguration, journey: JourneyType
+) -> ProductConfiguration:
+    return _filter_configuration_for_journey(configuration, journey)
 
 
 class YamlPayload(BaseModel):

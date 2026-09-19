@@ -346,6 +346,7 @@ def test_preview_summarizes_configured_checks() -> None:
                 "previous_policy": "ncb_percent",
                 "claims_history": "claim_count",
             },
+            "applies_to": ["new_business"],
         }
     ]
 

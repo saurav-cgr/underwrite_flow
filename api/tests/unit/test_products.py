@@ -383,3 +383,4 @@ def test_malformed_json_is_refused() -> None:
         load_configuration('{"product_code": "synthetic-motor",}')
 
     assert "not valid JSON or YAML" in str(refused.value)
+

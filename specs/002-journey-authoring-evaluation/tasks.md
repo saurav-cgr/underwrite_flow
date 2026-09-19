@@ -40,31 +40,35 @@ before commit or next phase.
 
 ### Tests
 
-- [ ] T003 [P] Add migration upgrade, backfill, constraint, and downgrade
+- [X] T003 [P] Add migration upgrade, backfill, constraint, and downgrade
   tests in `api/tests/integration/test_journey_migration.py`.
-- [ ] T004 [P] Add journey defaults, subsets, document-stage, reference, and
+- [X] T004 [P] Add journey defaults, subsets, document-stage, reference, and
   pure-filter tests in `api/tests/unit/test_journey_configuration.py`.
-- [ ] T005 [P] Add legacy semantic re-import and immutable-hash tests in
-  `api/tests/unit/test_products.py`.
+- [X] T005 [P] Add legacy semantic re-import and immutable-hash tests in
+  `api/tests/unit/test_product_legacy_import.py` (split from
+  `test_products.py` to stay under the 400-line file limit).
 
 ### Implementation
 
-- [ ] T006 Add revision 08 in
+- [X] T006 Add revision 08 in
   `api/alembic/versions/08_case_journey.py`: `journey_type` is non-null,
   defaults/backfills to `new_business`, accepts only `new_business` or
   `renewal`, and downgrade removes its constraint then column.
-- [ ] T007 Add the constrained `journey_type` field to `Case` in
+- [X] T007 Add the constrained `journey_type` field to `Case` in
   `api/src/underwriteflow/persistence/models.py`.
-- [ ] T008 Add journey schema and pure filtering in
-  `api/src/underwriteflow/products/schemas.py`: `supported_journeys` is a
-  unique, non-empty list defaulting to `[new_business]`; `applies_to` is a
-  non-empty supported subset defaulting to `[new_business]`; `required_for`
-  is null or a subset of document `applies_to`; `stage` defaults to
-  `supporting` and accepts only `prior_policy` or `supporting`.
-- [ ] T009 Normalize stored and incoming configurations before legacy version
+- [X] T008 Add journey schema and pure filtering in
+  `api/src/underwriteflow/products/schemas.py` (cross-reference validation
+  and the pure filter itself live in the new
+  `api/src/underwriteflow/products/journey.py` to stay under the 400-line
+  file limit): `supported_journeys` is a unique, non-empty list defaulting to
+  `[new_business]`; `applies_to` is a non-empty supported subset defaulting
+  to `[new_business]`; `required_for` is null or a subset of document
+  `applies_to`; `stage` defaults to `supporting` and accepts only
+  `prior_policy` or `supporting`.
+- [X] T009 Normalize stored and incoming configurations before legacy version
   conflict checks in `api/src/underwriteflow/products/service.py`; preserve
   existing stored payloads and hashes.
-- [ ] T010 Run Phase 2 checks from
+- [X] T010 Run Phase 2 checks from
   `specs/002-journey-authoring-evaluation/quickstart.md`; report results and
   proposed commit, then wait for `continue`.
 
