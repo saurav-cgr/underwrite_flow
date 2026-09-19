@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { Icon, IconSprite } from "./icons";
 import type { IconName } from "./icons";
 import { homeScreenForRole, identityInitials } from "./ui-state";
@@ -227,9 +228,14 @@ export function Journey({ current }: { current: number }) {
 // Render an accessible error summary linked to invalid fields.
 export function ErrorSummary({ errors }: { errors: Record<string, string> }) {
   const entries = Object.entries(errors);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (entries.length > 0) ref.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries.length]);
   if (entries.length === 0) return null;
   return (
-    <div className="error-summary" role="alert" tabIndex={-1}>
+    <div className="error-summary" ref={ref} role="alert" tabIndex={-1}>
       <strong>There is a problem</strong>
       <ul>
         {entries.map(([key, message]) => (

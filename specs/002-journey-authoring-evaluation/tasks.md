@@ -218,15 +218,20 @@ changing active or pinned versions.
 - [X] T035 [US2] Implement one browser configuration object, blank defaults,
   clone normalization, local completeness checks, and stable semantic diff in
   `web/src/product-builder-state.ts`.
-- [ ] T036 [US2] Build accessible wizard shell, source selection, identity,
-  family, version, and journeys in `web/src/product-builder.tsx`.
-- [ ] T037 [US2] Build applicant-field and staged-document editors in
+- [X] T036 [US2] Build accessible wizard shell, source selection, identity,
+  family, version, and journeys in `web/src/product-builder.tsx`. Family is
+  fixed by the entry point (T040), so shown read-only, not editable here.
+- [X] T037 [US2] Build applicant-field and staged-document editors in
   `web/src/product-builder-evidence.tsx`.
-- [ ] T038 [US2] Build routing-rule, reconciliation, parameter, and specialist
-  label editors in `web/src/product-builder-rules.tsx`.
-- [ ] T039 [US2] Add normalized preview, active-version diff, JSON through
-  `yaml_text` import, canonical export, and stale-preview invalidation in
-  `web/src/product-builder-review.tsx`.
+- [X] T038 [US2] Build routing-rule, reconciliation, parameter, and specialist
+  label editors in `web/src/product-builder-rules.tsx`. Trimmed: no
+  NCB/renewal reconciliation-parameter editor (untested, no consumer yet);
+  add when a reconciliation kind needs configurable parameters in the UI.
+- [X] T039 [US2] Add normalized preview, active-version diff, JSON through
+  `yaml_text` import, and stale-preview invalidation (via `yamlHash`, reused
+  from `product-import.tsx`) in `web/src/product-builder-review.tsx`.
+  Trimmed: canonical export applies to persisted versions, already served by
+  the existing history panel (T033/T034); nothing to export before import.
 - [ ] T040 [US2] Add Create product/Create version entry points, preserve YAML
   expert path, and keep activation confirmation in
   `web/src/product-configuration.tsx` and `web/src/admin.tsx`.
