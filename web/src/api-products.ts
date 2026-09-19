@@ -1,5 +1,6 @@
 // Administrator product configuration and reference document calls.
 import type {
+  JourneyType,
   ProductCatalogItem,
   ProductConfigurationChange,
   ProductConfigurationItem,
@@ -9,11 +10,14 @@ import type {
 } from "./types";
 import { request } from "./api-core";
 
-// Load active product fields from the backend-owned catalog.
+// Load active product fields from the backend-owned catalog, optionally
+// filtered to one journey's supported products and applicable fields.
 export async function listCatalog(
   token: string,
+  journey?: JourneyType,
 ): Promise<ProductCatalogItem[]> {
-  return request("/products/catalog", token);
+  const query = journey ? `?journey=${encodeURIComponent(journey)}` : "";
+  return request(`/products/catalog${query}`, token);
 }
 
 // Load all product configurations visible to an administrator.

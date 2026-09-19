@@ -17,6 +17,7 @@ import type { ReviewStart } from "./types";
 
 const PACK: ReviewStart = {
   case_id: "case-id",
+  journey: "new_business",
   status: "awaiting_human_review",
   recommendation: { route: "specialist", factors: ["specialist_signal"] },
   summary: {

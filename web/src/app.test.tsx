@@ -71,8 +71,10 @@ const ACTIVE_CATALOGUE: ProductCatalogItem = {
       title: "Active catalogue identity record",
       requirement: "required",
       accepted_types: ["application/pdf"],
+      stage: "supporting",
     },
   ],
+  supported_journeys: ["new_business"],
 };
 
 const PINNED_CASE: CaseRecord = {
@@ -81,6 +83,7 @@ const PINNED_CASE: CaseRecord = {
   product_version: "v1",
   rulebook_version: "v1",
   status: "new",
+  journey: "new_business",
 };
 
 const PINNED_CONFIGURATION: CaseConfiguration = {
@@ -88,6 +91,7 @@ const PINNED_CONFIGURATION: CaseConfiguration = {
   product_code: "motor-private-car",
   product_version: "v1",
   rulebook_version: "v1",
+  journey: "new_business",
   fields: [],
   documents: [
     {
@@ -97,6 +101,7 @@ const PINNED_CONFIGURATION: CaseConfiguration = {
       required: true,
       accepted_types: ["application/pdf"],
       condition: null,
+      stage: "supporting",
     },
   ],
 };
@@ -104,6 +109,7 @@ const PINNED_CONFIGURATION: CaseConfiguration = {
 const REVIEW_ITEM: QueueItem = {
   case_id: "00000000-0000-0000-0000-000000000001",
   product_code: "motor-private-car",
+  journey: "new_business",
   status: "underwriter_review",
   route: "standard",
   selected_route: null,

@@ -20,6 +20,7 @@ import type { QueueItem, ReviewStart } from "./types";
 const ITEM: QueueItem = {
   case_id: "case-id-0000-0000-0000-000000000000",
   product_code: "motor-private-car",
+  journey: "new_business",
   status: "underwriter_review",
   route: "specialist",
   selected_route: null,
@@ -33,6 +34,7 @@ const ITEM: QueueItem = {
 
 const PACK: ReviewStart = {
   case_id: "case-id-0000-0000-0000-000000000000",
+  journey: "new_business",
   status: "awaiting_human_review",
   recommendation: { route: "specialist", factors: ["specialist_signal"] },
   summary: {
@@ -201,6 +203,7 @@ describe("manual recommendation", () => {
     vi.mocked(startReview).mockResolvedValue(manualPack);
     vi.mocked(submitReview).mockResolvedValue({
       case_id: ITEM.case_id,
+      journey: ITEM.journey,
       action: "confirm",
       selected_route: "specialist",
       status: "overridden",
@@ -270,6 +273,7 @@ describe("decision summary", () => {
   it("does not repeat the word when the route matches the status", async () => {
     vi.mocked(submitReview).mockResolvedValue({
       case_id: ITEM.case_id,
+      journey: ITEM.journey,
       action: "request_information",
       selected_route: null,
       status: "needs_information",
@@ -304,6 +308,7 @@ describe("decision summary", () => {
     async () => {
       vi.mocked(submitReview).mockResolvedValue({
         case_id: ITEM.case_id,
+        journey: ITEM.journey,
         action: "confirm",
         selected_route: "specialist",
         status: "confirmed",

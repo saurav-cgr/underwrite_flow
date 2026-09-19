@@ -140,7 +140,7 @@ journey remains visible through human-confirmed completion.
 - [X] T023 [US1] Add journey to review-start and review-decision responses in
   `api/src/underwriteflow/reviews/schemas.py` and
   `api/src/underwriteflow/reviews/router.py`.
-- [ ] T024 [US1] Add journey, application replacement, staged document, queue,
+- [X] T024 [US1] Add journey, application replacement, staged document, queue,
   review, and completion types/calls in `web/src/types.ts`,
   `web/src/api.ts`, `web/src/api-products.ts`, and
   `web/src/api-staff.ts`.

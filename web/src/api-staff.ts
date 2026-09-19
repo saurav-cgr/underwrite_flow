@@ -4,6 +4,7 @@ import type {
   CompletionResult,
   EvaluationSplit,
   EvaluationSummary,
+  JourneyType,
   PermissionSummary,
   QueueItem,
   ReviewResult,
@@ -19,6 +20,7 @@ export async function listQueue(
   status?: string,
   awaitingHandoff?: boolean,
   reconciliationStatus?: string,
+  journey?: JourneyType,
 ): Promise<QueueItem[]> {
   const params = new URLSearchParams();
   if (status) {
@@ -29,6 +31,9 @@ export async function listQueue(
   }
   if (reconciliationStatus) {
     params.set("reconciliation_status", reconciliationStatus);
+  }
+  if (journey) {
+    params.set("journey", journey);
   }
   const query = params.size > 0 ? `?${params.toString()}` : "";
   return request(`/queues${query}`, token);

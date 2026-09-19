@@ -1,5 +1,7 @@
 export type Role = "Applicant" | "Underwriter" | "Administrator";
 
+export type JourneyType = "new_business" | "renewal";
+
 // Stable lowercase role codes owned by the backend's database-backed RBAC.
 const ROLE_LABELS: Record<string, Role> = {
   applicant: "Applicant",
@@ -84,11 +86,14 @@ export interface ProductField {
   visible_when?: { field: string; equals?: unknown };
 }
 
+export type DocumentStage = "prior_policy" | "supporting";
+
 export interface ProductDocument {
   code: string;
   title: string;
   requirement: "required" | "optional" | "conditional" | "not_applicable";
   accepted_types: string[];
+  stage: DocumentStage;
 }
 
 export interface ProductCatalogItem {
@@ -100,6 +105,7 @@ export interface ProductCatalogItem {
   version: string;
   fields: ProductField[];
   documents: ProductDocument[];
+  supported_journeys: JourneyType[];
 }
 
 export interface ProductConfigurationItem {
@@ -152,6 +158,7 @@ export interface CaseRecord {
   product_version: string;
   rulebook_version: string;
   status: string;
+  journey: JourneyType;
 }
 
 export interface DocumentRecord {
@@ -199,6 +206,7 @@ export interface ReconciliationCheck {
 export interface QueueItem {
   case_id: string;
   product_code: string;
+  journey: JourneyType;
   status: string;
   route: string | null;
   selected_route: string | null;
@@ -313,6 +321,7 @@ export interface ConflictEvidence {
 
 export interface ReviewStart {
   case_id: string;
+  journey: JourneyType;
   status: "awaiting_human_review";
   recommendation: Recommendation;
   summary: Record<string, unknown>;
@@ -327,6 +336,7 @@ export interface ReviewStart {
 
 export interface ReviewResult {
   case_id: string;
+  journey: JourneyType;
   action: "confirm" | "override" | "request_information";
   selected_route: string | null;
   status: "confirmed" | "overridden" | "needs_information" | "manual_review";
@@ -335,6 +345,7 @@ export interface ReviewResult {
 export interface CompletionResult {
   handoff_id: string;
   case_id: string;
+  journey: JourneyType;
   route: "specialist" | "standard" | "expedited";
   specialist_label: string | null;
   status: "completed";
@@ -353,6 +364,7 @@ export interface ResolvedDocument {
   required: boolean;
   accepted_types: string[];
   condition: Record<string, unknown> | null;
+  stage: DocumentStage;
 }
 
 export interface CaseConfiguration {
@@ -360,6 +372,7 @@ export interface CaseConfiguration {
   product_code: string;
   product_version: string;
   rulebook_version: string;
+  journey: JourneyType;
   fields: ProductField[];
   documents: ResolvedDocument[];
 }

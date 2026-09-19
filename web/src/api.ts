@@ -5,6 +5,7 @@ import type {
   Credentials,
   CurrentUser,
   DocumentRecord,
+  JourneyType,
 } from "./types";
 import { request } from "./api-core";
 
@@ -46,12 +47,29 @@ export async function createCase(
   payload: {
     product_code: string;
     idempotency_key: string;
+    journey?: JourneyType;
     payload: Record<string, unknown>;
     document_codes: string[];
   },
 ): Promise<CaseRecord> {
   return request("/cases", token, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+// Replace an owned draft case's stored answers before review starts.
+export async function updateApplication(
+  token: string,
+  caseId: string,
+  payload: {
+    payload: Record<string, unknown>;
+    document_codes: string[];
+  },
+): Promise<CaseRecord> {
+  return request(`/cases/${caseId}/application`, token, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });

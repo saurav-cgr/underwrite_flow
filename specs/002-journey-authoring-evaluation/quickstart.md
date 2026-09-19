@@ -32,8 +32,10 @@
 
 ## 0c. Phase 3a Verification Record (2026-09-19)
 
-Backend slice of US1 only (T011-T014, T016-T023); all web work
-(T015/T024-T026) remains, to keep this checkpoint reviewable.
+Backend slice of US1 (T011-T014, T016-T023) plus the web types/API
+client slice (T024). Journey-selection UI, staged renewal/new-business
+form flows with reload recovery, and their tests (T015/T025/T026)
+remain, to keep this checkpoint reviewable.
 
 - New immutable `motor-private-car-v4` and
   `health-individual-family-floater-v3` configurations declare
@@ -63,7 +65,11 @@ Backend slice of US1 only (T011-T014, T016-T023); all web work
 - `tests/contract/test_journey_staff.py`: journey through queue filter,
   review start/decision, audit details, and idempotent completion.
 - Full `make test-api`: 409 passed (394 baseline + 15 new).
-- Full `make test-web`: 141 passed, unaffected (no web changes yet).
+- Web `types.ts`/`api.ts`/`api-products.ts`/`api-staff.ts` now carry
+  `journey`, `stage`, `supported_journeys`, an optional catalogue/queue
+  `journey` filter, and `updateApplication` (`PUT` draft replace). No
+  screen consumes them yet; existing fixtures updated to match.
+- Full `make test-web`: 141 passed; `npm run build` succeeds.
 - `api/tests/fixtures/records.py` split into `records.py` (identity/role)
   and `case_fixtures.py` (case/product-status/evidence) to stay under the
   400-line limit; existing imports re-exported unchanged.
