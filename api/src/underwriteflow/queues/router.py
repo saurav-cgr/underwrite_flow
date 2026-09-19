@@ -41,6 +41,7 @@ completion_router = APIRouter(prefix="/completion", tags=["completion"])
 async def list_queue(
     status: str | None = Query(default=None, max_length=50),
     product_code: str | None = Query(default=None, max_length=100),
+    journey: str | None = Query(default=None, max_length=50),
     route: str | None = Query(default=None, max_length=50),
     specialist: bool | None = Query(default=None),
     awaiting_handoff: bool | None = Query(default=None),
@@ -59,6 +60,8 @@ async def list_queue(
         statement = statement.where(Case.status == status)
     if product_code is not None:
         statement = statement.where(Product.code == product_code)
+    if journey is not None:
+        statement = statement.where(Case.journey_type == journey)
     if route is not None:
         statement = statement.where(Recommendation.route == route)
     if specialist is True:
@@ -83,6 +86,7 @@ async def list_queue(
         QueueItem(
             case_id=case.id,
             product_code=product.code,
+            journey=case.journey_type,
             status=case.status,
             route=recommendation.route if recommendation else None,
             selected_route=final_route_for(review),
@@ -249,6 +253,7 @@ async def complete_case(
         return CompletionResponse(
             handoff_id=existing.id,
             case_id=case_id,
+            journey=case.journey_type,
             route=existing.payload["route"],
             specialist_label=existing.payload.get("specialist_label"),
             status="completed",
@@ -261,6 +266,7 @@ async def complete_case(
         destination="completed_queue",
         payload={
             "case_id": str(case_id),
+            "journey": case.journey_type,
             "route": review.selected_route,
             "specialist_label": review.specialist_label,
         },
@@ -274,6 +280,7 @@ async def complete_case(
                 "handoff_id": handoff.id,
                 "destination": handoff.destination,
                 "idempotency_key": handoff.idempotency_key,
+                "journey": case.journey_type,
                 "route": review.selected_route,
                 "specialist_label": review.specialist_label,
                 "review_id": review.id,
@@ -297,6 +304,7 @@ async def complete_case(
         return CompletionResponse(
             handoff_id=existing.id,
             case_id=case_id,
+            journey=case.journey_type,
             route=existing.payload["route"],
             specialist_label=existing.payload.get("specialist_label"),
             status="completed",
@@ -304,6 +312,7 @@ async def complete_case(
     return CompletionResponse(
         handoff_id=handoff.id,
         case_id=case_id,
+        journey=case.journey_type,
         route=review.selected_route,
         specialist_label=review.specialist_label,
         status="completed",

@@ -133,11 +133,11 @@ journey remains visible through human-confirmed completion.
 - [X] T021 [US1] Enforce complete stored answers and actual uploaded documents,
   then pass filtered configuration into existing graphs in
   `api/src/underwriteflow/cases/submission.py`.
-- [ ] T022 [US1] Add journey filtering/output to queue and completion, plus
+- [X] T022 [US1] Add journey filtering/output to queue and completion, plus
   journey in handoff and audit details, in
   `api/src/underwriteflow/queues/schemas.py` and
   `api/src/underwriteflow/queues/router.py`.
-- [ ] T023 [US1] Add journey to review-start and review-decision responses in
+- [X] T023 [US1] Add journey to review-start and review-decision responses in
   `api/src/underwriteflow/reviews/schemas.py` and
   `api/src/underwriteflow/reviews/router.py`.
 - [ ] T024 [US1] Add journey, application replacement, staged document, queue,

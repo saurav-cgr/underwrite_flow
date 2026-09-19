@@ -17,6 +17,7 @@ from underwriteflow.config import Settings
 QUEUE_ITEM_KEYS = {
     "case_id",
     "product_code",
+    "journey",
     "status",
     "route",
     "selected_route",

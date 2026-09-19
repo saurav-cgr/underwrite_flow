@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, model_validator
 
+from underwriteflow.products.journey import JourneyType
 from underwriteflow.products.schemas import Route
 
 FinalRoute = Literal["specialist", "standard", "expedited"]
@@ -16,6 +17,7 @@ class QueueItem(BaseModel):
 
     case_id: UUID
     product_code: str
+    journey: JourneyType
     status: str
     route: Route | None
     selected_route: FinalRoute | None = None
@@ -55,6 +57,7 @@ class CompletionResponse(BaseModel):
 
     handoff_id: UUID
     case_id: UUID
+    journey: JourneyType
     route: FinalRoute
     specialist_label: str | None = None
     status: Literal["completed"]

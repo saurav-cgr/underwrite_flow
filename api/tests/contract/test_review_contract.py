@@ -30,6 +30,7 @@ from underwriteflow.config import Settings
 
 REVIEW_START_KEYS = {
     "case_id",
+    "journey",
     "status",
     "recommendation",
     "summary",

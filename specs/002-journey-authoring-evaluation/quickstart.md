@@ -32,9 +32,9 @@
 
 ## 0c. Phase 3a Verification Record (2026-09-19)
 
-Backend slice of US1 only (T011, T012, T013, T016-T021); queue/review
-journey exposure (T014/T022/T023) and all web work (T015/T024-T026)
-remain, to keep this checkpoint reviewable.
+Backend slice of US1 only (T011, T012, T013, T016-T023); staff-contract
+tests (T014) and all web work (T015/T024-T026) remain, to keep this
+checkpoint reviewable.
 
 - New immutable `motor-private-car-v4` and
   `health-individual-family-floater-v3` configurations declare
@@ -55,11 +55,20 @@ remain, to keep this checkpoint reviewable.
 - `tests/integration/test_journey_workflow.py`: renewal submission is
   refused without its prior-policy document and succeeds with it;
   new-business configuration excludes renewal-only requirements.
+- Queue items, completion responses, review-start, and review-decision
+  responses now report `journey`; handoff payloads and the
+  `case_completed`/`underwriter_reviewed` audit events carry it too.
+  `GET /queues` accepts an optional `journey` filter.
+- `tests/contract/test_queue_contract.py` and
+  `tests/contract/test_review_contract.py`: updated frozen key sets.
 - Full `make test-api`: 408 passed (394 baseline + 14 new).
 - Full `make test-web`: 141 passed, unaffected (no web changes yet).
 - `api/tests/fixtures/records.py` split into `records.py` (identity/role)
   and `case_fixtures.py` (case/product-status/evidence) to stay under the
   400-line limit; existing imports re-exported unchanged.
+- `api/src/underwriteflow/reviews/router.py` split: specialist-label
+  validation and idempotent-record helpers moved to
+  `api/src/underwriteflow/reviews/commands.py` to stay under 400 lines.
 
 ## 1. Static and Deterministic Suites
 

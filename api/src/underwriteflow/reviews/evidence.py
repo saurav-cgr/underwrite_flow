@@ -126,6 +126,7 @@ def build_review_start_response(
     failures: list[Validation],
     configuration: ProductConfiguration | None,
     reconciliation: list[Validation] | None = None,
+    journey: str = "new_business",
 ) -> ReviewStartResponse:
     summary = dict(recommendation.summary or {})
     submitted_facts, evidence = build_review_evidence(
@@ -136,6 +137,7 @@ def build_review_start_response(
     )
     return ReviewStartResponse(
         case_id=case_id,
+        journey=journey,
         status="awaiting_human_review",
         recommendation=summary.get(
             "recommendation",
