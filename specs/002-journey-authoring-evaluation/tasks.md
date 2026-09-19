@@ -181,7 +181,7 @@ changing active or pinned versions.
 
 ### Tests
 
-- [ ] T028 [P] [US2] Add normalized preview, configuration read, export,
+- [X] T028 [P] [US2] Add normalized preview, configuration read, export,
   permission, corrupt payload, and YAML round-trip tests in
   `api/tests/contract/test_product_authoring.py`.
 - [ ] T029 [P] [US2] Add blank, clone, upload, identity-lock, validation, and
