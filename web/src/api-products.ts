@@ -8,7 +8,8 @@ import type {
   ProductVersionHistoryItem,
   ReferenceDocument,
 } from "./types";
-import { request } from "./api-core";
+import type { BuilderConfiguration } from "./product-builder-state";
+import { request, requestBlob } from "./api-core";
 
 // Load active product fields from the backend-owned catalog, optionally
 // filtered to one journey's supported products and applicable fields.
@@ -86,6 +87,33 @@ export async function activateProductConfiguration(
       body: JSON.stringify({ version }),
     },
   );
+}
+
+// Read one persisted version's normalized configuration for the builder.
+export async function readProductVersionConfiguration(
+  token: string,
+  productCode: string,
+  version: string,
+): Promise<BuilderConfiguration> {
+  return request(
+    `/products/${encodeURIComponent(productCode)}` +
+      `/versions/${encodeURIComponent(version)}`,
+    token,
+  );
+}
+
+// Export one persisted version as canonical YAML text.
+export async function exportProductVersion(
+  token: string,
+  productCode: string,
+  version: string,
+): Promise<string> {
+  const { blob } = await requestBlob(
+    `/products/${encodeURIComponent(productCode)}` +
+      `/versions/${encodeURIComponent(version)}/export`,
+    token,
+  );
+  return blob.text();
 }
 
 // Attach one administrator reference document to a product version.

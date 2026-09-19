@@ -210,9 +210,11 @@ changing active or pinned versions.
   reference-document endpoints into
   `api/src/underwriteflow/products/reference_router.py` to keep both files
   under the 400-line limit.
-- [ ] T034 [US2] Add complete product configuration types, normalized preview,
+- [X] T034 [US2] Add complete product configuration types, normalized preview,
   read, and export calls in `web/src/types.ts` and
-  `web/src/api-products.ts`.
+  `web/src/api-products.ts`. Full config type lives in
+  `product-builder-state.ts` (T035); reused `requestBlob` for export text,
+  no `types.ts` change needed.
 - [X] T035 [US2] Implement one browser configuration object, blank defaults,
   clone normalization, local completeness checks, and stable semantic diff in
   `web/src/product-builder-state.ts`.
