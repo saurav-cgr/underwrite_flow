@@ -76,9 +76,19 @@ T015) remain, to keep this checkpoint reviewable.
   creation. Shell navigation and the dashboard's "Start an application"
   action route through the journey screen first.
 - `web/src/journey-flow.test.tsx`: keyboard journey selection, a
-  journey-unsupported product excluded from the list, and journey
-  carried through to case creation.
-- Full `make test-web`: 144 passed; `npm run build` succeeds.
+  journey-unsupported product excluded from the list, journey carried
+  through to case creation, a staged renewal (prior policy, then the
+  renewal form, then supporting evidence, then submit), and reload
+  recovery of an open renewal case with its uploaded documents intact.
+- A renewal now opens a draft case (empty payload) as soon as a product
+  is chosen, so its prior-policy document can be uploaded before the
+  form; `web/src/application-form.tsx` updates that existing case
+  through `PUT /cases/{case_id}/application` instead of creating a
+  second one, and `web/src/documents.tsx` gained an optional stage
+  filter and continue step to show only the prior-policy or supporting
+  documents for the current step. New business is unchanged: form
+  first, then all documents together.
+- Full `make test-web`: 146 passed; `npm run build` succeeds.
 - `api/tests/fixtures/records.py` split into `records.py` (identity/role)
   and `case_fixtures.py` (case/product-status/evidence) to stay under the
   400-line limit; existing imports re-exported unchanged.

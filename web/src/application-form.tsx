@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
-import { ApiError, createCase } from "./api";
+import { ApiError, createCase, updateApplication } from "./api";
 import {
   Button,
   ErrorSummary,
@@ -106,16 +106,21 @@ function ProductFieldInput({
 }
 
 // Render the active product's typed application form with linked errors.
+// A supplied `caseRecord` means this is a renewal's staged form step, so
+// the draft case created before prior-policy upload is updated in place
+// instead of creating a second case.
 export function ApplicationForm({
   product,
   journey,
   token,
+  caseRecord,
   onCreated,
   onNavigate,
 }: {
   product: ProductCatalogItem;
   journey: JourneyType;
   token: string;
+  caseRecord?: CaseRecord | null;
   onCreated: (caseRecord: CaseRecord, product: ProductCatalogItem) => void;
   onNavigate: (screen: Screen) => void;
 }) {
@@ -134,14 +139,20 @@ export function ApplicationForm({
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
     try {
-      const caseRecord = await createCase(token, {
-        product_code: product.product_code,
-        idempotency_key: crypto.randomUUID(),
-        journey,
-        payload: values,
-        document_codes: allDocumentCodes(product.documents),
-      });
-      onCreated(caseRecord, product);
+      const documentCodes = allDocumentCodes(product.documents);
+      const saved = caseRecord
+        ? await updateApplication(token, caseRecord.id, {
+            payload: values,
+            document_codes: documentCodes,
+          })
+        : await createCase(token, {
+            product_code: product.product_code,
+            idempotency_key: crypto.randomUUID(),
+            journey,
+            payload: values,
+            document_codes: documentCodes,
+          });
+      onCreated(saved, product);
     } catch (error) {
       setMessage(
         error instanceof ApiError
@@ -177,8 +188,11 @@ export function ApplicationForm({
         title={product.title}
         description={product.scope}
         action={
-          <Button variant="quiet" onClick={() => onNavigate("products")}>
-            Change product
+          <Button
+            onClick={() => onNavigate(caseRecord ? "documents" : "products")}
+            variant="quiet"
+          >
+            {caseRecord ? "Back to documents" : "Change product"}
           </Button>
         }
       />
@@ -215,7 +229,12 @@ export function ApplicationForm({
               ))}
             </div>
             <div className="form-actions">
-              <Button variant="quiet" onClick={() => onNavigate("products")}>
+              <Button
+                onClick={() =>
+                  onNavigate(caseRecord ? "documents" : "products")
+                }
+                variant="quiet"
+              >
                 Cancel
               </Button>
               <Button type="submit">Continue to documents</Button>

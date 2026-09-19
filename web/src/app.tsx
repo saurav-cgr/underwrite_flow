@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
+  ApiError,
+  createCase,
   listCases,
   listCatalog,
   readCaseConfiguration,
@@ -46,6 +48,7 @@ export function App() {
   const [auditCaseId, setAuditCaseId] = useState("");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
+  const [renewalFormDone, setRenewalFormDone] = useState(false);
 
   // Drop every role-scoped view and return to the entry screen.
   function resetToEntry(noticeText: string) {
@@ -57,6 +60,7 @@ export function App() {
     setQueueItem(null);
     setAuditCaseId("");
     setMessage("");
+    setRenewalFormDone(false);
     setScreen("dashboard");
     setNotice(noticeText);
   }
@@ -136,6 +140,7 @@ export function App() {
     setConfiguration(null);
     setQueueItem(null);
     setAuditCaseId("");
+    setRenewalFormDone(false);
     setScreen("dashboard");
   }
 
@@ -143,6 +148,34 @@ export function App() {
   function navigate(nextScreen: Screen) {
     setMessage("");
     setScreen(nextScreen);
+  }
+
+  // Choose a product and, for renewal, open a draft case immediately so
+  // its prior-policy document can be uploaded before the renewal form.
+  async function handleProductSelect(product: ProductCatalogItem) {
+    setSelectedProduct(product);
+    setRenewalFormDone(false);
+    if (journey !== "renewal" || !session) {
+      navigate("application");
+      return;
+    }
+    try {
+      const created = await createCase(session.token, {
+        product_code: product.product_code,
+        idempotency_key: crypto.randomUUID(),
+        journey,
+        payload: {},
+        document_codes: [],
+      });
+      setCaseRecord(created);
+      navigate("documents");
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "The renewal case could not be started.",
+      );
+    }
   }
 
   if (!session) return <RoleEntry notice={notice} onLogin={handleLogin} />;
@@ -177,10 +210,7 @@ export function App() {
         catalog={catalog}
         error={message}
         onNavigate={navigate}
-        onSelect={(product) => {
-          setSelectedProduct(product);
-          navigate("application");
-        }}
+        onSelect={(product) => void handleProductSelect(product)}
       />
     );
   } else if (
@@ -192,10 +222,12 @@ export function App() {
     activeScreen = "application";
     content = (
       <ApplicationForm
+        caseRecord={journey === "renewal" ? caseRecord : null}
         journey={journey}
         onCreated={(created, product) => {
           setCaseRecord(created);
           setSelectedProduct(product);
+          if (journey === "renewal") setRenewalFormDone(true);
           navigate("documents");
         }}
         onNavigate={navigate}
@@ -210,12 +242,18 @@ export function App() {
     caseRecord
   ) {
     activeScreen = "documents";
+    const priorPolicyPending = journey === "renewal" && !renewalFormDone;
     content = (
       <DocumentsScreen
         caseRecord={caseRecord}
         configuration={configuration}
+        continueLabel="Continue to application"
         onCaseChange={setCaseRecord}
+        onContinue={
+          priorPolicyPending ? () => navigate("application") : undefined
+        }
         onNavigate={navigate}
+        stageFilter={priorPolicyPending ? "prior_policy" : undefined}
         token={session.token}
       />
     );

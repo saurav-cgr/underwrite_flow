@@ -105,12 +105,9 @@ journey remains visible through human-confirmed completion.
   evidence/pinning/reload scenarios deferred.)
 - [X] T014 [P] [US1] Add journey queue, review, audit, handoff, and idempotent
   completion contracts in `api/tests/contract/test_journey_staff.py`.
-- [ ] T015 [P] [US1] Add keyboard-accessible journey choice, unsupported
+- [X] T015 [P] [US1] Add keyboard-accessible journey choice, unsupported
   product, staged renewal, and reload tests in
   `web/src/journey-flow.test.tsx`.
-  (trimmed scope: keyboard journey choice and unsupported-product
-  exclusion covered now with T025; staged renewal and reload tests move
-  to T026, since they need the form flows T026 builds.)
 
 ### Implementation
 
@@ -150,10 +147,17 @@ journey remains visible through human-confirmed completion.
 - [X] T025 [US1] Add journey-first selection and eligible-product display in
   `web/src/journey-selection.tsx` and integrate it in
   `web/src/app.tsx`.
-- [ ] T026 [US1] Implement new-business form-first and renewal
+- [X] T026 [US1] Implement new-business form-first and renewal
   prior-policy-first flows with reload recovery in
   `web/src/application-form.tsx`, `web/src/documents.tsx`, and
   `web/src/tracking.tsx`.
+  (trimmed scope: `web/src/tracking.tsx` needed no change; the staged
+  order and reload recovery live in `application-form.tsx`,
+  `documents.tsx`, and `app.tsx`'s screen wiring. Reload recovery
+  restores journey, case, pinned configuration, and document state, all
+  already durable server-side; it does not prefill previously entered
+  form answers, since no endpoint returns stored draft payload back to
+  the client.)
 - [ ] T027 [US1] Run US1 API/UI tests, full web build, and human-authority
   checks from `specs/002-journey-authoring-evaluation/quickstart.md`; report
   results and proposed commit, then wait for `continue`.
