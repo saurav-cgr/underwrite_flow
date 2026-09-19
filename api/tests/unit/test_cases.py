@@ -7,16 +7,20 @@ from fastapi import UploadFile
 from PIL import Image
 from pypdf import PdfWriter
 
-from underwriteflow.cases.schemas import CaseCreate
+from underwriteflow.cases.schemas import ApplicationUpdate, CaseCreate
 from underwriteflow.cases.service import (
     CaseService,
     CaseValidationError,
     missing_document_codes,
-    validate_application,
+)
+from underwriteflow.cases.validation import (
+    validate_complete_application,
+    validate_draft_application,
 )
 from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.persistence.models import Case, Document
 from underwriteflow.persistence.repositories import AuditRepository
+from underwriteflow.products.schemas import filter_configuration_for_journey
 from underwriteflow.products.service import load_configuration
 
 
@@ -52,6 +56,44 @@ specialist_labels: [motor inspection]
 """
 )
 
+JOURNEY_CONFIGURATION = load_configuration(
+    """
+product_code: synthetic-motor-journey
+title: Synthetic Motor Journey
+family: motor
+scope: Fictional demonstration only
+description: Synthetic product configuration
+version: v1
+supported_journeys: [new_business, renewal]
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Synthetic vehicle age
+    applies_to: [new_business, renewal]
+documents:
+  - code: identity_record
+    title: Identity
+    requirement: required
+    accepted_types: [application/pdf]
+    applies_to: [new_business, renewal]
+  - code: previous_policy
+    title: Previous policy
+    requirement: required
+    accepted_types: [application/pdf]
+    applies_to: [renewal]
+    required_for: [renewal]
+    stage: prior_policy
+routing_rules:
+  - code: standard
+    condition: {field: vehicle_age, operator: greater_than, value: 0}
+    route: standard
+    applies_to: [new_business, renewal]
+specialist_labels: [motor inspection]
+"""
+)
+
 
 # Build a minimal synthetic PDF with the requested page count.
 def synthetic_pdf(pages: int = 1) -> bytes:
@@ -71,21 +113,88 @@ def synthetic_png() -> bytes:
 
 
 # Verify required product fields and conditional documents are enforced.
-def test_application_validation_checks_product_requirements() -> None:
-    application = CaseCreate(
-        product_code="synthetic-motor",
-        idempotency_key="synthetic-case-1",
-        payload={"vehicle_age": 14},
-        document_codes=["identity_record", "inspection_photo"],
+def test_complete_validation_checks_product_requirements() -> None:
+    validate_complete_application(
+        {"vehicle_age": 14},
+        ["identity_record", "inspection_photo"],
+        MOTOR_CONFIGURATION,
     )
 
-    validate_application(application, MOTOR_CONFIGURATION)
+    with pytest.raises(CaseValidationError):
+        validate_complete_application(
+            {"vehicle_age": 14}, ["identity_record"], MOTOR_CONFIGURATION
+        )
 
-    missing = application.model_copy(
-        update={"document_codes": ["identity_record"]}
+
+# Verify a draft may omit required fields and required documents.
+def test_draft_validation_allows_incomplete_answers() -> None:
+    validate_draft_application({}, [], MOTOR_CONFIGURATION)
+    validate_draft_application(
+        {"vehicle_age": 3}, ["identity_record"], MOTOR_CONFIGURATION
+    )
+
+
+# Verify a draft still rejects a malformed answered field.
+def test_draft_validation_rejects_invalid_field_type() -> None:
+    with pytest.raises(CaseValidationError):
+        validate_draft_application(
+            {"vehicle_age": "not-a-number"}, [], MOTOR_CONFIGURATION
+        )
+
+
+# Verify a draft rejects a document code the product never declared.
+def test_draft_validation_rejects_unsupported_document_code() -> None:
+    with pytest.raises(CaseValidationError):
+        validate_draft_application(
+            {}, ["unknown_document"], MOTOR_CONFIGURATION
+        )
+
+
+# Verify a renewal-only document is unsupported once filtered to new business.
+def test_journey_filter_hides_documents_not_applicable_to_the_journey() -> None:
+    new_business = filter_configuration_for_journey(
+        JOURNEY_CONFIGURATION, "new_business"
+    )
+
+    validate_draft_application(
+        {}, ["identity_record"], new_business
     )
     with pytest.raises(CaseValidationError):
-        validate_application(missing, MOTOR_CONFIGURATION)
+        validate_draft_application(
+            {}, ["previous_policy"], new_business
+        )
+
+
+# Verify a renewal submission requires its prior-policy document.
+def test_complete_validation_requires_renewal_prior_policy() -> None:
+    renewal = filter_configuration_for_journey(
+        JOURNEY_CONFIGURATION, "renewal"
+    )
+
+    with pytest.raises(CaseValidationError):
+        validate_complete_application(
+            {"vehicle_age": 3}, ["identity_record"], renewal
+        )
+    validate_complete_application(
+        {"vehicle_age": 3},
+        ["identity_record", "previous_policy"],
+        renewal,
+    )
+
+
+# Verify a case cannot have its application replaced once review starts.
+@pytest.mark.asyncio
+async def test_replace_application_rejects_after_review_starts() -> None:
+    case = Case(id=uuid4(), status="underwriter_review")
+    service = CaseService(FailingStorage(), AuditRepository())
+
+    with pytest.raises(CaseValidationError):
+        await service.replace_application(
+            None,
+            case,
+            ApplicationUpdate(payload={}, document_codes=[]),
+            uuid4(),
+        )
 
 
 # Verify uploads use generated case-scoped keys and preserve content hashes.

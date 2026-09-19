@@ -86,10 +86,7 @@ def test_bootstrap_imports_builtin_products() -> None:
 
 # Verify the additive migration inserts all fictional demo identities.
 def test_migration_inserts_demo_accounts() -> None:
-    connection = psycopg.connect(
-        "postgresql://underwriteflow:synthetic-local-password@"
-        "db:5433/underwriteflow"
-    )
+    connection = psycopg.connect(DATABASE_URL)
     with connection, connection.cursor() as cursor:
         cursor.execute(
             "SELECT email, role, is_active FROM users "

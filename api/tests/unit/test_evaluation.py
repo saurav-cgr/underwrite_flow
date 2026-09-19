@@ -1,11 +1,16 @@
 import asyncio
+from collections import Counter
 
 import pytest
 from fastapi.testclient import TestClient
+from fixtures.records import synthetic_user
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
-from underwriteflow.evaluation.dataset import load_dataset
+from underwriteflow.evaluation.dataset import (
+    load_configuration_manifest,
+    load_dataset,
+)
 from underwriteflow.evaluation.metrics import evaluate_records
 from underwriteflow.evaluation.runner import run_evaluation
 from underwriteflow.evaluation.tracing import redact_trace, trace_summary
@@ -34,6 +39,59 @@ def test_reference_dataset_has_balanced_synthetic_cases() -> None:
         "life-individual-term": 30,
         "health-individual-family-floater": 30,
     }
+
+
+# Verify every reference case has a distinct, non-blank case identifier.
+def test_dataset_case_ids_are_unique() -> None:
+    records = load_dataset()
+    case_ids = [record["case_id"] for record in records]
+
+    assert all(case_ids)
+    assert len(set(case_ids)) == len(case_ids)
+
+
+# Verify each product/journey split matches the planned 90-case distribution.
+def test_dataset_journey_distribution_matches_the_plan() -> None:
+    records = load_dataset()
+    counts = Counter(
+        (record["product_code"], record["journey_type"]) for record in records
+    )
+
+    assert counts == {
+        ("motor-private-car", "new_business"): 15,
+        ("motor-private-car", "renewal"): 15,
+        ("health-individual-family-floater", "new_business"): 15,
+        ("health-individual-family-floater", "renewal"): 15,
+        ("life-individual-term", "new_business"): 30,
+    }
+
+
+# Verify expected routes remain balanced across the full reference set.
+def test_dataset_route_balance_is_thirty_each() -> None:
+    records = load_dataset()
+    counts = Counter(record["expected"]["route"] for record in records)
+
+    assert counts == {"expedited": 30, "standard": 30, "specialist": 30}
+
+
+# Verify every declared configuration version is actually mounted.
+def test_dataset_versions_are_in_the_configuration_manifest() -> None:
+    records = load_dataset()
+    configurations = load_configuration_manifest()
+
+    for record in records:
+        key = (record["product_code"], record["configuration_version"])
+        assert key in configurations, key
+
+
+# Verify every declared version supports the case's named journey.
+def test_dataset_versions_support_their_named_journey() -> None:
+    records = load_dataset()
+    configurations = load_configuration_manifest()
+
+    for record in records:
+        key = (record["product_code"], record["configuration_version"])
+        assert record["journey_type"] in configurations[key].supported_journeys
 
 
 # Verify evaluator reports route, detection, provenance, and workflow metrics.
@@ -197,12 +255,22 @@ def test_opt_in_trace_uses_apac_endpoint(
 def test_evaluation_endpoint_is_administrator_only() -> None:
     app = create_app()
 
-    # Supply a synthetic underwriter identity to the authorization dependency.
-    async def underwriter_session() -> dict[str, str]:
-        return {"sub": "synthetic-underwriter", "role": "Underwriter"}
+    with synthetic_user(role="Underwriter") as user_id:
+        # Supply an existing actor to the authorization dependency.
+        async def underwriter_session() -> dict[str, object]:
+            return {
+                "sub": str(user_id),
+                "role": "Underwriter",
+                "role_code": "underwriter",
+                "permissions": [
+                    "cases:read",
+                    "reviews:read",
+                    "reviews:write",
+                ],
+            }
 
-    app.dependency_overrides[get_current_session] = underwriter_session
-    response = TestClient(app).post("/api/v1/evaluation/run", json={})
+        app.dependency_overrides[get_current_session] = underwriter_session
+        response = TestClient(app).post("/api/v1/evaluation/run", json={})
 
     assert response.status_code == 403
 
@@ -212,8 +280,13 @@ def test_administrator_can_run_full_evaluation() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    async def administrator_session() -> dict[str, str]:
-        return {"sub": "synthetic-administrator", "role": "Administrator"}
+    async def administrator_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-administrator",
+            "role": "Administrator",
+            "role_code": "administrator",
+            "permissions": ["evaluation:run"],
+        }
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post("/api/v1/evaluation/run", json={})
@@ -243,8 +316,13 @@ def test_evaluation_endpoint_accepts_a_known_split() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    async def administrator_session() -> dict[str, str]:
-        return {"sub": "synthetic-administrator", "role": "Administrator"}
+    async def administrator_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-administrator",
+            "role": "Administrator",
+            "role_code": "administrator",
+            "permissions": ["evaluation:run"],
+        }
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post(
@@ -261,8 +339,13 @@ def test_evaluation_endpoint_rejects_an_unknown_split() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    async def administrator_session() -> dict[str, str]:
-        return {"sub": "synthetic-administrator", "role": "Administrator"}
+    async def administrator_session() -> dict[str, object]:
+        return {
+            "sub": "synthetic-administrator",
+            "role": "Administrator",
+            "role_code": "administrator",
+            "permissions": ["evaluation:run"],
+        }
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post(

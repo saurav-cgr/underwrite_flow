@@ -12,6 +12,7 @@ vi.mock("./api", () => ({
   listProductVersionHistory: vi.fn(),
   listReferences: vi.fn(),
   previewProductConfiguration: vi.fn(),
+  readProductVersionConfiguration: vi.fn(),
   uploadReference: vi.fn(),
   validateProductConfiguration: vi.fn(),
 }));
@@ -21,6 +22,7 @@ import {
   listProductConfigurations,
   listProductVersionHistory,
   listReferences,
+  readProductVersionConfiguration,
 } from "./api";
 import { ProductConfiguration } from "./product-configuration";
 import "./test-setup";
@@ -116,5 +118,50 @@ describe("product activation", () => {
 
     expect(activateProductConfiguration).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+// Verify the guided builder is reachable without losing the YAML path.
+describe("guided builder entry points", () => {
+  it("opens a blank builder for the chosen family", async () => {
+    render(<ProductConfiguration token="session" />);
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Create product" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Motor" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Identity", level: 2 }),
+    ).toBeTruthy();
+  });
+
+  it("clones the active version into a new draft builder", async () => {
+    vi.mocked(readProductVersionConfiguration).mockResolvedValue({
+      product_code: "motor-private-car",
+      title: "Fictional Private-Car Motor",
+      family: "motor",
+      scope: "Fictional demonstration only",
+      description: "Synthetic",
+      version: "v1",
+      status: "active",
+      fields: [],
+      documents: [],
+      routing_rules: [],
+      reconciliations: [],
+      specialist_labels: [],
+      supported_journeys: ["new_business", "renewal"],
+    });
+    render(<ProductConfiguration token="session" />);
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Create version" }),
+    );
+
+    expect(
+      await screen.findByText(/Cloned from motor-private-car v1/),
+    ).toBeTruthy();
   });
 });

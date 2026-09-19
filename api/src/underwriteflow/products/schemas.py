@@ -12,14 +12,31 @@ from pydantic import (
 )
 
 from underwriteflow.document_types import SUPPORTED_CONTENT_TYPES
+from underwriteflow.products.journey import (
+    DocumentStage,
+    JourneyType,
+    default_journeys,
+    filter_configuration_for_journey as _filter_configuration_for_journey,
+    validate_journeys as _validate_journeys,
+)
 
 FieldType = Literal["text", "integer", "number", "date", "boolean", "enum"]
 Requirement = Literal["required", "optional", "conditional", "not_applicable"]
-Route = Literal["manual", "needs_information", "specialist", "standard", "expedited"]
+Route = Literal[
+    "manual",
+    "needs_information",
+    "specialist",
+    "standard",
+    "expedited",
+]
+ReconciliationKind = Literal["ncb_match", "asset_match", "policy_lapse"]
 
 SUPPORTED_OPERATORS = frozenset({"equals", "greater_than"})
 COMPARABLE_OPERATORS = frozenset({"greater_than"})
 FIELD_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+
+# Source key for values the applicant claimed rather than evidence supplied.
+APPLICATION_SOURCE = "application"
 
 
 # Return the effective operator for a configured condition.
@@ -69,6 +86,9 @@ class ProductField(BaseModel):
     validation: dict[str, Any] = Field(default_factory=dict)
     visible_when: dict[str, Any] | None = None
     options: list[str] = Field(default_factory=list)
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
 
 
 class ProductDocument(BaseModel):
@@ -81,6 +101,11 @@ class ProductDocument(BaseModel):
     requirement: Requirement
     accepted_types: list[str] = Field(min_length=1)
     condition: dict[str, Any] | None = None
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
+    required_for: list[JourneyType] | None = None
+    stage: DocumentStage = "supporting"
 
     # Refuse evidence types the upload path cannot store at all.
     @field_validator("accepted_types")
@@ -103,7 +128,13 @@ class ProductDocument(BaseModel):
         if self.requirement == "conditional" and not self.condition:
             raise ValueError("conditional documents require a condition")
         if self.requirement != "conditional" and self.condition is not None:
-            raise ValueError("only conditional documents may define a condition")
+            raise ValueError(
+                "only conditional documents may define a condition"
+            )
+        if self.requirement == "not_applicable" and self.required_for:
+            raise ValueError(
+                "not_applicable documents cannot declare required_for"
+            )
         return self
 
 
@@ -116,6 +147,72 @@ class RoutingRule(BaseModel):
     condition: dict[str, Any] = Field(min_length=1)
     route: Route
     specialist_label: str | None = None
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
+
+
+class NcbParameters(BaseModel):
+    """Pinned fictional NCB progression and claims adjustment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tiers: list[int] = Field(min_length=2, max_length=20)
+    claim_count_field: str = Field(pattern=r"^[a-z][a-z0-9_]*$")
+    claims_reset_threshold: int = Field(ge=1)
+    claims_reset_tier: int = Field(ge=0, le=100)
+
+    # Require unique ascending percentage tiers and a reachable reset tier.
+    @model_validator(mode="after")
+    def validate_progression(self) -> "NcbParameters":
+        if self.tiers != sorted(set(self.tiers)):
+            raise ValueError("NCB tiers must be strictly increasing")
+        if any(tier < 0 or tier > 100 for tier in self.tiers):
+            raise ValueError("NCB tiers must be percentages from 0 to 100")
+        if self.claims_reset_tier not in self.tiers:
+            raise ValueError("claims reset tier must be a configured NCB tier")
+        return self
+
+
+class RenewalParameters(BaseModel):
+    """Pinned fictional policy-renewal boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    maximum_gap_days: int = Field(ge=0, le=3660)
+    boundary: Literal["inclusive", "exclusive"]
+
+
+class ReconciliationCheck(BaseModel):
+    """One configured pure reconciliation check.
+
+    Configuration supplies only the check code, the fixed implementation kind,
+    and the source-to-field mapping. The comparison itself stays in code, so a
+    configuration can never introduce executable behaviour.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(min_length=1, max_length=100)
+    kind: ReconciliationKind
+    inputs: dict[str, str] = Field(min_length=1)
+    parameters: NcbParameters | RenewalParameters | None = None
+    applies_to: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
+
+    # Match optional pinned parameters to the implemented check kind.
+    @model_validator(mode="after")
+    def validate_parameters(self) -> "ReconciliationCheck":
+        if self.parameters is None:
+            return self
+        expected = {
+            "ncb_match": NcbParameters,
+            "policy_lapse": RenewalParameters,
+        }.get(self.kind)
+        if expected is None or not isinstance(self.parameters, expected):
+            raise ValueError("parameters do not match reconciliation kind")
+        return self
 
 
 class ProductConfiguration(BaseModel):
@@ -133,7 +230,21 @@ class ProductConfiguration(BaseModel):
     fields: list[ProductField] = Field(min_length=1)
     documents: list[ProductDocument] = Field(min_length=1)
     routing_rules: list[RoutingRule] = Field(min_length=1)
+    reconciliations: list[ReconciliationCheck] = Field(default_factory=list)
     specialist_labels: list[str] = Field(min_length=1)
+    supported_journeys: list[JourneyType] = Field(
+        default_factory=default_journeys, min_length=1
+    )
+
+    # Reject an unsupported, empty, or duplicate declared journey list.
+    @field_validator("supported_journeys")
+    @classmethod
+    def validate_supported_journeys(
+        cls, value: list[str]
+    ) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("supported_journeys must be unique")
+        return value
 
     # Ensure identifiers and specialist references are unambiguous.
     @model_validator(mode="after")
@@ -149,7 +260,10 @@ class ProductConfiguration(BaseModel):
             raise ValueError("routing rule codes must be unique")
         labels = set(self.specialist_labels)
         for rule in self.routing_rules:
-            if rule.route == "specialist" and rule.specialist_label not in labels:
+            if (
+                rule.route == "specialist"
+                and rule.specialist_label not in labels
+            ):
                 raise ValueError("specialist rules must use a declared label")
         keys = set(field_keys)
         for field in self.fields:
@@ -164,7 +278,69 @@ class ProductConfiguration(BaseModel):
                 )
         for rule in self.routing_rules:
             validate_condition(rule.condition, keys, f"rule {rule.code}")
+        self.validate_reconciliations(keys, set(document_codes))
+        _validate_journeys(self, APPLICATION_SOURCE)
         return self
+
+    # Ensure each reconciliation check names real sources and declared fields.
+    def validate_reconciliations(
+        self, field_keys: set[str], document_codes: set[str]
+    ) -> None:
+        check_codes = [check.code for check in self.reconciliations]
+        if len(check_codes) != len(set(check_codes)):
+            raise ValueError("reconciliation codes must be unique")
+        # A comparison needs two sides. A check therefore reads the
+        # applicant's claim plus a document, or two documents, so every source
+        # key must be `application` or a declared document code.
+        allowed_sources = document_codes | {APPLICATION_SOURCE}
+        for check in self.reconciliations:
+            where = f"reconciliation {check.code}"
+            if not FIELD_NAME_PATTERN.match(check.code):
+                raise ValueError(f"{where}: malformed code")
+            unknown = sorted(set(check.inputs) - allowed_sources)
+            if unknown:
+                raise ValueError(f"{where}: unknown input sources {unknown}")
+            if not set(check.inputs) - {APPLICATION_SOURCE}:
+                raise ValueError(
+                    f"{where}: at least one document source is required"
+                )
+            if len(check.inputs) < 2:
+                raise ValueError(
+                    f"{where}: two comparison sources are required"
+                )
+            for source, field_name in check.inputs.items():
+                if not FIELD_NAME_PATTERN.match(field_name):
+                    raise ValueError(
+                        f"{where}: malformed field name for {source}"
+                    )
+            claimed = check.inputs.get(APPLICATION_SOURCE)
+            if claimed is not None and claimed not in field_keys:
+                raise ValueError(
+                    f"{where}: application field {claimed!r} is not declared"
+                )
+            if isinstance(check.parameters, NcbParameters) and (
+                claimed is None
+                or len(set(check.inputs) - {APPLICATION_SOURCE}) != 1
+            ):
+                raise ValueError(
+                    f"{where}: parameterized NCB requires one document source"
+                )
+            if (
+                isinstance(check.parameters, NcbParameters)
+                and check.parameters.claim_count_field not in field_keys
+            ):
+                raise ValueError(
+                    f"{where}: claim count field is not declared"
+                )
+
+
+# Return the same configuration shape containing only items that apply to
+# the given journey. Never mutates the input; the input remains reusable for
+# any other journey.
+def filter_configuration_for_journey(
+    configuration: ProductConfiguration, journey: JourneyType
+) -> ProductConfiguration:
+    return _filter_configuration_for_journey(configuration, journey)
 
 
 class YamlPayload(BaseModel):

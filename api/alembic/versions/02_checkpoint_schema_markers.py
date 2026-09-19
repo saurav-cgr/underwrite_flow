@@ -18,7 +18,8 @@ depends_on = None
 def upgrade() -> None:
     for version in range(9):
         op.execute(
-            f"INSERT INTO checkpoint_migrations (v) VALUES ({version}) ON CONFLICT DO NOTHING"
+            "INSERT INTO checkpoint_migrations (v) "
+            f"VALUES ({version}) ON CONFLICT DO NOTHING"
         )
 
 

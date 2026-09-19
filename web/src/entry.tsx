@@ -5,6 +5,7 @@ import { ApiError, createSession, readSession } from "./api";
 import { BrandMark, Button } from "./components";
 import { Icon } from "./icons";
 import type { IconName } from "./icons";
+import { roleLabelFor } from "./types";
 import type { Role, Session } from "./types";
 
 const DEMO_ACCOUNTS: {
@@ -56,13 +57,20 @@ export function RoleEntry({
     setWorking(true);
     setMessage("");
     try {
-      const response = await createSession(email, password);
-      const identity = await readSession(response.token);
+      const issued = await createSession(email, password);
+      const identity = await readSession(issued.access_token);
+      const role = roleLabelFor(identity.role.code);
+      if (!role) {
+        setMessage("This account has no supported role.");
+        return;
+      }
       onLogin({
-        token: response.token,
-        role: identity.role,
-        sub: identity.sub,
-        email,
+        token: issued.access_token,
+        refreshToken: issued.refresh_token,
+        role,
+        sub: identity.id,
+        email: identity.email,
+        permissions: identity.permissions,
       });
     } catch (error) {
       setMessage(

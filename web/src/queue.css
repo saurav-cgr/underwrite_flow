@@ -82,3 +82,17 @@
   gap: 8px;
   justify-content: flex-end;
 }
+
+.evidence-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.evidence-cell span {
+  font-weight: 600;
+}
+
+.evidence-cell small {
+  color: var(--muted);
+  font-size: .78rem;
+}

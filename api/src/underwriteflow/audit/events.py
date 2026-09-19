@@ -21,6 +21,30 @@ SENSITIVE_KEY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Exact detail keys that are safe even though their names look sensitive.
+ALLOWED_KEYS = frozenset({"prompt_tokens", "completion_tokens"})
+
+# Exact detail keys that would carry raw prompt or document content.
+# "content_hash" and "prompt_tokens" deliberately stay outside this set.
+DENIED_KEYS = frozenset(
+    {
+        "body",
+        "chunk",
+        "content",
+        "document_text",
+        "excerpt",
+        "message",
+        "messages",
+        "page_text",
+        "pages",
+        "prompt",
+        "prompts",
+        "raw",
+        "snippet",
+        "text",
+    }
+)
+
 # Longest free-text value retained, which bounds any document excerpt.
 MAX_STRING_CHARS = 200
 
@@ -70,7 +94,12 @@ def sanitize_details(
     sanitized: dict[str, Any] = {}
     for key, value in details.items():
         name = str(key)
-        if SENSITIVE_KEY_PATTERN.search(name):
+        if name.casefold() in DENIED_KEYS:
+            continue
+        if (
+            name.casefold() not in ALLOWED_KEYS
+            and SENSITIVE_KEY_PATTERN.search(name)
+        ):
             continue
         if len(sanitized) >= MAX_ITEMS:
             break
@@ -109,3 +138,34 @@ def version_details(
         details["rulebook_version"] = rulebook_version.version
         details["rulebook_content_hash"] = rulebook_version.content_hash
     return details
+
+
+# Describe one provider call per document without copying document content.
+def provider_activity(
+    results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "document_id": result.get("document_id"),
+            "document_code": result.get("document_code"),
+            "provider": result.get("provider"),
+            "model": result.get("model"),
+            "attempts": result.get("attempts"),
+            "prompt_tokens": result.get("prompt_tokens"),
+            "completion_tokens": result.get("completion_tokens"),
+            "usage_unavailable": bool(
+                result.get("usage_unavailable", True)
+            ),
+            "request_hash": result.get("request_hash") or None,
+            "result_hash": result.get("result_hash") or None,
+            "error_code": result.get("error_code"),
+        }
+        for result in results
+    ]
+
+
+# Point one event at the earlier event it replaces.
+def supersedes_details(previous_event_id: UUID | None) -> dict[str, Any]:
+    if previous_event_id is None:
+        return {}
+    return {"supersedes_event_id": previous_event_id}

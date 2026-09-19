@@ -5,8 +5,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from underwriteflow.auth.dependencies import require_role
-from underwriteflow.auth.schemas import UserRole
+from underwriteflow.auth.dependencies import require_permission
+from underwriteflow.auth.schemas import Permission
 from underwriteflow.evaluation.runner import run_evaluation
 
 router = APIRouter(prefix="/evaluation", tags=["evaluation"])
@@ -23,6 +23,8 @@ class EvaluationRunRequest(BaseModel):
 @router.post("/run")
 async def run_synthetic_evaluation(
     command: EvaluationRunRequest | None = None,
-    _: dict[str, str] = Depends(require_role(UserRole.ADMINISTRATOR.value)),
+    _: dict[str, str] = Depends(
+        require_permission(Permission.EVALUATION_RUN)
+    ),
 ) -> dict:
     return await run_evaluation(command.split if command else None)

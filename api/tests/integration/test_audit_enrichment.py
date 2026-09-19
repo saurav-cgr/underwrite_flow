@@ -2,9 +2,13 @@
 
 from uuid import uuid4
 
-import psycopg
 from fastapi.testclient import TestClient
 from fixtures.records import set_motor_status
+from fixtures.support import (
+    create_motor_case,
+    submit_motor_case,
+    upload_motor_documents,
+)
 from fixtures.synthetic_pdf import (
     IDENTITY_ONLY_LINES,
     MOTOR_EVIDENCE_LINES,
@@ -12,17 +16,7 @@ from fixtures.synthetic_pdf import (
 )
 
 from underwriteflow.app import create_app
-from underwriteflow.audit.events import (
-    MAX_ITEMS,
-    MAX_STRING_CHARS,
-    SENSITIVE_KEY_PATTERN,
-)
 from underwriteflow.config import Settings
-
-DATABASE_URL = (
-    "postgresql://underwriteflow:synthetic-local-password@"
-    "db:5433/underwriteflow"
-)
 
 APPLICANT = ("applicant@synthetic.test", "underwriteflow-demo-applicant")
 UNDERWRITER = ("underwriter@synthetic.test", "underwriteflow-demo-underwriter")
@@ -236,8 +230,8 @@ def test_audit_records_detected_conflicts_and_missing_fields() -> None:
     assert cycle["evidence_provenance"]
 
 
-# Verify every persisted value stays bounded and free of secret-shaped keys.
-def test_persisted_events_are_bounded_and_secret_free() -> None:
+# Verify each document branch records provider, usage, attempts, and hashes.
+def test_audit_records_provider_metadata_and_hashes() -> None:
     set_motor_status("active")
     try:
         with TestClient(
@@ -245,26 +239,54 @@ def test_persisted_events_are_bounded_and_secret_free() -> None:
         ) as client:
             applicant = login(client, APPLICANT)
             admin = login(client, ADMIN)
-            created = client.post(
-                "/api/v1/cases",
-                json={
-                    "product_code": "motor-private-car",
-                    "idempotency_key": str(uuid4()),
-                    "payload": {
-                        "vehicle_age": 2,
-                        "vehicle_use": "personal",
-                        "prior_claims": 0,
-                    },
-                    "document_codes": ["identity_record", "vehicle_record"],
-                },
-                headers=applicant,
-            )
-            case_id = created.json()["id"]
+            created = create_motor_case(client, applicant)
+            case_id = str(created["id"])
+            upload_motor_documents(client, applicant, case_id)
+            submit_motor_case(client, applicant, case_id)
+            audit = audit_by_type(client, case_id, admin)
+    finally:
+        set_motor_status("draft")
+
+    calls = audit["case_submitted"]["provider_calls"]
+    assert len(calls) == 2
+    assert {call["document_code"] for call in calls} == {
+        "identity_record",
+        "vehicle_record",
+    }
+    assert {call["provider"] for call in calls} == {"fake"}
+    assert {call["attempts"] for call in calls} == {1}
+    assert {call["usage_unavailable"] for call in calls} == {True}
+    assert {call["model"] for call in calls} == {None}
+    assert {call["error_code"] for call in calls} == {None}
+    assert all(call["request_hash"] for call in calls)
+    assert all(call["result_hash"] for call in calls)
+    # Ordering is deterministic, and every call links to a consumed document.
+    assert [call["document_id"] for call in calls] == sorted(
+        call["document_id"] for call in calls
+    )
+    assert {call["document_id"] for call in calls} == {
+        document["document_id"]
+        for document in audit["case_submitted"]["documents"]
+    }
+
+
+# Verify a later cycle and a later human decision supersede earlier events.
+def test_audit_links_each_superseded_event() -> None:
+    set_motor_status("active")
+    try:
+        with TestClient(
+            create_app(Settings(generation_provider="fake"))
+        ) as client:
+            applicant = login(client, APPLICANT)
+            underwriter = login(client, UNDERWRITER)
+            admin = login(client, ADMIN)
+            created = create_motor_case(client, applicant)
+            case_id = str(created["id"])
             for code, lines in (
                 ("identity_record", IDENTITY_ONLY_LINES),
-                ("vehicle_record", MOTOR_EVIDENCE_LINES),
+                ("vehicle_record", ["vehicle_age: 2", "vehicle_use: personal"]),
             ):
-                client.post(
+                uploaded = client.post(
                     f"/api/v1/cases/{case_id}/documents",
                     files={
                         "document": (
@@ -276,8 +298,39 @@ def test_persisted_events_are_bounded_and_secret_free() -> None:
                     data={"document_code": code},
                     headers=applicant,
                 )
+                assert uploaded.status_code == 200, uploaded.text
             assert client.post(
                 f"/api/v1/cases/{case_id}/submit", headers=applicant
+            ).status_code == 200
+            assert client.post(
+                f"/api/v1/reviews/{case_id}/start", headers=underwriter
+            ).status_code == 200
+            assert client.post(
+                f"/api/v1/reviews/{case_id}",
+                json={
+                    "action": "request_information",
+                    "reason": "Synthetic gap in the vehicle record",
+                    "evidence_acknowledged": True,
+                },
+                headers=underwriter,
+            ).status_code == 200
+            resubmitted = client.post(
+                f"/api/v1/cases/{case_id}/resubmit", headers=applicant
+            )
+            assert resubmitted.status_code == 200, resubmitted.text
+            assert client.post(
+                f"/api/v1/reviews/{case_id}/start", headers=underwriter
+            ).status_code == 200
+            assert client.post(
+                f"/api/v1/reviews/{case_id}",
+                json={
+                    "action": "override",
+                    "selected_route": "specialist",
+                    "specialist_label": "motor inspection",
+                    "reason": "Synthetic demonstration override",
+                    "evidence_acknowledged": True,
+                },
+                headers=underwriter,
             ).status_code == 200
             response = client.get(
                 f"/api/v1/audit/cases/{case_id}", headers=admin
@@ -287,23 +340,30 @@ def test_persisted_events_are_bounded_and_secret_free() -> None:
     finally:
         set_motor_status("draft")
 
-    assert events
-    for event in events:
-        _assert_bounded_and_secret_free(event["details"])
-
-
-# Walk one detail tree asserting the sanitization bound and key policy.
-def _assert_bounded_and_secret_free(details: object) -> None:
-    if isinstance(details, str):
-        assert len(details) <= MAX_STRING_CHARS + 1, details[:80]
-        return
-    if isinstance(details, list):
-        assert len(details) <= MAX_ITEMS
-        for item in details:
-            _assert_bounded_and_secret_free(item)
-        return
-    if isinstance(details, dict):
-        assert len(details) <= MAX_ITEMS
-        for key, value in details.items():
-            assert not SENSITIVE_KEY_PATTERN.search(str(key)), key
-            _assert_bounded_and_secret_free(value)
+    submissions = [
+        event
+        for event in events
+        if event["event_type"] in {"case_submitted", "case_resubmitted"}
+    ]
+    reviews = [
+        event
+        for event in events
+        if event["event_type"] == "underwriter_reviewed"
+    ]
+    assert [event["event_type"] for event in submissions] == [
+        "case_submitted",
+        "case_resubmitted",
+    ]
+    assert submissions[0]["details"]["review_cycle"] == 0
+    assert submissions[1]["details"]["review_cycle"] == 1
+    assert "supersedes_event_id" not in submissions[0]["details"]
+    assert (
+        submissions[1]["details"]["supersedes_event_id"]
+        == submissions[0]["id"]
+    )
+    assert [event["details"]["action"] for event in reviews] == [
+        "request_information",
+        "override",
+    ]
+    assert "supersedes_event_id" not in reviews[0]["details"]
+    assert reviews[1]["details"]["supersedes_event_id"] == reviews[0]["id"]

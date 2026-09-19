@@ -98,4 +98,6 @@ def test_health_allows_local_web_origin() -> None:
     )
 
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert response.headers["access-control-allow-origin"] == (
+        "http://localhost:5173"
+    )

@@ -51,7 +51,7 @@ def read_motor_configuration() -> str:
             cursor.execute(
                 "SELECT configuration::text FROM product_versions "
                 "WHERE product_id = (SELECT id FROM products WHERE code = %s) "
-                "ORDER BY version LIMIT 1",
+                "AND status = 'active'",
                 ("motor-private-car",),
             )
             return cursor.fetchone()[0]
@@ -63,7 +63,8 @@ def write_motor_configuration(text: str) -> None:
         with connection.cursor() as cursor:
             cursor.execute(
                 "UPDATE product_versions SET configuration = %s::jsonb "
-                "WHERE product_id = (SELECT id FROM products WHERE code = %s)",
+                "WHERE product_id = (SELECT id FROM products WHERE code = %s) "
+                "AND status = 'active'",
                 (text, "motor-private-car"),
             )
 

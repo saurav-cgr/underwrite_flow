@@ -6,7 +6,11 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
-from underwriteflow.products.rules import ProductRuleError, RuleEvaluation, evaluate_rule
+from underwriteflow.products.rules import (
+    ProductRuleError,
+    RuleEvaluation,
+    evaluate_rule,
+)
 from underwriteflow.products.schemas import ProductConfiguration, RoutingRule
 from underwriteflow.workflow.state import (
     ProductRuleInput,
@@ -21,7 +25,9 @@ class ProductSelectionError(ValueError):
 
 
 # Evaluate one configured rule in an isolated deterministic branch.
-def evaluate_product_rule(state: ProductRuleWorkerState) -> dict[str, list[ProductRuleResult]]:
+def evaluate_product_rule(
+    state: ProductRuleWorkerState,
+) -> dict[str, list[ProductRuleResult]]:
     rule = RoutingRule.model_validate(state["rule"])
     try:
         evaluation = evaluate_rule(rule, state["payload"])
@@ -43,7 +49,10 @@ def fan_out_product_rules(
     if not rules:
         return "normalize_product_results"
     return [
-        Send("evaluate_product_rule", {"rule": rule, "payload": state["payload"]})
+        Send(
+            "evaluate_product_rule",
+            {"rule": rule, "payload": state["payload"]},
+        )
         for rule in rules
     ]
 
@@ -52,7 +61,10 @@ def fan_out_product_rules(
 def normalize_product_results(
     state: ProductState,
 ) -> dict[str, list[dict[str, object]]]:
-    results = sorted(state.get("rule_results", []), key=lambda result: result["rule_code"])
+    results = sorted(
+        state.get("rule_results", []),
+        key=lambda result: result["rule_code"],
+    )
     validations: list[dict[str, object]] = []
     risk_signals: list[dict[str, object]] = []
     for result in results:
@@ -60,18 +72,29 @@ def normalize_product_results(
         validations.append(
             {
                 "rule_code": result["rule_code"],
-                "status": "error" if error_code else ("triggered" if result["triggered"] else "clear"),
+                "status": (
+                    "error"
+                    if error_code
+                    else "triggered" if result["triggered"] else "clear"
+                ),
                 "route": result["route"],
                 "source_type": "deterministic",
                 "error_code": error_code,
             }
         )
-        if not error_code and result["triggered"] and result["route"] == "specialist":
+        if (
+            not error_code
+            and result["triggered"]
+            and result["route"] == "specialist"
+        ):
             risk_signals.append(
                 {
                     "code": result["rule_code"],
                     "severity": "high",
-                    "explanation": f"Configured rule triggered: {result['rule_code']}",
+                    "explanation": (
+                        "Configured rule triggered: "
+                        f"{result['rule_code']}"
+                    ),
                     "specialist_label": result["specialist_label"],
                     "source_type": "deterministic",
                 }
@@ -84,7 +107,10 @@ def build_product_subgraph(
     configuration: ProductConfiguration,
     checkpointer: BaseCheckpointSaver | None = None,
 ):
-    rules = [rule.model_dump(mode="json") for rule in configuration.routing_rules]
+    rules = [
+        rule.model_dump(mode="json")
+        for rule in configuration.routing_rules
+    ]
     builder = StateGraph(ProductState)
     builder.add_node("evaluate_product_rule", evaluate_product_rule)
     builder.add_node("normalize_product_results", normalize_product_results)

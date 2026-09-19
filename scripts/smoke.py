@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from underwriteflow.app import create_app
 
-SMOKE_KEY = "synthetic-compose-smoke-v1"
+SMOKE_KEY = "synthetic-compose-smoke-rules-v2"
 SMOKE_DOCUMENTS = (
     ("identity_record", "identity.pdf"),
     ("vehicle_record", "vehicle.pdf"),
@@ -12,10 +12,14 @@ SMOKE_DOCUMENTS = (
 
 # Field lines the fictional motor configuration requests. Extraction reads the
 # document text layer, so a blank PDF yields no evidence and no final route.
+# The last two lines are the evidence the configured reconciliation reads.
 MOTOR_EVIDENCE_LINES = [
     "vehicle_age: 4",
     "vehicle_use: personal",
     "prior_claims: 0",
+    "claimed_ncb_percent: 20",
+    "ncb_percent: 0",
+    "policy_expiry: 2026-01-05",
 ]
 
 
@@ -141,7 +145,7 @@ def run_smoke() -> None:
         activation = client.post(
             "/api/v1/products/motor-private-car/activate",
             headers=administrator,
-            json={"version": "v1"},
+            json={"version": "v2"},
         )
         assert activation.status_code == 200, activation.text
         applicant = login(
@@ -159,6 +163,7 @@ def run_smoke() -> None:
                     "vehicle_age": 4,
                     "vehicle_use": "personal",
                     "prior_claims": 0,
+                    "claimed_ncb_percent": 20,
                 },
                 "document_codes": ["identity_record", "vehicle_record"],
             },

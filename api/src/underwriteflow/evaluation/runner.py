@@ -3,13 +3,22 @@
 import argparse
 import asyncio
 import json
-from pathlib import Path
 from typing import Any
 
-from underwriteflow.evaluation.dataset import load_dataset
+from underwriteflow.cases.service import (
+    field_specifications,
+    requested_field_keys,
+)
+from underwriteflow.evaluation.dataset import (
+    load_configuration_manifest,
+    load_dataset,
+)
 from underwriteflow.evaluation.metrics import evaluate_records
 from underwriteflow.evaluation.tracing import trace_summary
-from underwriteflow.products.service import load_configuration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.nodes import branch_failures
@@ -20,30 +29,15 @@ from underwriteflow.workflow.triage import (
 )
 
 
-# Locate mounted product configurations or their source-checkout fallback.
-def product_config_root() -> Path:
-    mounted_path = Path("/app/product-config")
-    if mounted_path.exists():
-        return mounted_path
-    return Path(__file__).resolve().parents[4] / "product-config"
-
-
-# Load the fictional configurations used by deterministic product subgraphs.
-def load_configurations() -> dict[str, Any]:
-    return {
-        configuration.product_code: configuration
-        for path in product_config_root().glob("*.yaml")
-        if (configuration := load_configuration(path.read_text()))
-    }
-
-
 # Read the documents a reference case supplies as evidence input.
-def document_inputs(record: dict[str, Any]) -> list[dict[str, str]]:
+def document_inputs(record: dict[str, Any]) -> list[dict[str, object]]:
     return [
         {
             "document_id": document["document_id"],
+            "document_code": document["document_id"],
             "filename": document["filename"],
             "content": "\n".join(document["lines"]),
+            "pages": [],
         }
         for document in record["documents"]
     ]
@@ -51,22 +45,38 @@ def document_inputs(record: dict[str, Any]) -> list[dict[str, str]]:
 
 # Run one synthetic case through extraction, reconciliation, and routing.
 async def run_record(
-    record: dict[str, Any], configurations: dict[str, Any]
+    record: dict[str, Any],
+    configurations: dict[tuple[str, str], ProductConfiguration],
 ) -> dict[str, Any]:
-    configuration = configurations[record["product_code"]]
+    manifest_key = (record["product_code"], record["configuration_version"])
+    configuration = filter_configuration_for_journey(
+        configurations[manifest_key], record["journey_type"]
+    )
+    requested_fields = requested_field_keys(
+        configuration, record["workflow_input"]["payload"]
+    )
     evidence_result = await build_evidence_graph(
         FakeProvider(), retry_count=0
     ).ainvoke(
         {
             "case_id": record["case_id"],
             "documents": document_inputs(record),
-            "requested_fields": [field.key for field in configuration.fields],
+            "requested_fields": requested_fields,
+            "field_specifications": field_specifications(
+                configuration, requested_fields
+            ),
             "reference_content": "",
+            "application": record["workflow_input"]["payload"],
+            "reconciliation_checks": [
+                check.model_dump(mode="json")
+                for check in configuration.reconciliations
+            ],
+            "rule_version": configuration.version,
             "results": [],
         }
     )
     product_result = await select_product_subgraph(
-        record["product_code"], configurations
+        record["product_code"], {record["product_code"]: configuration}
     ).ainvoke(
         {
             "product_code": record["product_code"],
@@ -113,7 +123,7 @@ async def evaluate_cases(split: str | None = None) -> list[dict[str, Any]]:
     records = load_dataset()
     if split:
         records = [record for record in records if record.get("split") == split]
-    configurations = load_configurations()
+    configurations = load_configuration_manifest()
     return [await run_record(record, configurations) for record in records]
 
 

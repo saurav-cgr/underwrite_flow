@@ -8,6 +8,8 @@ import {
   listReferences,
   readCase,
   readCaseConfiguration,
+  readSession,
+  refreshSession,
   removeDocument,
   resubmitCase,
   setUnauthorizedHandler,
@@ -127,6 +129,81 @@ function stubJson(status: number, value: unknown) {
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
+
+// Verify the credential routes carry the contracted payloads.
+describe("session API", () => {
+  it(
+    "signs in through the login route and returns both credentials",
+    async () => {
+    const credentials = {
+      access_token: "access",
+      refresh_token: "refresh",
+      token_type: "bearer",
+      expires_in: 900,
+      refresh_expires_in: 28800,
+    };
+    const fetchMock = stubJson(200, credentials);
+
+    const issued = await createSession("synthetic@test", "secret");
+
+    expect(issued).toEqual(credentials);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/auth/login",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          email: "synthetic@test",
+          password: "secret",
+        }),
+      }),
+    );
+    },
+  );
+
+  it("rotates the refresh credential through the refresh route", async () => {
+    const fetchMock = stubJson(200, {
+      access_token: "next-access",
+      refresh_token: "next-refresh",
+      token_type: "bearer",
+      expires_in: 900,
+      refresh_expires_in: 28800,
+    });
+
+    const issued = await refreshSession("current-refresh");
+
+    expect(issued.access_token).toBe("next-access");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/auth/refresh",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ refresh_token: "current-refresh" }),
+      }),
+    );
+  });
+
+  it("reads the identity and scopes behind an access token", async () => {
+    const fetchMock = stubJson(200, {
+      id: "user-1",
+      email: "underwriter@synthetic.test",
+      display_name: "Synthetic Underwriter",
+      role: { id: "role-1", code: "underwriter" },
+      permissions: ["cases:override", "cases:read"],
+    });
+
+    const identity = await readSession("access");
+
+    expect(identity.role.code).toBe("underwriter");
+    expect(identity.permissions).toEqual(["cases:override", "cases:read"]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/auth/me",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer access",
+        }),
+      }),
+    );
+  });
+});
 
 // Verify the applicant lifecycle calls the owned case routes.
 describe("case submission API", () => {

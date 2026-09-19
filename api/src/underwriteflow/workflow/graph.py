@@ -6,7 +6,12 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 
 from underwriteflow.providers.protocol import ExtractionProvider
-from underwriteflow.workflow.nodes import extract_document, fan_out_documents, join_evidence, reconcile_evidence
+from underwriteflow.workflow.nodes import (
+    extract_document,
+    fan_out_documents,
+    join_evidence,
+    reconcile_evidence,
+)
 from underwriteflow.workflow.state import EvidenceState, thread_config
 
 

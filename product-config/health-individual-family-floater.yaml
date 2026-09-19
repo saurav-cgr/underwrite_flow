@@ -2,7 +2,8 @@ product_code: health-individual-family-floater
 title: Fictional Individual and Family Floater Health
 family: health
 scope: Fictional India-focused demonstration only
-description: Demonstration triage configuration for individual and family floater health.
+description: >-
+  Demonstration triage configuration for individual and family floater health.
 version: v1
 status: draft
 fields:
@@ -24,6 +25,11 @@ fields:
     help_text: Enter fictional continuity months when applicable.
     visible_when: {field: prior_hospitalization, equals: true}
     validation: {minimum: 0}
+  - key: policy_start_date
+    label: Policy start date
+    type: date
+    required: false
+    help_text: Enter the fictional renewal start date.
 documents:
   - code: identity_record
     title: Synthetic identity record
@@ -39,6 +45,10 @@ documents:
     requirement: conditional
     condition: {field: prior_hospitalization, operator: equals, value: true}
     accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: previous_policy
+    title: Synthetic previous policy
+    requirement: optional
+    accepted_types: [application/pdf, image/jpeg, image/png]
 routing_rules:
   - code: prior_hospitalization_specialist
     condition: {field: prior_hospitalization, operator: equals, value: true}
@@ -47,4 +57,16 @@ routing_rules:
   - code: large_floater_standard
     condition: {field: member_count, operator: greater_than, value: 4}
     route: standard
+# Fictional checks only. Every comparison stays in backend code.
+reconciliations:
+  - code: health_identity_match
+    kind: asset_match
+    inputs:
+      identity_record: holder_name
+      member_relationship_record: holder_name
+  - code: health_renewal_lapse
+    kind: policy_lapse
+    inputs:
+      application: policy_start_date
+      previous_policy: policy_expiry_date
 specialist_labels: [health review]

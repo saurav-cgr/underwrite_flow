@@ -89,12 +89,14 @@ describe("document intake", () => {
         title: "Identity",
         requirement: "required",
         accepted_types: ["application/pdf"],
+        stage: "supporting",
       },
       {
         code: "old_record",
         title: "Old record",
         requirement: "not_applicable",
         accepted_types: ["application/pdf"],
+        stage: "supporting",
       },
     ];
     expect(allDocumentCodes(documents)).toEqual(["identity_record"]);
@@ -111,6 +113,7 @@ describe("resolved requirements", () => {
       required: true,
       accepted_types: ["application/pdf"],
       condition: null,
+      stage: "supporting",
     },
     {
       code: "inspection_photo",
@@ -123,6 +126,7 @@ describe("resolved requirements", () => {
         operator: "greater_than",
         value: 12,
       },
+      stage: "supporting",
     },
     {
       code: "prior_report",
@@ -135,6 +139,7 @@ describe("resolved requirements", () => {
         operator: "greater_than",
         value: 1,
       },
+      stage: "supporting",
     },
   ];
 

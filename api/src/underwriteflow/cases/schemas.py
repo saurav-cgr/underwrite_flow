@@ -5,13 +5,27 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from underwriteflow.products.journey import DocumentStage, JourneyType
+
 
 class CaseCreate(BaseModel):
-    """Synthetic application intake payload."""
+    """Synthetic application intake payload.
+
+    A draft may be created with an incomplete payload; only ``submit``
+    enforces every journey-required field and document.
+    """
 
     product_code: str = Field(min_length=1, max_length=100)
     idempotency_key: str = Field(min_length=1, max_length=255)
-    payload: dict[str, Any]
+    journey: JourneyType = "new_business"
+    payload: dict[str, Any] = Field(default_factory=dict)
+    document_codes: list[str] = Field(default_factory=list, max_length=10)
+
+
+class ApplicationUpdate(BaseModel):
+    """Owner-only replacement of a mutable case's stored draft answers."""
+
+    payload: dict[str, Any] = Field(default_factory=dict)
     document_codes: list[str] = Field(default_factory=list, max_length=10)
 
 
@@ -23,6 +37,7 @@ class CaseResponse(BaseModel):
     product_version: str
     rulebook_version: str
     status: str
+    journey: JourneyType
 
 
 class SubmitResponse(BaseModel):
@@ -67,6 +82,7 @@ class CaseDocumentResponse(BaseModel):
     required: bool
     accepted_types: list[str]
     condition: dict[str, Any] | None
+    stage: DocumentStage
 
 
 class CaseConfigurationResponse(BaseModel):
@@ -76,5 +92,6 @@ class CaseConfigurationResponse(BaseModel):
     product_code: str
     product_version: str
     rulebook_version: str
+    journey: JourneyType
     fields: list[CaseFieldResponse]
     documents: list[CaseDocumentResponse]

@@ -30,7 +30,8 @@ def test_product_versions_are_unique_per_product_version() -> None:
     constraints = ProductVersion.__table__.constraints
 
     assert any(
-        getattr(constraint, "name", None) == "uq_product_versions_product_version"
+        getattr(constraint, "name", None)
+        == "uq_product_versions_product_version"
         for constraint in constraints
     )
 

@@ -51,10 +51,18 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
-      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-900}
+      JWT_ISSUER: ${JWT_ISSUER:-underwriteflow}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-underwriteflow-web}
+      ACCESS_TOKEN_TTL_SECONDS: ${ACCESS_TOKEN_TTL_SECONDS:-900}
+      REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-28800}
+      REFRESH_TOKEN_PEPPER: ${REFRESH_TOKEN_PEPPER:-synthetic-local-refresh-pepper}
       GENERATION_PROVIDER: ${GENERATION_PROVIDER:-gemini}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
+      GEMINI_NO_TRAINING_ACKNOWLEDGED: >-
+        ${GEMINI_NO_TRAINING_ACKNOWLEDGED:-false}
+      PROVIDER_ALLOWED_HOSTS:
+      PII_REDACTION_TERMS: ${PII_REDACTION_TERMS:-[]}
       PROVIDER_TIMEOUT_SECONDS: ${PROVIDER_TIMEOUT_SECONDS:-30}
       PROVIDER_RETRY_COUNT: ${PROVIDER_RETRY_COUNT:-2}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}

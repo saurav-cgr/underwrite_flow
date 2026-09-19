@@ -28,6 +28,7 @@ const CONFIGURATION: CaseConfiguration = {
   product_code: "motor-private-car",
   product_version: "v1",
   rulebook_version: "v1",
+  journey: "new_business",
   fields: [],
   documents: [
     {
@@ -37,6 +38,7 @@ const CONFIGURATION: CaseConfiguration = {
       required: true,
       accepted_types: ["application/pdf"],
       condition: null,
+      stage: "supporting",
     },
     {
       code: "inspection_photo",
@@ -49,6 +51,7 @@ const CONFIGURATION: CaseConfiguration = {
         operator: "greater_than",
         value: 12,
       },
+      stage: "supporting",
     },
   ],
 };
@@ -59,6 +62,7 @@ const CASE: CaseRecord = {
   product_version: "v1",
   rulebook_version: "v1",
   status: "new",
+  journey: "new_business",
 };
 
 const UPLOADED: DocumentRecord = {

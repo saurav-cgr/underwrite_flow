@@ -44,6 +44,17 @@ const PREVIEW: ProductConfigurationPreview = {
   field_count: 3,
   document_count: 5,
   routing_rule_count: 7,
+  reconciliation_count: 1,
+  reconciliations: [
+    {
+      code: "motor_ncb_match",
+      kind: "ncb_match",
+      inputs: {
+        application: "claimed_ncb_percent",
+        previous_policy: "ncb_percent",
+      },
+    },
+  ],
   specialist_labels: ["motor inspection"],
 };
 
@@ -141,6 +152,43 @@ describe("product import panel", () => {
     expect(screen.getByText("5")).toBeTruthy();
     expect(screen.getByText("Routing rules")).toBeTruthy();
     expect(screen.getByText("7")).toBeTruthy();
+    expect(screen.getByText("Reconciliations")).toBeTruthy();
+  });
+
+  it("shows each configured reconciliation definition", async () => {
+    previewMock.mockResolvedValue(PREVIEW);
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.type(yamlField(), "product_code: motor-private-car");
+    await user.click(screen.getByRole("button", { name: "Preview" }));
+
+    expect(await screen.findByText("motor_ncb_match")).toBeTruthy();
+    expect(screen.getByText("No-claim bonus match")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "application → claimed_ncb_percent, previous_policy → ncb_percent",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("says when a version configures no checks", async () => {
+    previewMock.mockResolvedValue({
+      ...PREVIEW,
+      reconciliation_count: 0,
+      reconciliations: [],
+    });
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.type(yamlField(), "product_code: motor-private-car");
+    await user.click(screen.getByRole("button", { name: "Preview" }));
+
+    expect(
+      await screen.findByText(
+        "No reconciliation checks are configured for this version.",
+      ),
+    ).toBeTruthy();
   });
 
   it("imports a draft and hands the product code upward", async () => {
@@ -172,6 +220,29 @@ describe("product import panel", () => {
     await waitFor(() =>
       expect(onStatus).toHaveBeenCalledWith({
         message: "Configuration is invalid",
+      }),
+    );
+  });
+
+  it("names the failing reconciliation reference when refused", async () => {
+    validateMock.mockRejectedValue(
+      new ApiError(
+        422,
+        "Invalid product configuration: reconciliation motor_ncb_match: " +
+          "unknown input sources ['inspection_photo']",
+      ),
+    );
+    const { onStatus } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.type(yamlField(), "product_code: motor-private-car");
+    await user.click(screen.getByRole("button", { name: "Validate" }));
+
+    await waitFor(() =>
+      expect(onStatus).toHaveBeenCalledWith({
+        message:
+          "Invalid product configuration: reconciliation " +
+          "motor_ncb_match: unknown input sources ['inspection_photo']",
       }),
     );
   });

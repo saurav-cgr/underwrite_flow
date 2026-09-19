@@ -1,0 +1,81 @@
+product_code: motor-private-car
+title: Fictional Private-Car Motor
+family: motor
+scope: Fictional India-focused demonstration only
+description: >-
+  Demonstration triage configuration for privately owned cars.
+version: v2
+status: draft
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Enter the fictional vehicle age in years.
+    validation: {minimum: 0, maximum: 30}
+  - key: vehicle_use
+    label: Vehicle use
+    type: enum
+    required: true
+    help_text: Select the fictional primary use.
+    options: [personal, commute]
+  - key: prior_claims
+    label: Prior claims
+    type: integer
+    required: true
+    help_text: Enter the number of fictional prior claims.
+    validation: {minimum: 0}
+  - key: claimed_ncb_percent
+    label: Claimed NCB percent
+    type: integer
+    required: true
+    help_text: Enter the fictional renewal NCB percentage.
+    validation: {minimum: 0, maximum: 100}
+  - key: policy_start_date
+    label: Policy start date
+    type: date
+    required: false
+    help_text: Enter the fictional renewal start date.
+documents:
+  - code: identity_record
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: vehicle_record
+    title: Synthetic vehicle record
+    requirement: required
+    accepted_types: [application/pdf, image/jpeg, image/png]
+  - code: inspection_photo
+    title: Synthetic inspection photo
+    requirement: conditional
+    condition: {field: vehicle_age, operator: greater_than, value: 12}
+    accepted_types: [image/jpeg, image/png]
+routing_rules:
+  - code: vehicle_age_specialist
+    condition: {field: vehicle_age, operator: greater_than, value: 12}
+    route: specialist
+    specialist_label: motor inspection
+  - code: prior_claims_standard
+    condition: {field: prior_claims, operator: greater_than, value: 1}
+    route: standard
+# Fictional checks only. Every comparison stays in backend code.
+reconciliations:
+  - code: motor_ncb_match
+    kind: ncb_match
+    inputs:
+      application: claimed_ncb_percent
+      vehicle_record: ncb_percent
+    parameters:
+      tiers: [0, 20, 25, 35, 45, 50]
+      claim_count_field: prior_claims
+      claims_reset_threshold: 1
+      claims_reset_tier: 0
+  - code: motor_renewal_lapse
+    kind: policy_lapse
+    inputs:
+      application: policy_start_date
+      vehicle_record: policy_expiry
+    parameters:
+      maximum_gap_days: 30
+      boundary: inclusive
+specialist_labels: [motor inspection]

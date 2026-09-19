@@ -25,6 +25,7 @@ CASE_KEYS = {
     "product_version",
     "rulebook_version",
     "status",
+    "journey",
 }
 
 CONFIGURATION_KEYS = {
@@ -32,6 +33,7 @@ CONFIGURATION_KEYS = {
     "product_code",
     "product_version",
     "rulebook_version",
+    "journey",
     "fields",
     "documents",
 }
@@ -54,6 +56,7 @@ REQUIREMENT_KEYS = {
     "required",
     "accepted_types",
     "condition",
+    "stage",
 }
 
 DOCUMENT_KEYS = {

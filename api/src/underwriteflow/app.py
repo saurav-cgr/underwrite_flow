@@ -12,7 +12,10 @@ from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
 from underwriteflow.api.v1.router import router as api_v1_router
+from underwriteflow.auth.admin_router import router as admin_router
+from underwriteflow.auth.dependencies import AuthorizationDenied
 from underwriteflow.auth.router import router as auth_router
+from underwriteflow.audit.events import build_audit_event
 from underwriteflow.cases.router import router as cases_router
 from underwriteflow.config import Settings, get_settings
 from underwriteflow.database import Database
@@ -24,12 +27,39 @@ from underwriteflow.errors import (
 from underwriteflow.evaluation.router import router as evaluation_router
 from underwriteflow.products.router import router as products_router
 from underwriteflow.reviews.router import router as reviews_router
-from underwriteflow.queues.router import router as queues_router
+from underwriteflow.queues.router import (
+    audit_router,
+    completion_router,
+    queues_router,
+)
 
 
 # Return an existing request ID or create one for an early failure.
 def request_id_for(request: Request) -> str:
     return getattr(request.state, "request_id", None) or str(uuid4())
+
+
+# Persist one safe authorization denial outside the refused transaction.
+async def audit_authorization_denial(
+    request: Request, error: AuthorizationDenied
+) -> None:
+    details = {
+        "reason": error.reason,
+        "request_id": request_id_for(request),
+        "method": request.method,
+        "path": request.url.path,
+        **error.audit_details,
+    }
+    async with request.app.state.database.session_factory() as session:
+        session.add(
+            build_audit_event(
+                "authorization_denied",
+                details,
+                case_id=error.case_id,
+                actor_user_id=error.actor_user_id,
+            )
+        )
+        await session.commit()
 
 
 # Release database resources when the application stops.
@@ -80,6 +110,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def http_error_handler(
         request: Request, error: StarletteHTTPException
     ) -> Response:
+        if isinstance(error, AuthorizationDenied):
+            await audit_authorization_denial(request, error)
         if error.status_code == 404:
             return error_response(
                 status_code=404,
@@ -94,7 +126,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             request_id=request_id_for(request),
         )
 
-    # Keep validation details generic until endpoint contracts define safe fields.
+    # Keep details generic until endpoint contracts define safe fields.
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(
         request: Request, error: RequestValidationError
@@ -109,7 +141,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Prevent unhandled exceptions from exposing implementation details.
     @app.exception_handler(Exception)
-    async def unexpected_error_handler(request: Request, error: Exception) -> Response:
+    async def unexpected_error_handler(
+        request: Request,
+        error: Exception,
+    ) -> Response:
         del error
         return error_response(
             status_code=500,
@@ -132,9 +167,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(api_v1_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(admin_router, prefix="/api/v1")
     app.include_router(cases_router, prefix="/api/v1")
     app.include_router(products_router, prefix="/api/v1")
     app.include_router(reviews_router, prefix="/api/v1")
     app.include_router(queues_router, prefix="/api/v1")
+    app.include_router(audit_router, prefix="/api/v1")
+    app.include_router(completion_router, prefix="/api/v1")
     app.include_router(evaluation_router, prefix="/api/v1")
     return app
