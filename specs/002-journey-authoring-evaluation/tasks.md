@@ -213,7 +213,7 @@ changing active or pinned versions.
 - [ ] T034 [US2] Add complete product configuration types, normalized preview,
   read, and export calls in `web/src/types.ts` and
   `web/src/api-products.ts`.
-- [ ] T035 [US2] Implement one browser configuration object, blank defaults,
+- [X] T035 [US2] Implement one browser configuration object, blank defaults,
   clone normalization, local completeness checks, and stable semantic diff in
   `web/src/product-builder-state.ts`.
 - [ ] T036 [US2] Build accessible wizard shell, source selection, identity,
