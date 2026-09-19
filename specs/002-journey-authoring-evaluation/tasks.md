@@ -191,7 +191,7 @@ changing active or pinned versions.
 - [ ] T030 [P] [US2] Add seven-section, keyboard, focus, labels, error summary,
   non-color diff, import, and activation tests in
   `web/src/product-builder.test.tsx`.
-- [ ] T031 [P] [US2] Add draft-hidden, activation-visible, and case-pinning
+- [X] T031 [P] [US2] Add draft-hidden, activation-visible, and case-pinning
   integration coverage in
   `api/tests/integration/test_product_builder_lifecycle.py`.
 
