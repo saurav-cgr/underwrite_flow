@@ -188,9 +188,11 @@ changing active or pinned versions.
   semantic-diff state tests in `web/src/product-builder-state.test.ts`.
   Trimmed: upload normalization is server-driven (preview endpoint), so its
   coverage lives in T030/T039 UI tests, not a pure state-module function.
-- [ ] T030 [P] [US2] Add seven-section, keyboard, focus, labels, error summary,
+- [X] T030 [P] [US2] Add seven-section, keyboard, focus, labels, error summary,
   non-color diff, import, and activation tests in
-  `web/src/product-builder.test.tsx`.
+  `web/src/product-builder.test.tsx`. Trimmed: activation itself is already
+  covered end to end in `product-configuration.test.tsx`; this file verifies
+  the import hand-off (`onImported`) that makes the new draft reachable.
 - [X] T031 [P] [US2] Add draft-hidden, activation-visible, and case-pinning
   integration coverage in
   `api/tests/integration/test_product_builder_lifecycle.py`.
