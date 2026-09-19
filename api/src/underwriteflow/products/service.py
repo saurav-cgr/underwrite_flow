@@ -24,6 +24,7 @@ from underwriteflow.persistence.models import (
 )
 from underwriteflow.persistence.repositories import AuditRepository
 from underwriteflow.products.errors import (
+    ProductConfigurationCorruptError,
     ProductConfigurationError,
     ProductConflictError,
 )
@@ -36,6 +37,7 @@ from underwriteflow.products.schemas import ProductConfiguration
 LOGGER = logging.getLogger(__name__)
 
 __all__ = [
+    "ProductConfigurationCorruptError",
     "ProductConfigurationError",
     "ProductConflictError",
     "ProductService",
@@ -131,22 +133,40 @@ class ProductService(ReferenceDocumentMixin):
     ) -> None:
         self.repository = repository or ProductRepository()
         self.audit_repository = audit_repository or AuditRepository()
-    # Summarize validated configuration impact without persisting it.
+    # Return the fully normalized configuration, plus its summary counts,
+    # without persisting it. The counts stay for the existing expert-YAML
+    # preview screen; the normalized fields feed the guided builder.
     def preview(self, configuration: ProductConfiguration) -> dict[str, Any]:
         return {
-            "product_code": configuration.product_code,
-            "version": configuration.version,
-            "status": configuration.status,
+            **configuration_payload(configuration),
             "field_count": len(configuration.fields),
             "document_count": len(configuration.documents),
             "routing_rule_count": len(configuration.routing_rules),
             "reconciliation_count": len(configuration.reconciliations),
-            "reconciliations": [
-                check.model_dump(mode="json", exclude_none=True)
-                for check in configuration.reconciliations
-            ],
-            "specialist_labels": configuration.specialist_labels,
         }
+
+    # Read one persisted version's validated configuration.
+    async def read_version(
+        self, session: AsyncSession, code: str, version: str
+    ) -> ProductConfiguration:
+        target = await self.repository.find_version(session, code, version)
+        if target is None:
+            raise ProductConfigurationError("product version not found")
+        configuration = configuration_from_payload(target.configuration)
+        if configuration is None:
+            raise ProductConfigurationCorruptError(
+                "stored configuration is no longer valid"
+            )
+        return configuration
+
+    # Export one persisted version as canonical YAML text.
+    async def export_version(
+        self, session: AsyncSession, code: str, version: str
+    ) -> str:
+        configuration = await self.read_version(session, code, version)
+        return yaml.safe_dump(
+            configuration_payload(configuration), sort_keys=False
+        )
     # Import one validated configuration as an immutable draft version.
     async def import_configuration(
         self,

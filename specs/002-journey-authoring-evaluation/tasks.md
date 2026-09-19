@@ -199,12 +199,17 @@ changing active or pinned versions.
 
 ### Implementation
 
-- [ ] T032 [US2] Return normalized configuration from preview and add validated
+- [X] T032 [US2] Return normalized configuration from preview and add validated
   read/export service operations in
-  `api/src/underwriteflow/products/service.py`.
-- [ ] T033 [US2] Add administrator-only configuration and canonical YAML
+  `api/src/underwriteflow/products/service.py`. Preview now returns the full
+  normalized configuration plus its original summary counts (additive, so
+  the existing expert-YAML preview screen stays unaffected).
+- [X] T033 [US2] Add administrator-only configuration and canonical YAML
   export endpoints in `api/src/underwriteflow/products/router.py`; use
-  `application/yaml` and sanitized attachment names.
+  `application/yaml` and sanitized attachment names. Split the existing
+  reference-document endpoints into
+  `api/src/underwriteflow/products/reference_router.py` to keep both files
+  under the 400-line limit.
 - [ ] T034 [US2] Add complete product configuration types, normalized preview,
   read, and export calls in `web/src/types.ts` and
   `web/src/api-products.ts`.

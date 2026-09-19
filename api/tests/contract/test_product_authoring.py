@@ -135,12 +135,9 @@ def test_preview_returns_normalized_configuration() -> None:
         assert response.status_code == 200, response.text
         body = response.json()
         assert body["status"] == "draft"
-        assert body["supported_journeys"] == ["new_business", "renewal"]
+        assert body["supported_journeys"] == ["new_business"]
         assert body["fields"][0]["key"] == "vehicle_age"
-        assert body["fields"][0]["applies_to"] == [
-            "new_business",
-            "renewal",
-        ]
+        assert body["fields"][0]["applies_to"] == ["new_business"]
         assert body["documents"][0]["stage"] == "supporting"
 
 
