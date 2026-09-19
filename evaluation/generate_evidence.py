@@ -27,20 +27,34 @@ EVALUATION_DIR = Path(__file__).resolve().parent
 PRODUCT_CONFIG_DIR = EVALUATION_DIR.parent / "product-config"
 
 
-# Read the required field keys for each fictional product configuration.
+# Load every published configuration, keyed by product code and version.
+def all_configurations() -> dict[tuple[str, str], dict[str, Any]]:
+    configurations: dict[tuple[str, str], dict[str, Any]] = {}
+    for path in sorted(PRODUCT_CONFIG_DIR.glob("*.yaml")):
+        configuration = yaml.safe_load(path.read_text())
+        key = (configuration["product_code"], configuration["version"])
+        configurations[key] = configuration
+    return configurations
+
+
+# Match the backend's default: an entry with no applies_to is new-business
+# only, so a case's declared journey must match it explicitly to count.
+def applies_to_journey(entry: dict[str, Any], journey: str) -> bool:
+    return journey in entry.get("applies_to", ["new_business"])
+
+
+# Read the required field keys one journey sees on one configuration.
 #
 # Optional fields are excluded: the applicant either answered them or left them
 # unanswered, and the pipeline only expects evidence for what was answered.
-def product_fields() -> dict[str, list[str]]:
-    fields: dict[str, list[str]] = {}
-    for path in sorted(PRODUCT_CONFIG_DIR.glob("*.yaml")):
-        configuration = yaml.safe_load(path.read_text())
-        fields[configuration["product_code"]] = [
-            field["key"]
-            for field in configuration["fields"]
-            if field.get("required", True)
-        ]
-    return fields
+def required_fields(
+    configuration: dict[str, Any], journey: str
+) -> list[str]:
+    return [
+        field["key"]
+        for field in configuration["fields"]
+        if field.get("required", True) and applies_to_journey(field, journey)
+    ]
 
 
 # Render one value the way a synthetic document line would carry it.
@@ -59,15 +73,15 @@ def conflicting_value(value: Any) -> str:
     return "other"
 
 
-# Read the reconciliation checks each fictional product configures.
-def product_checks() -> dict[str, list[dict[str, Any]]]:
-    checks: dict[str, list[dict[str, Any]]] = {}
-    for path in sorted(PRODUCT_CONFIG_DIR.glob("*.yaml")):
-        configuration = yaml.safe_load(path.read_text())
-        checks[configuration["product_code"]] = configuration.get(
-            "reconciliations", []
-        )
-    return checks
+# Read the reconciliation checks one journey sees on one configuration.
+def journey_checks(
+    configuration: dict[str, Any], journey: str
+) -> list[dict[str, Any]]:
+    return [
+        check
+        for check in configuration.get("reconciliations", [])
+        if applies_to_journey(check, journey)
+    ]
 
 
 # Derive one agreeing value for every evidence field a check reads.
@@ -153,13 +167,16 @@ def main() -> None:
         if len(sys.argv) > 1
         else EVALUATION_DIR / "cases.json"
     )
-    fields = product_fields()
-    checks = product_checks()
+    configurations = all_configurations()
     records: list[dict[str, Any]] = json.loads(cases_path.read_text())
     for record in records:
-        product = record["product_code"]
+        key = (record["product_code"], record["configuration_version"])
+        configuration = configurations[key]
+        journey = record["journey_type"]
         record["documents"] = build_documents(
-            record, fields[product], checks[product]
+            record,
+            required_fields(configuration, journey),
+            journey_checks(configuration, journey),
         )
     cases_path.write_text(json.dumps(records, indent=2) + "\n")
     print(f"wrote {len(records)} records with document material")

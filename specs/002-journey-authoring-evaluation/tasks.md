@@ -286,9 +286,18 @@ idempotent completion, and unchanged development rows/files.
 
 ### Implementation
 
-- [ ] T045 [US3] Add `journey_type` and exact
+- [X] T045 [US3] Add `journey_type` and exact
   `configuration_version` to all records while preserving required product,
   journey, split, and 30/30/30 route counts in `evaluation/cases.json`.
+  Extended `evaluation/generate_evidence.py` to select fields/checks by
+  (product, version, journey) instead of one config per product, then
+  regenerated. 15 motor (v4) and 15 health (v3) records flipped to renewal
+  (suffixes 6-10/16-20/26-30 per product, route/split untouched); life stays
+  30 new-business on v1, since no life version supports renewal yet. Known
+  gap for T046: the offline runner still picks the earliest version per
+  product and ignores `journey_type`/`configuration_version`, so it
+  currently evaluates the new renewal records against v1/v1 (a safe subset,
+  hence still green) rather than their exact declared version.
 - [ ] T046 [US3] Load exact versions, filter by journey, and retain current
   in-memory API metrics in
   `api/src/underwriteflow/evaluation/runner.py` and
