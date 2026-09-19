@@ -184,8 +184,10 @@ changing active or pinned versions.
 - [X] T028 [P] [US2] Add normalized preview, configuration read, export,
   permission, corrupt payload, and YAML round-trip tests in
   `api/tests/contract/test_product_authoring.py`.
-- [ ] T029 [P] [US2] Add blank, clone, upload, identity-lock, validation, and
+- [X] T029 [P] [US2] Add blank, clone, upload, identity-lock, validation, and
   semantic-diff state tests in `web/src/product-builder-state.test.ts`.
+  Trimmed: upload normalization is server-driven (preview endpoint), so its
+  coverage lives in T030/T039 UI tests, not a pure state-module function.
 - [ ] T030 [P] [US2] Add seven-section, keyboard, focus, labels, error summary,
   non-color diff, import, and activation tests in
   `web/src/product-builder.test.tsx`.
