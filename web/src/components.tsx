@@ -63,7 +63,7 @@ function shellLinks(role: Role): ShellLink[] {
   if (role === "Applicant") {
     return [
       { screen: "dashboard", label: "Overview", icon: "grid" },
-      { screen: "products", label: "New application", icon: "plus" },
+      { screen: "journey", label: "New application", icon: "plus" },
       { screen: "tracking", label: "My cases", icon: "file" },
     ];
   }

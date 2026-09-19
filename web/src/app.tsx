@@ -13,6 +13,7 @@ import { ApplicantDashboard, ProductSelection } from "./applicant";
 import { ApplicationForm } from "./application-form";
 import { DocumentsScreen } from "./documents";
 import { RoleEntry } from "./entry";
+import { JourneySelection } from "./journey-selection";
 import { ProductConfiguration } from "./product-configuration";
 import { TrackingScreen } from "./tracking";
 import { AppShell, Button } from "./components";
@@ -22,6 +23,7 @@ import { homeScreenForRole, isOpenCase } from "./ui-state";
 import type {
   CaseConfiguration,
   CaseRecord,
+  JourneyType,
   ProductCatalogItem,
   QueueItem,
   Screen,
@@ -33,6 +35,7 @@ export function App() {
   const [session, setSession] = useState<Session | null>(null);
   const sessionRef = useRef<Session | null>(null);
   const [screen, setScreen] = useState<Screen>("dashboard");
+  const [journey, setJourney] = useState<JourneyType | null>(null);
   const [catalog, setCatalog] = useState<ProductCatalogItem[]>([]);
   const [selectedProduct, setSelectedProduct] =
     useState<ProductCatalogItem | null>(null);
@@ -47,6 +50,7 @@ export function App() {
   // Drop every role-scoped view and return to the entry screen.
   function resetToEntry(noticeText: string) {
     setSession(null);
+    setJourney(null);
     setSelectedProduct(null);
     setCaseRecord(null);
     setConfiguration(null);
@@ -82,21 +86,24 @@ export function App() {
     return () => setUnauthorizedHandler(null);
   }, []);
 
-  // Load product metadata after an applicant is authenticated.
+  // Load product metadata scoped to the chosen journey, once one is chosen.
   useEffect(() => {
-    if (session?.role !== "Applicant") return;
-    listCatalog(session.token)
+    if (session?.role !== "Applicant" || !journey) return;
+    listCatalog(session.token, journey)
       .then(setCatalog)
-      .catch(() => setMessage("Active products could not be loaded."));
-  }, [session]);
+      .catch(() => setMessage("Eligible products could not be loaded."));
+  }, [journey, session]);
 
-  // Restore the latest open case after a reload.
+  // Restore the latest open case, and its journey, after a reload.
   useEffect(() => {
     if (session?.role !== "Applicant" || caseRecord) return;
     listCases(session.token)
       .then((cases) => {
         const latest = cases.find((item) => isOpenCase(item.status));
-        if (latest) setCaseRecord(latest);
+        if (latest) {
+          setCaseRecord(latest);
+          setJourney(latest.journey);
+        }
       })
       .catch(() => setMessage("Existing cases could not be loaded."));
   }, [caseRecord, session]);
@@ -123,6 +130,7 @@ export function App() {
   // Clear local UI state without retaining a bearer token.
   function handleSignOut() {
     setSession(null);
+    setJourney(null);
     setSelectedProduct(null);
     setCaseRecord(null);
     setConfiguration(null);
@@ -147,7 +155,22 @@ export function App() {
     content = (
       <ApplicantDashboard caseRecord={caseRecord} onNavigate={navigate} />
     );
-  } else if (session.role === "Applicant" && screen === "products") {
+  } else if (session.role === "Applicant" && screen === "journey") {
+    activeScreen = "journey";
+    content = (
+      <JourneySelection
+        onNavigate={navigate}
+        onSelect={(chosen) => {
+          setJourney(chosen);
+          navigate("products");
+        }}
+      />
+    );
+  } else if (
+    session.role === "Applicant" &&
+    screen === "products" &&
+    journey
+  ) {
     activeScreen = "products";
     content = (
       <ProductSelection
@@ -163,11 +186,13 @@ export function App() {
   } else if (
     session.role === "Applicant" &&
     screen === "application" &&
-    selectedProduct
+    selectedProduct &&
+    journey
   ) {
     activeScreen = "application";
     content = (
       <ApplicationForm
+        journey={journey}
         onCreated={(created, product) => {
           setCaseRecord(created);
           setSelectedProduct(product);

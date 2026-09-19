@@ -16,6 +16,7 @@ import {
 } from "./ui-state";
 import type {
   CaseRecord,
+  JourneyType,
   ProductCatalogItem,
   ProductField,
   Screen,
@@ -107,11 +108,13 @@ function ProductFieldInput({
 // Render the active product's typed application form with linked errors.
 export function ApplicationForm({
   product,
+  journey,
   token,
   onCreated,
   onNavigate,
 }: {
   product: ProductCatalogItem;
+  journey: JourneyType;
   token: string;
   onCreated: (caseRecord: CaseRecord, product: ProductCatalogItem) => void;
   onNavigate: (screen: Screen) => void;
@@ -134,6 +137,7 @@ export function ApplicationForm({
       const caseRecord = await createCase(token, {
         product_code: product.product_code,
         idempotency_key: crypto.randomUUID(),
+        journey,
         payload: values,
         document_codes: allDocumentCodes(product.documents),
       });

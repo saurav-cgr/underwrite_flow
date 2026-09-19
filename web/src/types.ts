@@ -32,6 +32,7 @@ export interface CurrentUser {
 
 export type Screen =
   | "dashboard"
+  | "journey"
   | "products"
   | "application"
   | "documents"

@@ -108,6 +108,9 @@ journey remains visible through human-confirmed completion.
 - [ ] T015 [P] [US1] Add keyboard-accessible journey choice, unsupported
   product, staged renewal, and reload tests in
   `web/src/journey-flow.test.tsx`.
+  (trimmed scope: keyboard journey choice and unsupported-product
+  exclusion covered now with T025; staged renewal and reload tests move
+  to T026, since they need the form flows T026 builds.)
 
 ### Implementation
 
@@ -144,7 +147,7 @@ journey remains visible through human-confirmed completion.
   review, and completion types/calls in `web/src/types.ts`,
   `web/src/api.ts`, `web/src/api-products.ts`, and
   `web/src/api-staff.ts`.
-- [ ] T025 [US1] Add journey-first selection and eligible-product display in
+- [X] T025 [US1] Add journey-first selection and eligible-product display in
   `web/src/journey-selection.tsx` and integrate it in
   `web/src/app.tsx`.
 - [ ] T026 [US1] Implement new-business form-first and renewal
