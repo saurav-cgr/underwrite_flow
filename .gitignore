@@ -55,3 +55,4 @@ output/
 # Local agent and tooling configuration
 .specify/
 .agents/
+.claude/
