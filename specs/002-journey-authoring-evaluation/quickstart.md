@@ -32,9 +32,8 @@
 
 ## 0c. Phase 3a Verification Record (2026-09-19)
 
-Backend slice of US1 only (T011, T012, T013, T016-T023); staff-contract
-tests (T014) and all web work (T015/T024-T026) remain, to keep this
-checkpoint reviewable.
+Backend slice of US1 only (T011-T014, T016-T023); all web work
+(T015/T024-T026) remains, to keep this checkpoint reviewable.
 
 - New immutable `motor-private-car-v4` and
   `health-individual-family-floater-v3` configurations declare
@@ -61,7 +60,9 @@ checkpoint reviewable.
   `GET /queues` accepts an optional `journey` filter.
 - `tests/contract/test_queue_contract.py` and
   `tests/contract/test_review_contract.py`: updated frozen key sets.
-- Full `make test-api`: 408 passed (394 baseline + 14 new).
+- `tests/contract/test_journey_staff.py`: journey through queue filter,
+  review start/decision, audit details, and idempotent completion.
+- Full `make test-api`: 409 passed (394 baseline + 15 new).
 - Full `make test-web`: 141 passed, unaffected (no web changes yet).
 - `api/tests/fixtures/records.py` split into `records.py` (identity/role)
   and `case_fixtures.py` (case/product-status/evidence) to stay under the

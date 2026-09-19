@@ -103,7 +103,7 @@ journey remains visible through human-confirmed completion.
   (trimmed scope: renewal prior-policy enforcement at submit and
   new-business exclusion of renewal-only requirements; unreadable
   evidence/pinning/reload scenarios deferred.)
-- [ ] T014 [P] [US1] Add journey queue, review, audit, handoff, and idempotent
+- [X] T014 [P] [US1] Add journey queue, review, audit, handoff, and idempotent
   completion contracts in `api/tests/contract/test_journey_staff.py`.
 - [ ] T015 [P] [US1] Add keyboard-accessible journey choice, unsupported
   product, staged renewal, and reload tests in
