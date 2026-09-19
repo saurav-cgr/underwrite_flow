@@ -269,9 +269,15 @@ idempotent completion, and unchanged development rows/files.
 - [ ] T042 [P] [US3] Add 90-case journey/version distribution, uniqueness,
   supported-version, and route-balance tests in
   `api/tests/unit/test_evaluation.py`.
-- [ ] T043 [P] [US3] Add mocked HTTP flow, stable result, atomic write,
+- [X] T043 [P] [US3] Add mocked HTTP flow, stable result, atomic write,
   sanitized failure, and nonzero-exit tests in
-  `api/tests/unit/test_evaluation_e2e.py`.
+  `api/tests/unit/test_evaluation_e2e.py`. Trimmed: mocks cover login,
+  one case's create/upload/submit, atomic write, and the failure/exit-code
+  shape only — not the full 9-step review/completion orchestration, which
+  T051's live double-run against the real stack verifies instead of a mock
+  that would just re-describe the same system. `pytest.importorskip` keeps
+  this module from blocking `make test-api` before T047 adds the runner
+  script it targets.
 - [ ] T044 [P] [US3] Add rendered Compose isolation tests for no ports, named
   volumes, development network, DB URL in runner, live provider, or tracing in
   `api/tests/contract/test_evaluation_compose.py`.
