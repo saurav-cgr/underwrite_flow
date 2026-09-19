@@ -3,17 +3,22 @@
 import argparse
 import asyncio
 import json
-from pathlib import Path
 from typing import Any
 
 from underwriteflow.cases.service import (
     field_specifications,
     requested_field_keys,
 )
-from underwriteflow.evaluation.dataset import load_dataset
+from underwriteflow.evaluation.dataset import (
+    load_configuration_manifest,
+    load_dataset,
+)
 from underwriteflow.evaluation.metrics import evaluate_records
 from underwriteflow.evaluation.tracing import trace_summary
-from underwriteflow.products.service import load_configuration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.nodes import branch_failures
@@ -22,28 +27,6 @@ from underwriteflow.workflow.triage import (
     has_low_confidence,
     recommend_triage_route,
 )
-
-
-# Locate mounted product configurations or their source-checkout fallback.
-def product_config_root() -> Path:
-    mounted_path = Path("/app/product-config")
-    if mounted_path.exists():
-        return mounted_path
-    return Path(__file__).resolve().parents[4] / "product-config"
-
-
-# Load the earliest published fictional version of each product.
-#
-# The reference dataset was labelled against the first published version, so a
-# later draft file on disk must not change its deterministic outcome.
-def load_configurations() -> dict[str, Any]:
-    configurations: dict[str, Any] = {}
-    for path in sorted(product_config_root().glob("*.yaml")):
-        configuration = load_configuration(path.read_text())
-        current = configurations.get(configuration.product_code)
-        if current is None or configuration.version < current.version:
-            configurations[configuration.product_code] = configuration
-    return configurations
 
 
 # Read the documents a reference case supplies as evidence input.
@@ -62,9 +45,13 @@ def document_inputs(record: dict[str, Any]) -> list[dict[str, object]]:
 
 # Run one synthetic case through extraction, reconciliation, and routing.
 async def run_record(
-    record: dict[str, Any], configurations: dict[str, Any]
+    record: dict[str, Any],
+    configurations: dict[tuple[str, str], ProductConfiguration],
 ) -> dict[str, Any]:
-    configuration = configurations[record["product_code"]]
+    manifest_key = (record["product_code"], record["configuration_version"])
+    configuration = filter_configuration_for_journey(
+        configurations[manifest_key], record["journey_type"]
+    )
     requested_fields = requested_field_keys(
         configuration, record["workflow_input"]["payload"]
     )
@@ -89,7 +76,7 @@ async def run_record(
         }
     )
     product_result = await select_product_subgraph(
-        record["product_code"], configurations
+        record["product_code"], {record["product_code"]: configuration}
     ).ainvoke(
         {
             "product_code": record["product_code"],
@@ -136,7 +123,7 @@ async def evaluate_cases(split: str | None = None) -> list[dict[str, Any]]:
     records = load_dataset()
     if split:
         records = [record for record in records if record.get("split") == split]
-    configurations = load_configurations()
+    configurations = load_configuration_manifest()
     return [await run_record(record, configurations) for record in records]
 
 

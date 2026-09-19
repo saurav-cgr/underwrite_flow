@@ -7,11 +7,13 @@ from fixtures.records import synthetic_user
 
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
-from underwriteflow.evaluation.dataset import load_dataset
+from underwriteflow.evaluation.dataset import (
+    load_configuration_manifest,
+    load_dataset,
+)
 from underwriteflow.evaluation.metrics import evaluate_records
-from underwriteflow.evaluation.runner import product_config_root, run_evaluation
+from underwriteflow.evaluation.runner import run_evaluation
 from underwriteflow.evaluation.tracing import redact_trace, trace_summary
-from underwriteflow.products.service import load_configuration
 
 
 # Verify the reference dataset has the planned synthetic split and balance.
@@ -37,16 +39,6 @@ def test_reference_dataset_has_balanced_synthetic_cases() -> None:
         "life-individual-term": 30,
         "health-individual-family-floater": 30,
     }
-
-
-# Load every published configuration version, keyed by product and version.
-def _all_configurations() -> dict[tuple[str, str], object]:
-    configurations: dict[tuple[str, str], object] = {}
-    for path in product_config_root().glob("*.yaml"):
-        configuration = load_configuration(path.read_text())
-        key = (configuration.product_code, configuration.version)
-        configurations[key] = configuration
-    return configurations
 
 
 # Verify every reference case has a distinct, non-blank case identifier.
@@ -85,7 +77,7 @@ def test_dataset_route_balance_is_thirty_each() -> None:
 # Verify every declared configuration version is actually mounted.
 def test_dataset_versions_are_in_the_configuration_manifest() -> None:
     records = load_dataset()
-    configurations = _all_configurations()
+    configurations = load_configuration_manifest()
 
     for record in records:
         key = (record["product_code"], record["configuration_version"])
@@ -95,7 +87,7 @@ def test_dataset_versions_are_in_the_configuration_manifest() -> None:
 # Verify every declared version supports the case's named journey.
 def test_dataset_versions_support_their_named_journey() -> None:
     records = load_dataset()
-    configurations = _all_configurations()
+    configurations = load_configuration_manifest()
 
     for record in records:
         key = (record["product_code"], record["configuration_version"])

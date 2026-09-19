@@ -298,10 +298,15 @@ idempotent completion, and unchanged development rows/files.
   product and ignores `journey_type`/`configuration_version`, so it
   currently evaluates the new renewal records against v1/v1 (a safe subset,
   hence still green) rather than their exact declared version.
-- [ ] T046 [US3] Load exact versions, filter by journey, and retain current
+- [X] T046 [US3] Load exact versions, filter by journey, and retain current
   in-memory API metrics in
   `api/src/underwriteflow/evaluation/runner.py` and
-  `api/src/underwriteflow/evaluation/dataset.py`.
+  `api/src/underwriteflow/evaluation/dataset.py`. Moved config loading into
+  `dataset.load_configuration_manifest()` (keyed by product+version); runner
+  looks up each record's exact `configuration_version` and filters it with
+  the existing `filter_configuration_for_journey` before evaluating. No
+  metrics/router change, so the in-process admin evaluation endpoint is
+  untouched.
 - [ ] T047 [US3] Implement dataset preflight, public HTTP orchestration,
   synthetic PDF reuse, representative reviews, double completion, queue/audit
   checks, and atomic success/failure output in `scripts/evaluate_e2e.py`;
