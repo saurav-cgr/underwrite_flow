@@ -30,10 +30,9 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                 JOIN products ON products.id = product_versions.product_id
                 JOIN rulebook_versions
                   ON rulebook_versions.product_version_id = product_versions.id
-                WHERE products.code = %s
-                LIMIT 1
+                WHERE products.code = %s AND product_versions.version = %s
                 """,
-                ("motor-private-car",),
+                ("motor-private-car", "v1"),
             )
             product_version_id, rulebook_version_id = cursor.fetchone()
             cursor.execute(

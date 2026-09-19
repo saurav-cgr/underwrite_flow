@@ -237,9 +237,16 @@ changing active or pinned versions.
   `web/src/product-configuration.tsx`. `web/src/admin.tsx` is the unrelated
   audit workspace screen; product config lives only in
   `product-configuration.tsx`, so it needed no change.
-- [ ] T041 [US2] Run US2 API/UI/accessibility tests and production build from
+- [X] T041 [US2] Run US2 API/UI/accessibility tests and production build from
   `specs/002-journey-authoring-evaluation/quickstart.md`; report results and
-  proposed commit, then wait for `continue`.
+  proposed commit, then wait for `continue`. Found and fixed a pre-existing
+  test bug along the way: three integration tests picked motor-private-car's
+  product/rulebook version with an unordered `LIMIT 1` query, which silently
+  depended on row order. The repo seeds motor-private-car with v1-v4
+  (`product-config/motor-private-car-v*.yaml`), so once physical row order
+  shifted, the query could return a non-active version and break document
+  requirements. Pinned all three (one shared fixture, two inline copies) to
+  `version = 'v1'`.
 
 **Checkpoint**: US2 works independently. No isolated-evaluation work starts
 before review.
