@@ -232,9 +232,11 @@ changing active or pinned versions.
   from `product-import.tsx`) in `web/src/product-builder-review.tsx`.
   Trimmed: canonical export applies to persisted versions, already served by
   the existing history panel (T033/T034); nothing to export before import.
-- [ ] T040 [US2] Add Create product/Create version entry points, preserve YAML
+- [X] T040 [US2] Add Create product/Create version entry points, preserve YAML
   expert path, and keep activation confirmation in
-  `web/src/product-configuration.tsx` and `web/src/admin.tsx`.
+  `web/src/product-configuration.tsx`. `web/src/admin.tsx` is the unrelated
+  audit workspace screen; product config lives only in
+  `product-configuration.tsx`, so it needed no change.
 - [ ] T041 [US2] Run US2 API/UI/accessibility tests and production build from
   `specs/002-journey-authoring-evaluation/quickstart.md`; report results and
   proposed commit, then wait for `continue`.
