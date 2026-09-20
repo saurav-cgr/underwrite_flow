@@ -72,20 +72,20 @@ an unchanged second initialization.
 
 ### Tests for User Story 1
 
-- [ ] T007 [P] [US1] Add failing fresh-storage baseline coverage in
+- [X] T007 [P] [US1] Add failing fresh-storage baseline coverage in
   `api/tests/integration/test_environment_baseline.py` for the exact three
   active demo identities, existing roles/scopes, all built-in product
   versions, zero business records, and duplicate-free reinitialization.
-- [ ] T008 [P] [US1] Add a failing safe-status contract test in
+- [X] T008 [P] [US1] Add a failing safe-status contract test in
   `api/tests/unit/test_app.py` for only `environment` and
   `evaluation_loading_allowed`, with no credential, URL, key, token, or path.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Add the read-only environment status response in
+- [X] T009 [US1] Add the read-only environment status response in
   `api/src/underwriteflow/app.py` using validated settings until T008 passes;
   do not expose another configuration field or add authentication behavior.
-- [ ] T010 [US1] Run T002, T007, T008, existing product-import tests, and all
+- [X] T010 [US1] Run T002, T007, T008, existing product-import tests, and all
   three documented demo login checks through Docker Compose; record any
   necessary minimal baseline repair in the already-owned files from T004 or
   `api/src/underwriteflow/products/import_configs.py`.

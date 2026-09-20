@@ -165,6 +165,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         await request.app.state.database.ping()
         return {"status": "ready"}
 
+    # Report the selected environment mode without any other setting.
+    @app.get("/api/v1/environment", tags=["system"])
+    async def environment() -> dict[str, object]:
+        return {
+            "environment": active_settings.environment_mode,
+            "evaluation_loading_allowed": (
+                active_settings.evaluation_loading_allowed
+            ),
+        }
+
     app.include_router(api_v1_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(admin_router, prefix="/api/v1")
