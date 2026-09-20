@@ -201,17 +201,17 @@ and proposed commit `test: preserve pinned claims behavior`. Wait for
 **Purpose**: Put the corrected version on the deterministic smoke path and run
 the repository gates.
 
-- [ ] T019 Update the v5 smoke path in scripts/smoke.py
+- [X] T019 Update the v5 smoke path in scripts/smoke.py
 
   Activate `v5`, omit prior claims from new-business intake and synthetic
   document text, and retain mandatory human confirmation.
 
-- [ ] T020 Run all gates in specs/003-exclude-prior-claims/quickstart.md
+- [X] T020 Run all gates in specs/003-exclude-prior-claims/quickstart.md
 
   Run the complete API suite, web suite, production web build, and deterministic
   smoke test through Docker Compose. Do not enable live providers or tracing.
 
-- [ ] T021 Check specs/003-exclude-prior-claims/plan.md
+- [X] T021 Check specs/003-exclude-prior-claims/plan.md
 
   Run whitespace, line-length, file-size, secret, synthetic-data, and migration
   checks. Confirm no dependency, schema migration, provider, authorization, or

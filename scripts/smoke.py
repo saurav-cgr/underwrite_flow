@@ -4,22 +4,23 @@ from fastapi.testclient import TestClient
 
 from underwriteflow.app import create_app
 
-SMOKE_KEY = "synthetic-compose-smoke-rules-v2"
+SMOKE_KEY = "synthetic-compose-smoke-v5"
 SMOKE_DOCUMENTS = (
     ("identity_record", "identity.pdf"),
     ("vehicle_record", "vehicle.pdf"),
+    ("registration_certificate", "registration.pdf"),
 )
 
 # Field lines the fictional motor configuration requests. Extraction reads the
 # document text layer, so a blank PDF yields no evidence and no final route.
-# The last two lines are the evidence the configured reconciliation reads.
+# New business never asks for prior claims, and the identifier lines are the
+# evidence the configured asset checks read.
 MOTOR_EVIDENCE_LINES = [
     "vehicle_age: 4",
     "vehicle_use: personal",
-    "prior_claims: 0",
-    "claimed_ncb_percent: 20",
-    "ncb_percent: 0",
-    "policy_expiry: 2026-01-05",
+    "chassis_number: SYNTHETIC-AGREED",
+    "engine_number: SYNTHETIC-AGREED",
+    "registration_number: SYNTHETIC-AGREED",
 ]
 
 
@@ -145,7 +146,7 @@ def run_smoke() -> None:
         activation = client.post(
             "/api/v1/products/motor-private-car/activate",
             headers=administrator,
-            json={"version": "v2"},
+            json={"version": "v5"},
         )
         assert activation.status_code == 200, activation.text
         applicant = login(
@@ -162,10 +163,12 @@ def run_smoke() -> None:
                 "payload": {
                     "vehicle_age": 4,
                     "vehicle_use": "personal",
-                    "prior_claims": 0,
-                    "claimed_ncb_percent": 20,
                 },
-                "document_codes": ["identity_record", "vehicle_record"],
+                "document_codes": [
+                    "identity_record",
+                    "vehicle_record",
+                    "registration_certificate",
+                ],
             },
         )
         assert case_response.status_code == 200, case_response.text
