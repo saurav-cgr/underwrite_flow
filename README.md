@@ -36,6 +36,52 @@ make smoke
 make evaluate-e2e
 ```
 
+## Environments and evaluation data
+
+Every environment starts from the same common baseline: the current schema,
+the authorization catalogue, the three fictional demo accounts, and every
+built-in product configuration version. The baseline contains no case,
+submission, document, or recommendation. Starting the stack twice changes
+nothing and duplicates nothing.
+
+`ENVIRONMENT_MODE` selects `development`, `evaluation`, or `production`.
+Development is the local default; `compose.evaluation.yaml` and
+`compose.production.yaml` set the other two explicitly. An unsupported value
+prevents startup. The selected mode is readable without a credential:
+
+```bash
+curl http://localhost:8000/api/v1/environment
+```
+
+No startup path ever loads evaluation data. One explicit operator command
+loads the 90-case synthetic corpus into development or evaluation:
+
+```bash
+make load-evaluation-data
+```
+
+The command verifies the whole corpus before its first write, identifies the
+dataset by SHA-256, reserves each case under a stable dataset-derived key,
+and runs the workflow with the deterministic fake provider only. Running it
+again creates nothing new, resumes any interrupted record in place, and never
+overwrites a record that no longer matches its source. It never confirms,
+overrides, completes, or hands off a case: an authenticated underwriter still
+decides every final route.
+
+In production mode the same command refuses before it opens the database or
+the upload volume, writes nothing, and exits non-zero with the stable code
+`evaluation_load_forbidden`:
+
+```bash
+docker compose -f compose.yaml -f compose.production.yaml run --rm api \
+  python /app/scripts/load_evaluation_data.py
+```
+
+The production override selects an environment mode. It is not a claim of
+production readiness, security hardening, or compliance. Every applicant,
+document, product rule, and evaluation case this project loads is synthetic
+and exists only for demonstration.
+
 ## Journeys and product authoring
 
 Applicants choose new business or renewal before selecting a product; a

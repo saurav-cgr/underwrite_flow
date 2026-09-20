@@ -187,11 +187,11 @@ baseline.
 
 **Purpose**: Document the operator path and prove existing safeguards remain.
 
-- [ ] T024 [P] Document baseline contents, the explicit loader command,
+- [X] T024 [P] Document baseline contents, the explicit loader command,
   production refusal, synthetic-only scope, and non-production-readiness in
   `README.md`; keep credentials referenced only through existing documented
   fictional demo values.
-- [ ] T025 Run the full gates from
+- [X] T025 Run the full gates from
   `specs/004-environment-data-seeding/quickstart.md`, then `make test-api`,
   `make test-web`, the web production build, `make smoke`, secret scanning,
   line-length checks, file-size checks, and `git diff --check`; record no live
