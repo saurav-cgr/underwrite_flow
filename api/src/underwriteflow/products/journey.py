@@ -69,6 +69,14 @@ def require_reconciliation_journey(
                 f"{where}: document {source!r} is not available on "
                 f"journey {journey!r}"
             )
+    parameter_field = getattr(check.parameters, "claim_count_field", None)
+    if parameter_field is not None:
+        field = fields_by_key.get(parameter_field)
+        if field is not None and journey not in field.applies_to:
+            raise ValueError(
+                f"{where}: parameter field {parameter_field!r} is not "
+                f"available on journey {journey!r}"
+            )
 
 
 # Validate every field, document, rule, and reconciliation journey reference.

@@ -172,6 +172,50 @@ def test_rule_condition_field_must_be_available_on_rule_journey() -> None:
         ProductConfiguration.model_validate(payload)
 
 
+def test_reconciliation_parameter_field_must_be_available() -> None:
+    payload = renewal_payload()
+    payload["fields"].append(
+        {
+            "key": "prior_claims",
+            "label": "Prior claims",
+            "type": "integer",
+            "required": False,
+            "help_text": "Enter the fictional prior claim count.",
+            "applies_to": ["new_business"],
+        }
+    )
+    payload["fields"].append(
+        {
+            "key": "claimed_ncb_percent",
+            "label": "Claimed NCB percent",
+            "type": "integer",
+            "required": True,
+            "help_text": "Enter the fictional claimed NCB percentage.",
+            "applies_to": ["renewal"],
+        }
+    )
+    payload["reconciliations"] = [
+        {
+            "code": "motor_ncb_match",
+            "kind": "ncb_match",
+            "inputs": {
+                "application": "claimed_ncb_percent",
+                "previous_policy": "vehicle_age",
+            },
+            "parameters": {
+                "tiers": [0, 20],
+                "claim_count_field": "prior_claims",
+                "claims_reset_threshold": 1,
+                "claims_reset_tier": 0,
+            },
+            "applies_to": ["renewal"],
+        }
+    ]
+
+    with pytest.raises(ValidationError, match="not available on journey"):
+        ProductConfiguration.model_validate(payload)
+
+
 def test_reconciliation_application_input_journey_must_be_available() -> None:
     payload = renewal_payload()
     payload["fields"].append(

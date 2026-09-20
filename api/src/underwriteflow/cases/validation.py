@@ -136,11 +136,21 @@ def validate_field_value(field: ProductField, value: Any) -> None:
 
 # Validate a partial draft: answered fields and document codes must be
 # well-formed, but a required field or document may still be missing.
+#
+# Every submitted key must exist in the supplied configuration, which is
+# already filtered to the case journey. A value for a field this journey never
+# asks for is rejected instead of being silently dropped.
 def validate_draft_application(
     payload: Mapping[str, Any],
     document_codes: Iterable[str],
     configuration: ProductConfiguration,
 ) -> None:
+    declared_keys = {field.key for field in configuration.fields}
+    unsupported = sorted(set(payload) - declared_keys)
+    if unsupported:
+        raise CaseValidationError(
+            f"Unsupported application field: {unsupported[0]}"
+        )
     for field in configuration.fields:
         if field.key in payload:
             validate_field_value(field, payload[field.key])

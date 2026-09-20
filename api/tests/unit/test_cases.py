@@ -85,6 +85,51 @@ specialist_labels: [motor inspection]
 )
 
 
+CLAIMS_CONFIGURATION = load_configuration(
+    """
+product_code: synthetic-motor-claims
+title: Synthetic Motor Claims
+family: motor
+scope: Fictional demonstration only
+description: Synthetic product configuration
+version: v1
+supported_journeys: [new_business, renewal]
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Synthetic vehicle age
+    applies_to: [new_business, renewal]
+  - key: prior_claims
+    label: Prior claims
+    type: integer
+    required: true
+    help_text: Synthetic prior claim count
+    applies_to: [renewal]
+documents:
+  - code: identity_record
+    title: Identity
+    requirement: required
+    accepted_types: [application/pdf]
+    applies_to: [new_business, renewal]
+  - code: previous_policy
+    title: Previous policy
+    requirement: required
+    accepted_types: [application/pdf]
+    applies_to: [renewal]
+    required_for: [renewal]
+    stage: prior_policy
+routing_rules:
+  - code: standard
+    condition: {field: vehicle_age, operator: greater_than, value: 0}
+    route: standard
+    applies_to: [new_business, renewal]
+specialist_labels: [motor inspection]
+"""
+)
+
+
 class FailingStorage:
     """Represent an upload volume whose file removal always fails."""
 
@@ -144,6 +189,22 @@ def test_journey_filter_hides_documents_not_applicable_to_the_journey() -> None:
         validate_draft_application(
             {}, ["previous_policy"], new_business
         )
+
+
+# Verify a journey never accepts a value for a field it does not ask.
+def test_draft_validation_rejects_field_outside_the_journey() -> None:
+    new_business = filter_configuration_for_journey(
+        CLAIMS_CONFIGURATION, "new_business"
+    )
+    renewal = filter_configuration_for_journey(
+        CLAIMS_CONFIGURATION, "renewal"
+    )
+
+    with pytest.raises(CaseValidationError) as error:
+        validate_draft_application({"prior_claims": 1}, [], new_business)
+
+    assert str(error.value) == "Unsupported application field: prior_claims"
+    validate_draft_application({"prior_claims": 1}, [], renewal)
 
 
 # Verify a renewal submission requires its prior-policy document.
