@@ -395,5 +395,5 @@ Detail behind the table:
 
 ## Amendment, 20 September 2026
 
-`make evaluate-e2e` runs the 90-case dataset against an isolated tmpfs
-stack, deterministic across runs; development rows/containers unchanged.
+`make evaluate-e2e` deterministic; dev state unchanged. New flows carry no
+automated approve/decline/bind/price/issue/renew/cancel action.
