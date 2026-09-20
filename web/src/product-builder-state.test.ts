@@ -114,14 +114,42 @@ describe("local completeness checks", () => {
 });
 
 describe("stable semantic diff", () => {
-  it("reports no difference when only section ordering changes", () => {
+  it("reports no difference for a single-entry section's own order", () => {
     const base = completeConfiguration();
     const reordered: BuilderConfiguration = {
       ...base,
       specialist_labels: [...base.specialist_labels],
-      fields: [...base.fields].reverse(),
     };
     expect(semanticDiff(base, reordered)).toHaveLength(0);
+  });
+
+  it("reports a reorder when surviving fields change sequence", () => {
+    const base: BuilderConfiguration = {
+      ...completeConfiguration(),
+      fields: [
+        ...completeConfiguration().fields,
+        {
+          key: "vehicle_use",
+          label: "Vehicle use",
+          type: "text",
+          required: false,
+          help_text: "Synthetic vehicle use.",
+          validation: {},
+          options: [],
+          applies_to: ["new_business", "renewal"],
+        },
+      ],
+    };
+    const reordered: BuilderConfiguration = {
+      ...base,
+      fields: [...base.fields].reverse(),
+    };
+
+    expect(semanticDiff(base, reordered)).toContainEqual({
+      section: "fields",
+      kind: "reordered",
+      key: "order",
+    });
   });
 
   it("reports an added field and a changed rule route", () => {
@@ -171,7 +199,7 @@ describe("stable semantic diff", () => {
     });
   });
 
-  it("reports no journey difference when the order changes", () => {
+  it("reports a reorder when the supported journey sequence changes", () => {
     const before: BuilderConfiguration = {
       ...completeConfiguration(),
       supported_journeys: ["new_business", "renewal"],
@@ -181,7 +209,11 @@ describe("stable semantic diff", () => {
       supported_journeys: ["renewal", "new_business"],
     };
 
-    expect(semanticDiff(before, after)).toHaveLength(0);
+    expect(semanticDiff(before, after)).toContainEqual({
+      section: "supported_journeys",
+      kind: "reordered",
+      key: "order",
+    });
   });
 
   it("reports an added supported journey", () => {

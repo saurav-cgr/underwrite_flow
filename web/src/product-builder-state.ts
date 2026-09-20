@@ -135,7 +135,11 @@ export function builderCompletion(configuration: BuilderConfiguration): {
   return { complete: missingSections.length === 0, missingSections };
 }
 
-export type ConfigurationDiffKind = "added" | "removed" | "changed";
+export type ConfigurationDiffKind =
+  | "added"
+  | "removed"
+  | "changed"
+  | "reordered";
 
 export interface ConfigurationDiffEntry {
   section: string;
@@ -143,7 +147,22 @@ export interface ConfigurationDiffEntry {
   key: string;
 }
 
-// Diff one keyed list section by stable identifier, ignoring order.
+// Diff a stable-key sequence's order, ignoring keys added or removed on
+// either side, so a pure reorder of surviving entries is still reported.
+function diffOrder(
+  section: string,
+  beforeKeys: string[],
+  afterKeys: string[],
+): ConfigurationDiffEntry[] {
+  const common = afterKeys.filter((key) => beforeKeys.includes(key));
+  const beforeCommon = beforeKeys.filter((key) => afterKeys.includes(key));
+  if (common.length < 2) return [];
+  return common.join("|") === beforeCommon.join("|")
+    ? []
+    : [{ section, kind: "reordered", key: "order" }];
+}
+
+// Diff one keyed list section by stable identifier, then its order.
 function diffKeyedSection<T>(
   section: string,
   before: T[],
@@ -164,6 +183,9 @@ function diffKeyedSection<T>(
   for (const key of beforeMap.keys()) {
     if (!afterMap.has(key)) entries.push({ section, kind: "removed", key });
   }
+  entries.push(
+    ...diffOrder(section, before.map(keyOf), after.map(keyOf)),
+  );
   return entries;
 }
 
@@ -189,6 +211,7 @@ function diffLabels(
       });
     }
   }
+  entries.push(...diffOrder("specialist_labels", before, after));
   return entries;
 }
 
@@ -230,6 +253,7 @@ function diffJourneys(
       entries.push({ section, kind: "removed", key: journey });
     }
   }
+  entries.push(...diffOrder(section, before, after));
   return entries;
 }
 

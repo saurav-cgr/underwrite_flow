@@ -664,10 +664,23 @@ deterministic, and passing 90/90 with zero development-state leakage.
   `ApplicantFieldsSection` into its own `product-builder-fields.tsx` because
   the added editors pushed `product-builder-evidence.tsx` over the 400-line
   cap.
-- [ ] T068 Detect and display stable-order changes for fields, documents,
+- [X] T068 Detect and display stable-order changes for fields, documents,
   routing rules, reconciliations, specialist labels, and supported journeys
   instead of treating reordering as semantic equality per FR-012 and T059
-  (partial)
+  (partial). `semanticDiff()` compared every section by stable key alone, so
+  reordering survivors with unchanged content produced zero diff entries;
+  two existing tests even asserted that as correct. Added a `diffOrder()`
+  helper (a pure reorder of two or more common keys yields one
+  `{kind: "reordered", key: "order"}` entry) and wired it into
+  `diffKeyedSection` (covers fields, documents, routing rules,
+  reconciliations), `diffLabels` (specialist labels), and `diffJourneys`
+  (supported journeys). Flipped the two tests that had encoded the old
+  "reordering is invisible" behavior to assert the reorder is now reported,
+  and added one more for a multi-field reorder. Found and fixed a
+  self-inflicted bug while editing: an `Edit` call embedded a literal
+  ` ` byte instead of the intended escape, corrupting the file to
+  binary; caught it because `grep` on the file returned nothing, rewrote the
+  separator as `"|"`.
 - [ ] T069 Add immutable journey identity to `document_removed` and
   `document_file_orphaned` audit details and cover both event contracts per
   FR-008 and T062 (partial)
