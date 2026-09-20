@@ -94,6 +94,33 @@ def test_dataset_versions_support_their_named_journey() -> None:
         assert record["journey_type"] in configurations[key].supported_journeys
 
 
+# Verify every current motor new-business record is v5 without prior claims.
+def test_current_motor_new_business_records_omit_prior_claims() -> None:
+    records = load_dataset()
+    current = [
+        record
+        for record in records
+        if record["product_code"] == "motor-private-car"
+        and record["journey_type"] == "new_business"
+        and record["configuration_version"] == "v5"
+    ]
+
+    assert current, "v5 must cover current motor new-business cases"
+    assert len(records) == 90
+    assert Counter(record["expected"]["route"] for record in records) == {
+        "expedited": 30,
+        "standard": 30,
+        "specialist": 30,
+    }
+    for record in current:
+        assert "prior_claims" not in record["workflow_input"]["payload"]
+        for document in record["documents"]:
+            assert not any(
+                line.startswith("prior_claims:")
+                for line in document["lines"]
+            )
+
+
 # Verify evaluator reports route, detection, provenance, and workflow metrics.
 def test_evaluator_reports_expected_metric_groups() -> None:
     records = [

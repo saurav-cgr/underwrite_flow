@@ -4,6 +4,9 @@ The underwriter screen reads nested evidence, summary, and failure objects, so
 each nested key set is pinned here as well as the top-level response.
 """
 
+import json
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 
 from fixtures.records import (
@@ -14,6 +17,7 @@ from fixtures.records import (
     set_motor_status,
 )
 from fixtures.support import (
+    ADMINISTRATOR,
     APPLICANT,
     RECOMMENDATION_KEYS,
     UNDERWRITER,
@@ -24,6 +28,12 @@ from fixtures.support import (
     submit_motor_case,
     upload_documents,
     upload_motor_documents,
+)
+from fixtures.synthetic_pdf import (
+    IDENTITY_ONLY_LINES,
+    MOTOR_EVIDENCE_LINES,
+    REGISTRATION_CERTIFICATE_LINES,
+    text_pdf,
 )
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
@@ -117,6 +127,71 @@ FAILURE_KEYS = {"rule_code", "details"}
 FAILURE_DETAIL_KEYS = {"document_id", "filename", "error_code"}
 
 REVIEW_KEYS = {"case_id", "action", "selected_route", "status"}
+
+
+# Pin the v5 new-business review view with prior claims fully excluded.
+def test_v5_new_business_review_excludes_prior_claims() -> None:
+    prior = motor_status()
+    case_id = ""
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            activated = client.post(
+                "/api/v1/products/motor-private-car/activate",
+                json={"version": "v5"},
+                headers=login(client, ADMINISTRATOR),
+            )
+            assert activated.status_code == 200, activated.text
+            applicant = login(client, APPLICANT)
+            underwriter = login(client, UNDERWRITER)
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "journey": "new_business",
+                    "payload": {"vehicle_age": 4, "vehicle_use": "personal"},
+                    "document_codes": [],
+                },
+                headers=applicant,
+            )
+            assert created.status_code == 200, created.text
+            case_id = str(created.json()["id"])
+            upload_documents(
+                client,
+                applicant,
+                case_id,
+                [
+                    ("identity_record", text_pdf(IDENTITY_ONLY_LINES)),
+                    ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
+                    (
+                        "registration_certificate",
+                        text_pdf(REGISTRATION_CERTIFICATE_LINES),
+                    ),
+                ],
+            )
+            submit_motor_case(client, applicant, case_id)
+
+            body = start_review(client, underwriter, case_id)
+
+            assert set(body) == REVIEW_START_KEYS, body
+            assert body["journey"] == "new_business"
+            assert {
+                fact["field_name"] for fact in body["submitted_facts"]
+            } == {"vehicle_age", "vehicle_use"}
+            codes = {check["check_code"] for check in body["reconciliation"]}
+            assert codes == {
+                "motor_chassis_match",
+                "motor_engine_match",
+                "motor_registration_match",
+            }
+            assert body["missing_information"] == []
+            assert body["specialist_options"] == ["motor inspection"]
+            assert "prior_claims" not in json.dumps(body)
+    finally:
+        if case_id:
+            remove_case(case_id)
+        set_motor_status(prior)
 
 
 # Pin the review view served for a complete, consistent case.

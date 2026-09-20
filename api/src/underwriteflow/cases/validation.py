@@ -4,6 +4,7 @@ Split out of ``service.py`` to keep that file under the project's 400-line
 limit.
 """
 
+import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -15,9 +16,25 @@ from underwriteflow.products.schemas import (
 )
 from underwriteflow.workflow.reconciliation import APPLICATION_SOURCE
 
+UNSUPPORTED_FIELD_PREFIX = "Unsupported application field: "
+UNSUPPORTED_FIELD_MESSAGE = "Unsupported application field"
+FIELD_NAME_PATTERN = re.compile(r"[a-z][a-z0-9_]*")
+
 
 class CaseValidationError(ValueError):
     """Raised when intake data does not satisfy the pinned product."""
+
+
+class UnsupportedFieldError(CaseValidationError):
+    """Raised when a payload names a field its journey never asks for."""
+
+
+# Describe one rejected payload key, or fall back to a generic phrase when the
+# key is not a field-name shape the product could ever declare.
+def unsupported_field_message(field_key: str) -> str:
+    if FIELD_NAME_PATTERN.fullmatch(field_key) is None:
+        return UNSUPPORTED_FIELD_MESSAGE
+    return f"{UNSUPPORTED_FIELD_PREFIX}{field_key}"
 
 
 # Decide whether one configured document is required for this application.
@@ -148,8 +165,8 @@ def validate_draft_application(
     declared_keys = {field.key for field in configuration.fields}
     unsupported = sorted(set(payload) - declared_keys)
     if unsupported:
-        raise CaseValidationError(
-            f"Unsupported application field: {unsupported[0]}"
+        raise UnsupportedFieldError(
+            unsupported_field_message(unsupported[0])
         )
     for field in configuration.fields:
         if field.key in payload:

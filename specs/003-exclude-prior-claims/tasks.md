@@ -94,43 +94,43 @@ reconciliation result mentions prior claims. A stale payload receives 422.
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Test api/tests/integration/test_journey_workflow.py
+- [X] T008 [P] [US1] Test api/tests/integration/test_journey_workflow.py
 
   Cover catalogue and case-configuration omission, accepted valid creation,
   precise 422 responses for stale create and replacement payloads, successful
   submission, and absence from review results.
 
-- [ ] T009 [P] [US1] Test api/tests/contract/test_review_contract.py
+- [X] T009 [P] [US1] Test api/tests/contract/test_review_contract.py
 
   Prove a `v5` new-business review excludes prior claims from submitted facts,
   evidence, missing information, and reconciliation output while retaining the
   existing response shape and human-review state.
 
-- [ ] T010 [P] [US1] Add v5 dataset checks in api/tests/unit/test_evaluation.py
+- [X] T010 [P] [US1] Add v5 dataset checks in api/tests/unit/test_evaluation.py
 
   Require every `v5` motor new-business record to omit prior claims, retain 90
   cases, and preserve the 30/30/30 expected-route distribution.
 
 ### Implementation for User Story 1
 
-- [ ] T011 [P] [US1] Fix api/src/underwriteflow/cases/router.py
+- [X] T011 [P] [US1] Fix api/src/underwriteflow/cases/router.py
 
   Preserve status 422 for create and replacement, expose only the deterministic
   unsupported-field message, and keep unrelated validation errors generic.
 
-- [ ] T012 [P] [US1] Fix api/src/underwriteflow/reviews/router.py
+- [X] T012 [P] [US1] Fix api/src/underwriteflow/reviews/router.py
 
   Apply the existing journey filter before building review evidence and handle
   an unsupported or unreadable pinned configuration through the existing safe
   fallback.
 
-- [ ] T013 [P] [US1] Update current fixtures in evaluation/cases.json
+- [X] T013 [P] [US1] Update current fixtures in evaluation/cases.json
 
   Move motor new-business expedited and specialist records to `v5`, remove
   prior claims from their application payloads and document text, and leave
   claim-driven standard records pinned to historical `v1`.
 
-- [ ] T014 [US1] Verify specs/003-exclude-prior-claims/quickstart.md
+- [X] T014 [US1] Verify specs/003-exclude-prior-claims/quickstart.md
 
   Run the focused unit, integration, and contract commands. Confirm rejected
   payloads create no case, replacement, or audit event.

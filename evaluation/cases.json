@@ -8,6 +8,7 @@
       "route": "expedited",
       "evidence": [
         "identity_record",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -17,8 +18,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 4,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -26,6 +26,9 @@
         },
         {
           "code": "vehicle_record"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -45,14 +48,25 @@
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -63,6 +77,7 @@
       "route": "expedited",
       "evidence": [
         "identity_record",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -72,8 +87,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 4,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -81,6 +95,9 @@
         },
         {
           "code": "vehicle_record"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -100,14 +117,25 @@
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -118,6 +146,7 @@
       "route": "expedited",
       "evidence": [
         "identity_record",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -127,8 +156,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 4,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -136,6 +164,9 @@
         },
         {
           "code": "vehicle_record"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -155,14 +186,25 @@
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -173,6 +215,7 @@
       "route": "expedited",
       "evidence": [
         "identity_record",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -182,8 +225,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 4,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -191,6 +233,9 @@
         },
         {
           "code": "vehicle_record"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -210,14 +255,25 @@
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -228,6 +284,7 @@
       "route": "expedited",
       "evidence": [
         "identity_record",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -237,8 +294,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 4,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -246,6 +302,9 @@
         },
         {
           "code": "vehicle_record"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -265,14 +324,25 @@
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1349,6 +1419,7 @@
       "evidence": [
         "identity_record",
         "inspection_photo",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -1358,8 +1429,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 13,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -1370,6 +1440,9 @@
         },
         {
           "code": "inspection_photo"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -1401,10 +1474,17 @@
           "ncb_percent: 0",
           "policy_expiry: SYNTHETIC-AGREED"
         ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "document_reference: registration_certificate"
+        ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1416,6 +1496,7 @@
       "evidence": [
         "identity_record",
         "inspection_photo",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": true,
@@ -1425,8 +1506,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 13,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -1437,6 +1517,9 @@
         },
         {
           "code": "inspection_photo"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [
@@ -1467,14 +1550,25 @@
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1486,6 +1580,7 @@
       "evidence": [
         "identity_record",
         "inspection_photo",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -1495,8 +1590,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 13,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -1507,6 +1601,9 @@
         },
         {
           "code": "inspection_photo"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -1533,14 +1630,25 @@
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1552,6 +1660,7 @@
       "evidence": [
         "identity_record",
         "inspection_photo",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": true,
@@ -1561,8 +1670,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 13,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -1573,6 +1681,9 @@
         },
         {
           "code": "inspection_photo"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [
@@ -1608,10 +1719,17 @@
           "ncb_percent: 0",
           "policy_expiry: SYNTHETIC-AGREED"
         ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "document_reference: registration_certificate"
+        ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",
@@ -1623,6 +1741,7 @@
       "evidence": [
         "identity_record",
         "inspection_photo",
+        "registration_certificate",
         "vehicle_record"
       ],
       "conflict": false,
@@ -1632,8 +1751,7 @@
     "workflow_input": {
       "payload": {
         "vehicle_age": 13,
-        "vehicle_use": "personal",
-        "prior_claims": 0
+        "vehicle_use": "personal"
       },
       "evidence": [
         {
@@ -1644,6 +1762,9 @@
         },
         {
           "code": "inspection_photo"
+        },
+        {
+          "code": "registration_certificate"
         }
       ],
       "conflicts": [],
@@ -1670,14 +1791,25 @@
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
-          "prior_claims: 0",
           "ncb_percent: 0",
-          "policy_expiry: SYNTHETIC-AGREED"
+          "policy_expiry: SYNTHETIC-AGREED",
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
+        ]
+      },
+      {
+        "document_id": "registration_certificate",
+        "filename": "registration_certificate.pdf",
+        "lines": [
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
     "journey_type": "new_business",
-    "configuration_version": "v1"
+    "configuration_version": "v5"
   },
   {
     "fixture_label": "SYNTHETIC - FOR DEMONSTRATION ONLY",

@@ -39,6 +39,7 @@ from underwriteflow.cases.service import (
     document_is_required,
     field_is_visible,
 )
+from underwriteflow.cases.validation import UnsupportedFieldError
 from underwriteflow.products.schemas import (
     ProductConfiguration,
     filter_configuration_for_journey,
@@ -100,6 +101,8 @@ async def create_case(
             UploadStorage(Path(request.app.state.settings.upload_root))
         ).create_case(session, UUID(current["sub"]), application)
         return await case_response(session, case)
+    except UnsupportedFieldError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
     except CaseValidationError:
         raise HTTPException(
             status_code=422,
@@ -255,6 +258,8 @@ async def replace_application(
         ).replace_application(
             session, case, application, UUID(current["sub"])
         )
+    except UnsupportedFieldError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
     except CaseValidationError:
         raise HTTPException(
             status_code=422,

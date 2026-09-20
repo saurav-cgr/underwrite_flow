@@ -28,7 +28,10 @@ from underwriteflow.persistence.models import (
     Validation,
 )
 from underwriteflow.persistence.repositories import AuditRepository
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.reviews.commands import (
     recover_review_command,
     require_specialist_label,
@@ -95,12 +98,17 @@ async def start_review(
             detail="Case recommendation is unavailable",
         )
     try:
-        configuration = ProductConfiguration.model_validate(
-            product_version.configuration
+        # The review view shows only what this case's journey asks for, so a
+        # renewal-only field can never appear on a new-business review.
+        configuration = filter_configuration_for_journey(
+            ProductConfiguration.model_validate(
+                product_version.configuration
+            ),
+            case.journey_type,
         )
-    except ValidationError:
-        # An unreadable pinned configuration still opens for human review
-        # with no derived requirements and no selectable specialist labels.
+    except (ValidationError, ValueError):
+        # An unreadable or journey-inapplicable pinned configuration still
+        # opens for human review with no derived requirements.
         configuration = None
     documents = list(
         await session.scalars(
