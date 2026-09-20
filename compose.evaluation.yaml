@@ -93,7 +93,9 @@ services:
     tmpfs:
       - /data/uploads
     volumes:
+      - ./evaluation:/app/evaluation:ro
       - ./product-config:/app/product-config:ro
+      - ./scripts:/app/scripts:ro
     networks:
       - evaluation
 

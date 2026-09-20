@@ -105,38 +105,38 @@ retry, exact version pinning, and no human completion.
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Add failing exact-version case-creation tests in
+- [X] T011 [P] [US2] Add failing exact-version case-creation tests in
   `api/tests/unit/test_cases.py` proving trusted internal creation pins the
   requested existing product and rulebook without activation while normal API
   intake still selects only the active version.
-- [ ] T012 [P] [US2] Add failing loader unit tests in
+- [X] T012 [P] [US2] Add failing loader unit tests in
   `api/tests/unit/test_evaluation_loader.py` for dataset SHA-256 identity,
   stable `evaluation:<sha256>:<source_case_id>` keys, deterministic ordering,
   sanitized JSON output, and fake-provider-only execution.
-- [ ] T013 [P] [US2] Add failing integration coverage in
+- [X] T013 [P] [US2] Add failing integration coverage in
   `api/tests/integration/test_evaluation_loader.py` for exact payload,
   journey, version, document-code/hash, workflow-result, and audit mappings;
   include repeat, unrelated-record, interruption, retry, and collision cases.
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Minimally extend exact-version resolution in
+- [X] T014 [US2] Minimally extend exact-version resolution in
   `api/src/underwriteflow/cases/service.py` until T011 passes, reusing the
   existing validation, submission, rulebook, and audit path and keeping the
   file below 400 lines.
-- [ ] T015 [US2] Implement preflight and stable record loading in
+- [X] T015 [US2] Implement preflight and stable record loading in
   `scripts/load_evaluation_data.py` using the existing dataset loader,
   `scripts/synthetic_pdf.py`, `CaseService`, `UploadStorage`, and
   `FakeProvider`; never activate product versions or call an external provider.
-- [ ] T016 [US2] Complete resumable verification and append-only markers in
+- [X] T016 [US2] Complete resumable verification and append-only markers in
   `scripts/load_evaluation_data.py`: skip exact documents by code/hash, resume
   missing stages, reject mismatches with `evaluation_record_collision`, append
   each record marker once, and append the dataset marker only after all 90
   records verify.
-- [ ] T017 [US2] Add the explicit `load-evaluation-data` command to `Makefile`
+- [X] T017 [US2] Add the explicit `load-evaluation-data` command to `Makefile`
   and the read-only corpus mount needed by the evaluation service in
   `compose.evaluation.yaml`; normal `up` must never run the command.
-- [ ] T018 [US2] Run T005, T011-T013, the existing end-to-end evaluation tests,
+- [X] T018 [US2] Run T005, T011-T013, the existing end-to-end evaluation tests,
   and `make load-evaluation-data` twice; verify 90 cases, the current expected
   document count, zero duplicate rows/files/events, and zero review,
   completion, or handoff actions.

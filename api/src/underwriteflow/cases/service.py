@@ -81,8 +81,15 @@ class CaseService:
         self.audit = audit or AuditRepository()
 
     # Create or return an idempotent case for the authenticated applicant.
+    # `version` is for trusted internal loading of an exact existing
+    # configuration version; request intake leaves it unset so only the
+    # administrator-activated version is ever selected.
     async def create_case(
-        self, session: AsyncSession, applicant_id: UUID, application: CaseCreate
+        self,
+        session: AsyncSession,
+        applicant_id: UUID,
+        application: CaseCreate,
+        version: str | None = None,
     ) -> Case:
         existing = await session.scalar(
             select(Case).where(
@@ -92,13 +99,15 @@ class CaseService:
         )
         if existing is not None:
             return existing
+        selector = (
+            ProductVersion.version == version
+            if version is not None
+            else ProductVersion.status == "active"
+        )
         product_version = await session.scalar(
             select(ProductVersion)
             .join(Product, Product.id == ProductVersion.product_id)
-            .where(
-                ProductVersion.status == "active",
-                Product.code == application.product_code,
-            )
+            .where(selector, Product.code == application.product_code)
         )
         if product_version is None:
             raise CaseValidationError("active product configuration not found")

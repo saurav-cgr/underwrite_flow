@@ -1,4 +1,4 @@
-.PHONY: test-api test-web smoke probe evaluate-e2e
+.PHONY: test-api test-web smoke probe evaluate-e2e load-evaluation-data
 
 test-api:
 	docker compose run --rm api sh -c 'pytest -q \
@@ -24,3 +24,8 @@ evaluate-e2e:
 		code=$$?; \
 		docker compose -f compose.evaluation.yaml down --remove-orphans; \
 		exit $$code
+
+# Explicit operator command. Nothing loads evaluation data automatically.
+load-evaluation-data:
+	docker compose run --rm api \
+		python /app/scripts/load_evaluation_data.py
