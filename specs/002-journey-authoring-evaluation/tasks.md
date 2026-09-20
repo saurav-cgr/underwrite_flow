@@ -340,11 +340,20 @@ idempotent completion, and unchanged development rows/files.
   now pass `specialist_label`. `scripts/evaluate_e2e.py` split into
   `evaluate_failures.py` (failure model) and `evaluate_review.py`
   (review/audit/representative-case selection) to stay under 400 lines.
-- [ ] T049 [US3] Add `evaluate-e2e` lifecycle/exit propagation to
+- [X] T049 [US3] Add `evaluate-e2e` lifecycle/exit propagation to
   `Makefile` and ignore only `evaluation/results/` in `.gitignore`.
-- [ ] T050 [US3] Add CI execution of `make evaluate-e2e` and always retain
+  Target does `up -d --build evaluation-api` (brings up db/bootstrap/api
+  via `depends_on`), then `run --rm evaluation-runner` (compose blocks on
+  `evaluation-api`'s `service_healthy` condition itself, no manual poll
+  needed), captures the runner's exit code, then `down --remove-orphans`
+  (no `-v`) and propagates that exit code. Verified clean end to end:
+  `{"passed": true}`, exit 0, zero leftover containers/volumes after.
+- [X] T050 [US3] Add CI execution of `make evaluate-e2e` and always retain
   `evaluation/results/e2e.json` in
-  `.github/workflows/evaluation.yml`.
+  `.github/workflows/evaluation.yml`. New workflow (no prior
+  `.github/workflows/` existed): checkout, `make evaluate-e2e`, then
+  `actions/upload-artifact` with `if: always()` so the result is kept
+  whether the run passes or fails.
 - [ ] T051 [US3] Run `make evaluate-e2e` twice and compare deterministic
   fields per `specs/002-journey-authoring-evaluation/contracts/evaluation.md`;
   verify development rows, files, containers, and volumes remain unchanged.
