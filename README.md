@@ -33,7 +33,21 @@ Run the deterministic checks with:
 make test-api
 make test-web
 make smoke
+make evaluate-e2e
 ```
+
+## Journeys and product authoring
+
+Applicants choose new business or renewal before selecting a product; a
+renewal requires its prior-policy document before the rest of the form.
+Administrators author, preview, and version product rulebooks (fields,
+documents, routing rules, reconciliation checks) through the builder, then
+explicitly activate one version per product. A case stays pinned to the
+version and journey selected when it started.
+
+`make evaluate-e2e` runs the full 90-case synthetic evaluation set against an
+isolated, tmpfs-only Compose stack with no published ports and no shared
+state with the development database or upload volume.
 
 ## Provider boundary
 

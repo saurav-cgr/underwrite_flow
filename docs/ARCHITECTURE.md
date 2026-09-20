@@ -161,6 +161,27 @@ event-type filter and a bounded limit. No mutation route exists on the audit
 surface: the only supported removal path is the operator cleanup used by
 integration tests, which disables the append-only guard for that transaction.
 
+## Journey and configuration authoring
+
+A case's journey (new business or renewal) is chosen before product
+selection and is fixed for that case. The pinned configuration is filtered
+by journey: a renewal-only requirement, such as a prior-policy document,
+never applies to a new-business case and vice versa. Administrators build,
+preview, import, and explicitly activate versioned rulebooks; only an
+activated version is visible to applicants, and activation never rewrites an
+existing case's pinned version.
+
+## Isolated end-to-end evaluation
+
+`compose.evaluation.yaml` runs the full reference dataset against its own
+tmpfs-backed PostgreSQL, bootstrap, API, and runner containers, with no
+published ports and no volume or network shared with the development stack.
+`make evaluate-e2e` tears down stale containers first, brings the stack up
+detached, runs the evaluation as a separate one-shot container so its exit
+code reflects only pass/fail, then tears down without deleting named
+volumes. The result artifact is deterministic across repeated runs except
+for elapsed time.
+
 ## Known limits
 
 - Local-first and single-node: one FastAPI service, one web application, one

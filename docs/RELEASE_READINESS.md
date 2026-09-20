@@ -392,3 +392,8 @@ Detail behind the table:
     the limit.
 19. **The pilot probe reuses ten deterministic cases.** A repeated run measures
     idempotent re-processing rather than fresh throughput, by design.
+
+## Amendment, 20 September 2026
+
+`make evaluate-e2e` runs the 90-case dataset against an isolated tmpfs
+stack, deterministic across runs; development rows/containers unchanged.

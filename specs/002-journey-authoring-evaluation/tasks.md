@@ -383,9 +383,15 @@ deterministic, and passing 90/90 with zero development-state leakage.
 
 **Purpose**: Prove combined behavior without expanding scope.
 
-- [ ] T053 [P] Update journey, builder, evaluation, limitations, and synthetic
+- [X] T053 [P] Update journey, builder, evaluation, limitations, and synthetic
   data guidance in `README.md`, `docs/ARCHITECTURE.md`,
-  `docs/DEMO.md`, and `docs/RELEASE_READINESS.md`.
+  `docs/DEMO.md`, and `docs/RELEASE_READINESS.md`. Added `make evaluate-e2e`
+  and a journeys/builder paragraph to `README.md`; new "Journey and
+  configuration authoring" and "Isolated end-to-end evaluation" sections to
+  `ARCHITECTURE.md`; a renewal/builder demo section plus an evaluate-e2e step
+  to `DEMO.md`; and a short amendment to `RELEASE_READINESS.md` recording the
+  two-run determinism/isolation proof. Trimmed the amendment to keep the file
+  at 399 of the 400-line cap.
 - [ ] T054 Run full API/web suites, production build, smoke, evaluation,
   secret scan, line-length check, file-size check, and `git diff --check`
   using `Makefile` and

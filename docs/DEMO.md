@@ -56,6 +56,22 @@ drafts; Administrator activation is required before applicants can see them.
 6. Run `make smoke` for the deterministic end-to-end flow, and `make probe`
    for fresh bounded 10-case and 100-case synthetic pilot probes. Recorded
    local measures are in `docs/PILOT_PROBE.md`.
+7. Run `make evaluate-e2e` for the isolated 90-case evaluation against its
+   own tmpfs stack, then show `evaluation/results/e2e.json`: `passed`,
+   dataset and configuration hashes, and journey/route counts.
+
+## 6. Show renewal and the product builder
+
+1. As Applicant, choose renewal and show a product that supports only new
+   business is unavailable.
+2. Start a motor renewal: upload the prior-policy document first, then
+   complete the renewal form and remaining evidence.
+3. As Administrator, open the builder, edit a draft version's fields,
+   documents, routing rules, and reconciliation checks, then preview and
+   import it as a new draft.
+4. Activate the new version through its separate confirmation and show the
+   diff against the version it replaces.
+5. Show that a case already pinned to the prior version keeps reading it.
 
 ## Demo boundaries
 
