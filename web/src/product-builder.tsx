@@ -1,8 +1,8 @@
 // Guided, accessible wizard shell for nontechnical product authoring.
 import { useState } from "react";
 
-import { ApplicantFieldsSection, DocumentsSection } from
-  "./product-builder-evidence";
+import { DocumentsSection } from "./product-builder-evidence";
+import { ApplicantFieldsSection } from "./product-builder-fields";
 import { ReconciliationSection } from "./product-builder-reconciliation";
 import {
   RoutingRulesSection,

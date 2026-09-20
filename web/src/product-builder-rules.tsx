@@ -8,7 +8,10 @@ import type {
   BuilderRoute,
   BuilderRoutingRule,
 } from "./product-builder-state";
-import { AppliesToEditor } from "./product-builder-shared";
+import {
+  AppliesToEditor,
+  parseComparisonValue,
+} from "./product-builder-shared";
 import type { JourneyType } from "./types";
 
 interface SectionProps {
@@ -25,13 +28,6 @@ const ROUTES: BuilderRoute[] = [
 ];
 
 const OPERATORS: BuilderCondition["operator"][] = ["equals", "greater_than"];
-
-// Parse a routing-rule comparison value as a number when it looks numeric.
-function parseComparisonValue(raw: string): string | number {
-  if (raw.trim() === "") return raw;
-  const numeric = Number(raw);
-  return Number.isNaN(numeric) ? raw : numeric;
-}
 
 // Add or remove the deterministic routing rules for this product.
 export function RoutingRulesSection({ configuration, onChange }: SectionProps) {

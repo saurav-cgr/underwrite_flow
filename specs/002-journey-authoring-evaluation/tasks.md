@@ -649,10 +649,21 @@ deterministic, and passing 90/90 with zero development-state leakage.
   "blank". Reproduced with a failing screen-level test (paste YAML, Preview,
   click "Edit in guided builder", assert the Product code field is
   pre-filled) before the fix, passing after.
-- [ ] T067 Complete guided document authoring for requirement, condition, and
+- [X] T067 Complete guided document authoring for requirement, condition, and
   `required_for`, use current field/document identifiers as reference choices,
   and preserve correctly typed condition values per FR-004, FR-012, and T057
-  (partial)
+  (partial). `DocumentsSection` always saved `requirement: "required"` with
+  no condition or `required_for` editor. Added a requirement select; a
+  condition editor (field select sourced from the draft's own applicant
+  fields, operator select, typed value) shown only for "conditional"; and a
+  `required_for` journey checkbox group shown for every requirement except
+  "not_applicable", matching the backend's Pydantic constraints exactly.
+  Extracted `parseComparisonValue` (now also recognizing booleans) and a new
+  `RequiredForEditor` into `product-builder-shared.tsx` so the routing-rule
+  editor and this one share one typed-value parser instead of two. Split
+  `ApplicantFieldsSection` into its own `product-builder-fields.tsx` because
+  the added editors pushed `product-builder-evidence.tsx` over the 400-line
+  cap.
 - [ ] T068 Detect and display stable-order changes for fields, documents,
   routing rules, reconciliations, specialist labels, and supported journeys
   instead of treating reordering as semantic equality per FR-012 and T059
