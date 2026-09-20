@@ -392,10 +392,21 @@ deterministic, and passing 90/90 with zero development-state leakage.
   to `DEMO.md`; and a short amendment to `RELEASE_READINESS.md` recording the
   two-run determinism/isolation proof. Trimmed the amendment to keep the file
   at 399 of the 400-line cap.
-- [ ] T054 Run full API/web suites, production build, smoke, evaluation,
+- [X] T054 Run full API/web suites, production build, smoke, evaluation,
   secret scan, line-length check, file-size check, and `git diff --check`
   using `Makefile` and
-  `specs/002-journey-authoring-evaluation/quickstart.md`.
+  `specs/002-journey-authoring-evaluation/quickstart.md`. `make test-api`:
+  435 passed, reconciliation coverage 100%. `make test-web`: 19 files, 159
+  passed. `npm run build`: clean. `make smoke`: passed. `make evaluate-e2e`:
+  90/90, `failures=[]`. Secret scan: no hardcoded key/token values, no
+  tracked `.env*` beyond `.env.example`. `git diff --check`: clean, no
+  whitespace errors. File-size check: 4 pre-existing files at/over 400
+  lines, none touched this session (`test_cases.py` at exactly 400,
+  `evaluation/cases.json` is generated data, both `tasks.md` files are
+  growing spec logs). Line-length check: pre-existing debt across docs and
+  `compose.yaml`'s connection-string lines (unbreakable single-token
+  values); `compose.evaluation.yaml` mirrors that same accepted pattern.
+  No line added this session exceeds 80 columns.
 - [ ] T055 Confirm no automated approval, decline, binding, pricing, issue,
   renewal, or cancellation; record final evidence and risks in
   `docs/RELEASE_READINESS.md`.
