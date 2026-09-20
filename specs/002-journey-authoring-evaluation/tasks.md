@@ -690,7 +690,17 @@ deterministic, and passing 90/90 with zero development-state leakage.
   `details ->> 'journey'`) and `document_file_orphaned` through the existing
   `FailingStorage` unit test, since triggering a real storage failure
   end-to-end isn't worth the added fixture weight.
-- [ ] T070 Shorten the isolated evaluation-only database identifiers or use
+- [X] T070 Shorten the isolated evaluation-only database identifiers or use
   another valid YAML representation so every hand-written line in
   `compose.evaluation.yaml` stays at or below 80 columns per T064 and project
-  line-length constraints (contradicts)
+  line-length constraints (contradicts). T064 accepted the over-length
+  `DATABASE_URL` lines as an exception because shortening the shared
+  `underwriteflow` user/db name or the `evaluation-db` hostname would ripple
+  into the healthcheck, `depends_on`, and `compose.yaml`'s matching pattern
+  for no real benefit. T070 gave a second option this task took instead: a
+  YAML double-quoted scalar's escaped line-break-continuation (`...-\` then
+  an indented next line) removes the line break with no inserted whitespace,
+  so both `DATABASE_URL` lines now wrap under 80 columns while
+  `docker compose -f compose.evaluation.yaml config` resolves to the exact
+  same connection string. Verified with a real `make evaluate-e2e` run
+  (`{"passed": true}`), not just the YAML round-trip.
