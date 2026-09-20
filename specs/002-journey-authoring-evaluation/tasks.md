@@ -624,3 +624,36 @@ deterministic, and passing 90/90 with zero development-state leakage.
   diverge from `compose.yaml`'s pre-existing identical pattern (already
   recorded as an accepted exception in T054), creating a new
   inconsistency instead of fixing a real one.
+
+## Phase 8: Convergence
+
+- [X] T065 Let applicants reopen and replace answers for every mutable draft,
+  including restored new-business and completed-form renewal cases; pass the
+  existing case to `ApplicationForm` and add an answer-edit route with reload
+  coverage per FR-007 and T056 (partial). `updateApplication` and its
+  `caseRecord`-aware `ApplicationForm` already existed for renewal; the gap
+  was `app.tsx` only ever passing `caseRecord` for renewal, and no UI route
+  back to the form once documents were reached. Fixed by always passing the
+  live `caseRecord` (edits now update in place for both journeys) and adding
+  an "Edit answers" button on `DocumentsScreen`, shown only while the case is
+  still mutable (`new`/`needs_information`, matching the backend's
+  `MUTABLE_DOCUMENT_STATUSES` guard).
+- [ ] T066 Pass an uploaded normalized configuration through
+  `ProductConfiguration` into `ProductBuilder` and add a screen-level test
+  proving uploaded values populate the guided editor per FR-011 and T058
+  (partial)
+- [ ] T067 Complete guided document authoring for requirement, condition, and
+  `required_for`, use current field/document identifiers as reference choices,
+  and preserve correctly typed condition values per FR-004, FR-012, and T057
+  (partial)
+- [ ] T068 Detect and display stable-order changes for fields, documents,
+  routing rules, reconciliations, specialist labels, and supported journeys
+  instead of treating reordering as semantic equality per FR-012 and T059
+  (partial)
+- [ ] T069 Add immutable journey identity to `document_removed` and
+  `document_file_orphaned` audit details and cover both event contracts per
+  FR-008 and T062 (partial)
+- [ ] T070 Shorten the isolated evaluation-only database identifiers or use
+  another valid YAML representation so every hand-written line in
+  `compose.evaluation.yaml` stays at or below 80 columns per T064 and project
+  line-length constraints (contradicts)

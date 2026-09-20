@@ -250,7 +250,7 @@ export function App() {
     activeScreen = "application";
     content = (
       <ApplicationForm
-        caseRecord={journey === "renewal" ? caseRecord : null}
+        caseRecord={caseRecord}
         initialValues={configuration?.application}
         journey={journey}
         onCreated={(created, product) => {

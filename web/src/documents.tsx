@@ -337,6 +337,14 @@ export function DocumentsScreen({
                 {submitting ? "Submitting…" : intake.label}
               </Button>
             ) : null}
+            {intake ? (
+              <Button
+                onClick={() => onNavigate("application")}
+                variant="quiet"
+              >
+                Edit answers
+              </Button>
+            ) : null}
             <Button onClick={() => onNavigate("tracking")} variant="quiet">
               Continue to tracking
             </Button>

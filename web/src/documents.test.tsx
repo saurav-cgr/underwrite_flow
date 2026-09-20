@@ -242,3 +242,27 @@ describe("replacement upload counting", () => {
     ).toBe("100");
   });
 });
+
+// Verify a mutable draft case offers a route back to edit its answers.
+describe("answer editing", () => {
+  it("navigates to the application screen for a mutable draft", async () => {
+    const { onNavigate } = renderScreen(CASE);
+    const user = userEvent.setup();
+
+    const edit = await screen.findByRole("button", { name: "Edit answers" });
+    await user.click(edit);
+
+    expect(onNavigate).toHaveBeenCalledWith("application");
+  });
+
+  it("hides answer editing once review has started", async () => {
+    renderScreen({ ...CASE, status: "underwriter_review" });
+
+    await waitFor(() =>
+      expect(screen.queryByText("No files uploaded yet.")).toBeTruthy(),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Edit answers" }),
+    ).toBeNull();
+  });
+});
