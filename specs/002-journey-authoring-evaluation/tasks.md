@@ -572,9 +572,19 @@ deterministic, and passing 90/90 with zero development-state leakage.
   inside `evaluation-api` to `8.8.8.8:53` fails with "Network is
   unreachable". `test_every_service_joins_one_internal_network` (new) pins
   this. Full evaluation run still passes 90/90 with the network attached.
-- [ ] T061 Convert unexpected preflight, HTTP, and runtime failures into a
+- [X] T061 Convert unexpected preflight, HTTP, and runtime failures into a
   sanitized nonzero result and atomically write `evaluation/results/e2e.json`
-  whenever the result path is writable per FR-028 and T047 (partial)
+  whenever the result path is writable per FR-028 and T047 (partial).
+  `main()` only caught `EvaluationFailure`; a raw HTTP failure (e.g.
+  `login()`'s `raise_for_status()`, or a connection error reaching
+  `evaluation-api`) crashed uncaught, writing no result artifact at all
+  (violates FR-028's "MUST be machine-detectable"). Added a broad
+  `except Exception` that sanitizes via `sanitized_failure("dataset",
+  "runtime", type(error).__name__)` — the exception's class name only, no
+  raw message or traceback in the JSON (the type name still prints to
+  stderr for operator diagnosis). Extracted the shared empty-metrics
+  literal into `failure_result()`. A new test proves an
+  `httpx.ConnectError` still writes a well-formed nonzero result.
 - [ ] T062 Include immutable journey identity in case creation, application,
   document, submission, review, and completion audit details, with contract
   coverage across the case lifecycle, per FR-008 (partial)

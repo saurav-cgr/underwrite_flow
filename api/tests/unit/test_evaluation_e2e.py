@@ -153,3 +153,24 @@ def test_atomic_write_json_leaves_no_partial_file_behind(
 def test_exit_code_matches_the_passed_flag() -> None:
     assert exit_code_for({"passed": True}) == 0
     assert exit_code_for({"passed": False}) == 1
+
+
+# Verify an unexpected HTTP/runtime failure still writes a sanitized result.
+def test_main_sanitizes_an_unexpected_exception(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    def boom(base_url: str) -> None:
+        raise httpx.ConnectError("connection refused")
+
+    monkeypatch.setattr(evaluate_e2e, "run_evaluation", boom)
+    result_path = tmp_path / "e2e.json"
+    monkeypatch.setattr(evaluate_e2e, "RESULT_PATH", result_path)
+
+    exit_code = evaluate_e2e.main()
+
+    assert exit_code == 1
+    written = json.loads(result_path.read_text())
+    assert written["passed"] is False
+    assert written["failures"] == [
+        {"case_id": "dataset", "stage": "runtime", "code": "ConnectError"}
+    ]

@@ -290,6 +290,24 @@ def run_evaluation(base_url: str) -> dict[str, Any]:
     }
 
 
+# Build the empty-metrics failing result artifact for one sanitized failure.
+def failure_result(detail: dict[str, str]) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "passed": False,
+        "provider": "fake",
+        "dataset_sha256": "",
+        "configurations": {},
+        "case_count": 0,
+        "journey_counts": {},
+        "route_counts": {},
+        "metrics": {},
+        "reviewed_count": 0,
+        "completed_count": 0,
+        "failures": [detail],
+    }
+
+
 # Run the isolated evaluation, write its result, and exit with its status.
 def main() -> int:
     base_url = os.environ.get("EVALUATION_API_BASE_URL", DEFAULT_BASE_URL)
@@ -297,20 +315,12 @@ def main() -> int:
     try:
         result = run_evaluation(base_url)
     except EvaluationFailure as failure:
-        result = {
-            "schema_version": 1,
-            "passed": False,
-            "provider": "fake",
-            "dataset_sha256": "",
-            "configurations": {},
-            "case_count": 0,
-            "journey_counts": {},
-            "route_counts": {},
-            "metrics": {},
-            "reviewed_count": 0,
-            "completed_count": 0,
-            "failures": [failure.detail],
-        }
+        result = failure_result(failure.detail)
+    except Exception as error:  # noqa: BLE001 - sanitized into the result
+        print(f"unexpected failure: {type(error).__name__}", file=sys.stderr)
+        result = failure_result(
+            sanitized_failure("dataset", "runtime", type(error).__name__)
+        )
     result["elapsed_seconds"] = round(time.monotonic() - started, 3)
     atomic_write_json(RESULT_PATH, result)
     print(json.dumps({"passed": result["passed"]}))
