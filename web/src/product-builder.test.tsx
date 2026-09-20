@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -332,54 +332,3 @@ describe("guided editors", () => {
   );
 });
 
-describe("non-color diff against the active configuration", () => {
-  it("marks an added field with text, not color alone", async () => {
-    const active: BuilderConfiguration = {
-      product_code: "motor-builder-demo",
-      title: "Synthetic Builder Product",
-      family: "motor",
-      scope: "Fictional demonstration only",
-      description: "Synthetic builder configuration",
-      version: "v1",
-      status: "active",
-      supported_journeys: ["new_business", "renewal"],
-      fields: [],
-      documents: [],
-      routing_rules: [
-        {
-          code: "standard_review",
-          condition: {
-            field: "vehicle_age",
-            operator: "greater_than",
-            value: 0,
-          },
-          route: "standard",
-          applies_to: ["new_business", "renewal"],
-        },
-      ],
-      reconciliations: [],
-      specialist_labels: ["motor inspection"],
-    };
-    render(
-      <ProductBuilder
-        activeConfiguration={active}
-        family="motor"
-        onImported={vi.fn()}
-        onStatus={vi.fn()}
-        source="clone"
-        token="session"
-      />,
-    );
-    const user = userEvent.setup();
-
-    await goToSection(user, "Applicant fields");
-    await addField(user);
-    await goToSection(user, "Review");
-
-    const diff = await screen.findByRole("list", {
-      name: "Configuration changes",
-    });
-    const added = within(diff).getByText(/^Added: fields\.vehicle_age$/);
-    expect(added).toBeTruthy();
-  });
-});

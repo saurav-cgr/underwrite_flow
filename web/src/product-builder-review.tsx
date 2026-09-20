@@ -31,9 +31,12 @@ const REQUIRED_LABELS: Record<string, string> = {
   specialist_labels: "Add at least one specialist label.",
 };
 
-// Report missing identity fields and required sections for a blank draft.
+// Report missing identity fields, a broken clone lock, and missing required
+// sections for a draft the administrator is about to preview or import.
 function identityErrors(
   configuration: BuilderConfiguration,
+  source: BuilderSource,
+  activeConfiguration?: BuilderConfiguration,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!configuration.product_code.trim()) {
@@ -45,6 +48,14 @@ function identityErrors(
     errors.description = "Enter a description.";
   }
   if (!configuration.version.trim()) errors.version = "Enter a version.";
+  if (source === "clone" && activeConfiguration) {
+    if (configuration.product_code !== activeConfiguration.product_code) {
+      errors.product_code = "A clone must keep the source product code.";
+    }
+    if (configuration.version.trim() === activeConfiguration.version) {
+      errors.version = "Enter a version distinct from the cloned source.";
+    }
+  }
   for (const section of builderCompletion(configuration).missingSections) {
     errors[section] = REQUIRED_LABELS[section] ?? "Add at least one entry.";
   }
@@ -67,7 +78,9 @@ export function ReviewSection({
   source,
   token,
 }: ReviewSectionProps) {
-  const errors = source === "blank" ? identityErrors(configuration) : {};
+  const errors = source === "upload"
+    ? {}
+    : identityErrors(configuration, source, activeConfiguration);
   const configHash = yamlHash(JSON.stringify(configuration));
   const [candidate, setCandidate] = useState<BuilderConfiguration | null>(
     null,

@@ -68,10 +68,17 @@ function IdentitySection({
       <label className="field">
         Product code
         <input
+          disabled={source === "clone"}
           onChange={(event) => set("product_code", event.target.value)}
           value={configuration.product_code}
         />
       </label>
+      {source === "clone" ? (
+        <p className="muted">
+          A clone keeps its source product code. Enter a version distinct
+          from {activeConfiguration?.version} before importing.
+        </p>
+      ) : null}
       <label className="field">
         Title
         <input

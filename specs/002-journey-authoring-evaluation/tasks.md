@@ -595,8 +595,20 @@ deterministic, and passing 90/90 with zero development-state leakage.
   four gaps in `cases/service.py` and `cases/evidence_persistence.py`.
   Extended `test_journey_staff.py` and `test_journey_api.py` with audit
   assertions for all four event types.
-- [ ] T063 Lock cloned product identity and require a distinct successor
-  version before preview or import per T029 and plan: clone identity (partial)
+- [X] T063 Lock cloned product identity and require a distinct successor
+  version before preview or import per T029 and plan: clone identity (partial).
+  Two real gaps: the product-code input stayed editable during a clone (an
+  admin could silently rename a "successor" into an unrelated product), and
+  `identityErrors` only ran for `source === "blank"`, so a clone could reach
+  Review with the exact same version as its source (and skip every other
+  required-section check) with no warning. Product code is now `disabled`
+  for `source === "clone"`; `identityErrors` takes `source` and
+  `activeConfiguration` and blocks on a reused version or a changed product
+  code. Caught mid-fix: the existing "non-color diff" test relied on the
+  old, unguarded clone state (same version, empty documents) to reach
+  Review — fixed the fixture, not the assertion, and moved the whole
+  clone-focused describe blocks to a new `product-builder-clone.test.tsx`
+  to keep `product-builder.test.tsx` under 400 lines.
 - [ ] T064 Split `api/tests/unit/test_cases.py` below 400 lines and wrap the
   evaluation Compose database settings below 80 columns per T054 and project
   file-size/line-length constraints (contradicts)
