@@ -561,9 +561,17 @@ deterministic, and passing 90/90 with zero development-state leakage.
   comparison, like the existing label diff, so journey reordering reports
   no change). `ReviewSection`'s rendering needed no change, it already
   renders any `{section, kind, key}` entry generically.
-- [ ] T060 Put every evaluation service on an explicitly internal Compose
+- [X] T060 Put every evaluation service on an explicitly internal Compose
   network and extend isolation tests to reject internet-routable default
-  networking per FR-026 and plan: internal evaluation network (partial)
+  networking per FR-026 and plan: internal evaluation network (partial).
+  No `networks:` key existed, so every service joined Compose's implicit
+  default bridge network, which NATs out to the internet. Added an
+  `evaluation` network with `internal: true` and attached all four
+  services to it. Verified for real, not just via config: `docker network
+  inspect` reports `Internal: true`, and a live connection attempt from
+  inside `evaluation-api` to `8.8.8.8:53` fails with "Network is
+  unreachable". `test_every_service_joins_one_internal_network` (new) pins
+  this. Full evaluation run still passes 90/90 with the network attached.
 - [ ] T061 Convert unexpected preflight, HTTP, and runtime failures into a
   sanitized nonzero result and atomically write `evaluation/results/e2e.json`
   whenever the result path is writable per FR-028 and T047 (partial)

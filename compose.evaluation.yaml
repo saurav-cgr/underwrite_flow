@@ -1,5 +1,9 @@
 name: underwriteflow-evaluation
 
+networks:
+  evaluation:
+    internal: true
+
 services:
   evaluation-db:
     image: pgvector/pgvector:pg16
@@ -17,6 +21,8 @@ services:
       retries: 20
     tmpfs:
       - /var/lib/postgresql/data
+    networks:
+      - evaluation
 
   evaluation-bootstrap:
     build:
@@ -35,6 +41,8 @@ services:
         condition: service_healthy
     volumes:
       - ./product-config:/app/product-config:ro
+    networks:
+      - evaluation
 
   evaluation-api:
     build:
@@ -82,6 +90,8 @@ services:
       - /data/uploads
     volumes:
       - ./product-config:/app/product-config:ro
+    networks:
+      - evaluation
 
   evaluation-runner:
     build:
@@ -99,3 +109,5 @@ services:
       - ./evaluation/results:/app/evaluation/results
       - ./product-config:/app/product-config:ro
       - ./scripts:/app/scripts:ro
+    networks:
+      - evaluation

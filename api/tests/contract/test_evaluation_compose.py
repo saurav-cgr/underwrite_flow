@@ -52,6 +52,20 @@ def test_no_service_joins_an_external_network() -> None:
         assert "network_mode" not in service, name
 
 
+# Verify every service joins one explicitly internal, non-routable network.
+def test_every_service_joins_one_internal_network() -> None:
+    compose = _load_compose()
+    networks = compose.get("networks") or {}
+
+    assert networks, "no network is declared"
+    for network in networks.values():
+        assert (network or {}).get("internal") is True
+    for name, service in compose["services"].items():
+        declared = service.get("networks")
+        assert declared, f"{name} does not declare an explicit network"
+        assert set(declared) <= set(networks), name
+
+
 # Verify the runner has no database URL, Docker socket, or dev credential.
 def test_runner_has_no_database_url_or_docker_socket() -> None:
     compose = _load_compose()
