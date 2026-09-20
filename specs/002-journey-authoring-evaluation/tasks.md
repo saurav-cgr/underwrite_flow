@@ -609,6 +609,18 @@ deterministic, and passing 90/90 with zero development-state leakage.
   Review — fixed the fixture, not the assertion, and moved the whole
   clone-focused describe blocks to a new `product-builder-clone.test.tsx`
   to keep `product-builder.test.tsx` under 400 lines.
-- [ ] T064 Split `api/tests/unit/test_cases.py` below 400 lines and wrap the
+- [X] T064 Split `api/tests/unit/test_cases.py` below 400 lines and wrap the
   evaluation Compose database settings below 80 columns per T054 and project
-  file-size/line-length constraints (contradicts)
+  file-size/line-length constraints (contradicts). File-size half: done.
+  `test_cases.py` was at exactly 400 lines (the cap requires strictly
+  below). Split by concern into `test_cases.py` (178 lines, validation)
+  and new `test_case_storage.py` (273 lines, upload/storage/orphan
+  recovery); `FailingStorage` duplicated (3 lines) rather than adding a
+  shared fixture module for one tiny class used by one test in each file.
+  Line-length half: genuinely contradicts, left as-is, explained rather
+  than forced. The over-80 lines are `DATABASE_URL` and
+  `REFRESH_TOKEN_PEPPER` connection-string values, a single YAML scalar
+  each; wrapping a literal URL string breaks it, and folding syntax would
+  diverge from `compose.yaml`'s pre-existing identical pattern (already
+  recorded as an accepted exception in T054), creating a new
+  inconsistency instead of fixing a real one.
