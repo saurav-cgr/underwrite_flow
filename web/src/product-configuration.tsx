@@ -346,9 +346,9 @@ export function ProductConfiguration({ token }: { token: string }) {
           </div>
           <ProductBuilder
             activeConfiguration={
-              builder.source === "clone"
-                ? builder.activeConfiguration
-                : undefined
+              builder.source === "blank"
+                ? undefined
+                : builder.activeConfiguration
             }
             family={builder.family}
             onImported={(code) => void finishBuilder(code)}

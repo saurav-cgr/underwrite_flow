@@ -638,10 +638,17 @@ deterministic, and passing 90/90 with zero development-state leakage.
   an "Edit answers" button on `DocumentsScreen`, shown only while the case is
   still mutable (`new`/`needs_information`, matching the backend's
   `MUTABLE_DOCUMENT_STATUSES` guard).
-- [ ] T066 Pass an uploaded normalized configuration through
+- [X] T066 Pass an uploaded normalized configuration through
   `ProductConfiguration` into `ProductBuilder` and add a screen-level test
   proving uploaded values populate the guided editor per FR-011 and T058
-  (partial)
+  (partial). `product-builder.tsx`'s `initialConfiguration()` already
+  hydrated an "upload" source from its `activeConfiguration` prop; the bug
+  was in `product-configuration.tsx`, whose ternary forwarded
+  `activeConfiguration` only for `source === "clone"`, leaving upload's
+  builder always blank. Fixed the ternary to forward it for any source but
+  "blank". Reproduced with a failing screen-level test (paste YAML, Preview,
+  click "Edit in guided builder", assert the Product code field is
+  pre-filled) before the fix, passing after.
 - [ ] T067 Complete guided document authoring for requirement, condition, and
   `required_for`, use current field/document identifiers as reference choices,
   and preserve correctly typed condition values per FR-004, FR-012, and T057

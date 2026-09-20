@@ -22,6 +22,7 @@ import {
   listProductConfigurations,
   listProductVersionHistory,
   listReferences,
+  previewProductConfiguration,
   readProductVersionConfiguration,
 } from "./api";
 import { ProductConfiguration } from "./product-configuration";
@@ -163,5 +164,42 @@ describe("guided builder entry points", () => {
     expect(
       await screen.findByText(/Cloned from motor-private-car v1/),
     ).toBeTruthy();
+  });
+
+  it("hydrates builder from an uploaded configuration's preview", async () => {
+    vi.mocked(previewProductConfiguration).mockResolvedValue({
+      product_code: "uploaded-motor",
+      title: "Uploaded Motor",
+      family: "motor",
+      scope: "Fictional demonstration only",
+      description: "Synthetic",
+      version: "v1",
+      status: "draft",
+      fields: [],
+      documents: [],
+      routing_rules: [],
+      reconciliations: [],
+      specialist_labels: [],
+      supported_journeys: ["new_business"],
+      field_count: 0,
+      document_count: 0,
+      routing_rule_count: 0,
+      reconciliation_count: 0,
+    });
+    render(<ProductConfiguration token="session" />);
+    const user = userEvent.setup();
+
+    await user.type(
+      screen.getByLabelText(/Product configuration YAML/),
+      "product_code: uploaded-motor",
+    );
+    await user.click(screen.getByRole("button", { name: "Preview" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Edit in guided builder" }),
+    );
+
+    expect(
+      (screen.getByLabelText("Product code") as HTMLInputElement).value,
+    ).toBe("uploaded-motor");
   });
 });
