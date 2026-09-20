@@ -93,5 +93,6 @@ class CaseConfigurationResponse(BaseModel):
     product_version: str
     rulebook_version: str
     journey: JourneyType
+    application: dict[str, Any]
     fields: list[CaseFieldResponse]
     documents: list[CaseDocumentResponse]

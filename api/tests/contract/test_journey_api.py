@@ -140,6 +140,7 @@ def test_replace_application_updates_the_stored_draft() -> None:
                 f"/api/v1/cases/{case_id}/configuration", headers=applicant
             )
             assert configuration.status_code == 200, configuration.text
+            assert configuration.json()["application"] == {"vehicle_age": 5}
     finally:
         if case_id:
             remove_case(case_id)

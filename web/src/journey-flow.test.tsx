@@ -99,6 +99,7 @@ const MOTOR_CONFIGURATION: CaseConfiguration = {
   product_version: "v4",
   rulebook_version: "v1",
   journey: "renewal",
+  application: {},
   fields: MOTOR.fields,
   documents: MOTOR.documents.map((document) => ({
     code: document.code,
@@ -351,6 +352,34 @@ describe("staged renewal", () => {
         name: "Continue to application",
       });
       expect(continueButton.hasAttribute("disabled")).toBe(false);
+    },
+  );
+
+  it(
+    "resumes a completed renewal form after reload without re-gating "
+      + "to the prior policy step",
+    async () => {
+      uploadedDocuments = [storedDocument("previous_policy")];
+      vi.mocked(readCaseConfiguration).mockResolvedValue({
+        ...MOTOR_CONFIGURATION,
+        application: { vehicle_registration: "MH12AB1234" },
+      });
+      vi.mocked(listCases).mockResolvedValue([RENEWAL_CASE]);
+      render(<App />);
+      const user = await signIn();
+
+      const openButtons = await screen.findAllByRole("button", {
+        name: "Open documents",
+      });
+      await user.click(openButtons[0]);
+
+      await screen.findByText("Add your documents.");
+      expect(
+        screen.queryByText("Upload your existing policy."),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Continue to application" }),
+      ).toBeNull();
     },
   );
 });

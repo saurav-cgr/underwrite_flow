@@ -198,6 +198,7 @@ async def read_case_configuration(
         product_version=product_version.version,
         rulebook_version=rulebook.version,
         journey=case.journey_type,
+        application=payload,
         fields=[
             CaseFieldResponse(
                 key=field.key,

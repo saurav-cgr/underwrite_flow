@@ -500,3 +500,46 @@ deterministic, and passing 90/90 with zero development-state leakage.
 - Do not expose evaluation ports or development storage.
 - Use synthetic data only.
 - Preserve authenticated human final authority.
+
+## Phase 7: Convergence
+
+- [X] T056 Return the stored application in the pinned case configuration and
+  restore the selected product, saved answers, renewal stage, and editable form
+  after reload per FR-007 and plan: journey reload recovery (partial).
+  `CaseConfigurationResponse` now carries `application` (the stored draft
+  payload already computed server-side for field visibility, just never
+  returned). `app.tsx` reconstructs `selectedProduct` from the restored
+  configuration merged with the matching catalog entry, and derives
+  `renewalFormDone` from whether that application is non-empty, fixing a
+  real bug: a renewal case reloaded after the form step was previously
+  re-gated to the prior-policy-only view forever, since `renewalFormDone`
+  always reset to `false`. `ApplicationForm` takes `initialValues` and
+  seeds its field state from it. Frozen-key contract test updated
+  (`CONFIGURATION_KEYS`). New tests: a contract assertion that `/configuration`
+  echoes the replaced draft, a reload scenario proving the prior-policy gate
+  clears once the form is done, and a direct `ApplicationForm` prefill test.
+- [ ] T057 Complete the guided field, document, routing-rule, and
+  reconciliation editors so administrators can author validation, options,
+  conditions, journey applicability, accepted types, operators, specialist
+  labels, two-source checks, and supported check parameters per FR-012 and
+  SC-003 (partial)
+- [ ] T058 Let uploaded expert configuration preview hydrate the same editable
+  browser configuration object used by blank and clone flows before immutable
+  draft import per FR-011 and plan: one builder object (partial)
+- [ ] T059 Expand normalized change review to include scalar properties,
+  supported journeys, and stable-order changes alongside keyed collection
+  changes per FR-012 and plan: browser change review (partial)
+- [ ] T060 Put every evaluation service on an explicitly internal Compose
+  network and extend isolation tests to reject internet-routable default
+  networking per FR-026 and plan: internal evaluation network (partial)
+- [ ] T061 Convert unexpected preflight, HTTP, and runtime failures into a
+  sanitized nonzero result and atomically write `evaluation/results/e2e.json`
+  whenever the result path is writable per FR-028 and T047 (partial)
+- [ ] T062 Include immutable journey identity in case creation, application,
+  document, submission, review, and completion audit details, with contract
+  coverage across the case lifecycle, per FR-008 (partial)
+- [ ] T063 Lock cloned product identity and require a distinct successor
+  version before preview or import per T029 and plan: clone identity (partial)
+- [ ] T064 Split `api/tests/unit/test_cases.py` below 400 lines and wrap the
+  evaluation Compose database settings below 80 columns per T054 and project
+  file-size/line-length constraints (contradicts)

@@ -114,6 +114,7 @@ export function ApplicationForm({
   journey,
   token,
   caseRecord,
+  initialValues,
   onCreated,
   onNavigate,
 }: {
@@ -121,10 +122,13 @@ export function ApplicationForm({
   journey: JourneyType;
   token: string;
   caseRecord?: CaseRecord | null;
+  initialValues?: Record<string, unknown>;
   onCreated: (caseRecord: CaseRecord, product: ProductCatalogItem) => void;
   onNavigate: (screen: Screen) => void;
 }) {
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>(
+    initialValues ?? {},
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
   const fields = useMemo(

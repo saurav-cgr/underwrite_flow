@@ -34,6 +34,7 @@ CONFIGURATION_KEYS = {
     "product_version",
     "rulebook_version",
     "journey",
+    "application",
     "fields",
     "documents",
 }

@@ -123,6 +123,34 @@ export function App() {
       );
   }, [caseRecord?.id, session]);
 
+  // Rebuild the selected product and renewal stage from a restored case's
+  // pinned configuration, so a reload can still reach the application form.
+  useEffect(() => {
+    if (!configuration || selectedProduct) return;
+    const catalogEntry = catalog.find(
+      (item) => item.product_code === configuration.product_code,
+    );
+    setSelectedProduct({
+      product_code: configuration.product_code,
+      title: catalogEntry?.title ?? configuration.product_code,
+      family: catalogEntry?.family ?? "",
+      scope: catalogEntry?.scope ?? "",
+      description: catalogEntry?.description ?? "",
+      version: configuration.product_version,
+      fields: configuration.fields,
+      documents: configuration.documents,
+      supported_journeys: catalogEntry?.supported_journeys ?? [
+        configuration.journey,
+      ],
+    });
+    if (
+      configuration.journey === "renewal"
+      && Object.keys(configuration.application).length > 0
+    ) {
+      setRenewalFormDone(true);
+    }
+  }, [configuration, catalog, selectedProduct]);
+
   // Enter a role workspace and choose its first screen.
   function handleLogin(nextSession: Session) {
     setSession(nextSession);
@@ -223,6 +251,7 @@ export function App() {
     content = (
       <ApplicationForm
         caseRecord={journey === "renewal" ? caseRecord : null}
+        initialValues={configuration?.application}
         journey={journey}
         onCreated={(created, product) => {
           setCaseRecord(created);

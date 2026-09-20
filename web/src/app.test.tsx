@@ -92,6 +92,7 @@ const PINNED_CONFIGURATION: CaseConfiguration = {
   product_version: "v1",
   rulebook_version: "v1",
   journey: "new_business",
+  application: {},
   fields: [],
   documents: [
     {

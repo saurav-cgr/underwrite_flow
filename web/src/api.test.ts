@@ -245,6 +245,7 @@ describe("configuration and reference API", () => {
       product_code: "motor-private-car",
       product_version: "v1",
       rulebook_version: "v1",
+      application: {},
       fields: [],
       documents: [],
     });

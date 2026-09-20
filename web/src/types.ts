@@ -374,6 +374,7 @@ export interface CaseConfiguration {
   product_version: string;
   rulebook_version: string;
   journey: JourneyType;
+  application: Record<string, unknown>;
   fields: ProductField[];
   documents: ResolvedDocument[];
 }
