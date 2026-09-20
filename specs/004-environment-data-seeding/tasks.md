@@ -157,25 +157,25 @@ baseline.
 
 ### Tests for User Story 3
 
-- [ ] T019 [P] [US3] Add a failing production-guard unit test in
+- [X] T019 [P] [US3] Add a failing production-guard unit test in
   `api/tests/unit/test_evaluation_loader.py` that spies on database and upload
   construction and expects neither to occur before
   `evaluation_load_forbidden` is returned.
-- [ ] T020 [P] [US3] Add a failing production no-write integration case in
+- [X] T020 [P] [US3] Add a failing production no-write integration case in
   `api/tests/integration/test_evaluation_loader.py` covering cases,
   submissions, documents, recommendations, checkpoints, audit events, and
   upload files while confirming the common baseline remains usable.
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Add the fail-closed production check as the first executable
+- [X] T021 [US3] Add the fail-closed production check as the first executable
   loader step in `scripts/load_evaluation_data.py` until T019 and T020 pass;
   emit only environment, `complete: false`, and
   `evaluation_load_forbidden` with a nonzero exit.
-- [ ] T022 [US3] Extend `api/tests/contract/test_environment_compose.py` to
+- [X] T022 [US3] Extend `api/tests/contract/test_environment_compose.py` to
   render `compose.yaml` plus `compose.production.yaml`, prove the API receives
   production mode, and prove no service command automatically loads data.
-- [ ] T023 [US3] Run the production command from
+- [X] T023 [US3] Run the production command from
   `specs/004-environment-data-seeding/quickstart.md` and verify zero evaluation
   writes without deleting or resetting any volume.
 

@@ -86,3 +86,56 @@ def test_no_service_command_runs_the_loader(path: Path) -> None:
     for name, service in (compose.get("services") or {}).items():
         assert LOADER_SCRIPT not in _command_text(service), name
         assert LOADER_SCRIPT not in str(service.get("entrypoint") or ""), name
+
+
+# Merge one override onto the base stack the way Compose renders it, so the
+# test reads the same effective service definitions the operator runs.
+def _rendered_production() -> dict[str, Any]:
+    base = _load_compose(BASE_PATH)
+    override = _load_compose(PRODUCTION_PATH)
+    services = {name: dict(service) for name, service in
+                base["services"].items()}
+    for name, patch in (override.get("services") or {}).items():
+        merged = dict(services.get(name, {}))
+        for key, value in patch.items():
+            if key == "environment":
+                merged["environment"] = {
+                    **_environment(services.get(name, {})),
+                    **_environment({"environment": value}),
+                }
+            else:
+                merged[key] = value
+        services[name] = merged
+    return {**base, "services": services}
+
+
+# Verify the rendered production stack gives the API production mode.
+def test_rendered_production_stack_sets_production_mode() -> None:
+    rendered = _rendered_production()
+
+    assert (
+        _environment(rendered["services"]["api"])["ENVIRONMENT_MODE"]
+        == "production"
+    )
+    assert (
+        _environment(rendered["services"]["bootstrap"])["ENVIRONMENT_MODE"]
+        == "production"
+    )
+
+
+# Verify the rendered production stack keeps the common baseline bootstrap.
+def test_rendered_production_stack_keeps_the_baseline_bootstrap() -> None:
+    rendered = _rendered_production()
+
+    command = _command_text(rendered["services"]["bootstrap"])
+    assert "alembic upgrade head" in command
+    assert "import_configs" in command
+
+
+# Verify no rendered production service loads evaluation data on startup.
+def test_rendered_production_stack_never_loads_data() -> None:
+    rendered = _rendered_production()
+
+    for name, service in rendered["services"].items():
+        assert LOADER_SCRIPT not in _command_text(service), name
+        assert LOADER_SCRIPT not in str(service.get("entrypoint") or ""), name
