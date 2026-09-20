@@ -158,9 +158,14 @@ journey remains visible through human-confirmed completion.
   already durable server-side; it does not prefill previously entered
   form answers, since no endpoint returns stored draft payload back to
   the client.)
-- [ ] T027 [US1] Run US1 API/UI tests, full web build, and human-authority
+- [X] T027 [US1] Run US1 API/UI tests, full web build, and human-authority
   checks from `specs/002-journey-authoring-evaluation/quickstart.md`; report
-  results and proposed commit, then wait for `continue`.
+  results and proposed commit, then wait for `continue`. US1-scoped API
+  tests (`test_journey_workflow.py`, `test_journey_api.py`,
+  `test_journey_staff.py`, `test_cases.py`): 26 passed. US1-scoped web
+  tests (`journey-flow.test.tsx`, `documents.test.tsx`): 12 passed. Full
+  build and human-authority search already covered by T054/T055's
+  whole-repo runs, which include this scope.
 
 **Checkpoint**: US1 works independently. No admin-builder work starts before
 review.
@@ -266,9 +271,14 @@ idempotent completion, and unchanged development rows/files.
 
 ### Tests
 
-- [ ] T042 [P] [US3] Add 90-case journey/version distribution, uniqueness,
+- [X] T042 [P] [US3] Add 90-case journey/version distribution, uniqueness,
   supported-version, and route-balance tests in
-  `api/tests/unit/test_evaluation.py`.
+  `api/tests/unit/test_evaluation.py`. Already implemented (checkbox was
+  missed): `test_dataset_case_ids_are_unique`,
+  `test_dataset_journey_distribution_matches_the_plan`,
+  `test_dataset_route_balance_is_thirty_each`,
+  `test_dataset_versions_are_in_the_configuration_manifest`, and
+  `test_dataset_versions_support_their_named_journey`. Re-ran: 6 passed.
 - [X] T043 [P] [US3] Add mocked HTTP flow, stable result, atomic write,
   sanitized failure, and nonzero-exit tests in
   `api/tests/unit/test_evaluation_e2e.py`. Trimmed: mocks cover login,
