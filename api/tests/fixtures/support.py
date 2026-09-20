@@ -132,3 +132,36 @@ def start_review(
     started = client.post(f"/api/v1/reviews/{case_id}/start", headers=headers)
     assert started.status_code == 200, started.text
     return started.json()
+
+
+# Activate one built-in motor version through the administrator API.
+def activate_motor_version(
+    client: TestClient, headers: dict[str, str], version: str
+) -> None:
+    activated = client.post(
+        "/api/v1/products/motor-private-car/activate",
+        json={"version": version},
+        headers=headers,
+    )
+    assert activated.status_code == 200, activated.text
+
+
+# Create one draft case for a journey and return the raw response.
+def create_case_for_journey(
+    client: TestClient,
+    headers: dict[str, str],
+    journey: str,
+    payload: dict[str, object],
+    idempotency_key: str,
+) -> object:
+    return client.post(
+        "/api/v1/cases",
+        json={
+            "product_code": "motor-private-car",
+            "idempotency_key": idempotency_key,
+            "journey": journey,
+            "payload": payload,
+            "document_codes": [],
+        },
+        headers=headers,
+    )

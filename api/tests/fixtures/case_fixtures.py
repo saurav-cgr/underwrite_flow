@@ -169,6 +169,26 @@ def seed_case(
         write_upload(case_id, code, content)
 
 
+# Read the configuration audit events one product version recorded, oldest
+# first, with the authenticated identity that produced each event.
+def product_version_audit(
+    version: str, code: str = "motor-private-car"
+) -> list[tuple[str, str]]:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT audit_events.event_type, actors.email "
+                "FROM audit_events "
+                "JOIN users AS actors "
+                "ON actors.id = audit_events.actor_user_id "
+                "WHERE audit_events.details ->> 'product_code' = %s "
+                "AND audit_events.details ->> 'product_version' = %s "
+                "ORDER BY audit_events.occurred_at, audit_events.id",
+                (code, version),
+            )
+            return [tuple(row) for row in cursor.fetchall()]
+
+
 # Read one case's recorded decisions, oldest review cycle first.
 def read_decisions(case_id: UUID) -> list[tuple[int, str, str | None]]:
     with psycopg.connect(DATABASE_URL) as connection:

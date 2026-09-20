@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from fixtures.records import (
     motor_status,
+    product_version_audit,
     read_audit,
     remove_case,
     set_motor_status,
@@ -14,6 +15,8 @@ from fixtures.support import (
     ADMINISTRATOR,
     APPLICANT,
     UNDERWRITER,
+    activate_motor_version,
+    create_case_for_journey,
     login,
     upload_documents,
 )
@@ -41,84 +44,39 @@ RENEWAL_CORE_UPLOADS = [
     ("registration_certificate", text_pdf(REGISTRATION_CERTIFICATE_LINES)),
 ]
 
-
-NEW_BUSINESS_PAYLOAD = {"vehicle_age": 4, "vehicle_use": "personal"}
-
-UNSUPPORTED_FIELD_DETAIL = "Unsupported application field: prior_claims"
-
-NEW_BUSINESS_UPLOADS = [
-    ("identity_record", text_pdf(IDENTITY_ONLY_LINES)),
-    ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
-    ("registration_certificate", text_pdf(REGISTRATION_CERTIFICATE_LINES)),
+# A v5 renewal record whose every answered field is also evidenced.
+RENEWAL_V5_VEHICLE_LINES = [
+    "vehicle_age: 3",
+    "vehicle_use: personal",
+    "prior_claims: 2",
+    "claimed_ncb_percent: 0",
+    "policy_start_date: 2025-09-01",
+    "ncb_percent: 0",
+    "policy_expiry: 2025-09-01",
 ]
 
-MOTOR_ASSET_CHECKS = [
-    "motor_chassis_match",
-    "motor_engine_match",
-    "motor_registration_match",
+# Prior-policy facts that agree with the v5 renewal application above.
+RENEWAL_V5_POLICY_LINES = [
+    "ncb_percent: 0",
+    "policy_expiry: 2025-09-01",
 ]
 
 
-# Activate motor v4 for one test and always restore the prior active version.
-def activate_motor_v4(
-    client: TestClient, admin_headers: dict[str, str]
-) -> None:
-    activated = client.post(
-        "/api/v1/products/motor-private-car/activate",
-        json={"version": "v4"},
-        headers=admin_headers,
-    )
-    assert activated.status_code == 200, activated.text
-
-
-# Activate motor v5 for one test and always restore the prior active version.
-def activate_motor_v5(
-    client: TestClient, admin_headers: dict[str, str]
-) -> None:
-    activated = client.post(
-        "/api/v1/products/motor-private-car/activate",
-        json={"version": "v5"},
-        headers=admin_headers,
-    )
-    assert activated.status_code == 200, activated.text
-
-
-# Create one draft case for a journey and return the parsed response.
-def create_case(
-    client: TestClient,
-    headers: dict[str, str],
-    journey: str,
-    payload: dict[str, object],
-    idempotency_key: str,
-) -> object:
-    return client.post(
-        "/api/v1/cases",
-        json={
-            "product_code": "motor-private-car",
-            "idempotency_key": idempotency_key,
-            "journey": journey,
-            "payload": payload,
-            "document_codes": [],
-        },
-        headers=headers,
-    )
-
-
-# Verify a v5 new-business case never asks for, stores, or reviews claims.
-def test_new_business_v5_excludes_prior_claims_end_to_end() -> None:
+# Verify v5 renewal keeps the prior-claims field, rule, and NCB check.
+def test_renewal_v5_keeps_prior_claims_handling() -> None:
     prior = motor_status()
-    case_id = ""
+    case_ids: list[str] = []
     try:
         settings = Settings(generation_provider="fake")
         with TestClient(create_app(settings)) as client:
             admin = login(client, ADMINISTRATOR)
-            activate_motor_v5(client, admin)
+            activate_motor_version(client, admin, "v5")
             applicant = login(client, APPLICANT)
             underwriter = login(client, UNDERWRITER)
 
             catalog = client.get(
                 "/api/v1/products/catalog",
-                params={"journey": "new_business"},
+                params={"journey": "renewal"},
                 headers=applicant,
             )
             assert catalog.status_code == 200, catalog.text
@@ -128,98 +86,186 @@ def test_new_business_v5_excludes_prior_claims_end_to_end() -> None:
                 if entry["product_code"] == "motor-private-car"
             )
             assert motor["version"] == "v5"
-            assert "prior_claims" not in {
+            assert "prior_claims" in {
                 field["key"] for field in motor["fields"]
             }
 
-            idempotency_key = str(uuid4())
-            stale = create_case(
+            created = create_case_for_journey(
                 client,
                 applicant,
-                "new_business",
-                {**NEW_BUSINESS_PAYLOAD, "prior_claims": 0},
-                idempotency_key,
-            )
-            assert stale.status_code == 422, stale.text
-            assert (
-                stale.json()["error"]["message"]
-                == UNSUPPORTED_FIELD_DETAIL
-            )
-
-            created = create_case(
-                client,
-                applicant,
-                "new_business",
-                NEW_BUSINESS_PAYLOAD,
-                idempotency_key,
+                "renewal",
+                {
+                    **RENEWAL_PAYLOAD,
+                    "prior_claims": 2,
+                    "claimed_ncb_percent": 0,
+                },
+                str(uuid4()),
             )
             assert created.status_code == 200, created.text
             assert created.json()["product_version"] == "v5"
             case_id = created.json()["id"]
+            case_ids.append(case_id)
 
             configuration = client.get(
                 f"/api/v1/cases/{case_id}/configuration", headers=applicant
             )
-            assert configuration.status_code == 200, configuration.text
-            body = configuration.json()
-            assert "prior_claims" not in {
-                field["key"] for field in body["fields"]
+            fields = {
+                field["key"]: field
+                for field in configuration.json()["fields"]
             }
-            assert body["application"] == NEW_BUSINESS_PAYLOAD
-
-            replaced = client.put(
-                f"/api/v1/cases/{case_id}/application",
-                json={
-                    "payload": {
-                        **NEW_BUSINESS_PAYLOAD,
-                        "prior_claims": 1,
-                    },
-                    "document_codes": [],
-                },
-                headers=applicant,
-            )
-            assert replaced.status_code == 422, replaced.text
-            assert (
-                replaced.json()["error"]["message"]
-                == UNSUPPORTED_FIELD_DETAIL
-            )
-            unchanged = client.get(
-                f"/api/v1/cases/{case_id}/configuration", headers=applicant
-            )
-            assert unchanged.json()["application"] == NEW_BUSINESS_PAYLOAD
+            assert fields["prior_claims"]["required"] is True
+            assert fields["prior_claims"]["validation"] == {"minimum": 0}
 
             upload_documents(
-                client, applicant, case_id, NEW_BUSINESS_UPLOADS
+                client,
+                applicant,
+                case_id,
+                [
+                    ("identity_record", text_pdf(IDENTITY_ONLY_LINES)),
+                    (
+                        "vehicle_record",
+                        text_pdf(
+                            RENEWAL_V5_VEHICLE_LINES
+                            + REGISTRATION_CERTIFICATE_LINES
+                        ),
+                    ),
+                    (
+                        "registration_certificate",
+                        text_pdf(REGISTRATION_CERTIFICATE_LINES),
+                    ),
+                    (
+                        "previous_policy",
+                        text_pdf(RENEWAL_V5_POLICY_LINES),
+                    ),
+                ],
             )
             submitted = client.post(
                 f"/api/v1/cases/{case_id}/submit", headers=applicant
             )
             assert submitted.status_code == 200, submitted.text
             assert submitted.json()["status"] == "underwriter_review"
+            assert (
+                submitted.json()["recommendation"]["route"] == "standard"
+            )
 
             reviewed = client.post(
                 f"/api/v1/reviews/{case_id}/start", headers=underwriter
             )
             assert reviewed.status_code == 200, reviewed.text
             review = reviewed.json()
-            assert [
-                fact["field_name"] for fact in review["submitted_facts"]
-            ] == ["vehicle_age", "vehicle_use"]
-            assert [
-                check["check_code"] for check in review["reconciliation"]
-            ] == MOTOR_ASSET_CHECKS
-            assert review["missing_information"] == []
-            assert all(
-                item.get("field_name") != "prior_claims"
-                for item in review["evidence"]
+            facts = {
+                fact["field_name"]: fact["value"]
+                for fact in review["submitted_facts"]
+            }
+            assert facts["prior_claims"] == 2
+            checks = {
+                check["check_code"]: check
+                for check in review["reconciliation"]
+            }
+            assert checks["motor_ncb_match"]["status"] == "CLEARED"
+
+            incomplete = create_case_for_journey(
+                client,
+                applicant,
+                "renewal",
+                {
+                    key: value
+                    for key, value in RENEWAL_PAYLOAD.items()
+                    if key != "prior_claims"
+                },
+                str(uuid4()),
             )
-            event_types = [
-                event_type
-                for _, event_type, _ in read_audit(UUID(case_id))
-            ]
-            assert event_types.count("case_created") == 1
+            assert incomplete.status_code == 200, incomplete.text
+            incomplete_id = incomplete.json()["id"]
+            case_ids.append(incomplete_id)
+
+            refused = client.post(
+                f"/api/v1/cases/{incomplete_id}/submit", headers=applicant
+            )
+            assert refused.status_code == 422, refused.text
+            assert (
+                refused.json()["error"]["message"]
+                == "missing field: prior_claims"
+            )
     finally:
-        if case_id:
+        for case_id in case_ids:
+            remove_case(case_id)
+        set_motor_status("active", "v1")
+        set_motor_status(prior, "v1")
+
+
+# Verify v5 activation leaves an earlier pinned case and its history intact.
+def test_v5_activation_keeps_an_earlier_case_pinned() -> None:
+    prior = motor_status()
+    case_ids: list[str] = []
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            admin = login(client, ADMINISTRATOR)
+            activate_motor_version(client, admin, "v4")
+            applicant = login(client, APPLICANT)
+
+            pinned = create_case_for_journey(
+                client,
+                applicant,
+                "new_business",
+                {
+                    "vehicle_age": 3,
+                    "vehicle_use": "personal",
+                    "prior_claims": 0,
+                },
+                str(uuid4()),
+            )
+            assert pinned.status_code == 200, pinned.text
+            assert pinned.json()["product_version"] == "v4"
+            assert pinned.json()["rulebook_version"] == "v4"
+            pinned_id = pinned.json()["id"]
+            case_ids.append(pinned_id)
+            before = client.get(
+                f"/api/v1/cases/{pinned_id}/configuration", headers=applicant
+            ).json()
+            audit_before = read_audit(UUID(pinned_id))
+
+            imports = product_version_audit("v5")
+            activate_motor_version(client, admin, "v5")
+            activations = product_version_audit("v5")
+
+            after = client.get(
+                f"/api/v1/cases/{pinned_id}/configuration", headers=applicant
+            ).json()
+            replaced = client.put(
+                f"/api/v1/cases/{pinned_id}/application",
+                json={"payload": before["application"], "document_codes": []},
+                headers=applicant,
+            )
+
+            current = create_case_for_journey(
+                client,
+                applicant,
+                "new_business",
+                {"vehicle_age": 4, "vehicle_use": "personal"},
+                str(uuid4()),
+            )
+            assert current.status_code == 200, current.text
+            assert current.json()["product_version"] == "v5"
+            assert current.json()["rulebook_version"] == "v5"
+            current_id = current.json()["id"]
+            case_ids.append(current_id)
+            current_fields = client.get(
+                f"/api/v1/cases/{current_id}/configuration", headers=applicant
+            ).json()["fields"]
+
+        assert after == before
+        assert after["product_version"] == "v4"
+        assert "prior_claims" in {field["key"] for field in after["fields"]}
+        assert read_audit(UUID(pinned_id))[: len(audit_before)] == audit_before
+        assert replaced.status_code == 200, replaced.text
+        assert "prior_claims" not in {field["key"] for field in current_fields}
+        assert len(activations) == len(imports) + 1
+        assert activations[-1] == ("configuration_activated", ADMINISTRATOR[0])
+        assert ("configuration_imported", ADMINISTRATOR[0]) in imports
+    finally:
+        for case_id in case_ids:
             remove_case(case_id)
         set_motor_status("active", "v1")
         set_motor_status(prior, "v1")
@@ -233,7 +279,7 @@ def test_renewal_submission_requires_prior_policy_document() -> None:
         settings = Settings(generation_provider="fake")
         with TestClient(create_app(settings)) as client:
             admin = login(client, ADMINISTRATOR)
-            activate_motor_v4(client, admin)
+            activate_motor_version(client, admin, "v4")
             applicant = login(client, APPLICANT)
             created = client.post(
                 "/api/v1/cases",
@@ -272,7 +318,7 @@ def test_renewal_submission_succeeds_with_prior_policy_document() -> None:
         settings = Settings(generation_provider="fake")
         with TestClient(create_app(settings)) as client:
             admin = login(client, ADMINISTRATOR)
-            activate_motor_v4(client, admin)
+            activate_motor_version(client, admin, "v4")
             applicant = login(client, APPLICANT)
             created = client.post(
                 "/api/v1/cases",
@@ -320,7 +366,7 @@ def test_new_business_configuration_excludes_renewal_only_requirements() -> (
         settings = Settings(generation_provider="fake")
         with TestClient(create_app(settings)) as client:
             admin = login(client, ADMINISTRATOR)
-            activate_motor_v4(client, admin)
+            activate_motor_version(client, admin, "v4")
             applicant = login(client, APPLICANT)
             created = client.post(
                 "/api/v1/cases",

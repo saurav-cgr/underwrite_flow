@@ -180,6 +180,7 @@ from fixtures.case_fixtures import (  # noqa: E402
     clear_recommendation_summary,
     count_handoffs,
     motor_status,
+    product_version_audit,
     read_audit,
     read_decisions,
     remove_case,

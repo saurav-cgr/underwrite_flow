@@ -151,13 +151,13 @@ prior claims, and confirm the field, rule, and reconciliation remain usable.
 
 ### Tests for User Story 2
 
-- [ ] T015 [US2] Test v5 in api/tests/integration/test_journey_workflow.py
+- [X] T015 [US2] Test v5 in api/tests/integration/test_journey_workflow.py
 
   Assert the renewal catalogue and pinned case configuration include
   `prior_claims`; a complete renewal accepts it; the configured standard rule
   and NCB check can consume it; omission still fails when required.
 
-- [ ] T016 [US2] Verify api/tests/integration/test_journey_workflow.py
+- [X] T016 [US2] Verify api/tests/integration/test_journey_workflow.py
 
   Run the focused file and confirm legacy renewal tests and the new `v5`
   scenario pass without changing production behavior beyond Phase 2.
@@ -179,13 +179,13 @@ case omits and rejects prior claims.
 
 ### Tests for User Story 3
 
-- [ ] T017 [US3] Test pinning in api/tests/integration/test_journey_workflow.py
+- [X] T017 [US3] Test pinning in api/tests/integration/test_journey_workflow.py
 
   Assert product and rulebook version identities, unchanged historical case
   behavior, corrected new-case behavior, and append-only import and activation
   audit events with the authenticated administrator actor.
 
-- [ ] T018 [US3] Verify api/tests/integration/test_journey_workflow.py
+- [X] T018 [US3] Verify api/tests/integration/test_journey_workflow.py
 
   Run the focused file and confirm activation does not rewrite the earlier
   submission, configuration, recommendation, or audit history.
