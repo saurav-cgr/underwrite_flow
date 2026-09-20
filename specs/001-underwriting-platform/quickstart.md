@@ -1,4 +1,4 @@
-# Quickstart Validation Guide
+  # Quickstart Validation Guide
 
 This guide validates the completed feature. It does not authorize schema,
 authentication, provider, dependency, or retention changes. Obtain the project
