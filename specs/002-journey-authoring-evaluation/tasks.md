@@ -549,9 +549,18 @@ deterministic, and passing 90/90 with zero development-state leakage.
   `product-import.tsx`, and a new `BuilderSource: "upload"` in
   `product-builder.tsx` that loads the preview as-is (forced to `draft`
   status) instead of blank or clone-and-rename.
-- [ ] T059 Expand normalized change review to include scalar properties,
+- [X] T059 Expand normalized change review to include scalar properties,
   supported journeys, and stable-order changes alongside keyed collection
-  changes per FR-012 and plan: browser change review (partial)
+  changes per FR-012 and plan: browser change review (partial).
+  `semanticDiff` only diffed the five keyed collections and specialist
+  labels; identity scalars (`product_code`, `title`, `family`, `scope`,
+  `description`, `version` — `status` excluded, since a draft's status is
+  always "draft" against an active version's and would show as spurious
+  noise on every diff) and `supported_journeys` were silently invisible.
+  Added `diffScalars` (fixed field order) and `diffJourneys` (set
+  comparison, like the existing label diff, so journey reordering reports
+  no change). `ReviewSection`'s rendering needed no change, it already
+  renders any `{section, kind, key}` entry generically.
 - [ ] T060 Put every evaluation service on an explicitly internal Compose
   network and extend isolation tests to reject internet-routable default
   networking per FR-026 and plan: internal evaluation network (partial)

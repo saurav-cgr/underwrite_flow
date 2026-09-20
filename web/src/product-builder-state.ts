@@ -192,12 +192,55 @@ function diffLabels(
   return entries;
 }
 
+const SCALAR_FIELDS = [
+  "product_code",
+  "title",
+  "family",
+  "scope",
+  "description",
+  "version",
+] as const;
+
+// Diff the plain-text identity scalars in one fixed, stable field order.
+function diffScalars(
+  before: BuilderConfiguration,
+  after: BuilderConfiguration,
+): ConfigurationDiffEntry[] {
+  return SCALAR_FIELDS.filter((key) => before[key] !== after[key]).map(
+    (key) => ({ section: "identity", kind: "changed", key }),
+  );
+}
+
+// Diff the supported-journey set, ignoring order like specialist labels.
+function diffJourneys(
+  before: JourneyType[],
+  after: JourneyType[],
+): ConfigurationDiffEntry[] {
+  const beforeSet = new Set(before);
+  const afterSet = new Set(after);
+  const entries: ConfigurationDiffEntry[] = [];
+  const section = "supported_journeys";
+  for (const journey of afterSet) {
+    if (!beforeSet.has(journey)) {
+      entries.push({ section, kind: "added", key: journey });
+    }
+  }
+  for (const journey of beforeSet) {
+    if (!afterSet.has(journey)) {
+      entries.push({ section, kind: "removed", key: journey });
+    }
+  }
+  return entries;
+}
+
 // Compare two configurations by stable identifier, ignoring section order.
 export function semanticDiff(
   before: BuilderConfiguration,
   after: BuilderConfiguration,
 ): ConfigurationDiffEntry[] {
   return [
+    ...diffScalars(before, after),
+    ...diffJourneys(before.supported_journeys, after.supported_journeys),
     ...diffKeyedSection("fields", before.fields, after.fields, (f) => f.key),
     ...diffKeyedSection(
       "documents",

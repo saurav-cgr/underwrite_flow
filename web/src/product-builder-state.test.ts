@@ -159,4 +159,45 @@ describe("stable semantic diff", () => {
       ]),
     );
   });
+
+  it("reports a changed scalar identity property", () => {
+    const before = completeConfiguration();
+    const after: BuilderConfiguration = { ...before, title: "Renamed" };
+
+    expect(semanticDiff(before, after)).toContainEqual({
+      section: "identity",
+      kind: "changed",
+      key: "title",
+    });
+  });
+
+  it("reports no journey difference when the order changes", () => {
+    const before: BuilderConfiguration = {
+      ...completeConfiguration(),
+      supported_journeys: ["new_business", "renewal"],
+    };
+    const after: BuilderConfiguration = {
+      ...before,
+      supported_journeys: ["renewal", "new_business"],
+    };
+
+    expect(semanticDiff(before, after)).toHaveLength(0);
+  });
+
+  it("reports an added supported journey", () => {
+    const before: BuilderConfiguration = {
+      ...completeConfiguration(),
+      supported_journeys: ["new_business"],
+    };
+    const after: BuilderConfiguration = {
+      ...before,
+      supported_journeys: ["new_business", "renewal"],
+    };
+
+    expect(semanticDiff(before, after)).toContainEqual({
+      section: "supported_journeys",
+      kind: "added",
+      key: "renewal",
+    });
+  });
 });
