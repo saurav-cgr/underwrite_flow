@@ -3,8 +3,8 @@ import { useState } from "react";
 
 import { ApplicantFieldsSection, DocumentsSection } from
   "./product-builder-evidence";
+import { ReconciliationSection } from "./product-builder-reconciliation";
 import {
-  ReconciliationSection,
   RoutingRulesSection,
   SpecialistLabelsSection,
 } from "./product-builder-rules";

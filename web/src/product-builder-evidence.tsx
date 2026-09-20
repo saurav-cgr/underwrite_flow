@@ -7,7 +7,10 @@ import type {
   BuilderDocument,
   BuilderField,
 } from "./product-builder-state";
-import type { DocumentStage } from "./types";
+import type { DocumentStage, JourneyType } from "./types";
+import { AppliesToEditor } from "./product-builder-shared";
+
+const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
 interface SectionProps {
   configuration: BuilderConfiguration;
@@ -34,6 +37,14 @@ export function ApplicantFieldsSection({
   const [type, setType] = useState<BuilderField["type"]>("text");
   const [required, setRequired] = useState(false);
   const [helpText, setHelpText] = useState("");
+  const [options, setOptions] = useState("");
+  const [minimum, setMinimum] = useState("");
+  const [maximum, setMaximum] = useState("");
+  const [appliesTo, setAppliesTo] = useState<JourneyType[]>(
+    configuration.supported_journeys,
+  );
+  const [visibleWhenField, setVisibleWhenField] = useState("");
+  const [visibleWhenValue, setVisibleWhenValue] = useState("");
 
   // Reset the inline add-field form to its empty defaults.
   function resetDraft() {
@@ -42,21 +53,39 @@ export function ApplicantFieldsSection({
     setType("text");
     setRequired(false);
     setHelpText("");
+    setOptions("");
+    setMinimum("");
+    setMaximum("");
+    setAppliesTo(configuration.supported_journeys);
+    setVisibleWhenField("");
+    setVisibleWhenValue("");
     setAdding(false);
   }
 
   // Append the drafted field to the configuration and close the form.
   function saveField() {
-    if (!key.trim() || !label.trim()) return;
+    if (!key.trim() || !label.trim() || appliesTo.length === 0) return;
+    const validation: Record<string, number> = {};
+    if (minimum.trim()) validation.minimum = Number(minimum);
+    if (maximum.trim()) validation.maximum = Number(maximum);
     const field: BuilderField = {
       key: key.trim(),
       label: label.trim(),
       type,
       required,
       help_text: helpText.trim(),
-      validation: {},
-      options: [],
-      applies_to: configuration.supported_journeys,
+      validation,
+      options: type === "enum"
+        ? options.split(",").map((item) => item.trim()).filter(Boolean)
+        : [],
+      applies_to: appliesTo,
+      visible_when: visibleWhenField.trim()
+        ? {
+            field: visibleWhenField.trim(),
+            operator: "equals",
+            value: visibleWhenValue.trim(),
+          }
+        : undefined,
     };
     onChange({ ...configuration, fields: [...configuration.fields, field] });
     resetDraft();
@@ -138,6 +167,54 @@ export function ApplicantFieldsSection({
               value={helpText}
             />
           </label>
+          {type === "enum" ? (
+            <label className="field">
+              Options (comma separated)
+              <input
+                onChange={(event) => setOptions(event.target.value)}
+                value={options}
+              />
+            </label>
+          ) : null}
+          {type === "integer" || type === "number" ? (
+            <>
+              <label className="field">
+                Minimum
+                <input
+                  onChange={(event) => setMinimum(event.target.value)}
+                  type="number"
+                  value={minimum}
+                />
+              </label>
+              <label className="field">
+                Maximum
+                <input
+                  onChange={(event) => setMaximum(event.target.value)}
+                  type="number"
+                  value={maximum}
+                />
+              </label>
+            </>
+          ) : null}
+          <AppliesToEditor
+            appliesTo={appliesTo}
+            onChange={setAppliesTo}
+            supported={configuration.supported_journeys}
+          />
+          <label className="field">
+            Only show when field
+            <input
+              onChange={(event) => setVisibleWhenField(event.target.value)}
+              value={visibleWhenField}
+            />
+          </label>
+          <label className="field">
+            equals value
+            <input
+              onChange={(event) => setVisibleWhenValue(event.target.value)}
+              value={visibleWhenValue}
+            />
+          </label>
           <Button onClick={saveField}>Save field</Button>
         </div>
       ) : (
@@ -157,25 +234,49 @@ export function DocumentsSection({ configuration, onChange }: SectionProps) {
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [stage, setStage] = useState<DocumentStage>("supporting");
+  const [acceptedTypes, setAcceptedTypes] = useState<string[]>([
+    "application/pdf",
+  ]);
+  const [appliesTo, setAppliesTo] = useState<JourneyType[]>(
+    configuration.supported_journeys,
+  );
 
   // Reset the inline add-document form to its empty defaults.
   function resetDraft() {
     setCode("");
     setTitle("");
     setStage("supporting");
+    setAcceptedTypes(["application/pdf"]);
+    setAppliesTo(configuration.supported_journeys);
     setAdding(false);
+  }
+
+  // Toggle one accepted content type in the drafted document's type set.
+  function toggleType(type: string) {
+    setAcceptedTypes(
+      acceptedTypes.includes(type)
+        ? acceptedTypes.filter((item) => item !== type)
+        : [...acceptedTypes, type],
+    );
   }
 
   // Append the drafted document requirement and close the form.
   function saveDocument() {
-    if (!code.trim() || !title.trim()) return;
+    if (
+      !code.trim()
+      || !title.trim()
+      || acceptedTypes.length === 0
+      || appliesTo.length === 0
+    ) {
+      return;
+    }
     const document: BuilderDocument = {
       code: code.trim(),
       title: title.trim(),
       requirement: "required",
-      accepted_types: ["application/pdf"],
+      accepted_types: acceptedTypes,
       stage,
-      applies_to: configuration.supported_journeys,
+      applies_to: appliesTo,
     };
     onChange({
       ...configuration,
@@ -247,6 +348,24 @@ export function DocumentsSection({ configuration, onChange }: SectionProps) {
               ))}
             </select>
           </label>
+          <fieldset className="field">
+            <legend>Accepted types</legend>
+            {ACCEPTED_TYPES.map((type) => (
+              <label className="field-inline" key={type}>
+                <input
+                  checked={acceptedTypes.includes(type)}
+                  onChange={() => toggleType(type)}
+                  type="checkbox"
+                />
+                {type}
+              </label>
+            ))}
+          </fieldset>
+          <AppliesToEditor
+            appliesTo={appliesTo}
+            onChange={setAppliesTo}
+            supported={configuration.supported_journeys}
+          />
           <Button onClick={saveDocument}>Save document</Button>
         </div>
       ) : (

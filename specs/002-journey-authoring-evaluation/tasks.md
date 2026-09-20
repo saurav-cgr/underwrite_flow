@@ -518,11 +518,25 @@ deterministic, and passing 90/90 with zero development-state leakage.
   (`CONFIGURATION_KEYS`). New tests: a contract assertion that `/configuration`
   echoes the replaced draft, a reload scenario proving the prior-policy gate
   clears once the form is done, and a direct `ApplicationForm` prefill test.
-- [ ] T057 Complete the guided field, document, routing-rule, and
+- [X] T057 Complete the guided field, document, routing-rule, and
   reconciliation editors so administrators can author validation, options,
   conditions, journey applicability, accepted types, operators, specialist
   labels, two-source checks, and supported check parameters per FR-012 and
-  SC-003 (partial)
+  SC-003 (partial). All typed serialization (`validation`, `options`,
+  `visible_when`, `accepted_types`, `condition`, `required_for`,
+  `specialist_label`, `parameters`) already existed in
+  `product-builder-state.ts`; only the guided forms lacked controls for it.
+  Added: field validation (min/max) and enum options; per-field/document/
+  rule/check journey `applies_to` override via a shared `AppliesToEditor`
+  (`product-builder-shared.tsx`); field `visible_when` condition; document
+  `accepted_types` checkboxes; routing-rule operator picker
+  (`equals`/`greater_than`) and a `specialist_label` select (required and
+  wired only when route is `specialist`); reconciliation two-source inputs
+  (`asset_match`'s two-document form vs. `ncb_match`/`policy_lapse`'s
+  application-plus-document form) and kind-specific `parameters` editors
+  (NCB tiers/claim fields, lapse gap/boundary). `ReconciliationSection`
+  moved to its own `product-builder-reconciliation.tsx` to stay under the
+  400-line limit.
 - [ ] T058 Let uploaded expert configuration preview hydrate the same editable
   browser configuration object used by blank and clone flows before immutable
   draft import per FR-011 and plan: one builder object (partial)

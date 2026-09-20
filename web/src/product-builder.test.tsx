@@ -193,6 +193,145 @@ describe("import", () => {
   });
 });
 
+describe("guided editors", () => {
+  it(
+    "captures field options, operators, a specialist label, and a "
+      + "two-document reconciliation check",
+    async () => {
+      vi.mocked(importProductConfiguration).mockResolvedValue({
+        product_code: "motor-builder-demo",
+        version: "v1",
+        status: "draft",
+      });
+      render(
+        <ProductBuilder
+          family="motor"
+          onImported={vi.fn()}
+          onStatus={vi.fn()}
+          source="blank"
+          token="session"
+        />,
+      );
+      const user = userEvent.setup();
+
+      await fillIdentity(user);
+
+      await goToSection(user, "Applicant fields");
+      await user.click(screen.getByRole("button", { name: "Add field" }));
+      await user.type(screen.getByLabelText("Field key"), "coverage_tier");
+      await user.type(screen.getByLabelText("Field label"), "Coverage tier");
+      await user.selectOptions(
+        screen.getByLabelText("Field type"),
+        "enum",
+      );
+      await user.type(
+        screen.getByLabelText("Options (comma separated)"),
+        "basic, standard",
+      );
+      await user.click(screen.getByLabelText("Renewal"));
+      await user.click(screen.getByRole("button", { name: "Save field" }));
+
+      await goToSection(user, "Documents");
+      await user.click(screen.getByRole("button", { name: "Add document" }));
+      await user.type(
+        screen.getByLabelText("Document code"),
+        "identity_record",
+      );
+      await user.type(
+        screen.getByLabelText("Document title"),
+        "Synthetic identity record",
+      );
+      await user.click(screen.getByLabelText("image/jpeg"));
+      await user.click(screen.getByRole("button", { name: "Save document" }));
+
+      await goToSection(user, "Specialist labels");
+      await addLabel(user);
+
+      await goToSection(user, "Routing rules");
+      await user.click(
+        screen.getByRole("button", { name: "Add routing rule" }),
+      );
+      await user.type(
+        screen.getByLabelText("Rule code"),
+        "specialist_review",
+      );
+      await user.selectOptions(screen.getByLabelText("Operator"), "equals");
+      await user.selectOptions(screen.getByLabelText("Route"), "specialist");
+      await user.selectOptions(
+        screen.getByLabelText("Specialist label"),
+        "motor inspection",
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Save routing rule" }),
+      );
+
+      await goToSection(user, "Reconciliation");
+      await user.click(
+        screen.getByRole("button", { name: "Add reconciliation" }),
+      );
+      await user.type(
+        screen.getByLabelText("Reconciliation code"),
+        "motor_chassis_match",
+      );
+      await user.selectOptions(screen.getByLabelText("Kind"), "asset_match");
+      await user.type(
+        screen.getByLabelText("Document 1 code"),
+        "vehicle_record",
+      );
+      await user.type(
+        screen.getByLabelText("Document 1 field"),
+        "chassis_number",
+      );
+      await user.type(
+        screen.getByLabelText("Document 2 code"),
+        "registration_certificate",
+      );
+      await user.type(
+        screen.getByLabelText("Document 2 field"),
+        "chassis_number",
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Save reconciliation" }),
+      );
+
+      await goToSection(user, "Review");
+      await user.click(await screen.findByRole("button", { name: "Import" }));
+
+      await waitFor(() =>
+        expect(importProductConfiguration).toHaveBeenCalledTimes(1),
+      );
+      const [, sentText] =
+        vi.mocked(importProductConfiguration).mock.calls[0];
+      const sent = JSON.parse(sentText);
+
+      const field = sent.fields.find(
+        (item: { key: string }) => item.key === "coverage_tier",
+      );
+      expect(field.options).toEqual(["basic", "standard"]);
+      expect(field.applies_to).toEqual(["new_business"]);
+
+      const document = sent.documents.find(
+        (item: { code: string }) => item.code === "identity_record",
+      );
+      expect(document.accepted_types).toContain("image/jpeg");
+
+      const rule = sent.routing_rules.find(
+        (item: { code: string }) => item.code === "specialist_review",
+      );
+      expect(rule.condition.operator).toBe("equals");
+      expect(rule.specialist_label).toBe("motor inspection");
+
+      const check = sent.reconciliations.find(
+        (item: { code: string }) => item.code === "motor_chassis_match",
+      );
+      expect(check.inputs).toEqual({
+        vehicle_record: "chassis_number",
+        registration_certificate: "chassis_number",
+      });
+    },
+  );
+});
+
 describe("non-color diff against the active configuration", () => {
   it("marks an added field with text, not color alone", async () => {
     const active: BuilderConfiguration = {

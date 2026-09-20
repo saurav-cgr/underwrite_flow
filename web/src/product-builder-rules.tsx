@@ -1,14 +1,15 @@
-// Routing-rule, reconciliation, and specialist-label editors.
+// Routing-rule and specialist-label editors.
 import { useState } from "react";
 
 import { Button } from "./components";
 import type {
   BuilderConfiguration,
-  BuilderReconciliation,
+  BuilderCondition,
   BuilderRoute,
   BuilderRoutingRule,
 } from "./product-builder-state";
-import type { ReconciliationKind } from "./types";
+import { AppliesToEditor } from "./product-builder-shared";
+import type { JourneyType } from "./types";
 
 interface SectionProps {
   configuration: BuilderConfiguration;
@@ -23,6 +24,8 @@ const ROUTES: BuilderRoute[] = [
   "manual",
 ];
 
+const OPERATORS: BuilderCondition["operator"][] = ["equals", "greater_than"];
+
 // Parse a routing-rule comparison value as a number when it looks numeric.
 function parseComparisonValue(raw: string): string | number {
   if (raw.trim() === "") return raw;
@@ -35,30 +38,42 @@ export function RoutingRulesSection({ configuration, onChange }: SectionProps) {
   const [adding, setAdding] = useState(false);
   const [code, setCode] = useState("");
   const [conditionField, setConditionField] = useState("");
+  const [operator, setOperator] =
+    useState<BuilderCondition["operator"]>("greater_than");
   const [value, setValue] = useState("");
   const [route, setRoute] = useState<BuilderRoute>("standard");
+  const [specialistLabel, setSpecialistLabel] = useState("");
+  const [appliesTo, setAppliesTo] = useState<JourneyType[]>(
+    configuration.supported_journeys,
+  );
 
   // Reset the inline add-rule form to its empty defaults.
   function resetDraft() {
     setCode("");
     setConditionField("");
+    setOperator("greater_than");
     setValue("");
     setRoute("standard");
+    setSpecialistLabel("");
+    setAppliesTo(configuration.supported_journeys);
     setAdding(false);
   }
 
   // Append the drafted routing rule and close the form.
   function saveRule() {
-    if (!code.trim()) return;
+    if (!code.trim() || appliesTo.length === 0) return;
+    if (route === "specialist" && !specialistLabel.trim()) return;
     const rule: BuilderRoutingRule = {
       code: code.trim(),
       condition: {
         field: conditionField.trim() || configuration.fields[0]?.key || "",
-        operator: "greater_than",
+        operator,
         value: parseComparisonValue(value),
       },
       route,
-      applies_to: configuration.supported_journeys,
+      specialist_label:
+        route === "specialist" ? specialistLabel.trim() : undefined,
+      applies_to: appliesTo,
     };
     onChange({
       ...configuration,
@@ -113,6 +128,21 @@ export function RoutingRulesSection({ configuration, onChange }: SectionProps) {
             />
           </label>
           <label className="field">
+            Operator
+            <select
+              onChange={(event) =>
+                setOperator(event.target.value as BuilderCondition["operator"])
+              }
+              value={operator}
+            >
+              {OPERATORS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
             Comparison value
             <input
               onChange={(event) => setValue(event.target.value)}
@@ -134,133 +164,32 @@ export function RoutingRulesSection({ configuration, onChange }: SectionProps) {
               ))}
             </select>
           </label>
+          {route === "specialist" ? (
+            <label className="field">
+              Specialist label
+              <select
+                onChange={(event) => setSpecialistLabel(event.target.value)}
+                value={specialistLabel}
+              >
+                <option value="">Select a specialist label</option>
+                {configuration.specialist_labels.map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <AppliesToEditor
+            appliesTo={appliesTo}
+            onChange={setAppliesTo}
+            supported={configuration.supported_journeys}
+          />
           <Button onClick={saveRule}>Save routing rule</Button>
         </div>
       ) : (
         <Button onClick={() => setAdding(true)} variant="secondary">
           Add routing rule
-        </Button>
-      )}
-    </section>
-  );
-}
-
-const RECONCILIATION_KINDS: ReconciliationKind[] = [
-  "ncb_match",
-  "asset_match",
-  "policy_lapse",
-];
-
-// Add or remove cross-document reconciliation checks for this product.
-export function ReconciliationSection({
-  configuration,
-  onChange,
-}: SectionProps) {
-  const [adding, setAdding] = useState(false);
-  const [code, setCode] = useState("");
-  const [kind, setKind] = useState<ReconciliationKind>("ncb_match");
-  const [source, setSource] = useState("");
-  const [target, setTarget] = useState("");
-
-  // Reset the inline add-check form to its empty defaults.
-  function resetDraft() {
-    setCode("");
-    setKind("ncb_match");
-    setSource("");
-    setTarget("");
-    setAdding(false);
-  }
-
-  // Append the drafted reconciliation check and close the form.
-  function saveCheck() {
-    if (!code.trim()) return;
-    const check: BuilderReconciliation = {
-      code: code.trim(),
-      kind,
-      inputs: source.trim() && target.trim()
-        ? { [source.trim()]: target.trim() }
-        : {},
-      applies_to: configuration.supported_journeys,
-    };
-    onChange({
-      ...configuration,
-      reconciliations: [...configuration.reconciliations, check],
-    });
-    resetDraft();
-  }
-
-  // Remove one reconciliation check by its stable code.
-  function removeCheck(checkCode: string) {
-    onChange({
-      ...configuration,
-      reconciliations: configuration.reconciliations.filter(
-        (check) => check.code !== checkCode,
-      ),
-    });
-  }
-
-  return (
-    <section aria-labelledby="section-reconciliation">
-      <h2 id="section-reconciliation">Reconciliation</h2>
-      {configuration.reconciliations.length === 0 ? (
-        <p className="muted">No reconciliation checks yet.</p>
-      ) : (
-        <ul aria-label="Reconciliation checks" className="mini-list">
-          {configuration.reconciliations.map((check) => (
-            <li key={check.code}>
-              <span>
-                {check.code} ({check.kind})
-              </span>
-              <Button onClick={() => removeCheck(check.code)} variant="quiet">
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {adding ? (
-        <div className="inline-form">
-          <label className="field">
-            Reconciliation code
-            <input
-              onChange={(event) => setCode(event.target.value)}
-              value={code}
-            />
-          </label>
-          <label className="field">
-            Kind
-            <select
-              onChange={(event) =>
-                setKind(event.target.value as ReconciliationKind)
-              }
-              value={kind}
-            >
-              {RECONCILIATION_KINDS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            Source field
-            <input
-              onChange={(event) => setSource(event.target.value)}
-              value={source}
-            />
-          </label>
-          <label className="field">
-            Compared field
-            <input
-              onChange={(event) => setTarget(event.target.value)}
-              value={target}
-            />
-          </label>
-          <Button onClick={saveCheck}>Save reconciliation</Button>
-        </div>
-      ) : (
-        <Button onClick={() => setAdding(true)} variant="secondary">
-          Add reconciliation
         </Button>
       )}
     </section>
