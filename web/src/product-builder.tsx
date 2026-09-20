@@ -19,7 +19,7 @@ import type {
 } from "./product-builder-state";
 import type { JourneyType } from "./types";
 
-export type BuilderSource = "blank" | "clone";
+export type BuilderSource = "blank" | "clone" | "upload";
 
 const SECTIONS = [
   "Identity",
@@ -61,7 +61,9 @@ function IdentitySection({
           ? `Cloned from ${activeConfiguration.product_code} `
             + `${activeConfiguration.version}. Family: `
             + `${configuration.family}.`
-          : `New ${configuration.family} product.`}
+          : source === "upload"
+            ? `Loaded from uploaded YAML. Family: ${configuration.family}.`
+            : `New ${configuration.family} product.`}
       </p>
       <label className="field">
         Product code
@@ -153,6 +155,9 @@ function initialConfiguration(
 ): BuilderConfiguration {
   if (source === "clone" && activeConfiguration) {
     return cloneForNewVersion(activeConfiguration, activeConfiguration.version);
+  }
+  if (source === "upload" && activeConfiguration) {
+    return { ...activeConfiguration, status: "draft" };
   }
   return blankConfiguration(family);
 }

@@ -27,6 +27,11 @@ type BuilderRequest =
       source: "clone";
       family: ProductFamily;
       activeConfiguration: BuilderConfiguration;
+    }
+  | {
+      source: "upload";
+      family: ProductFamily;
+      activeConfiguration: BuilderConfiguration;
     };
 
 const FAMILIES: { value: ProductFamily; label: string }[] = [
@@ -127,6 +132,15 @@ export function ProductConfiguration({ token }: { token: string }) {
           : "The active configuration could not be loaded.",
       );
     }
+  }
+
+  // Open the guided builder pre-filled from an uploaded YAML's preview.
+  function startUploadBuilder(configuration: BuilderConfiguration) {
+    setBuilder({
+      source: "upload",
+      family: configuration.family,
+      activeConfiguration: configuration,
+    });
   }
 
   // Close the guided builder once its draft has imported or been cancelled.
@@ -345,6 +359,7 @@ export function ProductConfiguration({ token }: { token: string }) {
         </Panel>
       ) : null}
       <ProductImport
+        onHydrate={startUploadBuilder}
         onImported={handleImported}
         onStatus={reportStatus}
         token={token}

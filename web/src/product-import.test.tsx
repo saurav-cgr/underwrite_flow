@@ -25,7 +25,7 @@ import {
 } from "./api";
 import { ProductImport } from "./product-import";
 import "./test-setup";
-import type { ProductConfigurationPreview } from "./types";
+import type { BuilderConfigurationPreview } from "./product-builder-state";
 
 const validateMock = vi.mocked(validateProductConfiguration);
 const previewMock = vi.mocked(previewProductConfiguration);
@@ -37,10 +37,18 @@ const VALIDATED = {
   status: "draft",
 };
 
-const PREVIEW: ProductConfigurationPreview = {
+const PREVIEW: BuilderConfigurationPreview = {
   product_code: "motor-private-car",
+  title: "Fictional Private-Car Motor",
+  family: "motor",
+  scope: "Fictional demonstration only",
+  description: "Synthetic demonstration product",
   version: "v2",
   status: "draft",
+  fields: [],
+  documents: [],
+  routing_rules: [],
+  supported_journeys: ["new_business"],
   field_count: 3,
   document_count: 5,
   routing_rule_count: 7,
@@ -53,6 +61,7 @@ const PREVIEW: ProductConfigurationPreview = {
         application: "claimed_ncb_percent",
         previous_policy: "ncb_percent",
       },
+      applies_to: ["renewal"],
     },
   ],
   specialist_labels: ["motor inspection"],
@@ -61,15 +70,17 @@ const PREVIEW: ProductConfigurationPreview = {
 // Render the import panel with synthetic status reporting.
 function renderPanel() {
   const onImported = vi.fn().mockResolvedValue(undefined);
+  const onHydrate = vi.fn();
   const onStatus = vi.fn();
   render(
     <ProductImport
+      onHydrate={onHydrate}
       onImported={onImported}
       onStatus={onStatus}
       token="session"
     />,
   );
-  return { onImported, onStatus };
+  return { onHydrate, onImported, onStatus };
 }
 
 // Locate the YAML field the administrator pastes into.
@@ -189,6 +200,20 @@ describe("product import panel", () => {
         "No reconciliation checks are configured for this version.",
       ),
     ).toBeTruthy();
+  });
+
+  it("hydrates the guided builder from the current preview", async () => {
+    previewMock.mockResolvedValue(PREVIEW);
+    const { onHydrate } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.type(yamlField(), "product_code: motor-private-car");
+    await user.click(screen.getByRole("button", { name: "Preview" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Edit in guided builder" }),
+    );
+
+    expect(onHydrate).toHaveBeenCalledWith(PREVIEW);
   });
 
   it("imports a draft and hands the product code upward", async () => {

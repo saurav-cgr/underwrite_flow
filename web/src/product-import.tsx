@@ -7,12 +7,9 @@ import {
   validateProductConfiguration,
 } from "./api";
 import { Button, EmptyState, Panel } from "./components";
+import type { BuilderConfigurationPreview } from "./product-builder-state";
 import { yamlHash } from "./ui-state";
-import type {
-  ProductConfigurationPreview,
-  ReconciliationDefinition,
-  ReconciliationKind,
-} from "./types";
+import type { ReconciliationDefinition, ReconciliationKind } from "./types";
 
 // Administrator-readable names for the fixed reconciliation kinds.
 const KIND_LABELS: Record<ReconciliationKind, string> = {
@@ -62,14 +59,16 @@ function ReconciliationList({
 export function ProductImport({
   token,
   onImported,
+  onHydrate,
   onStatus,
 }: {
   token: string;
   onImported: (productCode: string) => Promise<void>;
+  onHydrate: (configuration: BuilderConfigurationPreview) => void;
   onStatus: (next: { message?: string; notice?: string }) => void;
 }) {
   const [yamlText, setYamlText] = useState("");
-  const [preview, setPreview] = useState<ProductConfigurationPreview | null>(
+  const [preview, setPreview] = useState<BuilderConfigurationPreview | null>(
     null,
   );
   const [previewHash, setPreviewHash] = useState<string | null>(null);
@@ -240,6 +239,12 @@ export function ProductImport({
               </div>
             </div>
             <ReconciliationList checks={preview.reconciliations} />
+            <Button
+              onClick={() => onHydrate(preview)}
+              variant="secondary"
+            >
+              Edit in guided builder
+            </Button>
           </>
         ) : (
           <EmptyState

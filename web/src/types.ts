@@ -135,18 +135,6 @@ export interface ReconciliationDefinition {
   inputs: Record<string, string>;
 }
 
-export interface ProductConfigurationPreview {
-  product_code: string;
-  version: string;
-  status: string;
-  field_count: number;
-  document_count: number;
-  routing_rule_count: number;
-  reconciliation_count: number;
-  reconciliations: ReconciliationDefinition[];
-  specialist_labels: string[];
-}
-
 export interface ProductConfigurationChange {
   product_code: string;
   version: string;

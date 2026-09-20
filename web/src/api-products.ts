@@ -4,11 +4,13 @@ import type {
   ProductCatalogItem,
   ProductConfigurationChange,
   ProductConfigurationItem,
-  ProductConfigurationPreview,
   ProductVersionHistoryItem,
   ReferenceDocument,
 } from "./types";
-import type { BuilderConfiguration } from "./product-builder-state";
+import type {
+  BuilderConfiguration,
+  BuilderConfigurationPreview,
+} from "./product-builder-state";
 import { request, requestBlob } from "./api-core";
 
 // Load active product fields from the backend-owned catalog, optionally
@@ -48,11 +50,11 @@ export async function validateProductConfiguration(
   });
 }
 
-// Preview normalized configuration counts without changing persisted products.
+// Preview one YAML's normalized configuration and counts, unpersisted.
 export async function previewProductConfiguration(
   token: string,
   yamlText: string,
-): Promise<ProductConfigurationPreview> {
+): Promise<BuilderConfigurationPreview> {
   return request("/products/preview", token, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -537,9 +537,18 @@ deterministic, and passing 90/90 with zero development-state leakage.
   (NCB tiers/claim fields, lapse gap/boundary). `ReconciliationSection`
   moved to its own `product-builder-reconciliation.tsx` to stay under the
   400-line limit.
-- [ ] T058 Let uploaded expert configuration preview hydrate the same editable
+- [X] T058 Let uploaded expert configuration preview hydrate the same editable
   browser configuration object used by blank and clone flows before immutable
-  draft import per FR-011 and plan: one builder object (partial)
+  draft import per FR-011 and plan: one builder object (partial). Found the
+  backend's `/products/preview` already returned the full normalized
+  configuration (a comment in `service.py` said so: "the normalized fields
+  feed the guided builder") but the frontend's `ProductConfigurationPreview`
+  type only declared the summary counts, so nothing used it. Moved/widened it
+  to `BuilderConfigurationPreview` (extends `BuilderConfiguration`) in
+  `product-builder-state.ts`, added an "Edit in guided builder" action to
+  `product-import.tsx`, and a new `BuilderSource: "upload"` in
+  `product-builder.tsx` that loads the preview as-is (forced to `draft`
+  status) instead of blank or clone-and-rename.
 - [ ] T059 Expand normalized change review to include scalar properties,
   supported journeys, and stable-order changes alongside keyed collection
   changes per FR-012 and plan: browser change review (partial)

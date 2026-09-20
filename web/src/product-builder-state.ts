@@ -75,6 +75,16 @@ export interface BuilderConfiguration {
   supported_journeys: JourneyType[];
 }
 
+// The normalized configuration previewed from uploaded expert YAML, plus
+// summary counts. The full shape matches BuilderConfiguration so a preview
+// can hydrate the guided builder for further editing before import.
+export interface BuilderConfigurationPreview extends BuilderConfiguration {
+  field_count: number;
+  document_count: number;
+  routing_rule_count: number;
+  reconciliation_count: number;
+}
+
 // Build an empty configuration pinned to the chosen family.
 export function blankConfiguration(
   family: ProductFamily,
