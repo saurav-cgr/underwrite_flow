@@ -365,10 +365,15 @@ idempotent completion, and unchanged development rows/files.
   (`underwriteflow_postgres_data`, `underwriteflow_uploads_data`,
   `underwriteflow_web_node_modules`) unchanged; zero
   `underwriteflow-evaluation*` containers left after either run.
-- [ ] T052 [US3] Report US3 files, commands, artifact hashes, remaining risks,
+- [X] T052 [US3] Report US3 files, commands, artifact hashes, remaining risks,
   and proposed commit using
   `specs/002-journey-authoring-evaluation/quickstart.md`; wait for
-  `continue`.
+  `continue`. Reported in-session; latest `make evaluate-e2e` result:
+  `passed=true`, `dataset_sha256=2c02af0e...bc99ce`, `case_count=90`,
+  `reviewed_count=15`, `completed_count=15`.
+
+**Checkpoint (2026-09-20)**: US3 complete. Full evaluation stack isolated,
+deterministic, and passing 90/90 with zero development-state leakage.
 
 **Checkpoint**: US3 works independently. All planned product gaps are closed.
 
