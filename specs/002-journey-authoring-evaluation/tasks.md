@@ -681,9 +681,15 @@ deterministic, and passing 90/90 with zero development-state leakage.
   ` ` byte instead of the intended escape, corrupting the file to
   binary; caught it because `grep` on the file returned nothing, rewrote the
   separator as `"|"`.
-- [ ] T069 Add immutable journey identity to `document_removed` and
+- [X] T069 Add immutable journey identity to `document_removed` and
   `document_file_orphaned` audit details and cover both event contracts per
-  FR-008 and T062 (partial)
+  FR-008 and T062 (partial). Both events built their detail dict without
+  `journey`, the one gap T062 left in `cases/service.py::remove_document`.
+  Added `"journey": case.journey_type` to both. Covered `document_removed`
+  through the real API/DB integration test (asserts
+  `details ->> 'journey'`) and `document_file_orphaned` through the existing
+  `FailingStorage` unit test, since triggering a real storage failure
+  end-to-end isn't worth the added fixture weight.
 - [ ] T070 Shorten the isolated evaluation-only database identifiers or use
   another valid YAML representation so every hand-written line in
   `compose.evaluation.yaml` stays at or below 80 columns per T064 and project

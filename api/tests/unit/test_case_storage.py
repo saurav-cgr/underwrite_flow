@@ -260,7 +260,7 @@ async def test_remove_document_records_orphan_when_file_removal_fails() -> None:
         byte_size=32,
         page_count=1,
     )
-    case = Case(id=case_id, status="needs_information")
+    case = Case(id=case_id, status="needs_information", journey_type="renewal")
     session = StubSession(document)
     service = CaseService(FailingStorage(), AuditRepository())
 
@@ -271,3 +271,6 @@ async def test_remove_document_records_orphan_when_file_removal_fails() -> None:
         "document_removed",
         "document_file_orphaned",
     ]
+    assert all(
+        event.details["journey"] == "renewal" for event in session.added
+    )

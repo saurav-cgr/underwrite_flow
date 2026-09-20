@@ -122,13 +122,16 @@ def test_case_intake_is_idempotent_and_stores_safe_document_metadata() -> None:
                 with connection.cursor() as cursor:
                     cursor.execute(
                         """
-                        SELECT event_type
+                        SELECT event_type, details ->> 'journey'
                         FROM audit_events
                         WHERE case_id = %s AND event_type = %s
                         """,
                         (created.json()["id"], "document_removed"),
                     )
-                    assert cursor.fetchone() == ("document_removed",)
+                    assert cursor.fetchone() == (
+                        "document_removed",
+                        "new_business",
+                    )
 
             replacement = client.post(
                 f"/api/v1/cases/{created.json()['id']}/documents",

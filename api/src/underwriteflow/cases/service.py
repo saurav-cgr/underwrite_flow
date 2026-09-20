@@ -261,6 +261,7 @@ class CaseService:
                 {
                     "document_id": str(document_id),
                     "content_hash": content_hash,
+                    "journey": case.journey_type,
                 },
                 case_id=case.id,
                 actor_user_id=actor_user_id,
@@ -280,6 +281,7 @@ class CaseService:
                     {
                         "document_id": str(document_id),
                         "storage_key": storage_key,
+                        "journey": case.journey_type,
                     },
                     case_id=case.id,
                     actor_user_id=actor_user_id,
