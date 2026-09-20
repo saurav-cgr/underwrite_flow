@@ -354,9 +354,17 @@ idempotent completion, and unchanged development rows/files.
   `.github/workflows/` existed): checkout, `make evaluate-e2e`, then
   `actions/upload-artifact` with `if: always()` so the result is kept
   whether the run passes or fails.
-- [ ] T051 [US3] Run `make evaluate-e2e` twice and compare deterministic
+- [X] T051 [US3] Run `make evaluate-e2e` twice and compare deterministic
   fields per `specs/002-journey-authoring-evaluation/contracts/evaluation.md`;
   verify development rows, files, containers, and volumes remain unchanged.
+  Fixed the target itself first: added the leading `down --remove-orphans`
+  the contract requires as step 1 (was previously only tearing down after).
+  Both runs exit 0 with every deterministic field identical (all but
+  `elapsed_seconds`, which the contract excludes). Dev `cases` (1456) and
+  `product_versions` (9) row counts unchanged before/after; dev volumes
+  (`underwriteflow_postgres_data`, `underwriteflow_uploads_data`,
+  `underwriteflow_web_node_modules`) unchanged; zero
+  `underwriteflow-evaluation*` containers left after either run.
 - [ ] T052 [US3] Report US3 files, commands, artifact hashes, remaining risks,
   and proposed commit using
   `specs/002-journey-authoring-evaluation/quickstart.md`; wait for

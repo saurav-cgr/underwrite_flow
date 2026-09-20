@@ -18,6 +18,7 @@ probe:
 		python /app/scripts/pilot_load_probe.py
 
 evaluate-e2e:
+	docker compose -f compose.evaluation.yaml down --remove-orphans
 	docker compose -f compose.evaluation.yaml up -d --build evaluation-api
 	docker compose -f compose.evaluation.yaml run --rm evaluation-runner; \
 		code=$$?; \
