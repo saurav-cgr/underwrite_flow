@@ -27,9 +27,17 @@ from underwriteflow.evaluation.dataset import (  # noqa: E402
     load_dataset,
 )
 
+from evaluate_failures import EvaluationFailure, sanitized_failure  # noqa: E402
+from evaluate_review import (  # noqa: E402
+    representative_cases,
+    review_and_complete,
+    specialist_label_for,
+    verify_queue_and_audit,
+)
+from synthetic_pdf import document_types, document_upload  # noqa: E402
+
 DEFAULT_BASE_URL = "http://evaluation-api:8000/api/v1"
 RESULT_PATH = Path("/app/evaluation/results/e2e.json")
-REVIEWABLE_ROUTES = {"expedited", "standard", "specialist"}
 
 DEMO_ACCOUNTS = {
     "administrator": (
@@ -42,20 +50,6 @@ DEMO_ACCOUNTS = {
         "underwriteflow-demo-underwriter",
     ),
 }
-
-
-class EvaluationFailure(Exception):
-    """One case-level failure, carrying only its safe result-artifact shape."""
-
-    # Record the sanitized failure a caller reports instead of raising raw.
-    def __init__(self, case_id: str, stage: str, code: str) -> None:
-        super().__init__(f"{case_id}:{stage}:{code}")
-        self.detail = sanitized_failure(case_id, stage, code)
-
-
-# Build the safe failure record the result artifact stores for one case.
-def sanitized_failure(case_id: str, stage: str, code: str) -> dict[str, str]:
-    return {"case_id": case_id, "stage": stage, "code": code}
 
 
 # Write JSON atomically, so a reader never observes a partial file.
@@ -121,43 +115,35 @@ def preflight(
             )
 
 
-# Activate every exact version the dataset needs and record its content hash.
-def activate_versions(
+# Activate one exact version for one product and record its content hash.
+# Only one version can be active per product at a time, so this is called
+# per group instead of once for the whole dataset up front.
+def activate_version(
     client: httpx.Client,
     admin: dict[str, str],
-    records: list[dict[str, Any]],
-) -> dict[str, dict[str, str]]:
-    activated: dict[str, dict[str, str]] = {}
-    seen: set[tuple[str, str]] = set()
-    for record in records:
-        key = (record["product_code"], record["configuration_version"])
-        if key in seen:
-            continue
-        seen.add(key)
-        product_code, version = key
-        response = client.post(
-            f"/products/{product_code}/activate",
-            json={"version": version},
-            headers=admin,
-        )
-        if response.status_code != 200:
-            raise EvaluationFailure(product_code, "activate", "http_error")
-        history = client.get(f"/products/{product_code}/history", headers=admin)
-        history.raise_for_status()
-        entry = next(
-            item for item in history.json() if item["version"] == version
-        )
-        activated[product_code] = {
-            "version": entry["version"],
-            "content_hash": entry["content_hash"],
-        }
-    return activated
+    product_code: str,
+    version: str,
+) -> dict[str, str]:
+    response = client.post(
+        f"/products/{product_code}/activate",
+        json={"version": version},
+        headers=admin,
+    )
+    if response.status_code != 200:
+        raise EvaluationFailure(product_code, "activate", "http_error")
+    history = client.get(f"/products/{product_code}/history", headers=admin)
+    history.raise_for_status()
+    entry = next(item for item in history.json() if item["version"] == version)
+    return {"version": entry["version"], "content_hash": entry["content_hash"]}
 
 
 # Create, evidence, and submit one synthetic case; return its UUID and the
 # route the public submit response reported for it.
 def submit_case(
-    client: httpx.Client, applicant: dict[str, str], record: dict[str, Any]
+    client: httpx.Client,
+    applicant: dict[str, str],
+    record: dict[str, Any],
+    accepted_types: dict[str, list[str]] | None = None,
 ) -> tuple[str, str]:
     created = client.post(
         "/cases",
@@ -179,13 +165,7 @@ def submit_case(
         uploaded = client.post(
             f"/cases/{case_uuid}/documents",
             data={"document_code": document["document_id"]},
-            files={
-                "document": (
-                    document["filename"],
-                    "\n".join(document["lines"]).encode(),
-                    "application/pdf",
-                )
-            },
+            files={"document": document_upload(document, accepted_types)},
             headers=applicant,
         )
         if uploaded.status_code != 200:
@@ -194,6 +174,15 @@ def submit_case(
     if submitted.status_code != 200:
         raise EvaluationFailure(record["case_id"], "submit", "http_error")
     route = submitted.json()["recommendation"]["route"]
+    # needs_information is a queue state, not a final route: the offline
+    # evaluator excludes it from route comparison and checks missing-data
+    # detection instead, so this mirrors that instead of asserting equality.
+    if route == "needs_information":
+        if not record["expected"]["missing"]:
+            raise EvaluationFailure(
+                record["case_id"], "submit", "unexpected_needs_information"
+            )
+        return case_uuid, route
     if route != record["expected"]["route"]:
         raise EvaluationFailure(record["case_id"], "submit", "unexpected_route")
     return case_uuid, route
@@ -201,76 +190,13 @@ def submit_case(
 
 # Run one synthetic case and report its route without raising on mismatch.
 def run_case(
-    client: httpx.Client, applicant: dict[str, str], record: dict[str, Any]
+    client: httpx.Client,
+    applicant: dict[str, str],
+    record: dict[str, Any],
+    accepted_types: dict[str, list[str]] | None = None,
 ) -> dict[str, str]:
-    _, route = submit_case(client, applicant, record)
+    _, route = submit_case(client, applicant, record, accepted_types)
     return {"case_id": record["case_id"], "route": route}
-
-
-# Start review, confirm the recommendation, and complete a case twice.
-def review_and_complete(
-    client: httpx.Client,
-    underwriter: dict[str, str],
-    case_id: str,
-    case_uuid: str,
-) -> None:
-    started = client.post(f"/reviews/{case_uuid}/start", headers=underwriter)
-    if started.status_code != 200:
-        raise EvaluationFailure(case_id, "review_start", "http_error")
-    confirmed = client.post(
-        f"/reviews/{case_uuid}",
-        json={"action": "confirm", "evidence_acknowledged": True},
-        headers=underwriter,
-    )
-    if confirmed.status_code != 200:
-        raise EvaluationFailure(case_id, "review_confirm", "http_error")
-    first = client.post(f"/completion/{case_uuid}", headers=underwriter)
-    second = client.post(f"/completion/{case_uuid}", headers=underwriter)
-    if first.status_code != 200 or second.status_code != 200:
-        raise EvaluationFailure(case_id, "complete", "http_error")
-    if first.json() != second.json():
-        raise EvaluationFailure(case_id, "complete", "not_idempotent")
-
-
-# Verify one completed case reaches the completed queue with a full trail.
-def verify_queue_and_audit(
-    client: httpx.Client,
-    admin: dict[str, str],
-    case_id: str,
-    case_uuid: str,
-) -> None:
-    queue = client.get(
-        "/queues", params={"status": "completed"}, headers=admin
-    )
-    if queue.status_code != 200:
-        raise EvaluationFailure(case_id, "queue", "http_error")
-    if not any(item["case_id"] == case_uuid for item in queue.json()):
-        raise EvaluationFailure(case_id, "queue", "not_completed")
-    audit = client.get(f"/audit/cases/{case_uuid}", headers=admin)
-    if audit.status_code != 200:
-        raise EvaluationFailure(case_id, "audit", "http_error")
-    event_types = {event["event_type"] for event in audit.json()}
-    required = {"underwriter_reviewed", "case_completed"}
-    if not required.issubset(event_types):
-        raise EvaluationFailure(case_id, "audit", "missing_event")
-
-
-# Pick the first case per product, journey, and expected route to review.
-def representative_cases(
-    records: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    seen: set[tuple[str, str, str]] = set()
-    representatives: list[dict[str, Any]] = []
-    for record in records:
-        route = record["expected"]["route"]
-        if route not in REVIEWABLE_ROUTES:
-            continue
-        key = (record["product_code"], record["journey_type"], route)
-        if key in seen:
-            continue
-        seen.add(key)
-        representatives.append(record)
-    return representatives
 
 
 # Run every reference case end to end and return the result artifact.
@@ -288,13 +214,30 @@ def run_evaluation(base_url: str) -> dict[str, Any]:
         admin = login(client, "administrator")
         applicant = login(client, "applicant")
         underwriter = login(client, "underwriter")
-        product_configurations = activate_versions(client, admin, records)
 
+        # Group by (product, version) so each product activates one version
+        # at a time, submitting that group before switching versions.
+        ordered = sorted(
+            records,
+            key=lambda r: (r["product_code"], r["configuration_version"]),
+        )
+        product_configurations: dict[str, dict[str, str]] = {}
+        active_version: dict[str, str] = {}
         case_uuids: dict[str, str] = {}
         actual_routes: dict[str, str] = {}
-        for record in records:
+        for record in ordered:
+            product_code = record["product_code"]
+            version = record["configuration_version"]
+            if active_version.get(product_code) != version:
+                product_configurations[product_code] = activate_version(
+                    client, admin, product_code, version
+                )
+                active_version[product_code] = version
+            configuration = configurations[(product_code, version)]
             try:
-                case_uuid, route = submit_case(client, applicant, record)
+                case_uuid, route = submit_case(
+                    client, applicant, record, document_types(configuration)
+                )
             except EvaluationFailure as failure:
                 failures.append(failure.detail)
                 continue
@@ -308,8 +251,11 @@ def run_evaluation(base_url: str) -> dict[str, Any]:
             case_uuid = case_uuids.get(case_id)
             if case_uuid is None:
                 continue
+            specialist_label = specialist_label_for(record, configurations)
             try:
-                review_and_complete(client, underwriter, case_id, case_uuid)
+                review_and_complete(
+                    client, underwriter, case_id, case_uuid, specialist_label
+                )
                 reviewed_count += 1
                 completed_count += 1
                 verify_queue_and_audit(client, admin, case_id, case_uuid)

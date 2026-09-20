@@ -84,6 +84,30 @@ def journey_checks(
     ]
 
 
+# Derive the previous-policy NCB that agrees with an `ncb_match` check.
+#
+# The check does not compare the claimed NCB against the prior value
+# directly: it expects the prior value's *next tier* (or the reset tier,
+# once prior claims reach the reset threshold). Equal values never agree,
+# so the prior tier has to be picked to make that progression land on the
+# claimed value instead of copying it.
+def ncb_prior_tier(check: dict[str, Any], payload: dict[str, Any]) -> Any:
+    parameters = check.get("parameters") or {}
+    tiers = parameters.get("tiers")
+    claimed_key = check.get("inputs", {}).get("application")
+    if not tiers or claimed_key is None or claimed_key not in payload:
+        return None
+    claim_field = parameters.get("claim_count_field")
+    threshold = parameters.get("claims_reset_threshold", 0)
+    claims = payload.get(claim_field, 0)
+    if claims >= threshold:
+        return parameters.get("claims_reset_tier", tiers[0])
+    claimed_value = payload[claimed_key]
+    if claimed_value not in tiers:
+        return None
+    return tiers[max(tiers.index(claimed_value) - 1, 0)]
+
+
 # Derive one agreeing value for every evidence field a check reads.
 def agreed_evidence(
     checks: list[dict[str, Any]], payload: dict[str, Any]
@@ -92,11 +116,18 @@ def agreed_evidence(
     derived: dict[str, Any] = {}
     for check in checks:
         claimed = check.get("inputs", {}).get("application")
+        prior_tier = (
+            ncb_prior_tier(check, payload)
+            if check.get("kind") == "ncb_match"
+            else None
+        )
         for source, field_name in check.get("inputs", {}).items():
             if source == "application":
                 continue
             if field_name not in derived:
-                if claimed is not None and claimed in payload:
+                if prior_tier is not None:
+                    derived[field_name] = prior_tier
+                elif claimed is not None and claimed in payload:
                     derived[field_name] = payload[claimed]
                 elif field_name.endswith("_date"):
                     # An unanswered renewal date leaves the check missing.

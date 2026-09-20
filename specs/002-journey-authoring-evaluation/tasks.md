@@ -322,9 +322,24 @@ idempotent completion, and unchanged development rows/files.
   offline runner's fake-provider contract), not real PDF file generation.
   All 6 of T043's mocked tests now pass for real (no more skip). Full API
   suite: 429 passed, 6 skipped (T044, pending T048's compose file).
-- [ ] T048 [US3] Add standalone tmpfs database, bootstrap, API, and runner with
+- [X] T048 [US3] Add standalone tmpfs database, bootstrap, API, and runner with
   fake provider, tracing disabled, internal network, no ports, and no named
-  volumes in `compose.evaluation.yaml`.
+  volumes in `compose.evaluation.yaml`. Real end-to-end run against the
+  stack: 90/90 cases pass. Fixed along the way (all confirmed real bugs,
+  not stack workarounds): `api/alembic/env.py` now reads `DATABASE_URL`
+  (alembic.ini hardcoded the dev host, breaking any other Compose
+  project); `evaluate_e2e.py` activates one product version at a time
+  instead of all up front (only one version can be active per product);
+  it now uploads real PDF/JPEG bytes instead of raw text
+  (`scripts/synthetic_pdf.py`) since real upload validation checks magic
+  bytes; `evaluation/generate_evidence.py`'s NCB-renewal evidence now
+  follows the real tier-progression rule instead of copying the claimed
+  value verbatim (the two are never equal in a clean match); needs-
+  information cases are asserted via `expected.missing`, not forced
+  through review, per the evaluation contract; specialist-route reviews
+  now pass `specialist_label`. `scripts/evaluate_e2e.py` split into
+  `evaluate_failures.py` (failure model) and `evaluate_review.py`
+  (review/audit/representative-case selection) to stay under 400 lines.
 - [ ] T049 [US3] Add `evaluate-e2e` lifecycle/exit propagation to
   `Makefile` and ignore only `evaluation/results/` in `.gitignore`.
 - [ ] T050 [US3] Add CI execution of `make evaluate-e2e` and always retain

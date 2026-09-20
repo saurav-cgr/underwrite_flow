@@ -10,9 +10,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-COMPOSE_PATH = (
-    Path(__file__).resolve().parents[3] / "compose.evaluation.yaml"
-)
+COMPOSE_PATH = Path("/compose.evaluation.yaml")
 
 
 # Parse the standalone evaluation stack, skipping until T048 adds it.

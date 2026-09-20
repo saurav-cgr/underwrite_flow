@@ -92,6 +92,7 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
+      - ./compose.evaluation.yaml:/compose.evaluation.yaml:ro
       - ./evaluation:/app/evaluation:ro
       - ./product-config:/app/product-config:ro
       - ./scripts:/app/scripts:ro

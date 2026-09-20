@@ -319,12 +319,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -337,16 +336,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -398,12 +398,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -416,16 +415,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -477,12 +477,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -495,16 +494,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -556,12 +556,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -574,16 +573,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -635,12 +635,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -653,16 +652,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -967,7 +967,7 @@
         "vehicle_use": "personal",
         "prior_claims": 2,
         "policy_start_date": "2026-01-15",
-        "claimed_ncb_percent": 20
+        "claimed_ncb_percent": 0
       },
       "evidence": [
         {
@@ -989,12 +989,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1007,16 +1006,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 2",
-          "claimed_ncb_percent: 20",
+          "claimed_ncb_percent: 0",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1046,7 +1046,7 @@
         "vehicle_use": "personal",
         "prior_claims": 2,
         "policy_start_date": "2026-01-15",
-        "claimed_ncb_percent": 20
+        "claimed_ncb_percent": 0
       },
       "evidence": [
         {
@@ -1068,12 +1068,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1086,16 +1085,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 2",
-          "claimed_ncb_percent: 20",
+          "claimed_ncb_percent: 0",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1125,7 +1125,7 @@
         "vehicle_use": "personal",
         "prior_claims": 2,
         "policy_start_date": "2026-01-15",
-        "claimed_ncb_percent": 20
+        "claimed_ncb_percent": 0
       },
       "evidence": [
         {
@@ -1147,12 +1147,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1165,16 +1164,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 2",
-          "claimed_ncb_percent: 20",
+          "claimed_ncb_percent: 0",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1204,7 +1204,7 @@
         "vehicle_use": "personal",
         "prior_claims": 2,
         "policy_start_date": "2026-01-15",
-        "claimed_ncb_percent": 20
+        "claimed_ncb_percent": 0
       },
       "evidence": [
         {
@@ -1226,12 +1226,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1244,16 +1243,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 2",
-          "claimed_ncb_percent: 20",
+          "claimed_ncb_percent: 0",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1283,7 +1283,7 @@
         "vehicle_use": "personal",
         "prior_claims": 2,
         "policy_start_date": "2026-01-15",
-        "claimed_ncb_percent": 20
+        "claimed_ncb_percent": 0
       },
       "evidence": [
         {
@@ -1305,12 +1305,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1323,16 +1322,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 4",
           "vehicle_use: personal",
           "prior_claims: 2",
-          "claimed_ncb_percent: 20",
+          "claimed_ncb_percent: 0",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1739,12 +1739,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1757,16 +1756,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1831,12 +1831,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1849,15 +1848,16 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -1924,12 +1924,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -1942,16 +1941,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -2014,12 +2014,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -2032,16 +2031,17 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
           "policy_start_date: 2026-01-15",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],
@@ -2110,12 +2110,11 @@
         ]
       },
       {
-        "document_id": "vehicle_record",
-        "filename": "vehicle_record.pdf",
+        "document_id": "previous_policy",
+        "filename": "previous_policy.pdf",
         "lines": [
-          "chassis_number: SYNTHETIC-AGREED",
-          "engine_number: SYNTHETIC-AGREED",
-          "registration_number: SYNTHETIC-AGREED"
+          "ncb_percent: 0",
+          "policy_expiry: 2026-01-15"
         ]
       },
       {
@@ -2128,15 +2127,16 @@
         ]
       },
       {
-        "document_id": "previous_policy",
-        "filename": "previous_policy.pdf",
+        "document_id": "vehicle_record",
+        "filename": "vehicle_record.pdf",
         "lines": [
           "vehicle_age: 13",
           "vehicle_use: personal",
           "prior_claims: 0",
           "claimed_ncb_percent: 20",
-          "ncb_percent: 20",
-          "policy_expiry: 2026-01-15"
+          "chassis_number: SYNTHETIC-AGREED",
+          "engine_number: SYNTHETIC-AGREED",
+          "registration_number: SYNTHETIC-AGREED"
         ]
       }
     ],

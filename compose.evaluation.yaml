@@ -1,0 +1,101 @@
+name: underwriteflow-evaluation
+
+services:
+  evaluation-db:
+    image: pgvector/pgvector:pg16
+    command: ["postgres", "-c", "port=5433"]
+    environment:
+      POSTGRES_DB: underwriteflow
+      POSTGRES_USER: underwriteflow
+      POSTGRES_PASSWORD: synthetic-evaluation-password
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -p 5433 -U underwriteflow -d underwriteflow
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  evaluation-bootstrap:
+    build:
+      context: ./api
+    command:
+      - sh
+      - -c
+      - >-
+        alembic upgrade head &&
+        python -m underwriteflow.products.import_configs
+    environment:
+      DATABASE_URL: postgresql+asyncpg://underwriteflow:synthetic-evaluation-password@evaluation-db:5433/underwriteflow
+      SESSION_SECRET: synthetic-evaluation-session-secret
+    depends_on:
+      evaluation-db:
+        condition: service_healthy
+    volumes:
+      - ./product-config:/app/product-config:ro
+
+  evaluation-api:
+    build:
+      context: ./api
+    command:
+      - uvicorn
+      - underwriteflow.app:create_app
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://underwriteflow:synthetic-evaluation-password@evaluation-db:5433/underwriteflow
+      SESSION_SECRET: synthetic-evaluation-session-secret
+      JWT_ISSUER: underwriteflow-evaluation
+      JWT_AUDIENCE: underwriteflow-evaluation
+      ACCESS_TOKEN_TTL_SECONDS: 900
+      REFRESH_TOKEN_TTL_SECONDS: 28800
+      REFRESH_TOKEN_PEPPER: synthetic-evaluation-refresh-pepper
+      GENERATION_PROVIDER: fake
+      GEMINI_API_KEY:
+      PROVIDER_ALLOWED_HOSTS:
+      PROVIDER_TIMEOUT_SECONDS: 30
+      PROVIDER_RETRY_COUNT: 0
+      LANGSMITH_TRACING: "false"
+      LANGSMITH_API_KEY:
+    depends_on:
+      evaluation-db:
+        condition: service_healthy
+      evaluation-bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import socket;
+          socket.create_connection(('localhost', 8000), 2).close()
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    tmpfs:
+      - /data/uploads
+    volumes:
+      - ./product-config:/app/product-config:ro
+
+  evaluation-runner:
+    build:
+      context: ./api
+    command:
+      - python
+      - scripts/evaluate_e2e.py
+    environment:
+      EVALUATION_API_BASE_URL: http://evaluation-api:8000/api/v1
+    depends_on:
+      evaluation-api:
+        condition: service_healthy
+    volumes:
+      - ./evaluation:/app/evaluation:ro
+      - ./evaluation/results:/app/evaluation/results
+      - ./product-config:/app/product-config:ro
+      - ./scripts:/app/scripts:ro
