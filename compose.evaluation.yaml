@@ -34,6 +34,7 @@ services:
         alembic upgrade head &&
         python -m underwriteflow.products.import_configs
     environment:
+      ENVIRONMENT_MODE: evaluation
       DATABASE_URL: "postgresql+asyncpg://underwriteflow:synthetic-evaluation-\
         password@evaluation-db:5433/underwriteflow"
       SESSION_SECRET: synthetic-evaluation-session-secret
@@ -57,6 +58,7 @@ services:
       - --port
       - "8000"
     environment:
+      ENVIRONMENT_MODE: evaluation
       DATABASE_URL: "postgresql+asyncpg://underwriteflow:synthetic-evaluation-\
         password@evaluation-db:5433/underwriteflow"
       SESSION_SECRET: synthetic-evaluation-session-secret

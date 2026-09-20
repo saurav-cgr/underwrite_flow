@@ -19,8 +19,13 @@ ProviderHost = Annotated[
 class Settings(BaseSettings):
     """Validated local runtime settings."""
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", extra="ignore", frozen=True
+    )
 
+    environment_mode: Literal[
+        "development", "evaluation", "production"
+    ] = "development"
     database_url: str = (
         "postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/"
         "underwriteflow"
@@ -54,6 +59,11 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     )
+
+    # Report whether this process may load the evaluation corpus.
+    @property
+    def evaluation_loading_allowed(self) -> bool:
+        return self.environment_mode != "production"
 
 
 # Reuse one validated settings instance per process.

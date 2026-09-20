@@ -7,7 +7,6 @@ script can reuse the same dataset/config loaders the offline evaluator
 uses, and talks to `evaluation-api` over its own internal network.
 """
 
-import hashlib
 import json
 import os
 import sys
@@ -22,9 +21,11 @@ import httpx
 sys.path.insert(0, os.environ.get("UNDERWRITEFLOW_SRC", "/app/src"))
 
 from underwriteflow.evaluation.dataset import (  # noqa: E402
-    default_dataset_path,
+    DatasetPreflightError,
+    dataset_sha256,
     load_configuration_manifest,
     load_dataset,
+    preflight_dataset,
 )
 
 from evaluate_failures import EvaluationFailure, sanitized_failure  # noqa: E402
@@ -79,40 +80,18 @@ def login(client: httpx.Client, role: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
-# Reject the dataset before any case executes, per the dataset contract.
+# Reject the dataset before any case executes, reusing the shared corpus
+# rules and reporting them in this runner's sanitized failure shape.
 def preflight(
     records: list[dict[str, Any]],
     configurations: dict[tuple[str, str], Any],
 ) -> None:
-    case_ids = [record["case_id"] for record in records]
-    if len(records) != 90 or len(set(case_ids)) != len(case_ids):
-        raise EvaluationFailure("dataset", "preflight", "case_count")
-    counts = Counter(
-        (record["product_code"], record["journey_type"]) for record in records
-    )
-    plan = {
-        ("motor-private-car", "new_business"): 15,
-        ("motor-private-car", "renewal"): 15,
-        ("health-individual-family-floater", "new_business"): 15,
-        ("health-individual-family-floater", "renewal"): 15,
-        ("life-individual-term", "new_business"): 30,
-    }
-    if counts != plan:
-        raise EvaluationFailure("dataset", "preflight", "journey_distribution")
-    routes = Counter(record["expected"]["route"] for record in records)
-    if routes != {"expedited": 30, "standard": 30, "specialist": 30}:
-        raise EvaluationFailure("dataset", "preflight", "route_balance")
-    for record in records:
-        key = (record["product_code"], record["configuration_version"])
-        configuration = configurations.get(key)
-        if configuration is None:
-            raise EvaluationFailure(
-                record["case_id"], "preflight", "unknown_version"
-            )
-        if record["journey_type"] not in configuration.supported_journeys:
-            raise EvaluationFailure(
-                record["case_id"], "preflight", "unsupported_journey"
-            )
+    try:
+        preflight_dataset(records, configurations)
+    except DatasetPreflightError as rejection:
+        raise EvaluationFailure(
+            rejection.case_id, rejection.stage, rejection.code
+        ) from rejection
 
 
 # Activate one exact version for one product and record its content hash.
@@ -205,9 +184,7 @@ def run_evaluation(base_url: str) -> dict[str, Any]:
     configurations = load_configuration_manifest()
     preflight(records, configurations)
 
-    dataset_sha256 = hashlib.sha256(
-        default_dataset_path().read_bytes()
-    ).hexdigest()
+    corpus_sha256 = dataset_sha256()
 
     failures: list[dict[str, str]] = []
     with httpx.Client(base_url=base_url, timeout=30.0) as client:
@@ -274,7 +251,7 @@ def run_evaluation(base_url: str) -> dict[str, Any]:
         "schema_version": 1,
         "passed": not failures,
         "provider": "fake",
-        "dataset_sha256": dataset_sha256,
+        "dataset_sha256": corpus_sha256,
         "configurations": product_configurations,
         "case_count": len(records),
         "journey_counts": dict(

@@ -29,6 +29,7 @@ services:
         alembic upgrade head &&
         python -m underwriteflow.products.import_configs
     environment:
+      ENVIRONMENT_MODE: ${ENVIRONMENT_MODE:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
     depends_on:
@@ -49,6 +50,7 @@ services:
       - --port
       - "8000"
     environment:
+      ENVIRONMENT_MODE: ${ENVIRONMENT_MODE:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
       JWT_ISSUER: ${JWT_ISSUER:-underwriteflow}
@@ -92,7 +94,9 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
+      - ./compose.yaml:/compose.yaml:ro
       - ./compose.evaluation.yaml:/compose.evaluation.yaml:ro
+      - ./compose.production.yaml:/compose.production.yaml:ro
       - ./evaluation:/app/evaluation:ro
       - ./product-config:/app/product-config:ro
       - ./scripts:/app/scripts:ro
