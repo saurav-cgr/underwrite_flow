@@ -89,6 +89,7 @@ async def cycle_details(
     recommended = triage_values.get("recommendation", {})
     return {
         "review_cycle": case.review_cycle,
+        "journey": case.journey_type,
         "workflow_version": WORKFLOW_VERSION,
         "recommendation": recommended.get("route"),
         "recommendation_status": "pending_human_review",

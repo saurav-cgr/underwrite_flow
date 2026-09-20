@@ -141,6 +141,19 @@ def test_replace_application_updates_the_stored_draft() -> None:
             )
             assert configuration.status_code == 200, configuration.text
             assert configuration.json()["application"] == {"vehicle_age": 5}
+
+            administrator = login(client, ADMINISTRATOR)
+            audit = client.get(
+                f"/api/v1/audit/cases/{case_id}", headers=administrator
+            )
+            assert audit.status_code == 200, audit.text
+            events = {
+                event["event_type"]: event["details"] for event in audit.json()
+            }
+            assert events["case_created"]["journey"] == "new_business"
+            assert events["application_replaced"]["journey"] == (
+                "new_business"
+            )
     finally:
         if case_id:
             remove_case(case_id)

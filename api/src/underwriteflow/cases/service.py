@@ -147,6 +147,7 @@ class CaseService:
                 "case_created",
                 {
                     "product_code": application.product_code,
+                    "journey": case.journey_type,
                     **version_details(product_version, rulebook),
                 },
                 case_id=case.id,
@@ -219,6 +220,7 @@ class CaseService:
                 {
                     "document_id": document.id,
                     "document_code": document_code,
+                    "journey": case.journey_type,
                     "content_hash": stored.content_hash,
                     "byte_size": stored.byte_size,
                 },
@@ -327,6 +329,7 @@ class CaseService:
                 {
                     "field_keys": sorted(application.payload),
                     "document_codes": sorted(application.document_codes),
+                    "journey": case.journey_type,
                 },
                 case_id=case.id,
                 actor_user_id=actor_user_id,

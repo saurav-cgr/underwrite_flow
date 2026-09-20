@@ -585,9 +585,16 @@ deterministic, and passing 90/90 with zero development-state leakage.
   stderr for operator diagnosis). Extracted the shared empty-metrics
   literal into `failure_result()`. A new test proves an
   `httpx.ConnectError` still writes a well-formed nonzero result.
-- [ ] T062 Include immutable journey identity in case creation, application,
+- [X] T062 Include immutable journey identity in case creation, application,
   document, submission, review, and completion audit details, with contract
-  coverage across the case lifecycle, per FR-008 (partial)
+  coverage across the case lifecycle, per FR-008 (partial). `review` and
+  `completion` already carried `journey` (earlier US1 work); `case_created`,
+  `document_uploaded`, `application_replaced`, and `case_submitted`/
+  `case_resubmitted` (both route through the shared `cycle_details()`, one
+  fix point) did not. Added `"journey": case.journey_type` at each of the
+  four gaps in `cases/service.py` and `cases/evidence_persistence.py`.
+  Extended `test_journey_staff.py` and `test_journey_api.py` with audit
+  assertions for all four event types.
 - [ ] T063 Lock cloned product identity and require a distinct successor
   version before preview or import per T029 and plan: clone identity (partial)
 - [ ] T064 Split `api/tests/unit/test_cases.py` below 400 lines and wrap the

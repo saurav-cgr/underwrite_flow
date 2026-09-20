@@ -86,6 +86,9 @@ def test_journey_appears_in_queue_review_audit_and_completion() -> None:
                 event["event_type"]: event["details"]
                 for event in audit.json()
             }
+            assert events["case_created"]["journey"] == "new_business"
+            assert events["document_uploaded"]["journey"] == "new_business"
+            assert events["case_submitted"]["journey"] == "new_business"
             assert events["underwriter_reviewed"]["journey"] == (
                 "new_business"
             )
