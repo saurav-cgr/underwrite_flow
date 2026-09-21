@@ -54,9 +54,18 @@ curl http://localhost:8000/api/v1/environment
 ```
 
 No startup path ever loads evaluation data. One explicit operator command
-loads the 90-case synthetic corpus into development or evaluation:
+loads the 90-case synthetic corpus into development or evaluation. It
+requires a real access token for a user whose current authorization holds
+the `evaluation:run` permission (the fictional demo administrator, by
+default); a bare email or environment-supplied name is never accepted as
+identity:
 
 ```bash
+export EVALUATION_LOADER_ACTOR_TOKEN=$(curl -s -X POST \
+  http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\": \"administrator@synthetic.test\", \"password\": \"$DEMO_ADMINISTRATOR_PASSWORD\"}" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
 make load-evaluation-data
 ```
 

@@ -56,8 +56,7 @@ from evaluation_records import (  # noqa: E402
     verify_route,
 )
 from loader_audit import (  # noqa: E402
-    ACTOR_EMAIL_ENV,
-    DEFAULT_ACTOR_EMAIL,
+    ACTOR_TOKEN_ENV,
     append_marker,
     resolve_actor,
     verify_baseline_versions,
@@ -294,7 +293,7 @@ async def load_evaluation_data(
                 return failure_result(
                     active.environment_mode, ERROR_PRECONDITION, identity
                 )
-            actor = await resolve_actor(session)
+            actor = await resolve_actor(session, active)
             if actor is None:
                 return failure_result(
                     active.environment_mode, ERROR_PRECONDITION, identity

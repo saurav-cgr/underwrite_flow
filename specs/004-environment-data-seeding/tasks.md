@@ -300,3 +300,22 @@ T020: Production zero-write integration test
 - [X] T030 Make the exact-version case-creation test arrange or select an
   inactive product version deterministically instead of assuming
   `motor-private-car:v5` is inactive, per T011 (partial)
+
+---
+
+## Phase 8: Convergence
+
+- [X] T031 CRITICAL Authenticate the evaluation-loader operator with a
+  validated JWT identity before any write; reject a bare default or
+  environment-supplied email as proof of identity, and attribute every loader
+  marker to that authenticated user, per Constitution V (contradicts)
+- [ ] T032 Verify persisted missing-data and conflict signals independently
+  of the final route, including specialist records labeled missing and
+  needs-information records labeled conflicting, with focused collision tests,
+  per plan: expected-label assertions (partial)
+- [ ] T033 Detect duplicate or null-coded stored documents on a reserved
+  evaluation case before collapsing them by code, and report a collision
+  without overwriting any record, per FR-007 (partial)
+- [ ] T034 Make the loader CLI emit one sanitized JSON failure with no
+  traceback when settings validation fails, and validate optional failure
+  fields derived from malformed corpus records, per T029 (partial)

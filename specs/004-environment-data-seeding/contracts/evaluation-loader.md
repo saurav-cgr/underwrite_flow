@@ -53,9 +53,11 @@ Before its first write, the loader must verify:
 - every source case ID is unique;
 - every product, product version, rulebook, and journey exists;
 - the default applicant identity exists and is active;
-- the loader actor identity (`EVALUATION_LOADER_ACTOR_EMAIL`, defaulting to
-  the demo underwriter) exists, is active, and holds the underwriter or
-  administrator role;
+- the loader actor identity carries a real access token
+  (`EVALUATION_LOADER_ACTOR_TOKEN`), re-verified exactly like a protected API
+  request, whose current database authorization holds the `evaluation:run`
+  permission; a bare email or environment-supplied name is never accepted as
+  proof of identity;
 - upload storage and checkpoint configuration are local;
 - external tracing is not enabled for the load;
 - the deterministic fake provider is selected for workflow execution.

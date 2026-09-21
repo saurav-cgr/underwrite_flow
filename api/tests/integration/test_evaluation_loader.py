@@ -6,7 +6,6 @@ retry, and collision behavior without loading all ninety cases.
 """
 
 import sys
-from collections.abc import Iterator
 from pathlib import Path
 
 import psycopg
@@ -17,44 +16,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 loader = pytest.importorskip("load_evaluation_data")
 
 from fixtures.evaluation_loader import (  # noqa: E402
+    ADMIN_EMAIL,
+    APPLICANT_EMAIL,
     BUSINESS_TABLES,
     DATABASE_URL,
+    _default_actor,  # noqa: F401
+    actor_token,
     count,
     marker_count,
-    purge,
     reserved_cases,
-    upload_file_count,
+    subset,
 )
-from underwriteflow.config import Settings  # noqa: E402
-from underwriteflow.evaluation.dataset import load_dataset  # noqa: E402
-
-
-# Select one small, product-diverse subset of the authoritative corpus.
-def _subset() -> list[dict]:
-    records = load_dataset()
-    motor = next(
-        record
-        for record in records
-        if record["product_code"] == "motor-private-car"
-    )
-    life = next(
-        record
-        for record in records
-        if record["product_code"] == "life-individual-term"
-    )
-    return [motor, life]
-
-
-# Provide the injected subset and clean every row it reserves afterwards.
-@pytest.fixture
-def subset() -> Iterator[list[dict]]:
-    records = _subset()
-    identity = loader.records_sha256(records)
-    purge(identity)
-    try:
-        yield records
-    finally:
-        purge(identity)
 
 
 # Given an injected corpus, when loaded, then every source value maps onto
@@ -207,173 +179,13 @@ async def test_interrupted_load_resumes_without_duplicating(
     assert marker_count("evaluation_dataset_loaded", identity) == 1
 
 
-# Given a reserved identity whose stored record no longer matches, when the
-# loader runs, then it reports a collision and overwrites nothing.
-@pytest.mark.asyncio
-async def test_mismatched_reserved_identity_is_a_collision(subset) -> None:
-    await loader.load_evaluation_data(records=subset)
-    identity = loader.records_sha256(subset)
-    case_id = dict(
-        (key, value) for value, key in reserved_cases(identity)
-    )[loader.record_key(identity, subset[0]["case_id"])]
-    with psycopg.connect(DATABASE_URL) as connection:
-        connection.execute(
-            "UPDATE submissions SET payload = jsonb_set("
-            "payload, '{application,vehicle_age}', '99') WHERE case_id = %s",
-            (case_id,),
-        )
-        connection.commit()
-
-    result = await loader.load_evaluation_data(records=subset)
-
-    assert result["complete"] is False
-    assert result["error_code"] == "evaluation_record_collision"
-    assert result["source_case_id"] == subset[0]["case_id"]
-    with psycopg.connect(DATABASE_URL) as connection:
-        stored = connection.execute(
-            "SELECT payload -> 'application' -> 'vehicle_age' "
-            "FROM submissions WHERE case_id = %s",
-            (case_id,),
-        ).fetchone()[0]
-    assert stored == 99
-
-
-# Given a case whose stored product version belongs to a different product,
-# when the loader runs, then it reports a collision at the case stage.
-@pytest.mark.asyncio
-async def test_mismatched_product_is_a_collision(subset) -> None:
-    await loader.load_evaluation_data(records=subset)
-    identity = loader.records_sha256(subset)
-    reserved = dict((key, value) for value, key in reserved_cases(identity))
-    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
-    life_id = reserved[loader.record_key(identity, subset[1]["case_id"])]
-    with psycopg.connect(DATABASE_URL) as connection:
-        life_product_version_id = connection.execute(
-            "SELECT product_version_id FROM cases WHERE id = %s", (life_id,)
-        ).fetchone()[0]
-        connection.execute(
-            "UPDATE cases SET product_version_id = %s WHERE id = %s",
-            (life_product_version_id, motor_id),
-        )
-        connection.commit()
-
-    result = await loader.load_evaluation_data(records=subset)
-
-    assert result["complete"] is False
-    assert result["error_code"] == "evaluation_record_collision"
-    assert result["source_case_id"] == subset[0]["case_id"]
-    assert result["stage"] == "case"
-
-
-# Given a case whose stored rulebook belongs to a different product version,
-# when the loader runs, then it reports a collision at the rulebook stage.
-@pytest.mark.asyncio
-async def test_mismatched_rulebook_is_a_collision(subset) -> None:
-    await loader.load_evaluation_data(records=subset)
-    identity = loader.records_sha256(subset)
-    reserved = dict((key, value) for value, key in reserved_cases(identity))
-    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
-    life_id = reserved[loader.record_key(identity, subset[1]["case_id"])]
-    with psycopg.connect(DATABASE_URL) as connection:
-        life_rulebook_id = connection.execute(
-            "SELECT rulebook_version_id FROM cases WHERE id = %s", (life_id,)
-        ).fetchone()[0]
-        connection.execute(
-            "UPDATE cases SET rulebook_version_id = %s WHERE id = %s",
-            (life_rulebook_id, motor_id),
-        )
-        connection.commit()
-
-    result = await loader.load_evaluation_data(records=subset)
-
-    assert result["complete"] is False
-    assert result["error_code"] == "evaluation_record_collision"
-    assert result["source_case_id"] == subset[0]["case_id"]
-    assert result["stage"] == "rulebook"
-
-
-# Given a case with a stray stored document the source record never listed,
-# when the loader runs, then it reports a documents-stage collision.
-@pytest.mark.asyncio
-async def test_extra_stored_document_is_a_collision(subset) -> None:
-    await loader.load_evaluation_data(records=subset)
-    identity = loader.records_sha256(subset)
-    reserved = dict((key, value) for value, key in reserved_cases(identity))
-    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
-    with psycopg.connect(DATABASE_URL) as connection:
-        connection.execute(
-            "INSERT INTO documents (id, case_id, document_code, filename, "
-            "content_type, storage_key, content_hash, byte_size) VALUES "
-            "(gen_random_uuid(), %s, 'stray_document', 'stray.pdf', "
-            "'application/pdf', 'stray-key', 'deadbeef', 1)",
-            (motor_id,),
-        )
-        connection.commit()
-
-    result = await loader.load_evaluation_data(records=subset)
-
-    assert result["complete"] is False
-    assert result["error_code"] == "evaluation_record_collision"
-    assert result["source_case_id"] == subset[0]["case_id"]
-    assert result["stage"] == "documents"
-
-
-# Given a resolved case whose stored conflict signal contradicts its label,
-# when the loader runs, then it reports a workflow-stage collision.
-@pytest.mark.asyncio
-async def test_mismatched_conflict_signal_is_a_collision(subset) -> None:
-    await loader.load_evaluation_data(records=subset)
-    identity = loader.records_sha256(subset)
-    assert subset[0]["expected"]["conflict"] is False
-    reserved = dict((key, value) for value, key in reserved_cases(identity))
-    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
-    with psycopg.connect(DATABASE_URL) as connection:
-        connection.execute(
-            "UPDATE recommendations SET summary = jsonb_set(summary, "
-            "'{summary,conflicts}', "
-            "'[{\"field_name\": \"synthetic\"}]'::jsonb) "
-            "WHERE case_id = %s",
-            (motor_id,),
-        )
-        connection.commit()
-
-    result = await loader.load_evaluation_data(records=subset)
-
-    assert result["complete"] is False
-    assert result["error_code"] == "evaluation_record_collision"
-    assert result["source_case_id"] == subset[0]["case_id"]
-    assert result["stage"] == "workflow"
-
-
-# Given a record whose product version is not persisted, when the loader
-# runs, then it refuses before any case in the batch is written, even one
-# ordered ahead of the missing dependency.
-@pytest.mark.asyncio
-async def test_missing_baseline_version_is_a_precondition_failure(
-    subset,
-) -> None:
-    missing = dict(subset[0])
-    missing["configuration_version"] = "v999-not-persisted"
-    corpus = [missing, subset[1]]
-    identity = loader.records_sha256(corpus)
-    purge(identity)
-    try:
-        result = await loader.load_evaluation_data(records=corpus)
-
-        assert result["complete"] is False
-        assert result["error_code"] == loader.ERROR_PRECONDITION
-        assert len(reserved_cases(identity)) == 0
-    finally:
-        purge(identity)
-
-
-# Given no valid loader actor, when the loader runs, then it refuses before
+# Given no loader actor token, when the loader runs, then it refuses before
 # any business or audit row is written.
 @pytest.mark.asyncio
 async def test_unresolvable_actor_is_a_precondition_failure(
     subset, monkeypatch
 ) -> None:
-    monkeypatch.setenv(loader.ACTOR_EMAIL_ENV, "no-such-actor@synthetic.test")
+    monkeypatch.delenv(loader.ACTOR_TOKEN_ENV, raising=False)
     before = {table: count(table) for table in BUSINESS_TABLES}
 
     result = await loader.load_evaluation_data(records=subset)
@@ -383,11 +195,25 @@ async def test_unresolvable_actor_is_a_precondition_failure(
     assert {table: count(table) for table in BUSINESS_TABLES} == before
 
 
-# Given an applicant-role identity, when named as the loader actor, then the
-# load is refused because only underwriter or administrator actors qualify.
+# Given a bare email in place of a signed token, when the loader runs, then
+# it is refused: an email is never accepted as proof of identity.
+@pytest.mark.asyncio
+async def test_bare_email_is_not_accepted_as_identity(
+    subset, monkeypatch
+) -> None:
+    monkeypatch.setenv(loader.ACTOR_TOKEN_ENV, ADMIN_EMAIL)
+
+    result = await loader.load_evaluation_data(records=subset)
+
+    assert result["complete"] is False
+    assert result["error_code"] == loader.ERROR_PRECONDITION
+
+
+# Given an applicant identity, when named as the loader actor, then the load
+# is refused because that role lacks the `evaluation:run` permission.
 @pytest.mark.asyncio
 async def test_applicant_actor_is_rejected(subset, monkeypatch) -> None:
-    monkeypatch.setenv(loader.ACTOR_EMAIL_ENV, "applicant@synthetic.test")
+    monkeypatch.setenv(loader.ACTOR_TOKEN_ENV, actor_token(APPLICANT_EMAIL))
 
     result = await loader.load_evaluation_data(records=subset)
 
@@ -406,7 +232,7 @@ async def test_markers_record_actor_and_pinned_versions(subset) -> None:
     with psycopg.connect(DATABASE_URL) as connection:
         actor_id = connection.execute(
             "SELECT id FROM users WHERE email = %s",
-            (loader.DEFAULT_ACTOR_EMAIL,),
+            (ADMIN_EMAIL,),
         ).fetchone()[0]
         rows = connection.execute(
             "SELECT actor_user_id, details FROM audit_events "

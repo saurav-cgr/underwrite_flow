@@ -26,6 +26,8 @@ evaluate-e2e:
 		exit $$code
 
 # Explicit operator command. Nothing loads evaluation data automatically.
+# Requires EVALUATION_LOADER_ACTOR_TOKEN: a real access token for a user
+# whose current authorization holds the `evaluation:run` permission.
 load-evaluation-data:
-	docker compose run --rm api \
+	docker compose run --rm -e EVALUATION_LOADER_ACTOR_TOKEN api \
 		python /app/scripts/load_evaluation_data.py

@@ -14,7 +14,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.audit.events import build_audit_event
-from underwriteflow.auth.schemas import UserRole
+from underwriteflow.auth.dependencies import load_authorization
+from underwriteflow.auth.schemas import Permission
+from underwriteflow.auth.service import AuthService
+from underwriteflow.config import Settings
 from underwriteflow.persistence.models import (
     AuditEvent,
     Product,
@@ -23,18 +26,44 @@ from underwriteflow.persistence.models import (
     User,
 )
 
-ACTOR_EMAIL_ENV = "EVALUATION_LOADER_ACTOR_EMAIL"
-DEFAULT_ACTOR_EMAIL = "underwriter@synthetic.test"
-ACTOR_ROLES = frozenset({UserRole.UNDERWRITER, UserRole.ADMINISTRATOR})
+ACTOR_TOKEN_ENV = "EVALUATION_LOADER_ACTOR_TOKEN"
 
 
 # Resolve the authenticated operator identity the loader records audits as.
-async def resolve_actor(session: AsyncSession) -> User | None:
-    email = os.getenv(ACTOR_EMAIL_ENV, DEFAULT_ACTOR_EMAIL)
-    actor = await session.scalar(
-        select(User).where(User.email == email, User.is_active.is_(True))
+#
+# A bare email or environment-supplied name is never accepted as identity:
+# the operator must hold a real, currently valid access token, re-verified
+# against the database exactly like every protected API request.
+async def resolve_actor(
+    session: AsyncSession, settings: Settings
+) -> User | None:
+    token = os.getenv(ACTOR_TOKEN_ENV)
+    if not token:
+        return None
+    service = AuthService(
+        settings.session_secret,
+        issuer=settings.jwt_issuer,
+        audience=settings.jwt_audience,
+        refresh_pepper=settings.refresh_token_pepper,
     )
-    if actor is None or UserRole(actor.role) not in ACTOR_ROLES:
+    try:
+        claims = service.read_access_token(token)
+    except ValueError:
+        return None
+    actor = await session.scalar(
+        select(User).where(User.id == claims.sub, User.is_active.is_(True))
+    )
+    if actor is None:
+        return None
+    resolved = await load_authorization(session, actor.id)
+    if resolved is None:
+        return None
+    if (
+        resolved.role_code != claims.role
+        or resolved.version != claims.authz_version
+    ):
+        return None
+    if Permission.EVALUATION_RUN.value not in resolved.permissions:
         return None
     return actor
 
