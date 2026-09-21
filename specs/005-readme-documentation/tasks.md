@@ -82,7 +82,7 @@ identifies configuration, evidence, workflow, audit, and evaluation locations.
 
 - [X] T008 [US3] Add Mermaid architecture diagram to `README.md`, adapted from
   `docs/ARCHITECTURE.md` and meeting `contracts/readme-content.md`.
-- [ ] T009 [US3] Add architecture invariants and extension boundaries to
+- [X] T009 [US3] Add architecture invariants and extension boundaries to
   `README.md`, including pinned versions, redaction, audit, and human control.
 - [ ] T010 [US3] Add environment and evaluation summary to `README.md`, linking
   detailed loading instructions and preserving production refusal warning.

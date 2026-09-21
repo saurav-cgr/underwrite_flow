@@ -139,6 +139,17 @@ flowchart TD
 
 See the [architecture guide](docs/ARCHITECTURE.md) for full component detail.
 
+### Safety and extension boundaries
+
+- Uploads are untrusted evidence, never model instructions.
+- New cases pin their selected product version and journey.
+- Deterministic rules outrank model suggestions and retain evidence provenance.
+- Gemini receives redacted task data; fake provider supports local checks.
+- Audit events preserve history; workflow checkpoints only support resume.
+- Only an authenticated underwriter confirms or overrides a final route.
+- Extend products through versioned configuration and existing provider
+  adapters. Do not bypass with direct provider calls or hard-coded rules.
+
 ## Environments and evaluation data
 
 Every environment starts from the same common baseline: the current schema,
