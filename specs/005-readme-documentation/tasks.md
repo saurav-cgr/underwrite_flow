@@ -98,7 +98,7 @@ model is presented as final decision authority.
 
 - [X] T011 Add troubleshooting, known limits, and curated reference links to
   `README.md` using `docs/ARCHITECTURE.md`, `docs/DEMO.md`, and feature docs.
-- [ ] T012 Run every scenario in
+- [X] T012 Run every scenario in
   `specs/005-readme-documentation/quickstart.md` against `README.md`.
 - [ ] T013 Check line length, Markdown links, Mermaid rendering, and diff
   whitespace for `README.md` with `git diff --check`.

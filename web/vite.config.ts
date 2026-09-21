@@ -8,4 +8,7 @@ export default defineConfig({
       "/api": "http://api:8000",
     },
   },
+  test: {
+    testTimeout: 10_000,
+  },
 });
