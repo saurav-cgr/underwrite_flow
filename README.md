@@ -91,7 +91,8 @@ local synthetic environment.
 ## Verify each role
 
 1. **Administrator**: Open Product Configuration and activate one fictional
-   product version. Confirm applicants can then select it.
+   product version. Confirm applicants can select it, inspect the case audit,
+   then run `make evaluate-e2e` and confirm the isolated run cleans up.
 2. **Applicant**: Start new business or renewal, upload only synthetic
    evidence, and submit. A renewal requires prior-policy evidence first.
 3. **Underwriter**: Open submitted case from queue, inspect evidence, then
