@@ -139,3 +139,11 @@ Task: "Verify README safety claims against docs/ARCHITECTURE.md and PRD."
 2. Add runnable role and automated verification guidance.
 3. Add architecture, environment, troubleshooting, and references.
 4. Complete quickstart validation and formatting checks.
+
+## Phase 7: Convergence
+
+- [ ] T014 Add administrator audit and isolated-evaluation verification per
+  US2/AC4 and FR-004 (partial)
+- [ ] T015 State successful outcomes for each automated check per FR-005 and
+  SC-003 (partial)
+- [ ] T016 Add sign-in and failed-check troubleshooting per FR-009 (partial)
