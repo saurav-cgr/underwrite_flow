@@ -338,6 +338,6 @@ T020: Production zero-write integration test
 - [X] T038 Reject malformed source case IDs before any write and allow only
   safe identifiers in every loader failure path, including record collisions;
   test bounded secret-shaped strings cannot reach output, per T034 (partial)
-- [ ] T039 Update the README and feature quickstart with a runnable token
+- [X] T039 Update the README and feature quickstart with a runnable token
   acquisition step for the documented default demo administrator and the
   explicit loader commands, per FR-005 (partial)

@@ -33,7 +33,17 @@ approval.
 
 ## 2. Load Evaluation Data Explicitly
 
+The loader requires a real access token for a user whose current
+authorization holds the `evaluation:run` permission; mint one for the
+fictional demo administrator, then run the load:
+
 ```bash
+export DEMO_ADMINISTRATOR_PASSWORD=underwriteflow-demo-administrator
+export EVALUATION_LOADER_ACTOR_TOKEN=$(curl -s -X POST \
+  http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\": \"administrator@synthetic.test\", \"password\": \"$DEMO_ADMINISTRATOR_PASSWORD\"}" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
 make load-evaluation-data
 ```
 
@@ -46,6 +56,31 @@ Expected output is one sanitized JSON object with:
 
 The applicant and underwriter screens may now show the loaded synthetic cases
 and derived recommendations. No case is human-confirmed or completed.
+
+The isolated evaluation Compose stack takes the same corpus through its own
+command instead, using a token scoped to that stack's own login endpoint:
+
+```bash
+docker compose -f compose.evaluation.yaml up -d --build evaluation-api
+export EVALUATION_LOADER_ACTOR_TOKEN=$(
+  docker compose -f compose.evaluation.yaml exec -T evaluation-api \
+    python -c "
+import json, urllib.request
+body = json.dumps({'email': 'administrator@synthetic.test',
+                    'password': 'underwriteflow-demo-administrator'})
+request = urllib.request.Request(
+    'http://localhost:8000/api/v1/auth/login',
+    data=body.encode(),
+    headers={'Content-Type': 'application/json'},
+)
+print(json.load(urllib.request.urlopen(request))['access_token'])
+")
+make load-evaluation-data-eval
+```
+
+A document loaded this way stays readable through that same running
+`evaluation-api` container; a token minted against development is refused
+there, and one minted against evaluation is refused by development.
 
 ## 3. Prove Idempotency
 

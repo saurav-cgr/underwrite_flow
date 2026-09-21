@@ -61,6 +61,7 @@ default); a bare email or environment-supplied name is never accepted as
 identity:
 
 ```bash
+export DEMO_ADMINISTRATOR_PASSWORD=underwriteflow-demo-administrator
 export EVALUATION_LOADER_ACTOR_TOKEN=$(curl -s -X POST \
   http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
@@ -76,6 +77,33 @@ again creates nothing new, resumes any interrupted record in place, and never
 overwrites a record that no longer matches its source. It never confirms,
 overrides, completes, or hands off a case: an authenticated underwriter still
 decides every final route.
+
+A second command loads the same corpus into the isolated evaluation Compose
+stack instead of development. Its token must come from that stack's own
+login endpoint, since the isolated stack publishes no host port:
+
+```bash
+docker compose -f compose.evaluation.yaml up -d --build evaluation-api
+export EVALUATION_LOADER_ACTOR_TOKEN=$(
+  docker compose -f compose.evaluation.yaml exec -T evaluation-api \
+    python -c "
+import json, urllib.request
+body = json.dumps({'email': 'administrator@synthetic.test',
+                    'password': 'underwriteflow-demo-administrator'})
+request = urllib.request.Request(
+    'http://localhost:8000/api/v1/auth/login',
+    data=body.encode(),
+    headers={'Content-Type': 'application/json'},
+)
+print(json.load(urllib.request.urlopen(request))['access_token'])
+")
+make load-evaluation-data-eval
+```
+
+That token's issuer, audience, and signing secret are scoped to the
+evaluation stack, so a development-stack token is refused there and an
+evaluation-stack token is refused by development. Loaded documents stay
+readable through that same running `evaluation-api` container afterward.
 
 In production mode the same command refuses before it opens the database or
 the upload volume, writes nothing, and exits non-zero with the stable code
