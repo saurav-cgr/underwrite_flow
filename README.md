@@ -88,6 +88,18 @@ local synthetic environment.
 - Administrator: `administrator@synthetic.test`
   `underwriteflow-demo-administrator`
 
+## Verify each role
+
+1. **Administrator**: Open Product Configuration and activate one fictional
+   product version. Confirm applicants can then select it.
+2. **Applicant**: Start new business or renewal, upload only synthetic
+   evidence, and submit. A renewal requires prior-policy evidence first.
+3. **Underwriter**: Open submitted case from queue, inspect evidence, then
+   confirm recommendation or override it with a reason.
+
+The case completes only after underwriter confirmation. For a fuller guided
+walkthrough, see the [demo guide](docs/DEMO.md).
+
 Run the deterministic checks with:
 
 ```bash
