@@ -21,7 +21,7 @@ the quickstart validation and final static checks provide acceptance evidence.
 **Purpose**: Preserve the current documented safety, setup, and verification
 content while preparing a concise project-tour layer.
 
-- [ ] T002 Mark project-tour insertion points in `README.md`; retain guides.
+- [X] T002 Mark project-tour insertion points in `README.md`; retain guides.
 
 **Checkpoint**: Existing onboarding content remains the source of detailed
 instructions; user-story work can proceed.
