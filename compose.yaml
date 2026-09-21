@@ -94,6 +94,7 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
+      - ./Makefile:/Makefile:ro
       - ./compose.yaml:/compose.yaml:ro
       - ./compose.evaluation.yaml:/compose.evaluation.yaml:ro
       - ./compose.production.yaml:/compose.production.yaml:ro

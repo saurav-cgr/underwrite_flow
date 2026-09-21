@@ -14,8 +14,21 @@ import yaml
 BASE_PATH = Path("/compose.yaml")
 EVALUATION_PATH = Path("/compose.evaluation.yaml")
 PRODUCTION_PATH = Path("/compose.production.yaml")
+MAKEFILE_PATH = Path("/Makefile")
 
 LOADER_SCRIPT = "load_evaluation_data"
+
+
+# Return the lines of one Makefile target, up to the next unindented line.
+def _target_body(text: str, name: str) -> str:
+    lines = text.splitlines()
+    start = next(i for i, line in enumerate(lines) if line == f"{name}:")
+    body = []
+    for line in lines[start + 1 :]:
+        if line and not line[0].isspace():
+            break
+        body.append(line)
+    return "\n".join(body)
 
 
 # Parse one mounted Compose file, skipping until it is mounted read-only.
@@ -86,6 +99,21 @@ def test_no_service_command_runs_the_loader(path: Path) -> None:
     for name, service in (compose.get("services") or {}).items():
         assert LOADER_SCRIPT not in _command_text(service), name
         assert LOADER_SCRIPT not in str(service.get("entrypoint") or ""), name
+
+
+# Verify one explicit command loads the corpus into the isolated evaluation
+# stack, distinct from the command that targets development.
+def test_evaluation_load_command_targets_the_evaluation_stack() -> None:
+    if not MAKEFILE_PATH.exists():
+        pytest.skip("Makefile is not mounted into the api service")
+    text = MAKEFILE_PATH.read_text()
+
+    body = _target_body(text, "load-evaluation-data-eval")
+
+    assert "compose.evaluation.yaml" in body
+    assert "evaluation-api" in body
+    assert LOADER_SCRIPT in body
+    assert "EVALUATION_LOADER_ACTOR_TOKEN" in body
 
 
 # Merge one override onto the base stack the way Compose renders it, so the

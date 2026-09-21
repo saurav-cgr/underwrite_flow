@@ -328,7 +328,7 @@ T020: Production zero-write integration test
   upload, and submission audit events to the authenticated loader operator
   while retaining the demo applicant as case owner; add an audit regression
   test for all three event types, per Constitution V (contradicts)
-- [ ] T036 Provide and test one explicit operator command that loads the
+- [X] T036 Provide and test one explicit operator command that loads the
   corpus into the isolated evaluation Compose stack using a valid scoped JWT,
   rather than targeting the development stack, per FR-005 (partial)
 - [ ] T037 Make evaluation-mode uploads loaded by that command available to

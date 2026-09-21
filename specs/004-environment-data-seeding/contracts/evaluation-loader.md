@@ -43,6 +43,23 @@ The command accepts no production data path or mode override. Tests may inject
 a smaller dataset through function parameters; the operator command always
 uses the mounted authoritative corpus.
 
+A second explicit command loads the same corpus into the isolated evaluation
+Compose stack instead of development:
+
+```bash
+make load-evaluation-data-eval
+```
+
+```bash
+docker compose -f compose.evaluation.yaml run --rm evaluation-api \
+  python /app/scripts/load_evaluation_data.py
+```
+
+Its `EVALUATION_LOADER_ACTOR_TOKEN` must be minted by the evaluation stack's
+own login endpoint: the token's issuer, audience, and signing secret are
+scoped to that stack, so a development-stack token is refused there and an
+evaluation-stack token is refused by development.
+
 ## Preconditions
 
 Before its first write, the loader must verify:
