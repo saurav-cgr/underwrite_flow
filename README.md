@@ -105,10 +105,10 @@ walkthrough, see the [demo guide](docs/DEMO.md).
 
 Run these from repository root with Docker Compose available:
 
-- `make test-api`: runs deterministic API tests and reconciliation coverage.
-- `make test-web`: runs web tests.
-- `make smoke`: runs synthetic end-to-end intake, review, and completion.
-- `make evaluate-e2e`: runs isolated 90-case evaluation, then cleans up.
+- `make test-api`: deterministic API tests and reconciliation coverage pass.
+- `make test-web`: the web suite passes.
+- `make smoke`: synthetic intake, review, and completion pass.
+- `make evaluate-e2e`: isolated 90-case evaluation passes, then cleans up.
 
 ```bash
 make test-api

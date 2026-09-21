@@ -144,6 +144,6 @@ Task: "Verify README safety claims against docs/ARCHITECTURE.md and PRD."
 
 - [X] T014 Add administrator audit and isolated-evaluation verification per
   US2/AC4 and FR-004 (partial)
-- [ ] T015 State successful outcomes for each automated check per FR-005 and
+- [X] T015 State successful outcomes for each automated check per FR-005 and
   SC-003 (partial)
 - [ ] T016 Add sign-in and failed-check troubleshooting per FR-009 (partial)
