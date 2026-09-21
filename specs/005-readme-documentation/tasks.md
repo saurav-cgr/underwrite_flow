@@ -65,7 +65,7 @@ checks without source-code inspection.
   `README.md`; use only values verified in `web/src/entry.tsx`.
 - [X] T006 [US2] Add applicant, underwriter, and administrator manual checks
   to `README.md`, linking detail to `docs/DEMO.md`.
-- [ ] T007 [US2] Add `make test-api`, `make test-web`, `make smoke`, and
+- [X] T007 [US2] Add `make test-api`, `make test-web`, `make smoke`, and
   `make evaluate-e2e` guidance to `README.md` from `Makefile`.
 
 **Checkpoint**: User Story 2 documents setup, expected role outcomes, and

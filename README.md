@@ -100,7 +100,14 @@ local synthetic environment.
 The case completes only after underwriter confirmation. For a fuller guided
 walkthrough, see the [demo guide](docs/DEMO.md).
 
-Run the deterministic checks with:
+## Automated verification
+
+Run these from repository root with Docker Compose available:
+
+- `make test-api`: runs deterministic API tests and reconciliation coverage.
+- `make test-web`: runs web tests.
+- `make smoke`: runs synthetic end-to-end intake, review, and completion.
+- `make evaluate-e2e`: runs isolated 90-case evaluation, then cleans up.
 
 ```bash
 make test-api
