@@ -353,3 +353,12 @@ T020: Production zero-write integration test
 - [X] T041 Validate source case IDs with a safe identifier format before any
   loader write, and restrict every optional failure field to safe values so
   short secret-shaped strings cannot reach JSON output, per T038 (partial)
+
+---
+
+## Phase 11: Convergence
+
+- [X] T042 Verify the bytes of every existing evaluation document against
+  its source hash before a repeated load reports completion; reject or safely
+  restore a present-but-corrupt file, with a focused corruption regression
+  test, per FR-006 (partial)

@@ -215,6 +215,47 @@ async def test_retry_recovers_documents_lost_to_a_restart(subset) -> None:
         )
 
 
+# Given a completed load, when a stored document's bytes are corrupted in
+# place (present but altered, not lost), then a retry restores the exact
+# source bytes instead of reporting a repeated complete load over corrupt
+# content.
+@pytest.mark.asyncio
+async def test_retry_restores_a_present_but_corrupted_document(
+    subset,
+) -> None:
+    first = await loader.load_evaluation_data(records=subset)
+    identity = first["dataset_sha256"]
+    case_ids = [case_id for case_id, _ in reserved_cases(identity)]
+    corrupted_path = None
+    for case_id in case_ids:
+        for path in (UPLOAD_ROOT / str(case_id)).rglob("*"):
+            if path.is_file():
+                path.write_bytes(b"corrupted")
+                corrupted_path = path
+                break
+        if corrupted_path is not None:
+            break
+    assert corrupted_path is not None
+
+    retried = await loader.load_evaluation_data(records=subset)
+
+    assert retried["complete"] is True
+    assert retried["created_count"] == 0
+    assert retried["resumed_count"] == len(subset)
+    with psycopg.connect(DATABASE_URL) as connection:
+        rows = connection.execute(
+            "SELECT storage_key, content_hash FROM documents "
+            "WHERE case_id = ANY(%s)",
+            (case_ids,),
+        ).fetchall()
+    assert rows
+    for storage_key, content_hash in rows:
+        restored = UPLOAD_ROOT / storage_key
+        assert hashlib.sha256(restored.read_bytes()).hexdigest() == (
+            content_hash
+        )
+
+
 # Given no loader actor token, when the loader runs, then it refuses before
 # any business or audit row is written.
 @pytest.mark.asyncio

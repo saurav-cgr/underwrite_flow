@@ -140,14 +140,21 @@ def verify_document(
 
 
 # Rewrite an already-verified document's bytes if a restart between loads
-# lost them from an ephemeral upload volume (for example tmpfs), so a
-# repeated load never reports complete over unreadable content.
+# lost them, or a file present on disk no longer matches its source hash,
+# so a repeated load never reports complete over unreadable or corrupt
+# content.
 def recover_document_bytes(
     storage: UploadStorage, existing: Document, content: bytes
 ) -> None:
     try:
-        storage.read_path(existing.storage_key)
+        path = storage.read_path(existing.storage_key)
+        corrupt = (
+            hashlib.sha256(path.read_bytes()).hexdigest()
+            != existing.content_hash
+        )
     except StorageValidationError:
+        corrupt = True
+    if corrupt:
         storage.restore(existing.storage_key, content)
 
 
