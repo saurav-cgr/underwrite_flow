@@ -53,7 +53,7 @@ human-confirmed route and identify component boundaries.
 `README.md` against its architecture diagram without reading source code.
 
 - [X] T006 [US2] Add a case lifecycle beside the architecture in `README.md`.
-- [ ] T007 [US2] Add component responsibilities to `README.md`.
+- [X] T007 [US2] Add component responsibilities to `README.md`.
 - [ ] T008 [US2] Check `README.md` lifecycle against `docs/ARCHITECTURE.md`.
 
 **Checkpoint**: User Story 2 explains the existing diagram in text.

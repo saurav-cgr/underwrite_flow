@@ -166,6 +166,16 @@ flowchart TD
    the route.
 6. The decision and supporting process history are recorded in the audit trail.
 
+### Component responsibilities
+
+| Area | Responsibility | Boundary |
+| --- | --- | --- |
+| Web interface | Role-based interaction | No underwriting rules |
+| Workflow | Evidence checks and recommendation | No final route |
+| Storage | Cases, versions, audit, checkpoints | Local source of truth |
+| Provider | Optional redacted assistance | Not an authority |
+| Evaluation | Isolated synthetic validation | No shared development state |
+
 See the [architecture guide](docs/ARCHITECTURE.md) for full component detail.
 
 ### Safety and extension boundaries
