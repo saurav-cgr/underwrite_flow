@@ -52,10 +52,14 @@ set `LANGSMITH_TRACING=true`, provide a local evaluation key, and use the
 APAC endpoint in `.env.example`. Trace payloads are redacted and tracing
 failures never change application behavior.
 
-## Run locally
+## Quickstart: local fake provider
+
+Use the deterministic fake provider for a no-credential local demonstration.
+It keeps synthetic application and document content on this machine.
 
 ```bash
 cp .env.example .env
+# Edit .env: set GENERATION_PROVIDER=fake
 docker compose up --build
 ```
 
@@ -70,7 +74,19 @@ docker compose -f compose.yaml -f compose.localhost.yaml up --build
 
 The Compose bootstrap applies migrations and imports the three product files.
 The migration provisions fictional Applicant, Underwriter, and Administrator
-accounts. Their synthetic passwords are used by the API test fixtures.
+accounts.
+
+### Fictional demo accounts
+
+These credentials are public demonstration values. Never use them outside a
+local synthetic environment.
+
+- Applicant: `applicant@synthetic.test`
+  `underwriteflow-demo-applicant`
+- Underwriter: `underwriter@synthetic.test`
+  `underwriteflow-demo-underwriter`
+- Administrator: `administrator@synthetic.test`
+  `underwriteflow-demo-administrator`
 
 Run the deterministic checks with:
 

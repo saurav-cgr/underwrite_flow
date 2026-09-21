@@ -61,7 +61,7 @@ production readiness, compliance, or final insurance decisions.
 **Independent Test**: Evaluator completes one role journey and runs documented
 checks without source-code inspection.
 
-- [ ] T005 [US2] Add fake-provider quickstart and fictional account table to
+- [X] T005 [US2] Add fake-provider quickstart and fictional account table to
   `README.md`; use only values verified in `web/src/entry.tsx`.
 - [ ] T006 [US2] Add applicant, underwriter, and administrator manual checks
   to `README.md`, linking detail to `docs/DEMO.md`.
