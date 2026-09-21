@@ -39,6 +39,18 @@ class FailingStorage:
         raise OSError(f"synthetic storage failure: {storage_key}")
 
 
+# Activate motor v1 for one test and put every version status back, so a
+# suite that left another version active cannot change this outcome.
+@pytest.fixture
+def active_motor_v1() -> Iterator[str]:
+    found = motor_status()
+    set_motor_status("active", "v1")
+    try:
+        yield "v1"
+    finally:
+        set_motor_status(found)
+
+
 # Open one database session against the local synthetic stack.
 @asynccontextmanager
 async def _session() -> AsyncIterator[AsyncSession]:
@@ -63,8 +75,13 @@ async def _stored_version(
 
 # Given an exact existing version, when trusted internal loading creates a
 # case, then the case pins that version and its rulebook without activation.
+#
+# v5 is forced inactive by `active_motor_v1` (which activates v1 instead)
+# rather than assumed inactive from the product config's default state.
 @pytest.mark.asyncio
-async def test_create_case_pins_an_exact_requested_version() -> None:
+async def test_create_case_pins_an_exact_requested_version(
+    active_motor_v1,
+) -> None:
     applicant_id = create_user()
     case_id = None
     try:
@@ -112,18 +129,6 @@ def _record_for_motor(version: str) -> dict:
         if record["product_code"] == "motor-private-car"
         and record["configuration_version"] == version
     )
-
-
-# Activate motor v1 for one test and put every version status back, so a
-# suite that left another version active cannot change this outcome.
-@pytest.fixture
-def active_motor_v1() -> Iterator[str]:
-    found = motor_status()
-    set_motor_status("active", "v1")
-    try:
-        yield "v1"
-    finally:
-        set_motor_status(found)
 
 
 # Given no requested version, when normal intake creates a case, then the

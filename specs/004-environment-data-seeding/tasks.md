@@ -297,6 +297,6 @@ T020: Production zero-write integration test
 - [X] T029 Catch corpus preflight and unexpected command failures at the CLI
   boundary, emit one sanitized JSON failure object, exit nonzero, and add a
   traceback-leak regression test, per contract: output (partial)
-- [ ] T030 Make the exact-version case-creation test arrange or select an
+- [X] T030 Make the exact-version case-creation test arrange or select an
   inactive product version deterministically instead of assuming
   `motor-private-car:v5` is inactive, per T011 (partial)
