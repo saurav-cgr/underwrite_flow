@@ -22,6 +22,24 @@ from fixtures.evaluation_loader import (  # noqa: E402
     reserved_cases,
     subset,
 )
+from underwriteflow.evaluation.dataset import load_dataset  # noqa: E402
+
+
+# Provide the one shipped record whose evidence is genuinely incomplete, so
+# it naturally resolves to the needs-information queue state.
+@pytest.fixture
+def missing_evidence_record():
+    record = next(
+        item
+        for item in load_dataset()
+        if item["case_id"] == "motor-private-car-021"
+    )
+    identity = loader.records_sha256([record])
+    purge(identity)
+    try:
+        yield record
+    finally:
+        purge(identity)
 
 
 # Given a reserved identity whose stored record no longer matches, when the
@@ -182,3 +200,67 @@ async def test_missing_baseline_version_is_a_precondition_failure(
         assert len(reserved_cases(identity)) == 0
     finally:
         purge(identity)
+
+
+# Given a case whose route never queues for evidence, when its stored
+# summary shows a missing-data signal anyway, then the loader reports a
+# collision instead of trusting the route to imply nothing is missing.
+@pytest.mark.asyncio
+async def test_missing_signal_is_verified_independently_of_route(
+    subset,
+) -> None:
+    assert subset[0]["expected"]["missing"] is False
+    await loader.load_evaluation_data(records=subset)
+    identity = loader.records_sha256(subset)
+    reserved = dict((key, value) for value, key in reserved_cases(identity))
+    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
+    with psycopg.connect(DATABASE_URL) as connection:
+        connection.execute(
+            "UPDATE recommendations SET summary = jsonb_set(summary, "
+            "'{summary,missing_information}', "
+            "'[\"synthetic_field\"]'::jsonb) WHERE case_id = %s",
+            (motor_id,),
+        )
+        connection.commit()
+
+    result = await loader.load_evaluation_data(records=subset)
+
+    assert result["complete"] is False
+    assert result["error_code"] == "evaluation_record_collision"
+    assert result["source_case_id"] == subset[0]["case_id"]
+    assert result["stage"] == "workflow"
+
+
+# Given a case genuinely queued for missing evidence, when its stored summary
+# also shows a conflict the label never claims, then the loader reports a
+# collision instead of skipping the conflict check for a queue-state route.
+@pytest.mark.asyncio
+async def test_conflict_signal_is_verified_for_needs_information_route(
+    missing_evidence_record,
+) -> None:
+    record = missing_evidence_record
+    assert record["expected"]["conflict"] is False
+    await loader.load_evaluation_data(records=[record])
+    identity = loader.records_sha256([record])
+    case_id = reserved_cases(identity)[0][0]
+    with psycopg.connect(DATABASE_URL) as connection:
+        route = connection.execute(
+            "SELECT route FROM recommendations WHERE case_id = %s",
+            (case_id,),
+        ).fetchone()[0]
+        connection.execute(
+            "UPDATE recommendations SET summary = jsonb_set(summary, "
+            "'{summary,conflicts}', "
+            "'[{\"field_name\": \"synthetic\"}]'::jsonb) "
+            "WHERE case_id = %s",
+            (case_id,),
+        )
+        connection.commit()
+    assert route == "needs_information"
+
+    result = await loader.load_evaluation_data(records=[record])
+
+    assert result["complete"] is False
+    assert result["error_code"] == "evaluation_record_collision"
+    assert result["source_case_id"] == record["case_id"]
+    assert result["stage"] == "workflow"

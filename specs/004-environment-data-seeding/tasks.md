@@ -309,7 +309,7 @@ T020: Production zero-write integration test
   validated JWT identity before any write; reject a bare default or
   environment-supplied email as proof of identity, and attribute every loader
   marker to that authenticated user, per Constitution V (contradicts)
-- [ ] T032 Verify persisted missing-data and conflict signals independently
+- [X] T032 Verify persisted missing-data and conflict signals independently
   of the final route, including specialist records labeled missing and
   needs-information records labeled conflicting, with focused collision tests,
   per plan: expected-label assertions (partial)

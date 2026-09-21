@@ -141,7 +141,7 @@ async def verify_result(
         raise RecordCollision(record["case_id"], "workflow")
     route = recommendation.route or ""
     verify_route(record, route)
-    verify_derived_signals(record, route, recommendation.summary or {})
+    verify_derived_signals(record, recommendation.summary or {})
 
 
 # Compare one derived route with its reference label, treating the needs
@@ -156,15 +156,18 @@ def verify_route(record: dict[str, Any], route: str) -> None:
         raise RecordCollision(record["case_id"], "workflow")
 
 
-# Confirm a resolved case's conflict signal matches its label, so a route
-# that happens to match cannot mask a wrong underlying escalation reason.
-# The missing-data dimension is covered by `verify_route`'s queue-state
-# branch instead: a case still queued for evidence never derived conflicts.
+# Confirm a resolved case's conflict and missing-data signals both match
+# their labels, independently of the final route: a route that happens to
+# match cannot mask a wrong underlying conflict or missing-evidence result,
+# and a queue state cannot excuse an unverified conflict signal either.
 def verify_derived_signals(
-    record: dict[str, Any], route: str, summary: dict[str, Any]
+    record: dict[str, Any], summary: dict[str, Any]
 ) -> None:
-    if route == "needs_information":
-        return
-    has_conflict = bool((summary.get("summary") or {}).get("conflicts"))
-    if has_conflict != bool(record["expected"].get("conflict")):
+    nested = summary.get("summary") or {}
+    expected = record["expected"]
+    has_conflict = bool(nested.get("conflicts"))
+    if has_conflict != bool(expected.get("conflict")):
+        raise RecordCollision(record["case_id"], "workflow")
+    has_missing = bool(nested.get("missing_information"))
+    if has_missing != bool(expected.get("missing")):
         raise RecordCollision(record["case_id"], "workflow")

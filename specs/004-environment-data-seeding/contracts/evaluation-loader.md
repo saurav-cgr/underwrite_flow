@@ -80,7 +80,9 @@ For each source record, in stable order:
 7. If it was already processed, verify its persisted result instead of
    resubmitting or resetting it.
 8. Compare derived route, missing-data, and conflict results with reference
-   labels.
+   labels. Missing-data and conflict signals are each checked independently
+   of the final route, so a queue state never excuses an unverified conflict
+   and a non-queue route never excuses an unverified missing-data signal.
 9. Append one bounded `evaluation_record_loaded` event after verification,
    recording the resolved loader actor and the pinned product and rulebook
    version identities.
