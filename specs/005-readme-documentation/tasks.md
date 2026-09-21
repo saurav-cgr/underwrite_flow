@@ -100,7 +100,7 @@ model is presented as final decision authority.
   `README.md` using `docs/ARCHITECTURE.md`, `docs/DEMO.md`, and feature docs.
 - [X] T012 Run every scenario in
   `specs/005-readme-documentation/quickstart.md` against `README.md`.
-- [ ] T013 Check line length, Markdown links, Mermaid rendering, and diff
+- [X] T013 Check line length, Markdown links, Mermaid rendering, and diff
   whitespace for `README.md` with `git diff --check`.
 
 ---
