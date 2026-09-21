@@ -36,7 +36,7 @@ and main demonstrated capabilities in three minutes.
 **Independent Test**: Read only the opening project tour in `README.md`; find
 purpose, three routes, underwriter authority, and fictional-data restriction.
 
-- [ ] T003 [US1] Add contents and "What this demonstrates" to `README.md`.
+- [X] T003 [US1] Add contents and "What this demonstrates" to `README.md`.
 - [ ] T004 [US1] Add the capability table to `README.md`.
 - [ ] T005 [US1] Check `README.md` against `contracts/readme-project-tour.md`.
 

@@ -10,6 +10,26 @@ UnderwriteFlow recommends a work queue route. An authenticated underwriter
 must confirm or override every final route. It never approves, declines,
 binds, prices, issues, renews, or cancels insurance.
 
+## On this page
+
+- [What this demonstrates](#what-this-demonstrates)
+- [Quickstart](#quickstart-local-fake-provider)
+- [Role verification](#verify-each-role)
+- [Automated checks](#automated-verification)
+- [Architecture](#architecture-overview)
+- [Evaluation](#environments-and-evaluation-data)
+- [Known limits](#known-limits)
+
+## What this demonstrates
+
+UnderwriteFlow demonstrates how fictional applications and evidence can become
+an evidence-backed triage recommendation. It supports expedited, standard, and
+specialist review as work-queue routes—not insurance decisions.
+
+It also demonstrates versioned product rules, deterministic evidence checks,
+human review, immutable audit history, and isolated synthetic evaluation. Only
+fictional data belongs in this local demonstration.
+
 ## Implemented features
 
 - **Journey-aware intake**: Applicants choose new business or renewal before
