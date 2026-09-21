@@ -294,7 +294,7 @@ T020: Production zero-write integration test
   rulebook, exact document set or hash, and derived missing-data or conflict
   result, with focused regression coverage for each mismatch, per plan: retry
   and collision rules (partial)
-- [ ] T029 Catch corpus preflight and unexpected command failures at the CLI
+- [X] T029 Catch corpus preflight and unexpected command failures at the CLI
   boundary, emit one sanitized JSON failure object, exit nonzero, and add a
   traceback-leak regression test, per contract: output (partial)
 - [ ] T030 Make the exact-version case-creation test arrange or select an

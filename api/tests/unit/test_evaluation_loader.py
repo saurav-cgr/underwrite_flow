@@ -7,6 +7,7 @@ reserved keys, the deterministic order, the sanitized output shape, and the
 deterministic-provider rule.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -166,4 +167,53 @@ async def test_production_is_refused_before_persistence_opens(
         "environment": "production",
         "complete": False,
         "error_code": "evaluation_load_forbidden",
+    }
+
+
+# Given a rejected corpus preflight, when the CLI runs, then it prints one
+# sanitized JSON object and never a raw traceback.
+def test_preflight_failure_is_reported_without_a_traceback(
+    monkeypatch, capsys
+) -> None:
+    async def _raise(*args, **kwargs):
+        raise loader.DatasetPreflightError("case-1", "case_count")
+
+    monkeypatch.setattr(loader, "load_evaluation_data", _raise)
+
+    exit_code = loader.main()
+
+    assert exit_code == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output == {
+        "environment": "development",
+        "complete": False,
+        "error_code": "evaluation_load_preflight_failed",
+        "source_case_id": "case-1",
+        "stage": "preflight",
+    }
+
+
+# Given an unexpected internal failure, when the CLI runs, then it still
+# prints one sanitized JSON object and never a raw traceback or exception
+# message.
+def test_unexpected_failure_is_reported_without_a_traceback(
+    monkeypatch, capsys
+) -> None:
+    async def _raise(*args, **kwargs):
+        raise RuntimeError("synthetic-internal-detail")
+
+    monkeypatch.setattr(loader, "load_evaluation_data", _raise)
+
+    exit_code = loader.main()
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "Traceback" not in captured.out
+    assert "Traceback" not in captured.err
+    assert "synthetic-internal-detail" not in captured.out
+    output = json.loads(captured.out)
+    assert output == {
+        "environment": "development",
+        "complete": False,
+        "error_code": "evaluation_load_failed",
     }

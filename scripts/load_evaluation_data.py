@@ -30,6 +30,7 @@ from underwriteflow.cases.submission import SubmissionService  # noqa: E402
 from underwriteflow.config import Settings, get_settings  # noqa: E402
 from underwriteflow.database import Database  # noqa: E402
 from underwriteflow.evaluation.dataset import (  # noqa: E402
+    DatasetPreflightError,
     dataset_sha256,
     load_configuration_manifest,
     load_dataset,
@@ -73,6 +74,8 @@ DATASET_EVENT = "evaluation_dataset_loaded"
 ERROR_FORBIDDEN = "evaluation_load_forbidden"
 ERROR_COLLISION = "evaluation_record_collision"
 ERROR_PRECONDITION = "evaluation_load_precondition_failed"
+ERROR_PREFLIGHT = "evaluation_load_preflight_failed"
+ERROR_UNEXPECTED = "evaluation_load_failed"
 
 
 # Build the reserved idempotency key for one source record.
@@ -351,9 +354,23 @@ async def load_evaluation_data(
     )
 
 
-# Run the explicit load and exit with its completion status.
+# Run the explicit load and exit with its completion status. Every failure,
+# expected or not, surfaces as one sanitized JSON object: no traceback, no
+# internal detail, ever reaches standard output or standard error.
 def main() -> int:
-    result = asyncio.run(load_evaluation_data())
+    try:
+        result = asyncio.run(load_evaluation_data())
+    except DatasetPreflightError as error:
+        result = failure_result(
+            get_settings().environment_mode,
+            ERROR_PREFLIGHT,
+            source_case_id=error.case_id,
+            stage=error.stage,
+        )
+    except Exception:
+        result = failure_result(
+            get_settings().environment_mode, ERROR_UNEXPECTED
+        )
     print(json.dumps(result, sort_keys=True))
     return 0 if result.get("complete") else 1
 
