@@ -156,6 +156,16 @@ flowchart TD
     Evaluation[Isolated evaluation] --> EvalData[(Own tmpfs state)]
 ```
 
+### Case lifecycle
+
+1. An applicant submits fictional details and supporting evidence.
+2. The case pins its selected journey and product version.
+3. The workflow extracts evidence and runs deterministic reconciliation.
+4. It recommends expedited, standard, or specialist review as a queue route.
+5. An authenticated underwriter inspects the evidence and confirms or overrides
+   the route.
+6. The decision and supporting process history are recorded in the audit trail.
+
 See the [architecture guide](docs/ARCHITECTURE.md) for full component detail.
 
 ### Safety and extension boundaries
