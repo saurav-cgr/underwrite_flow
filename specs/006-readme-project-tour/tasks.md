@@ -38,7 +38,7 @@ purpose, three routes, underwriter authority, and fictional-data restriction.
 
 - [X] T003 [US1] Add contents and "What this demonstrates" to `README.md`.
 - [X] T004 [US1] Add the capability table to `README.md`.
-- [ ] T005 [US1] Check `README.md` against `contracts/readme-project-tour.md`.
+- [X] T005 [US1] Check `README.md` against `contracts/readme-project-tour.md`.
 
 **Checkpoint**: User Story 1 is independently readable and demonstrable.
 
