@@ -150,7 +150,11 @@ A rejected corpus preflight reports `evaluation_load_preflight_failed` with
 the failing case ID and stage. Any other unexpected failure reports the
 generic `evaluation_load_failed` with no further detail. Both are caught at
 the CLI boundary: no traceback or exception detail ever reaches standard
-output or standard error.
+output or standard error. A case ID that is not a plain, bounded string is
+dropped rather than reported, so a malformed corpus record cannot put
+arbitrary content on standard output. Settings that fail to validate report
+`evaluation_load_failed` with `environment: "unknown"` instead of failing a
+second time while trying to report the first failure.
 
 ## Compose Modes
 

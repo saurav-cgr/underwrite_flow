@@ -217,3 +217,69 @@ def test_unexpected_failure_is_reported_without_a_traceback(
         "complete": False,
         "error_code": "evaluation_load_failed",
     }
+
+
+# Given settings that fail to validate, when the CLI runs, then it still
+# prints one sanitized JSON object and never a raw traceback, even though
+# the failure handler cannot read the environment mode either.
+def test_settings_validation_failure_is_reported_without_a_traceback(
+    monkeypatch, capsys
+) -> None:
+    def _raise():
+        raise ValueError("synthetic-invalid-environment-mode")
+
+    monkeypatch.setattr(loader, "get_settings", _raise)
+
+    exit_code = loader.main()
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "Traceback" not in captured.out
+    assert "Traceback" not in captured.err
+    assert "synthetic-invalid-environment-mode" not in captured.out
+    output = json.loads(captured.out)
+    assert output == {
+        "environment": "unknown",
+        "complete": False,
+        "error_code": "evaluation_load_failed",
+    }
+
+
+# Given a preflight rejection whose case ID came from a malformed corpus
+# record, when the CLI runs, then an unsafe field is dropped instead of
+# reaching standard output verbatim.
+def test_preflight_failure_omits_a_malformed_source_case_id(
+    monkeypatch, capsys
+) -> None:
+    async def _raise(*args, **kwargs):
+        raise loader.DatasetPreflightError(12345, "case_count")
+
+    monkeypatch.setattr(loader, "load_evaluation_data", _raise)
+
+    exit_code = loader.main()
+
+    assert exit_code == 1
+    output = json.loads(capsys.readouterr().out)
+    assert output == {
+        "environment": "development",
+        "complete": False,
+        "error_code": "evaluation_load_preflight_failed",
+        "stage": "preflight",
+    }
+
+
+# Given a preflight rejection whose case ID is an implausibly long string,
+# when the CLI runs, then it is dropped instead of flooding standard output.
+def test_preflight_failure_omits_an_oversized_source_case_id(
+    monkeypatch, capsys
+) -> None:
+    async def _raise(*args, **kwargs):
+        raise loader.DatasetPreflightError("x" * 500, "case_count")
+
+    monkeypatch.setattr(loader, "load_evaluation_data", _raise)
+
+    exit_code = loader.main()
+
+    assert exit_code == 1
+    output = json.loads(capsys.readouterr().out)
+    assert "source_case_id" not in output

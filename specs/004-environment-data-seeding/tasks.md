@@ -316,6 +316,6 @@ T020: Production zero-write integration test
 - [X] T033 Detect duplicate or null-coded stored documents on a reserved
   evaluation case before collapsing them by code, and report a collision
   without overwriting any record, per FR-007 (partial)
-- [ ] T034 Make the loader CLI emit one sanitized JSON failure with no
+- [X] T034 Make the loader CLI emit one sanitized JSON failure with no
   traceback when settings validation fails, and validate optional failure
   fields derived from malformed corpus records, per T029 (partial)

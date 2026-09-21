@@ -353,23 +353,42 @@ async def load_evaluation_data(
     )
 
 
+# Return one corpus-derived field only when it is a plain, bounded string.
+# A malformed record can put anything in a labeled field, so nothing it
+# supplies reaches standard output without this shape check first.
+def safe_field(value: Any, limit: int = 200) -> str | None:
+    if not isinstance(value, str) or not value or len(value) > limit:
+        return None
+    return value
+
+
 # Run the explicit load and exit with its completion status. Every failure,
 # expected or not, surfaces as one sanitized JSON object: no traceback, no
-# internal detail, ever reaches standard output or standard error.
+# internal detail, ever reaches standard output or standard error. Settings
+# that fail to validate are a failure like any other: the environment mode
+# is read once, up front, so a broken configuration cannot also break the
+# failure handler that reports it.
 def main() -> int:
+    try:
+        environment = get_settings().environment_mode
+    except Exception:
+        print(
+            json.dumps(
+                failure_result("unknown", ERROR_UNEXPECTED), sort_keys=True
+            )
+        )
+        return 1
     try:
         result = asyncio.run(load_evaluation_data())
     except DatasetPreflightError as error:
         result = failure_result(
-            get_settings().environment_mode,
+            environment,
             ERROR_PREFLIGHT,
-            source_case_id=error.case_id,
-            stage=error.stage,
+            source_case_id=safe_field(error.case_id),
+            stage=safe_field(error.stage),
         )
     except Exception:
-        result = failure_result(
-            get_settings().environment_mode, ERROR_UNEXPECTED
-        )
+        result = failure_result(environment, ERROR_UNEXPECTED)
     print(json.dumps(result, sort_keys=True))
     return 0 if result.get("complete") else 1
 
