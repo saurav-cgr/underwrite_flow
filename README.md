@@ -18,6 +18,7 @@ binds, prices, issues, renews, or cancels insurance.
 - [Automated checks](#automated-verification)
 - [Architecture](#architecture-overview)
 - [Evaluation](#environments-and-evaluation-data)
+- [Troubleshooting](#troubleshooting)
 - [Known limits](#known-limits)
 
 ## What this demonstrates

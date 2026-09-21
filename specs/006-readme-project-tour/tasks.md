@@ -103,3 +103,7 @@ text in parallel, but the final README review remains one pass.
 2. Deliver US1 as the smallest useful project tour; validate its four key facts.
 3. Add US2's lifecycle and responsibility explanation.
 4. Validate navigation, then run the final factual and whitespace checks.
+
+## Phase 7: Convergence
+
+- [X] T012 Add Troubleshooting link in `README.md` per US3/SC-004 (partial).
