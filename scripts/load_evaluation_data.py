@@ -194,6 +194,7 @@ async def load_record(
                 ],
             ),
             version=record["configuration_version"],
+            actor_user_id=actor_id,
         )
     else:
         await verify_case(session, case, record)
@@ -214,7 +215,7 @@ async def load_record(
             session,
             service,
             case,
-            applicant_id,
+            actor_id,
             code,
             filename,
             content,
@@ -227,7 +228,7 @@ async def load_record(
             settings.upload_root,
             settings.database_url,
             retry_count=0,
-        ).submit(session, case, applicant_id)
+        ).submit(session, case, actor_id)
         recommendation = result.get("recommendation") or {}
         verify_route(record, str(recommendation.get("route", "")))
     await verify_result(session, case, record)

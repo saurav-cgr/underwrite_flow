@@ -319,3 +319,25 @@ T020: Production zero-write integration test
 - [X] T034 Make the loader CLI emit one sanitized JSON failure with no
   traceback when settings validation fails, and validate optional failure
   fields derived from malformed corpus records, per T029 (partial)
+
+---
+
+## Phase 9: Convergence
+
+- [X] T035 CRITICAL Attribute loader-triggered case creation, document
+  upload, and submission audit events to the authenticated loader operator
+  while retaining the demo applicant as case owner; add an audit regression
+  test for all three event types, per Constitution V (contradicts)
+- [ ] T036 Provide and test one explicit operator command that loads the
+  corpus into the isolated evaluation Compose stack using a valid scoped JWT,
+  rather than targeting the development stack, per FR-005 (partial)
+- [ ] T037 Make evaluation-mode uploads loaded by that command available to
+  the running evaluation API without exposing them outside its local stack;
+  verify a loaded document can be read after the loader exits, per SC-004
+  (partial)
+- [ ] T038 Reject malformed source case IDs before any write and allow only
+  safe identifiers in every loader failure path, including record collisions;
+  test bounded secret-shaped strings cannot reach output, per T034 (partial)
+- [ ] T039 Update the README and feature quickstart with a runnable token
+  acquisition step for the documented default demo administrator and the
+  explicit loader commands, per FR-005 (partial)

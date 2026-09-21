@@ -248,6 +248,38 @@ async def test_markers_record_actor_and_pinned_versions(subset) -> None:
         assert details["rulebook_version_id"]
 
 
+# Given a completed load, when its case-lifecycle audit events are read,
+# then each one attributes the authenticated loader operator, never the
+# demo applicant that still owns the case.
+@pytest.mark.asyncio
+async def test_case_lifecycle_events_attribute_the_loader_actor(
+    subset,
+) -> None:
+    result = await loader.load_evaluation_data(records=subset)
+    identity = result["dataset_sha256"]
+
+    with psycopg.connect(DATABASE_URL) as connection:
+        actor_id = connection.execute(
+            "SELECT id FROM users WHERE email = %s", (ADMIN_EMAIL,)
+        ).fetchone()[0]
+        applicant_id = connection.execute(
+            "SELECT id FROM users WHERE email = %s", (APPLICANT_EMAIL,)
+        ).fetchone()[0]
+        case_ids = [case_id for case_id, _ in reserved_cases(identity)]
+        rows = connection.execute(
+            "SELECT event_type, actor_user_id FROM audit_events "
+            "WHERE case_id = ANY(%s) "
+            "AND event_type IN "
+            "('case_created', 'document_uploaded', 'case_submitted')",
+            (case_ids,),
+        ).fetchall()
+
+    assert len(rows) >= len(subset) * 2
+    for event_type, actor_user_id in rows:
+        assert actor_user_id == actor_id, event_type
+        assert actor_user_id != applicant_id
+
+
 # Given a loaded case, when the load finishes, then no human review,
 # completion, or handoff action was taken for it.
 @pytest.mark.asyncio

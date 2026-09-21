@@ -90,6 +90,7 @@ class CaseService:
         applicant_id: UUID,
         application: CaseCreate,
         version: str | None = None,
+        actor_user_id: UUID | None = None,
     ) -> Case:
         existing = await session.scalar(
             select(Case).where(
@@ -160,7 +161,7 @@ class CaseService:
                     **version_details(product_version, rulebook),
                 },
                 case_id=case.id,
-                actor_user_id=applicant_id,
+                actor_user_id=actor_user_id or applicant_id,
             ),
         )
         await session.commit()
