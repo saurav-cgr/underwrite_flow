@@ -84,7 +84,7 @@ identifies configuration, evidence, workflow, audit, and evaluation locations.
   `docs/ARCHITECTURE.md` and meeting `contracts/readme-content.md`.
 - [X] T009 [US3] Add architecture invariants and extension boundaries to
   `README.md`, including pinned versions, redaction, audit, and human control.
-- [ ] T010 [US3] Add environment and evaluation summary to `README.md`, linking
+- [X] T010 [US3] Add environment and evaluation summary to `README.md`, linking
   detailed loading instructions and preserving production refusal warning.
 
 **Checkpoint**: User Story 3 shows end-to-end ownership and no provider or

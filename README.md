@@ -152,86 +152,25 @@ See the [architecture guide](docs/ARCHITECTURE.md) for full component detail.
 
 ## Environments and evaluation data
 
-Every environment starts from the same common baseline: the current schema,
-the authorization catalogue, the three fictional demo accounts, and every
-built-in product configuration version. The baseline contains no case,
-submission, document, or recommendation. Starting the stack twice changes
-nothing and duplicates nothing.
+Every environment starts with schema, permissions, fictional demo accounts,
+and built-in product versions. Startup creates no cases, documents, or
+recommendations.
 
 `ENVIRONMENT_MODE` selects `development`, `evaluation`, or `production`.
-Development is the local default; `compose.evaluation.yaml` and
-`compose.production.yaml` set the other two explicitly. An unsupported value
-prevents startup. The selected mode is readable without a credential:
+Development is local default. Evaluation runs isolated storage. Production is
+an environment setting only, not a production-readiness or compliance claim.
 
-```bash
-curl http://localhost:8000/api/v1/environment
-```
+Evaluation data never loads at startup. An authorized operator can explicitly
+load the 90-case synthetic corpus into development or evaluation. The loader
+is idempotent, retry-safe, uses the fake provider, and never confirms a route.
+See `specs/004-environment-data-seeding/quickstart.md` for loader commands
+and expected results.
 
-No startup path ever loads evaluation data. One explicit operator command
-loads the 90-case synthetic corpus into development or evaluation. It
-requires a real access token for a user whose current authorization holds
-the `evaluation:run` permission (the fictional demo administrator, by
-default); a bare email or environment-supplied name is never accepted as
-identity:
+`make evaluate-e2e` runs the same corpus in an isolated, tmpfs-backed stack
+with no shared development state. Production rejects evaluation loading before
+database or upload access with `evaluation_load_forbidden`.
 
-```bash
-export DEMO_ADMINISTRATOR_PASSWORD=underwriteflow-demo-administrator
-export EVALUATION_LOADER_ACTOR_TOKEN=$(curl -s -X POST \
-  http://localhost:8000/api/v1/auth/login \
-  -H 'Content-Type: application/json' \
-  -d "{\"email\": \"administrator@synthetic.test\", \"password\": \"$DEMO_ADMINISTRATOR_PASSWORD\"}" \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
-make load-evaluation-data
-```
-
-The command verifies the whole corpus before its first write, identifies the
-dataset by SHA-256, reserves each case under a stable dataset-derived key,
-and runs the workflow with the deterministic fake provider only. Running it
-again creates nothing new, resumes any interrupted record in place, and never
-overwrites a record that no longer matches its source. It never confirms,
-overrides, completes, or hands off a case: an authenticated underwriter still
-decides every final route.
-
-A second command loads the same corpus into the isolated evaluation Compose
-stack instead of development. Its token must come from that stack's own
-login endpoint, since the isolated stack publishes no host port:
-
-```bash
-docker compose -f compose.evaluation.yaml up -d --build evaluation-api
-export EVALUATION_LOADER_ACTOR_TOKEN=$(
-  docker compose -f compose.evaluation.yaml exec -T evaluation-api \
-    python -c "
-import json, urllib.request
-body = json.dumps({'email': 'administrator@synthetic.test',
-                    'password': 'underwriteflow-demo-administrator'})
-request = urllib.request.Request(
-    'http://localhost:8000/api/v1/auth/login',
-    data=body.encode(),
-    headers={'Content-Type': 'application/json'},
-)
-print(json.load(urllib.request.urlopen(request))['access_token'])
-")
-make load-evaluation-data-eval
-```
-
-That token's issuer, audience, and signing secret are scoped to the
-evaluation stack, so a development-stack token is refused there and an
-evaluation-stack token is refused by development. Loaded documents stay
-readable through that same running `evaluation-api` container afterward.
-
-In production mode the same command refuses before it opens the database or
-the upload volume, writes nothing, and exits non-zero with the stable code
-`evaluation_load_forbidden`:
-
-```bash
-docker compose -f compose.yaml -f compose.production.yaml run --rm api \
-  python /app/scripts/load_evaluation_data.py
-```
-
-The production override selects an environment mode. It is not a claim of
-production readiness, security hardening, or compliance. Every applicant,
-document, product rule, and evaluation case this project loads is synthetic
-and exists only for demonstration.
+All applicants, documents, rules, and evaluation cases are fictional.
 
 ## Documentation
 
