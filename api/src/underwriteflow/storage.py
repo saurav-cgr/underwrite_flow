@@ -133,3 +133,10 @@ class UploadStorage:
     # Remove one generated upload key without permitting path traversal.
     def delete(self, storage_key: str) -> None:
         self._resolve(storage_key).unlink(missing_ok=True)
+
+    # Rewrite bytes at an already-reserved key, recovering content an
+    # ephemeral volume (for example tmpfs) lost across a restart.
+    def restore(self, storage_key: str, content: bytes) -> None:
+        destination = self._resolve(storage_key)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)

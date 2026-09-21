@@ -23,6 +23,10 @@ from underwriteflow.persistence.models import (  # noqa: E402
     RulebookVersion,
     Submission,
 )
+from underwriteflow.storage import (  # noqa: E402
+    StorageValidationError,
+    UploadStorage,
+)
 
 from synthetic_pdf import document_types, document_upload  # noqa: E402
 
@@ -133,6 +137,18 @@ def verify_document(
 ) -> None:
     if existing.content_hash != content_hash:
         raise RecordCollision(record["case_id"], "documents")
+
+
+# Rewrite an already-verified document's bytes if a restart between loads
+# lost them from an ephemeral upload volume (for example tmpfs), so a
+# repeated load never reports complete over unreadable content.
+def recover_document_bytes(
+    storage: UploadStorage, existing: Document, content: bytes
+) -> None:
+    try:
+        storage.read_path(existing.storage_key)
+    except StorageValidationError:
+        storage.restore(existing.storage_key, content)
 
 
 # Confirm a processed case kept a derived result that matches its label.

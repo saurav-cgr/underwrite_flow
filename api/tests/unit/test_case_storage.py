@@ -204,6 +204,20 @@ def test_upload_storage_resolves_safe_content_paths(tmp_path: Path) -> None:
         storage.read_path("case-123/missing.pdf")
 
 
+# Verify restore rewrites bytes an ephemeral volume lost, at the same key.
+def test_upload_storage_restore_rewrites_missing_bytes(
+    tmp_path: Path,
+) -> None:
+    storage = UploadStorage(tmp_path)
+    content = synthetic_pdf()
+
+    storage.restore("case-123/synthetic.pdf", content)
+
+    assert storage.read_path("case-123/synthetic.pdf").read_bytes() == content
+    with pytest.raises(StorageValidationError):
+        storage.restore("../outside.pdf", content)
+
+
 # Verify a configured document code accepts only its advertised content types
 # and leaves nothing on the volume when the type is refused.
 @pytest.mark.asyncio

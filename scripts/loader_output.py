@@ -8,7 +8,13 @@ stay in the main script.
 
 import hashlib
 import json
+import os
+import sys
 from typing import Any
+
+sys.path.insert(0, os.environ.get("UNDERWRITEFLOW_SRC", "/app/src"))
+
+from underwriteflow.evaluation.dataset import SAFE_CASE_ID  # noqa: E402
 
 KEY_PREFIX = "evaluation"
 
@@ -66,6 +72,15 @@ def safe_field(value: Any, limit: int = 200) -> str | None:
     return value
 
 
+# Return a source case ID only when it is a safe, bounded identifier: a
+# length check alone lets a short secret-shaped string through, so this
+# reuses the same identifier format the corpus preflight itself enforces.
+def safe_case_id(value: Any) -> str | None:
+    if not isinstance(value, str) or not SAFE_CASE_ID.match(value):
+        return None
+    return value
+
+
 # Build the safe failure object a refused or incomplete load prints. Every
 # caller shares this one sanitization: a source case ID or stage can come
 # from a corpus record no preflight has yet rejected, so it is bounded here
@@ -84,7 +99,7 @@ def failure_result(
     }
     for key, value in (
         ("dataset_sha256", safe_field(dataset_sha256)),
-        ("source_case_id", safe_field(source_case_id)),
+        ("source_case_id", safe_case_id(source_case_id)),
         ("stage", safe_field(stage)),
     ):
         if value is not None:

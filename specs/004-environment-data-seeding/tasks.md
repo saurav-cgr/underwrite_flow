@@ -341,3 +341,15 @@ T020: Production zero-write integration test
 - [X] T039 Update the README and feature quickstart with a runnable token
   acquisition step for the documented default demo administrator and the
   explicit loader commands, per FR-005 (partial)
+
+---
+
+## Phase 10: Convergence
+
+- [X] T040 Keep evaluation documents usable across an evaluation-API-only
+  restart, or detect and safely recover missing stored bytes before reporting
+  a repeated load complete; test restart, retry, and document readability,
+  per FR-008 (partial)
+- [X] T041 Validate source case IDs with a safe identifier format before any
+  loader write, and restrict every optional failure field to safe values so
+  short secret-shaped strings cannot reach JSON output, per T038 (partial)

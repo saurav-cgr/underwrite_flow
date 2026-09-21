@@ -46,6 +46,7 @@ from underwriteflow.storage import UploadStorage  # noqa: E402
 
 from evaluation_records import (  # noqa: E402
     RecordCollision,
+    recover_document_bytes,
     rendered_document,
     stored_documents,
     verify_case,
@@ -153,6 +154,7 @@ async def load_record(
         )
         if code in existing:
             verify_document(record, existing[code], content_hash)
+            recover_document_bytes(service.storage, existing[code], content)
             continue
         await upload_document(
             session,

@@ -5,6 +5,7 @@ corpus, as the operator contract allows, so these tests prove mapping,
 retry, and collision behavior without loading all ninety cases.
 """
 
+import hashlib
 import sys
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from fixtures.evaluation_loader import (  # noqa: E402
     APPLICANT_EMAIL,
     BUSINESS_TABLES,
     DATABASE_URL,
+    UPLOAD_ROOT,
     _default_actor,  # noqa: F401
     actor_token,
     count,
@@ -177,6 +179,40 @@ async def test_interrupted_load_resumes_without_duplicating(
     assert retried["verified_count"] == len(subset)
     assert len(reserved_cases(identity)) == len(subset)
     assert marker_count("evaluation_dataset_loaded", identity) == 1
+
+
+# Given a completed load, when its documents' bytes are lost as an
+# evaluation-API-only restart would lose an ephemeral tmpfs volume, then a
+# retry recovers every byte instead of reporting a repeated complete load
+# over unreadable content.
+@pytest.mark.asyncio
+async def test_retry_recovers_documents_lost_to_a_restart(subset) -> None:
+    first = await loader.load_evaluation_data(records=subset)
+    identity = first["dataset_sha256"]
+    case_ids = [case_id for case_id, _ in reserved_cases(identity)]
+    for case_id in case_ids:
+        for path in (UPLOAD_ROOT / str(case_id)).rglob("*"):
+            if path.is_file():
+                path.unlink()
+
+    retried = await loader.load_evaluation_data(records=subset)
+
+    assert retried["complete"] is True
+    assert retried["created_count"] == 0
+    assert retried["resumed_count"] == len(subset)
+    with psycopg.connect(DATABASE_URL) as connection:
+        rows = connection.execute(
+            "SELECT storage_key, content_hash FROM documents "
+            "WHERE case_id = ANY(%s)",
+            (case_ids,),
+        ).fetchall()
+    assert rows
+    for storage_key, content_hash in rows:
+        restored = UPLOAD_ROOT / storage_key
+        assert restored.is_file()
+        assert hashlib.sha256(restored.read_bytes()).hexdigest() == (
+            content_hash
+        )
 
 
 # Given no loader actor token, when the loader runs, then it refuses before

@@ -3,12 +3,18 @@ configuration manifest each record's exact version and journey selects."""
 
 import hashlib
 import json
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.products.service import load_configuration
+
+# A source case ID may only be a short, safe, lowercase identifier: never
+# a secret-shaped, punctuation-laden, or over-long string reaching a key,
+# a query, or later, sanitized JSON output.
+SAFE_CASE_ID = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 
 SYNTHETIC_LABEL = "SYNTHETIC - FOR DEMONSTRATION ONLY"
 EXPECTED_CASE_COUNT = 90
@@ -97,6 +103,10 @@ def preflight_dataset(
         or len(set(case_ids)) != len(case_ids)
     ):
         raise DatasetPreflightError("dataset", "case_count")
+    for record in records:
+        case_id = record["case_id"]
+        if not isinstance(case_id, str) or not SAFE_CASE_ID.match(case_id):
+            raise DatasetPreflightError(case_id, "unsafe_case_id")
     for record in records:
         if record.get("fixture_label") != SYNTHETIC_LABEL:
             raise DatasetPreflightError(record["case_id"], "fixture_label")

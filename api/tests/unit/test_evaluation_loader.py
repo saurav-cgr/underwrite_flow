@@ -158,6 +158,46 @@ def test_collision_output_omits_an_oversized_source_case_id() -> None:
     assert "source_case_id" not in result
 
 
+# Given a short secret-shaped string standing in for a source case ID, when
+# it is reported, then it never reaches standard output: a length check
+# alone is not enough, the value must also be a safe identifier.
+@pytest.mark.parametrize(
+    "source_case_id",
+    [
+        "Bearer synthetic-secret-token",
+        "eyJhbGciOiJIUzI1NiJ9.synthetic",
+        "case id with spaces",
+        "../traversal",
+    ],
+)
+def test_collision_output_omits_a_secret_shaped_source_case_id(
+    source_case_id,
+) -> None:
+    result = loader.failure_result(
+        environment="development",
+        error_code=loader.ERROR_COLLISION,
+        dataset_sha256="e" * 64,
+        source_case_id=source_case_id,
+        stage="workflow",
+    )
+
+    assert "source_case_id" not in result
+
+
+# Given a valid corpus-shaped source case ID, when it is reported, then it
+# is kept, so genuine collision detail is not also thrown away.
+def test_collision_output_keeps_a_safe_source_case_id() -> None:
+    result = loader.failure_result(
+        environment="development",
+        error_code=loader.ERROR_COLLISION,
+        dataset_sha256="e" * 64,
+        source_case_id="motor-private-car-001",
+        stage="workflow",
+    )
+
+    assert result["source_case_id"] == "motor-private-car-001"
+
+
 # Given the loader, when it selects a provider, then only the deterministic
 # fake provider can run, never a network-backed one.
 def test_loader_runs_only_the_deterministic_fake_provider() -> None:

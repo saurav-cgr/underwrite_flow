@@ -64,6 +64,30 @@ def test_duplicate_case_id_is_rejected(records, configurations) -> None:
     assert failure.value.code == "case_count"
 
 
+# Given an unsafe case ID shape, when preflighted, then it is rejected
+# before any downstream use, whatever else the record contains.
+@pytest.mark.parametrize(
+    "case_id",
+    [
+        "Bearer synthetic-secret-token-x",
+        "case id with spaces",
+        "case/../traversal",
+        "x" * 500,
+        "",
+        None,
+        12345,
+    ],
+)
+def test_unsafe_case_id_is_rejected(records, configurations, case_id) -> None:
+    mutated = _mutated(records)
+    mutated[0]["case_id"] = case_id
+
+    with pytest.raises(DatasetPreflightError) as failure:
+        preflight_dataset(mutated, configurations)
+
+    assert failure.value.code == "unsafe_case_id"
+
+
 # Given a wrong synthetic label, when preflighted, then it is rejected.
 @pytest.mark.parametrize(
     "label",
