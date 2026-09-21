@@ -145,7 +145,8 @@ development state.
 
 Use production only to validate configuration behavior. This override sets
 `ENVIRONMENT_MODE=production` and refuses evaluation loading. It makes no
-production-readiness, security, or compliance claim:
+production-readiness, security, or compliance claim. It keeps the configured
+provider from `.env` (Gemini by default; fake remains available):
 
 ```bash
 docker compose -f compose.yaml -f compose.production.yaml up --build
@@ -315,6 +316,10 @@ running it.
 ```bash
 docker compose down
 docker volume rm underwriteflow_postgres_data underwriteflow_uploads_data
+# Reconfigure local settings in .env before restart.
+cp .env.example .env
+# Edit .env: set ENVIRONMENT_MODE=development
+# Edit .env: choose GENERATION_PROVIDER=fake or approved Gemini
 docker compose up --build
 ```
 

@@ -247,3 +247,12 @@ present.
 - `[USn]` labels map directly to the four stories in `spec.md`.
 - No application code, schema, dependency, provider, or destructive reset
   implementation is introduced by this feature.
+
+---
+
+## Phase 8: Convergence
+
+- [X] T019 State the configured provider choice in the production startup path
+  in `README.md` per FR-002 (partial)
+- [X] T020 Add an explicit local `.env` reconfiguration step before the reset
+  restart command in `README.md` per FR-005 (partial)
