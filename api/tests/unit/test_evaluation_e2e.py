@@ -146,6 +146,7 @@ def test_atomic_write_json_leaves_no_partial_file_behind(
     atomic_write_json(target, payload)
 
     assert json.loads(target.read_text()) == payload
+    assert target.stat().st_mode & 0o777 == 0o644
     assert list(target.parent.glob("*.tmp")) == []
 
 

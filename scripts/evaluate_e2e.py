@@ -62,6 +62,7 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
         json.dump(payload, handle, indent=2, sort_keys=True)
         handle.write("\n")
         temp_path = Path(handle.name)
+    temp_path.chmod(0o644)
     temp_path.replace(path)
 
 
