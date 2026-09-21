@@ -146,7 +146,8 @@ development state.
 Use production only to validate configuration behavior. This override sets
 `ENVIRONMENT_MODE=production` and refuses evaluation loading. It makes no
 production-readiness, security, or compliance claim. It keeps the configured
-provider from `.env` (Gemini by default; fake remains available):
+provider from `.env` (Gemini by default; fake remains available). It uses
+normal local Compose state, not the isolated evaluation stack:
 
 ```bash
 docker compose -f compose.yaml -f compose.production.yaml up --build

@@ -256,3 +256,10 @@ present.
   in `README.md` per FR-002 (partial)
 - [X] T020 Add an explicit local `.env` reconfiguration step before the reset
   restart command in `README.md` per FR-005 (partial)
+
+---
+
+## Phase 9: Convergence
+
+- [X] T021 State that the production-mode command uses normal local Compose
+  state, not the isolated evaluation stack, in `README.md` per FR-002 (partial)
