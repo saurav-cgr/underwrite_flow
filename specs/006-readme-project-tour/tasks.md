@@ -67,7 +67,7 @@ human-confirmed route and identify component boundaries.
 **Independent Test**: Open `README.md` in a Markdown viewer and select each
 contents link once.
 
-- [ ] T009 [US3] Validate each contents target and heading anchor in `README.md`
+- [X] T009 [US3] Validate each contents target and heading anchor in `README.md`
   using `quickstart.md`.
 
 **Checkpoint**: User Story 3 provides one-selection navigation for major topics.
