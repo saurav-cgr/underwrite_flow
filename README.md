@@ -14,10 +14,12 @@ binds, prices, issues, renews, or cancels insurance.
 
 - [What this demonstrates](#what-this-demonstrates)
 - [Quickstart](#quickstart-local-fake-provider)
+- [Environment mode startup paths](#environment-mode-startup-paths)
 - [Role verification](#verify-each-role)
 - [Automated checks](#automated-verification)
 - [Architecture](#architecture-overview)
 - [Evaluation](#environments-and-evaluation-data)
+- [Reset local demonstration](#reset-local-demonstration)
 - [Troubleshooting](#troubleshooting)
 - [Known limits](#known-limits)
 
@@ -80,6 +82,73 @@ It keeps synthetic application and document content on this machine.
 cp .env.example .env
 # Edit .env: set GENERATION_PROVIDER=fake
 docker compose up --build
+```
+
+### Gemini provider: approved project
+
+Use Gemini only with an approved project configured for no training or
+retention of request and response data. Put values in local `.env` only. Never
+paste an API key into this README, a command, or shell history.
+
+```bash
+cp .env.example .env
+# Edit .env: set GENERATION_PROVIDER=gemini
+# Edit .env: set GEMINI_NO_TRAINING_ACKNOWLEDGED=true after approval
+docker compose up --build
+```
+
+`.env.example` lists required fields: `GEMINI_API_KEY`, `GEMINI_MODEL`,
+`GEMINI_NO_TRAINING_ACKNOWLEDGED`, `PROVIDER_ALLOWED_HOSTS`, and
+`PII_REDACTION_TERMS`. Keep the approved Gemini host in the allowlist. Set
+redaction terms for deployment-specific identifiers before any request.
+Only approved, redacted synthetic task data may leave the local boundary.
+
+Without an approved project or credential, keep `GENERATION_PROVIDER=fake`.
+The fake path needs no cloud credential and remains the default for local
+checks.
+
+## Environment mode startup paths
+
+Choose one path before starting the stack. Every path uses fictional data.
+
+### Development: normal local demonstration
+
+Use development for interactive local work. It uses isolated local Compose
+state. Set the fake provider to avoid cloud credentials:
+
+```bash
+cp .env.example .env
+# Edit .env: set ENVIRONMENT_MODE=development
+# Edit .env: set GENERATION_PROVIDER=fake
+docker compose up --build
+```
+
+Development starts the normal local stack. It does not load evaluation cases
+automatically. The fake provider keeps application and document content local.
+
+### Evaluation: isolated synthetic run
+
+Use evaluation for the 90-case synthetic reference run. The isolated Compose
+file sets `ENVIRONMENT_MODE=evaluation`, uses the fake provider, and keeps its
+database, uploads, network, and result state separate from development:
+
+```bash
+make evaluate-e2e
+```
+
+The command starts `compose.evaluation.yaml`, runs the evaluation runner, and
+cleans up its containers. Expected result: the deterministic 90-case
+evaluation passes; failures return a nonzero exit. It does not share
+development state.
+
+### Production: guarded configuration mode
+
+Use production only to validate configuration behavior. This override sets
+`ENVIRONMENT_MODE=production` and refuses evaluation loading. It makes no
+production-readiness, security, or compliance claim:
+
+```bash
+docker compose -f compose.yaml -f compose.production.yaml up --build
 ```
 
 Open `http://localhost:5173`. PostgreSQL is reachable only on the Compose
@@ -145,17 +214,36 @@ flowchart TD
     Administrator --> Web
     Web --> API[FastAPI API]
     API --> Domain[Cases, products, reviews, queues, audit]
-    Domain --> Store[(PostgreSQL)]
+    Domain --> Store[(PostgreSQL business data)]
     Domain --> Documents[(Local documents)]
-    Domain --> Workflow[LangGraph workflow]
-    Workflow --> Product[Selected product path]
-    Product --> Reconcile[Deterministic reconciliation]
+    Domain --> Intake[Case intake]
+    Intake --> Parent[Parent LangGraph]
+    Parent --> Fanout{Bounded document fan-out<br/>maximum three branches}
+    Fanout --> BranchA[Document branch A]
+    Fanout --> BranchB[Document branch B]
+    Fanout --> BranchC[Document branch C]
+    BranchA --> Join[Stable ordered join]
+    BranchB --> Join
+    BranchC --> Join
+    Join --> Product[Selected product path<br/>pinned version]
+    Product --> Reconcile[Sequential deterministic reconciliation]
     Reconcile --> Recommend[Route recommendation]
-    Recommend --> Human[Underwriter decision]
-    Human --> Complete[Queue handoff and completion]
+    Recommend --> Interrupt[Human interrupt before final routing]
+    Interrupt --> Review[Authenticated underwriter confirms or overrides]
+    Review --> Resume[Resume same thread]
+    Resume --> Handoff[Idempotent queue handoff]
+    Handoff --> Complete[Completion]
+    Parent -. resume support .-> Checkpoints[(PostgreSQL checkpoints)]
+    Domain -. immutable business history .-> Audit[(Append-only audit events)]
     API -. optional redacted data .-> Provider[Gemini or Ollama]
     Evaluation[Isolated evaluation] --> EvalData[(Own tmpfs state)]
 ```
+
+Solid arrows show sequential stages. The fan-out runs bounded parallel
+document work, then the join waits for successful branches before the selected
+product path continues. Checkpoints support resume after interruption; they do
+not replace immutable audit events as the business history. No route completes
+until an authenticated underwriter confirms or overrides the recommendation.
 
 ### Case lifecycle
 
@@ -211,6 +299,32 @@ with no shared development state. Production rejects evaluation loading before
 database or upload access with `evaluation_load_forbidden`.
 
 All applicants, documents, rules, and evaluation cases are fictional.
+
+## Reset local demonstration
+
+Use this reset only for a local stack containing fictional data. Stop the
+development stack first. The reset permanently removes the development
+database and uploaded synthetic files. Do not use it for production data or
+records that need retention.
+This is not a production recovery or retention procedure.
+
+**Warning:** The command below cannot recover deleted cases, documents,
+reviews, or audit history. Confirm that all local data may be erased before
+running it.
+
+```bash
+docker compose down
+docker volume rm underwriteflow_postgres_data underwriteflow_uploads_data
+docker compose up --build
+```
+
+This removes only the `postgres_data` and `uploads_data` volumes. It preserves
+unrelated volumes, including web dependencies and optional Ollama data. Do
+not replace these commands with `docker compose down -v`.
+
+Startup reruns migrations and product bootstrap. Verify the empty fictional
+baseline: demo accounts and built-in product versions exist, while prior
+cases, uploaded documents, reviews, and audit records do not.
 
 ## Troubleshooting
 
