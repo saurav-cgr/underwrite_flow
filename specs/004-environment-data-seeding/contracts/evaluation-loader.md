@@ -51,7 +51,8 @@ make load-evaluation-data-eval
 ```
 
 ```bash
-docker compose -f compose.evaluation.yaml run --rm evaluation-api \
+docker compose -f compose.evaluation.yaml up -d --build evaluation-api
+docker compose -f compose.evaluation.yaml exec evaluation-api \
   python /app/scripts/load_evaluation_data.py
 ```
 
@@ -59,6 +60,14 @@ Its `EVALUATION_LOADER_ACTOR_TOKEN` must be minted by the evaluation stack's
 own login endpoint: the token's issuer, audience, and signing secret are
 scoped to that stack, so a development-stack token is refused there and an
 evaluation-stack token is refused by development.
+
+The load runs inside the already-running `evaluation-api` container through
+`exec`, never a fresh one-off `run` container. Uploaded documents live on
+that container's tmpfs upload volume, which exists only for one container's
+lifetime; a separate `run` container would write to its own, distinct
+tmpfs, invisible to the API the operator actually queries afterward. Running
+the load through `exec` keeps every loaded document readable by that same
+running evaluation API once the load finishes.
 
 ## Preconditions
 

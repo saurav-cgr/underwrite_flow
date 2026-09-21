@@ -116,6 +116,22 @@ def test_evaluation_load_command_targets_the_evaluation_stack() -> None:
     assert "EVALUATION_LOADER_ACTOR_TOKEN" in body
 
 
+# Verify the loader runs inside the already-running evaluation API container,
+# never a fresh one-off container: its tmpfs upload volume exists only for
+# one container's lifetime, so a separate `run` container's uploads would be
+# invisible to the API the operator actually queries afterward.
+def test_evaluation_load_command_targets_the_running_api_container() -> None:
+    if not MAKEFILE_PATH.exists():
+        pytest.skip("Makefile is not mounted into the api service")
+    text = MAKEFILE_PATH.read_text()
+
+    body = _target_body(text, "load-evaluation-data-eval")
+
+    assert "up -d" in body
+    assert "exec" in body
+    assert "run --rm" not in body
+
+
 # Merge one override onto the base stack the way Compose renders it, so the
 # test reads the same effective service definitions the operator runs.
 def _rendered_production() -> dict[str, Any]:

@@ -331,7 +331,7 @@ T020: Production zero-write integration test
 - [X] T036 Provide and test one explicit operator command that loads the
   corpus into the isolated evaluation Compose stack using a valid scoped JWT,
   rather than targeting the development stack, per FR-005 (partial)
-- [ ] T037 Make evaluation-mode uploads loaded by that command available to
+- [X] T037 Make evaluation-mode uploads loaded by that command available to
   the running evaluation API without exposing them outside its local stack;
   verify a loaded document can be read after the loader exits, per SC-004
   (partial)

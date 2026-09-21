@@ -36,8 +36,12 @@ load-evaluation-data:
 # Loads into the isolated evaluation stack instead of development. Requires
 # EVALUATION_LOADER_ACTOR_TOKEN: a real access token minted by the
 # evaluation stack's own login endpoint, scoped to its issuer and audience,
-# for a user whose current authorization holds `evaluation:run`.
+# for a user whose current authorization holds `evaluation:run`. Runs inside
+# the already-running evaluation-api container (not a fresh one-off `run`
+# container) so loaded documents share its tmpfs upload volume and stay
+# readable through that same running API afterward.
 load-evaluation-data-eval:
-	docker compose -f compose.evaluation.yaml run --rm \
+	docker compose -f compose.evaluation.yaml up -d --build evaluation-api
+	docker compose -f compose.evaluation.yaml exec \
 		-e EVALUATION_LOADER_ACTOR_TOKEN evaluation-api \
 		python /app/scripts/load_evaluation_data.py
