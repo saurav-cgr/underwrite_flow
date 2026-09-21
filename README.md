@@ -172,13 +172,39 @@ database or upload access with `evaluation_load_forbidden`.
 
 All applicants, documents, rules, and evaluation cases are fictional.
 
-## Documentation
+## Troubleshooting
+
+- **Stack is not ready**: run `docker compose ps`, then inspect
+  `docker compose logs bootstrap api`.
+- **No product is selectable**: sign in as Administrator and activate a
+  fictional product version before creating an application.
+- **Local provider needs credentials**: set `GENERATION_PROVIDER=fake` for the
+  deterministic, no-credential path.
+- **Evaluation load is denied**: use development or evaluation with a current
+  `evaluation:run` token. Production always refuses evaluation loading.
+
+## Known limits
+
+- This is a local, single-node demonstration: it has no broker, scheduler, or
+  object storage.
+- It uses fictional data only and is not a production-readiness or compliance
+  claim.
+- Normal checks use the fake provider, so live-provider latency, cost, and
+  quota behaviour are untested.
+- Uploads are validated but have no malware scan or quarantine. Real-user
+  deployments need both before accepting uploads.
+- Tracing is off by default. No retention or deletion policy exists beyond the
+  append-only audit guarantee.
+
+## Further reading
 
 - [Product requirements](docs/PRD.md)
 - [Finalized MVP decisions](docs/PRD_FINALIZED_DECISIONS.md)
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Demo guide](docs/DEMO.md)
+- [Evaluation loader](specs/004-environment-data-seeding/quickstart.md)
+- [Release readiness](docs/RELEASE_READINESS.md)
 - [Synthetic evaluation set](evaluation/cases.json)
 - [UI prototype](designs/underwriteflow-ui/index.html)
 

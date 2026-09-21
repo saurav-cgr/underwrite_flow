@@ -96,7 +96,7 @@ model is presented as final decision authority.
 
 **Purpose**: Make README discoverable, accurate, readable, and safe.
 
-- [ ] T011 Add troubleshooting, known limits, and curated reference links to
+- [X] T011 Add troubleshooting, known limits, and curated reference links to
   `README.md` using `docs/ARCHITECTURE.md`, `docs/DEMO.md`, and feature docs.
 - [ ] T012 Run every scenario in
   `specs/005-readme-documentation/quickstart.md` against `README.md`.
