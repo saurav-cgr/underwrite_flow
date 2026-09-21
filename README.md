@@ -1,11 +1,56 @@
 # UnderwriteFlow
 
-Human-governed triage for fictional motor, life, and health applications.
+Local, human-governed triage demonstration for fictional motor, life, and
+health applications. It turns application details and evidence into an
+evidence-backed work-queue recommendation for human review.
+
 The local MVP uses FastAPI, LangGraph, React, PostgreSQL, and Docker Compose.
 
 UnderwriteFlow recommends a work queue route. An authenticated underwriter
 must confirm or override every final route. It never approves, declines,
 binds, prices, issues, renews, or cancels insurance.
+
+## Implemented features
+
+- **Journey-aware intake**: Applicants choose new business or renewal before
+  product selection; renewal can require prior-policy evidence.
+- **Versioned product authoring**: Administrators validate, preview, compare,
+  activate, and export fictional product rulebooks. Existing cases stay pinned.
+- **Evidence reconciliation**: Configured checks identify cleared, conflicting,
+  or missing evidence with document provenance.
+- **Human review and audit**: Deterministic rules recommend a route; an
+  underwriter confirms it. Immutable audit events preserve decision history.
+- **Safe evaluation**: Development and evaluation can load synthetic data on
+  demand. Isolated 90-case evaluation never shares development state.
+
+### Journeys and product authoring
+
+Applicants choose new business or renewal before selecting a product; a
+renewal requires its prior-policy document before the rest of the form.
+Administrators author, preview, and version product rulebooks (fields,
+documents, routing rules, reconciliation checks) through the builder, then
+explicitly activate one version per product. A case stays pinned to the
+version and journey selected when it started.
+
+`make evaluate-e2e` runs the full 90-case synthetic evaluation set against an
+isolated, tmpfs-only Compose stack with no published ports and no shared
+state with the development database or upload volume.
+
+### Provider boundary
+
+The default generation provider is Gemini, so extracted document content and
+application facts are sent to the Gemini API unless the fake provider is
+selected. Set `GENERATION_PROVIDER=fake` to keep synthetic data on this
+machine. Ollama is available through the `ollama` Compose profile.
+
+Uploads are validated from their bytes, and file metadata is stored in the
+local upload volume. Uploaded content is untrusted and is never treated as
+model instructions.
+
+LangSmith tracing is disabled by default. To opt in for synthetic evaluation,
+set `LANGSMITH_TRACING=true`, provide a local evaluation key, and use the
+APAC endpoint in `.env.example`. Trace payloads are redacted and tracing
+failures never change application behavior.
 
 ## Run locally
 
@@ -118,35 +163,6 @@ The production override selects an environment mode. It is not a claim of
 production readiness, security hardening, or compliance. Every applicant,
 document, product rule, and evaluation case this project loads is synthetic
 and exists only for demonstration.
-
-## Journeys and product authoring
-
-Applicants choose new business or renewal before selecting a product; a
-renewal requires its prior-policy document before the rest of the form.
-Administrators author, preview, and version product rulebooks (fields,
-documents, routing rules, reconciliation checks) through the builder, then
-explicitly activate one version per product. A case stays pinned to the
-version and journey selected when it started.
-
-`make evaluate-e2e` runs the full 90-case synthetic evaluation set against an
-isolated, tmpfs-only Compose stack with no published ports and no shared
-state with the development database or upload volume.
-
-## Provider boundary
-
-The default generation provider is Gemini, so extracted document content and
-application facts are sent to the Gemini API unless the fake provider is
-selected. Set `GENERATION_PROVIDER=fake` to keep synthetic data on this
-machine. Ollama is available through the `ollama` Compose profile.
-
-Uploads are validated from their bytes, and file metadata is stored in the
-local upload volume. Uploaded content is untrusted and is never treated as
-model instructions.
-
-LangSmith tracing is disabled by default. To opt in for synthetic evaluation,
-set `LANGSMITH_TRACING=true`, provide a local evaluation key, and use the
-APAC endpoint in `.env.example`. Trace payloads are redacted and tracing
-failures never change application behavior.
 
 ## Documentation
 
