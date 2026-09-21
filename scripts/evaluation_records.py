@@ -17,8 +17,10 @@ from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
 
 from underwriteflow.persistence.models import (  # noqa: E402
     Document,
+    Product,
     ProductVersion,
     Recommendation,
+    RulebookVersion,
     Submission,
 )
 
@@ -59,12 +61,32 @@ async def verify_case(
             ProductVersion.id == case.product_version_id
         )
     )
+    product = (
+        await session.scalar(
+            select(Product).where(Product.id == product_version.product_id)
+        )
+        if product_version is not None
+        else None
+    )
     if (
         product_version is None
+        or product is None
+        or product.code != record["product_code"]
         or product_version.version != record["configuration_version"]
         or case.journey_type != record["journey_type"]
     ):
         raise RecordCollision(record["case_id"], "case")
+    rulebook = await session.scalar(
+        select(RulebookVersion).where(
+            RulebookVersion.id == case.rulebook_version_id
+        )
+    )
+    if (
+        rulebook is None
+        or rulebook.product_version_id != product_version.id
+        or rulebook.version != record["configuration_version"]
+    ):
+        raise RecordCollision(record["case_id"], "rulebook")
     submission = await session.scalar(
         select(Submission).where(Submission.case_id == case.id)
     )
@@ -89,6 +111,17 @@ async def stored_documents(
     }
 
 
+# Confirm the stored document codes are exactly the source record's set.
+def verify_document_set(
+    record: dict[str, Any], existing: dict[str, Document]
+) -> None:
+    expected_codes = {
+        document["document_id"] for document in record["documents"]
+    }
+    if set(existing) - expected_codes:
+        raise RecordCollision(record["case_id"], "documents")
+
+
 # Confirm one already stored document is byte-identical to its source.
 def verify_document(
     record: dict[str, Any], existing: Document, content_hash: str
@@ -106,7 +139,9 @@ async def verify_result(
     )
     if recommendation is None:
         raise RecordCollision(record["case_id"], "workflow")
-    verify_route(record, recommendation.route or "")
+    route = recommendation.route or ""
+    verify_route(record, route)
+    verify_derived_signals(record, route, recommendation.summary or {})
 
 
 # Compare one derived route with its reference label, treating the needs
@@ -118,4 +153,18 @@ def verify_route(record: dict[str, Any], route: str) -> None:
             raise RecordCollision(record["case_id"], "workflow")
         return
     if route != expected["route"]:
+        raise RecordCollision(record["case_id"], "workflow")
+
+
+# Confirm a resolved case's conflict signal matches its label, so a route
+# that happens to match cannot mask a wrong underlying escalation reason.
+# The missing-data dimension is covered by `verify_route`'s queue-state
+# branch instead: a case still queued for evidence never derived conflicts.
+def verify_derived_signals(
+    record: dict[str, Any], route: str, summary: dict[str, Any]
+) -> None:
+    if route == "needs_information":
+        return
+    has_conflict = bool((summary.get("summary") or {}).get("conflicts"))
+    if has_conflict != bool(record["expected"].get("conflict")):
         raise RecordCollision(record["case_id"], "workflow")

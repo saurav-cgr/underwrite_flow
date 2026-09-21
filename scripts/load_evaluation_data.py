@@ -50,6 +50,7 @@ from evaluation_records import (  # noqa: E402
     stored_documents,
     verify_case,
     verify_document,
+    verify_document_set,
     verify_result,
     verify_route,
 )
@@ -196,6 +197,7 @@ async def load_record(
         await verify_case(session, case, record)
 
     existing = await stored_documents(session, case)
+    verify_document_set(record, existing)
     for document in sorted(
         record["documents"], key=lambda item: item["document_id"]
     ):

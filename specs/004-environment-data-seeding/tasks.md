@@ -290,7 +290,7 @@ T020: Production zero-write integration test
   rulebook before the loader's first business or audit write, and add a
   no-write regression test for a missing baseline dependency, per plan: loader
   preflight (partial)
-- [ ] T028 Reject reserved-record collisions for a mismatched product,
+- [X] T028 Reject reserved-record collisions for a mismatched product,
   rulebook, exact document set or hash, and derived missing-data or conflict
   result, with focused regression coverage for each mismatch, per plan: retry
   and collision rules (partial)
