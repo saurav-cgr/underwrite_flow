@@ -32,16 +32,14 @@ fictional data belongs in this local demonstration.
 
 ## Implemented features
 
-- **Journey-aware intake**: Applicants choose new business or renewal before
-  product selection; renewal can require prior-policy evidence.
-- **Versioned product authoring**: Administrators validate, preview, compare,
-  activate, and export fictional product rulebooks. Existing cases stay pinned.
-- **Evidence reconciliation**: Configured checks identify cleared, conflicting,
-  or missing evidence with document provenance.
-- **Human review and audit**: Deterministic rules recommend a route; an
-  underwriter confirms it. Immutable audit events preserve decision history.
-- **Safe evaluation**: Development and evaluation can load synthetic data on
-  demand. Isolated 90-case evaluation never shares development state.
+| Capability | Demonstrated behavior | Boundary |
+| --- | --- | --- |
+| Intake | New business or renewal | Fictional data only |
+| Versioned rules | Admin validates and activates rules | Cases stay pinned |
+| Reconciliation | Finds evidence conflicts or gaps | Deterministic checks |
+| Triage and review | Underwriter confirms a route | No insurance decision |
+| Audit history | Preserves business events | Checkpoints support resume |
+| Safe evaluation | Isolated 90-case run | No shared development state |
 
 ### Journeys and product authoring
 
