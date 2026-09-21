@@ -178,9 +178,12 @@ generic `evaluation_load_failed` with no further detail. Both are caught at
 the CLI boundary: no traceback or exception detail ever reaches standard
 output or standard error. A case ID that is not a plain, bounded string is
 dropped rather than reported, so a malformed corpus record cannot put
-arbitrary content on standard output. Settings that fail to validate report
-`evaluation_load_failed` with `environment: "unknown"` instead of failing a
-second time while trying to report the first failure.
+arbitrary content on standard output. This sanitization is one shared
+chokepoint every failure path uses, including `evaluation_record_collision`:
+a reserved-record mismatch never reports the raw case ID a malformed record
+supplied. Settings that fail to validate report `evaluation_load_failed`
+with `environment: "unknown"` instead of failing a second time while trying
+to report the first failure.
 
 ## Compose Modes
 

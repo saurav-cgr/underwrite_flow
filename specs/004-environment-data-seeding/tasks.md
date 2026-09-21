@@ -335,7 +335,7 @@ T020: Production zero-write integration test
   the running evaluation API without exposing them outside its local stack;
   verify a loaded document can be read after the loader exits, per SC-004
   (partial)
-- [ ] T038 Reject malformed source case IDs before any write and allow only
+- [X] T038 Reject malformed source case IDs before any write and allow only
   safe identifiers in every loader failure path, including record collisions;
   test bounded secret-shaped strings cannot reach output, per T034 (partial)
 - [ ] T039 Update the README and feature quickstart with a runnable token

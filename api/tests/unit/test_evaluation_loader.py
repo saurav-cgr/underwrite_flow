@@ -128,6 +128,36 @@ def test_failure_output_rejects_unsafe_detail() -> None:
         assert unsafe not in text
 
 
+# Given a record collision whose case ID came from a malformed corpus
+# record, when it is reported, then the unsafe field is dropped: every
+# failure path shares the same sanitization, not only the CLI's own catch.
+def test_collision_output_omits_a_malformed_source_case_id() -> None:
+    result = loader.failure_result(
+        environment="development",
+        error_code=loader.ERROR_COLLISION,
+        dataset_sha256="e" * 64,
+        source_case_id=12345,
+        stage="workflow",
+    )
+
+    assert "source_case_id" not in result
+    assert result["stage"] == "workflow"
+
+
+# Given a record collision whose case ID is an implausibly long, secret-
+# shaped string, when it is reported, then it never reaches standard output.
+def test_collision_output_omits_an_oversized_source_case_id() -> None:
+    result = loader.failure_result(
+        environment="development",
+        error_code=loader.ERROR_COLLISION,
+        dataset_sha256="e" * 64,
+        source_case_id="Bearer synthetic-secret-token-" + "x" * 500,
+        stage="workflow",
+    )
+
+    assert "source_case_id" not in result
+
+
 # Given the loader, when it selects a provider, then only the deterministic
 # fake provider can run, never a network-backed one.
 def test_loader_runs_only_the_deterministic_fake_provider() -> None:

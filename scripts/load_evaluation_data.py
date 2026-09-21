@@ -8,7 +8,6 @@ See `specs/004-environment-data-seeding/contracts/evaluation-loader.md`.
 """
 
 import asyncio
-import hashlib
 import json
 import os
 import sys
@@ -61,81 +60,25 @@ from loader_audit import (  # noqa: E402
     resolve_actor,
     verify_baseline_versions,
 )
+from loader_output import (  # noqa: E402
+    ERROR_COLLISION,
+    ERROR_FORBIDDEN,
+    ERROR_PRECONDITION,
+    ERROR_PREFLIGHT,
+    ERROR_UNEXPECTED,
+    failure_result,
+    ordered_records,
+    record_key,
+    records_sha256,
+    success_result,
+)
 
 # Only the deterministic local provider may ever run during a load.
 PROVIDER_FACTORY = FakeProvider
 
 APPLICANT_EMAIL = "applicant@synthetic.test"
-KEY_PREFIX = "evaluation"
 RECORD_EVENT = "evaluation_record_loaded"
 DATASET_EVENT = "evaluation_dataset_loaded"
-
-ERROR_FORBIDDEN = "evaluation_load_forbidden"
-ERROR_COLLISION = "evaluation_record_collision"
-ERROR_PRECONDITION = "evaluation_load_precondition_failed"
-ERROR_PREFLIGHT = "evaluation_load_preflight_failed"
-ERROR_UNEXPECTED = "evaluation_load_failed"
-
-
-# Build the reserved idempotency key for one source record.
-def record_key(dataset_sha256_value: str, source_case_id: str) -> str:
-    return f"{KEY_PREFIX}:{dataset_sha256_value}:{source_case_id}"
-
-
-# Order records so every run walks the corpus in the same sequence.
-def ordered_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return sorted(records, key=lambda record: record["case_id"])
-
-
-# Identify an injected record subset by its canonical serialized bytes.
-def records_sha256(records: list[dict[str, Any]]) -> str:
-    canonical = json.dumps(
-        ordered_records(records), sort_keys=True, separators=(",", ":")
-    )
-    return hashlib.sha256(canonical.encode()).hexdigest()
-
-
-# Build the safe completion object one successful load prints.
-def success_result(
-    environment: str,
-    dataset_sha256: str,
-    expected_count: int,
-    created_count: int,
-    resumed_count: int,
-    verified_count: int,
-) -> dict[str, Any]:
-    return {
-        "environment": environment,
-        "dataset_sha256": dataset_sha256,
-        "expected_count": expected_count,
-        "created_count": created_count,
-        "resumed_count": resumed_count,
-        "verified_count": verified_count,
-        "complete": verified_count == expected_count,
-    }
-
-
-# Build the safe failure object a refused or incomplete load prints.
-def failure_result(
-    environment: str,
-    error_code: str,
-    dataset_sha256: str | None = None,
-    source_case_id: str | None = None,
-    stage: str | None = None,
-) -> dict[str, Any]:
-    result: dict[str, Any] = {
-        "environment": environment,
-        "complete": False,
-        "error_code": error_code,
-    }
-    for key, value in (
-        ("dataset_sha256", dataset_sha256),
-        ("source_case_id", source_case_id),
-        ("stage", stage),
-    ):
-        if value is not None:
-            result[key] = value
-    return result
 
 
 # Upload one rendered synthetic document through the existing case service.
@@ -354,15 +297,6 @@ async def load_evaluation_data(
     )
 
 
-# Return one corpus-derived field only when it is a plain, bounded string.
-# A malformed record can put anything in a labeled field, so nothing it
-# supplies reaches standard output without this shape check first.
-def safe_field(value: Any, limit: int = 200) -> str | None:
-    if not isinstance(value, str) or not value or len(value) > limit:
-        return None
-    return value
-
-
 # Run the explicit load and exit with its completion status. Every failure,
 # expected or not, surfaces as one sanitized JSON object: no traceback, no
 # internal detail, ever reaches standard output or standard error. Settings
@@ -385,8 +319,8 @@ def main() -> int:
         result = failure_result(
             environment,
             ERROR_PREFLIGHT,
-            source_case_id=safe_field(error.case_id),
-            stage=safe_field(error.stage),
+            source_case_id=error.case_id,
+            stage=error.stage,
         )
     except Exception:
         result = failure_result(environment, ERROR_UNEXPECTED)
