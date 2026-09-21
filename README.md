@@ -116,6 +116,29 @@ make smoke
 make evaluate-e2e
 ```
 
+## Architecture overview
+
+```mermaid
+flowchart TD
+    Applicant --> Web[React web]
+    Underwriter --> Web
+    Administrator --> Web
+    Web --> API[FastAPI API]
+    API --> Domain[Cases, products, reviews, queues, audit]
+    Domain --> Store[(PostgreSQL)]
+    Domain --> Documents[(Local documents)]
+    Domain --> Workflow[LangGraph workflow]
+    Workflow --> Product[Selected product path]
+    Product --> Reconcile[Deterministic reconciliation]
+    Reconcile --> Recommend[Route recommendation]
+    Recommend --> Human[Underwriter decision]
+    Human --> Complete[Queue handoff and completion]
+    API -. optional redacted data .-> Provider[Gemini or Ollama]
+    Evaluation[Isolated evaluation] --> EvalData[(Own tmpfs state)]
+```
+
+See the [architecture guide](docs/ARCHITECTURE.md) for full component detail.
+
 ## Environments and evaluation data
 
 Every environment starts from the same common baseline: the current schema,

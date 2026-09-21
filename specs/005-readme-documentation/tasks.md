@@ -80,7 +80,7 @@ automated verification without adding a new script.
 **Independent Test**: Evaluator traces intake through human completion and
 identifies configuration, evidence, workflow, audit, and evaluation locations.
 
-- [ ] T008 [US3] Add Mermaid architecture diagram to `README.md`, adapted from
+- [X] T008 [US3] Add Mermaid architecture diagram to `README.md`, adapted from
   `docs/ARCHITECTURE.md` and meeting `contracts/readme-content.md`.
 - [ ] T009 [US3] Add architecture invariants and extension boundaries to
   `README.md`, including pinned versions, redaction, audit, and human control.
