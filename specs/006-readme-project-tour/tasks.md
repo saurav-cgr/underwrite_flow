@@ -79,7 +79,7 @@ contents link once.
 **Purpose**: Prove the README stays factual, readable, and documentation-only.
 
 - [X] T010 Check `README.md` for real data or unsafe claims.
-- [ ] T011 Run `quickstart.md` validation and `git diff --check`.
+- [X] T011 Run `quickstart.md` validation and `git diff --check`.
 
 ---
 
