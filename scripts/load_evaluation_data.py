@@ -23,11 +23,7 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
 from starlette.datastructures import Headers  # noqa: E402
 
-from underwriteflow.audit.events import (  # noqa: E402
-    build_audit_event,
-    version_details,
-)
-from underwriteflow.auth.schemas import UserRole  # noqa: E402
+from underwriteflow.audit.events import version_details  # noqa: E402
 from underwriteflow.cases.schemas import CaseCreate  # noqa: E402
 from underwriteflow.cases.service import CaseService  # noqa: E402
 from underwriteflow.cases.submission import SubmissionService  # noqa: E402
@@ -40,7 +36,6 @@ from underwriteflow.evaluation.dataset import (  # noqa: E402
     preflight_dataset,
 )
 from underwriteflow.persistence.models import (  # noqa: E402
-    AuditEvent,
     Case,
     ProductVersion,
     RulebookVersion,
@@ -58,14 +53,18 @@ from evaluation_records import (  # noqa: E402
     verify_result,
     verify_route,
 )
+from loader_audit import (  # noqa: E402
+    ACTOR_EMAIL_ENV,
+    DEFAULT_ACTOR_EMAIL,
+    append_marker,
+    resolve_actor,
+    verify_baseline_versions,
+)
 
 # Only the deterministic local provider may ever run during a load.
 PROVIDER_FACTORY = FakeProvider
 
 APPLICANT_EMAIL = "applicant@synthetic.test"
-ACTOR_EMAIL_ENV = "EVALUATION_LOADER_ACTOR_EMAIL"
-DEFAULT_ACTOR_EMAIL = "underwriter@synthetic.test"
-ACTOR_ROLES = frozenset({UserRole.UNDERWRITER, UserRole.ADMINISTRATOR})
 KEY_PREFIX = "evaluation"
 RECORD_EVENT = "evaluation_record_loaded"
 DATASET_EVENT = "evaluation_dataset_loaded"
@@ -156,45 +155,6 @@ async def upload_document(
     await service.add_document(
         session, case, upload, document_code, actor_id
     )
-
-
-# Resolve the authenticated operator identity the loader records audits as.
-async def resolve_actor(session: AsyncSession) -> User | None:
-    email = os.getenv(ACTOR_EMAIL_ENV, DEFAULT_ACTOR_EMAIL)
-    actor = await session.scalar(
-        select(User).where(User.email == email, User.is_active.is_(True))
-    )
-    if actor is None or UserRole(actor.role) not in ACTOR_ROLES:
-        return None
-    return actor
-
-
-# Append one bounded marker unless this dataset already recorded it.
-async def append_marker(
-    session: AsyncSession,
-    event_type: str,
-    details: dict[str, Any],
-    actor_id: Any,
-    case_id: Any = None,
-) -> None:
-    statement = select(AuditEvent.id).where(
-        AuditEvent.event_type == event_type,
-        AuditEvent.details["dataset_sha256"].astext
-        == details["dataset_sha256"],
-    )
-    if "source_case_id" in details:
-        statement = statement.where(
-            AuditEvent.details["source_case_id"].astext
-            == details["source_case_id"]
-        )
-    if await session.scalar(statement) is not None:
-        return
-    session.add(
-        build_audit_event(
-            event_type, details, case_id=case_id, actor_user_id=actor_id
-        )
-    )
-    await session.commit()
 
 
 # Load or verify one source record and report how it was satisfied.
@@ -331,6 +291,10 @@ async def load_evaluation_data(
                 )
             actor = await resolve_actor(session)
             if actor is None:
+                return failure_result(
+                    active.environment_mode, ERROR_PRECONDITION, identity
+                )
+            if not await verify_baseline_versions(session, corpus):
                 return failure_result(
                     active.environment_mode, ERROR_PRECONDITION, identity
                 )

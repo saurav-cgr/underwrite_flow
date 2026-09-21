@@ -238,6 +238,28 @@ async def test_mismatched_reserved_identity_is_a_collision(subset) -> None:
     assert stored == 99
 
 
+# Given a record whose product version is not persisted, when the loader
+# runs, then it refuses before any case in the batch is written, even one
+# ordered ahead of the missing dependency.
+@pytest.mark.asyncio
+async def test_missing_baseline_version_is_a_precondition_failure(
+    subset,
+) -> None:
+    missing = dict(subset[0])
+    missing["configuration_version"] = "v999-not-persisted"
+    corpus = [missing, subset[1]]
+    identity = loader.records_sha256(corpus)
+    purge(identity)
+    try:
+        result = await loader.load_evaluation_data(records=corpus)
+
+        assert result["complete"] is False
+        assert result["error_code"] == loader.ERROR_PRECONDITION
+        assert len(reserved_cases(identity)) == 0
+    finally:
+        purge(identity)
+
+
 # Given no valid loader actor, when the loader runs, then it refuses before
 # any business or audit row is written.
 @pytest.mark.asyncio

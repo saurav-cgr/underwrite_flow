@@ -286,7 +286,7 @@ T020: Production zero-write integration test
   `actor_user_id` on every loader audit marker, while adding the exact pinned
   product and rulebook version identities to each per-case marker, per
   Constitution V (contradicts)
-- [ ] T027 Validate every required persisted product version and matching
+- [X] T027 Validate every required persisted product version and matching
   rulebook before the loader's first business or audit write, and add a
   no-write regression test for a missing baseline dependency, per plan: loader
   preflight (partial)
