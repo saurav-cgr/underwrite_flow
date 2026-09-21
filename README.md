@@ -177,8 +177,12 @@ All applicants, documents, rules, and evaluation cases are fictional.
 
 - **Stack is not ready**: run `docker compose ps`, then inspect
   `docker compose logs bootstrap api`.
+- **Sign-in fails**: wait for bootstrap to finish, then select the matching
+  fictional account above or re-enter its listed credentials.
 - **No product is selectable**: sign in as Administrator and activate a
   fictional product version before creating an application.
+- **An automated check fails**: run it from repository root, review its output,
+  then inspect `docker compose logs api web` for running-service failures.
 - **Local provider needs credentials**: set `GENERATION_PROVIDER=fake` for the
   deterministic, no-credential path.
 - **Evaluation load is denied**: use development or evaluation with a current
