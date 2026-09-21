@@ -98,17 +98,22 @@ async def verify_case(
 
 
 # Return the documents already stored for one case, keyed by document code.
+#
+# A null code or a code shared by two rows can never collapse into one
+# entry silently: either one is a stray write that a code-keyed lookup
+# would otherwise hide, so both are reported as a collision instead.
 async def stored_documents(
-    session: AsyncSession, case: Any
+    session: AsyncSession, case: Any, record: dict[str, Any]
 ) -> dict[str, Document]:
-    documents = await session.scalars(
-        select(Document).where(Document.case_id == case.id)
+    documents = list(
+        await session.scalars(
+            select(Document).where(Document.case_id == case.id)
+        )
     )
-    return {
-        document.document_code: document
-        for document in documents
-        if document.document_code
-    }
+    codes = [document.document_code for document in documents]
+    if any(code is None for code in codes) or len(set(codes)) != len(codes):
+        raise RecordCollision(record["case_id"], "documents")
+    return {document.document_code: document for document in documents}
 
 
 # Confirm the stored document codes are exactly the source record's set.

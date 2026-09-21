@@ -264,3 +264,60 @@ async def test_conflict_signal_is_verified_for_needs_information_route(
     assert result["error_code"] == "evaluation_record_collision"
     assert result["source_case_id"] == record["case_id"]
     assert result["stage"] == "workflow"
+
+
+# Given a stored document with a null code, when the loader runs, then it
+# reports a collision instead of dropping the row from its code-keyed lookup.
+@pytest.mark.asyncio
+async def test_null_coded_document_is_a_collision(subset) -> None:
+    await loader.load_evaluation_data(records=subset)
+    identity = loader.records_sha256(subset)
+    reserved = dict((key, value) for value, key in reserved_cases(identity))
+    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
+    with psycopg.connect(DATABASE_URL) as connection:
+        connection.execute(
+            "INSERT INTO documents (id, case_id, document_code, filename, "
+            "content_type, storage_key, content_hash, byte_size) VALUES "
+            "(gen_random_uuid(), %s, NULL, 'unlabeled.pdf', "
+            "'application/pdf', 'unlabeled-key', 'deadbeef', 1)",
+            (motor_id,),
+        )
+        connection.commit()
+
+    result = await loader.load_evaluation_data(records=subset)
+
+    assert result["complete"] is False
+    assert result["error_code"] == "evaluation_record_collision"
+    assert result["source_case_id"] == subset[0]["case_id"]
+    assert result["stage"] == "documents"
+
+
+# Given two stored documents sharing the same code, when the loader runs,
+# then it reports a collision instead of collapsing them into one entry.
+@pytest.mark.asyncio
+async def test_duplicate_coded_documents_are_a_collision(subset) -> None:
+    await loader.load_evaluation_data(records=subset)
+    identity = loader.records_sha256(subset)
+    reserved = dict((key, value) for value, key in reserved_cases(identity))
+    motor_id = reserved[loader.record_key(identity, subset[0]["case_id"])]
+    with psycopg.connect(DATABASE_URL) as connection:
+        code, content_hash = connection.execute(
+            "SELECT document_code, content_hash FROM documents "
+            "WHERE case_id = %s LIMIT 1",
+            (motor_id,),
+        ).fetchone()
+        connection.execute(
+            "INSERT INTO documents (id, case_id, document_code, filename, "
+            "content_type, storage_key, content_hash, byte_size) VALUES "
+            "(gen_random_uuid(), %s, %s, 'duplicate.pdf', "
+            "'application/pdf', 'duplicate-key', %s, 1)",
+            (motor_id, code, content_hash),
+        )
+        connection.commit()
+
+    result = await loader.load_evaluation_data(records=subset)
+
+    assert result["complete"] is False
+    assert result["error_code"] == "evaluation_record_collision"
+    assert result["source_case_id"] == subset[0]["case_id"]
+    assert result["stage"] == "documents"

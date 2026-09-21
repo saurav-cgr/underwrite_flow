@@ -74,7 +74,9 @@ For each source record, in stable order:
 3. Verify journey and application payload against the source record.
 4. Generate each synthetic document with the existing renderer.
 5. Skip an exact existing document by code and content hash; upload a missing
-   document through the existing storage and case service.
+   document through the existing storage and case service. A null-coded or
+   duplicate-coded stored document is a collision, never a silently
+   collapsed or dropped entry.
 6. If the case is new, submit it through the existing workflow with the fake
    provider.
 7. If it was already processed, verify its persisted result instead of

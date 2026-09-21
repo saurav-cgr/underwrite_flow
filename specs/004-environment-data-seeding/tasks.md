@@ -313,7 +313,7 @@ T020: Production zero-write integration test
   of the final route, including specialist records labeled missing and
   needs-information records labeled conflicting, with focused collision tests,
   per plan: expected-label assertions (partial)
-- [ ] T033 Detect duplicate or null-coded stored documents on a reserved
+- [X] T033 Detect duplicate or null-coded stored documents on a reserved
   evaluation case before collapsing them by code, and report a collision
   without overwriting any record, per FR-007 (partial)
 - [ ] T034 Make the loader CLI emit one sanitized JSON failure with no
