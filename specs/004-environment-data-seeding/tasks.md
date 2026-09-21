@@ -277,3 +277,26 @@ T020: Production zero-write integration test
 - No task may confirm, override, complete, or hand off a loaded case.
 - Keep every hand-written file below 400 lines and every line at 80 columns or
   fewer; split before exceeding either limit.
+
+---
+
+## Phase 7: Convergence
+
+- [X] T026 CRITICAL Require an authenticated loader actor and persist its
+  `actor_user_id` on every loader audit marker, while adding the exact pinned
+  product and rulebook version identities to each per-case marker, per
+  Constitution V (contradicts)
+- [ ] T027 Validate every required persisted product version and matching
+  rulebook before the loader's first business or audit write, and add a
+  no-write regression test for a missing baseline dependency, per plan: loader
+  preflight (partial)
+- [ ] T028 Reject reserved-record collisions for a mismatched product,
+  rulebook, exact document set or hash, and derived missing-data or conflict
+  result, with focused regression coverage for each mismatch, per plan: retry
+  and collision rules (partial)
+- [ ] T029 Catch corpus preflight and unexpected command failures at the CLI
+  boundary, emit one sanitized JSON failure object, exit nonzero, and add a
+  traceback-leak regression test, per contract: output (partial)
+- [ ] T030 Make the exact-version case-creation test arrange or select an
+  inactive product version deterministically instead of assuming
+  `motor-private-car:v5` is inactive, per T011 (partial)

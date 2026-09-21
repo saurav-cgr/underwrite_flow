@@ -23,7 +23,11 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
 from starlette.datastructures import Headers  # noqa: E402
 
-from underwriteflow.audit.events import build_audit_event  # noqa: E402
+from underwriteflow.audit.events import (  # noqa: E402
+    build_audit_event,
+    version_details,
+)
+from underwriteflow.auth.schemas import UserRole  # noqa: E402
 from underwriteflow.cases.schemas import CaseCreate  # noqa: E402
 from underwriteflow.cases.service import CaseService  # noqa: E402
 from underwriteflow.cases.submission import SubmissionService  # noqa: E402
@@ -38,6 +42,8 @@ from underwriteflow.evaluation.dataset import (  # noqa: E402
 from underwriteflow.persistence.models import (  # noqa: E402
     AuditEvent,
     Case,
+    ProductVersion,
+    RulebookVersion,
     User,
 )
 from underwriteflow.providers.fake import FakeProvider  # noqa: E402
@@ -57,6 +63,9 @@ from evaluation_records import (  # noqa: E402
 PROVIDER_FACTORY = FakeProvider
 
 APPLICANT_EMAIL = "applicant@synthetic.test"
+ACTOR_EMAIL_ENV = "EVALUATION_LOADER_ACTOR_EMAIL"
+DEFAULT_ACTOR_EMAIL = "underwriter@synthetic.test"
+ACTOR_ROLES = frozenset({UserRole.UNDERWRITER, UserRole.ADMINISTRATOR})
 KEY_PREFIX = "evaluation"
 RECORD_EVENT = "evaluation_record_loaded"
 DATASET_EVENT = "evaluation_dataset_loaded"
@@ -149,11 +158,23 @@ async def upload_document(
     )
 
 
+# Resolve the authenticated operator identity the loader records audits as.
+async def resolve_actor(session: AsyncSession) -> User | None:
+    email = os.getenv(ACTOR_EMAIL_ENV, DEFAULT_ACTOR_EMAIL)
+    actor = await session.scalar(
+        select(User).where(User.email == email, User.is_active.is_(True))
+    )
+    if actor is None or UserRole(actor.role) not in ACTOR_ROLES:
+        return None
+    return actor
+
+
 # Append one bounded marker unless this dataset already recorded it.
 async def append_marker(
     session: AsyncSession,
     event_type: str,
     details: dict[str, Any],
+    actor_id: Any,
     case_id: Any = None,
 ) -> None:
     statement = select(AuditEvent.id).where(
@@ -168,7 +189,11 @@ async def append_marker(
         )
     if await session.scalar(statement) is not None:
         return
-    session.add(build_audit_event(event_type, details, case_id=case_id))
+    session.add(
+        build_audit_event(
+            event_type, details, case_id=case_id, actor_user_id=actor_id
+        )
+    )
     await session.commit()
 
 
@@ -180,6 +205,7 @@ async def load_record(
     record: dict[str, Any],
     identity: str,
     applicant_id: Any,
+    actor_id: Any,
     configuration: Any,
 ) -> str:
     key = record_key(identity, record["case_id"])
@@ -242,6 +268,12 @@ async def load_record(
         verify_route(record, str(recommendation.get("route", "")))
     await verify_result(session, case, record)
 
+    product_version = await session.get(
+        ProductVersion, case.product_version_id
+    )
+    rulebook_version = await session.get(
+        RulebookVersion, case.rulebook_version_id
+    )
     await append_marker(
         session,
         RECORD_EVENT,
@@ -252,7 +284,9 @@ async def load_record(
             "fixture_label": record["fixture_label"],
             "product_version": record["configuration_version"],
             "product_code": record["product_code"],
+            **version_details(product_version, rulebook_version),
         },
+        actor_id,
         case_id=case.id,
     )
     return "created" if created else "resumed"
@@ -295,6 +329,11 @@ async def load_evaluation_data(
                 return failure_result(
                     active.environment_mode, ERROR_PRECONDITION, identity
                 )
+            actor = await resolve_actor(session)
+            if actor is None:
+                return failure_result(
+                    active.environment_mode, ERROR_PRECONDITION, identity
+                )
             for record in ordered_records(corpus):
                 configuration = configurations[
                     (record["product_code"], record["configuration_version"])
@@ -307,6 +346,7 @@ async def load_evaluation_data(
                         record,
                         identity,
                         applicant.id,
+                        actor.id,
                         configuration,
                     )
                 except RecordCollision as collision:
@@ -330,6 +370,7 @@ async def load_evaluation_data(
                         "expected_case_count": len(corpus),
                         "verified_case_count": verified_count,
                     },
+                    actor.id,
                 )
     finally:
         await database.close()

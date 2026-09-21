@@ -238,6 +238,61 @@ async def test_mismatched_reserved_identity_is_a_collision(subset) -> None:
     assert stored == 99
 
 
+# Given no valid loader actor, when the loader runs, then it refuses before
+# any business or audit row is written.
+@pytest.mark.asyncio
+async def test_unresolvable_actor_is_a_precondition_failure(
+    subset, monkeypatch
+) -> None:
+    monkeypatch.setenv(loader.ACTOR_EMAIL_ENV, "no-such-actor@synthetic.test")
+    before = {table: count(table) for table in BUSINESS_TABLES}
+
+    result = await loader.load_evaluation_data(records=subset)
+
+    assert result["complete"] is False
+    assert result["error_code"] == loader.ERROR_PRECONDITION
+    assert {table: count(table) for table in BUSINESS_TABLES} == before
+
+
+# Given an applicant-role identity, when named as the loader actor, then the
+# load is refused because only underwriter or administrator actors qualify.
+@pytest.mark.asyncio
+async def test_applicant_actor_is_rejected(subset, monkeypatch) -> None:
+    monkeypatch.setenv(loader.ACTOR_EMAIL_ENV, "applicant@synthetic.test")
+
+    result = await loader.load_evaluation_data(records=subset)
+
+    assert result["complete"] is False
+    assert result["error_code"] == loader.ERROR_PRECONDITION
+
+
+# Given a completed load, when its markers are inspected, then each one
+# records the authenticated actor and each case marker pins the exact
+# product and rulebook version identities.
+@pytest.mark.asyncio
+async def test_markers_record_actor_and_pinned_versions(subset) -> None:
+    result = await loader.load_evaluation_data(records=subset)
+    identity = result["dataset_sha256"]
+
+    with psycopg.connect(DATABASE_URL) as connection:
+        actor_id = connection.execute(
+            "SELECT id FROM users WHERE email = %s",
+            (loader.DEFAULT_ACTOR_EMAIL,),
+        ).fetchone()[0]
+        rows = connection.execute(
+            "SELECT actor_user_id, details FROM audit_events "
+            "WHERE event_type = %s "
+            "AND details ->> 'dataset_sha256' = %s",
+            ("evaluation_record_loaded", identity),
+        ).fetchall()
+
+    assert len(rows) == len(subset)
+    for actor_user_id, details in rows:
+        assert actor_user_id == actor_id
+        assert details["product_version_id"]
+        assert details["rulebook_version_id"]
+
+
 # Given a loaded case, when the load finishes, then no human review,
 # completion, or handoff action was taken for it.
 @pytest.mark.asyncio

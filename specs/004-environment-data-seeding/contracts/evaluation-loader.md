@@ -53,6 +53,9 @@ Before its first write, the loader must verify:
 - every source case ID is unique;
 - every product, product version, rulebook, and journey exists;
 - the default applicant identity exists and is active;
+- the loader actor identity (`EVALUATION_LOADER_ACTOR_EMAIL`, defaulting to
+  the demo underwriter) exists, is active, and holds the underwriter or
+  administrator role;
 - upload storage and checkpoint configuration are local;
 - external tracing is not enabled for the load;
 - the deterministic fake provider is selected for workflow execution.
@@ -76,7 +79,9 @@ For each source record, in stable order:
    resubmitting or resetting it.
 8. Compare derived route, missing-data, and conflict results with reference
    labels.
-9. Append one bounded `evaluation_record_loaded` event after verification.
+9. Append one bounded `evaluation_record_loaded` event after verification,
+   recording the resolved loader actor and the pinned product and rulebook
+   version identities.
 
 The loader never confirms, overrides, completes, or hands off a case.
 
