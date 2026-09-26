@@ -21,7 +21,7 @@ export function ApplicantDashboard({
         }
         action={
           <Button
-            onClick={() => onNavigate(caseRecord ? "documents" : "products")}
+            onClick={() => onNavigate(caseRecord ? "documents" : "journey")}
           >
             {caseRecord ? "Open documents" : "Start an application"}
           </Button>
@@ -112,8 +112,8 @@ export function ProductSelection({
           + "backend configuration."
         }
         action={
-          <Button variant="quiet" onClick={() => onNavigate("dashboard")}>
-            Back to overview
+          <Button variant="quiet" onClick={() => onNavigate("journey")}>
+            Change journey
           </Button>
         }
       />
@@ -125,10 +125,10 @@ export function ProductSelection({
       {catalog.length === 0 ? (
         <Panel>
           <div className="empty-state">
-            <h2>No active products</h2>
+            <h2>No eligible products</h2>
             <p>
-              An administrator must activate a fictional product configuration
-              before applications can be submitted.
+              No active fictional product configuration supports this
+              journey yet.
             </p>
           </div>
         </Panel>

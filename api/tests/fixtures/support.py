@@ -17,6 +17,10 @@ from fixtures.synthetic_pdf import (
 
 APPLICANT = ("applicant@synthetic.test", "underwriteflow-demo-applicant")
 UNDERWRITER = ("underwriter@synthetic.test", "underwriteflow-demo-underwriter")
+ADMINISTRATOR = (
+    "administrator@synthetic.test",
+    "underwriteflow-demo-administrator",
+)
 
 MOTOR_PAYLOAD = {
     "vehicle_age": 2,
@@ -30,15 +34,23 @@ DOCUMENT_CODES = ["identity_record", "vehicle_record"]
 RECOMMENDATION_KEYS = {"route", "factors"}
 
 
-# Log in one fictional demo role and return bearer headers.
-def login(client: TestClient, account: tuple[str, str]) -> dict[str, str]:
+# Log in one fictional demo role and return the parsed credential response.
+def login_credentials(
+    client: TestClient, account: tuple[str, str]
+) -> dict[str, object]:
     email, password = account
     response = client.post(
-        "/api/v1/auth/session",
+        "/api/v1/auth/login",
         json={"email": email, "password": password},
     )
     assert response.status_code == 200, response.text
-    return {"Authorization": f"Bearer {response.json()['token']}"}
+    return response.json()
+
+
+# Log in one fictional demo role and return bearer headers.
+def login(client: TestClient, account: tuple[str, str]) -> dict[str, str]:
+    credentials = login_credentials(client, account)
+    return {"Authorization": f"Bearer {credentials['access_token']}"}
 
 
 # Create one applicant-owned motor case and return the parsed response.
@@ -120,3 +132,36 @@ def start_review(
     started = client.post(f"/api/v1/reviews/{case_id}/start", headers=headers)
     assert started.status_code == 200, started.text
     return started.json()
+
+
+# Activate one built-in motor version through the administrator API.
+def activate_motor_version(
+    client: TestClient, headers: dict[str, str], version: str
+) -> None:
+    activated = client.post(
+        "/api/v1/products/motor-private-car/activate",
+        json={"version": version},
+        headers=headers,
+    )
+    assert activated.status_code == 200, activated.text
+
+
+# Create one draft case for a journey and return the raw response.
+def create_case_for_journey(
+    client: TestClient,
+    headers: dict[str, str],
+    journey: str,
+    payload: dict[str, object],
+    idempotency_key: str,
+) -> object:
+    return client.post(
+        "/api/v1/cases",
+        json={
+            "product_code": "motor-private-car",
+            "idempotency_key": idempotency_key,
+            "journey": journey,
+            "payload": payload,
+            "document_codes": [],
+        },
+        headers=headers,
+    )

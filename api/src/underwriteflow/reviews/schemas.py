@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from underwriteflow.products.journey import JourneyType
+
 ReviewAction = Literal["confirm", "override", "request_information"]
 FinalRoute = Literal["specialist", "standard", "expedited"]
 
@@ -47,6 +49,7 @@ class ReviewResponse(BaseModel):
     """Safe result of a human review command."""
 
     case_id: UUID
+    journey: JourneyType
     action: ReviewAction
     selected_route: FinalRoute | None
     status: Literal[
@@ -61,6 +64,7 @@ class ReviewStartResponse(BaseModel):
     """Persisted human-review view for one case awaiting a decision."""
 
     case_id: UUID
+    journey: JourneyType
     status: Literal["awaiting_human_review"]
     recommendation: dict[str, object]
     summary: dict[str, object]
@@ -68,5 +72,6 @@ class ReviewStartResponse(BaseModel):
     evidence: list[dict[str, object]]
     conflicts: list[dict[str, object]]
     missing_information: list[str]
+    reconciliation: list[dict[str, object]] = Field(default_factory=list)
     extraction_failures: list[dict[str, object]]
     specialist_options: list[str]

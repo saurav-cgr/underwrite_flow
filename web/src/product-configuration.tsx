@@ -5,15 +5,40 @@ import {
   activateProductConfiguration,
   listProductConfigurations,
   listProductVersionHistory,
+  readProductVersionConfiguration,
 } from "./api";
 import { Badge, Button, EmptyState, PageHeading, Panel } from "./components";
 import { ConfirmDialog } from "./confirm";
+import { ProductBuilder } from "./product-builder";
 import { ProductImport } from "./product-import";
+import type {
+  BuilderConfiguration,
+  ProductFamily,
+} from "./product-builder-state";
 import { ReferenceDocuments } from "./reference-documents";
 import type {
   ProductConfigurationItem,
   ProductVersionHistoryItem,
 } from "./types";
+
+type BuilderRequest =
+  | { source: "blank"; family: ProductFamily }
+  | {
+      source: "clone";
+      family: ProductFamily;
+      activeConfiguration: BuilderConfiguration;
+    }
+  | {
+      source: "upload";
+      family: ProductFamily;
+      activeConfiguration: BuilderConfiguration;
+    };
+
+const FAMILIES: { value: ProductFamily; label: string }[] = [
+  { value: "motor", label: "Motor" },
+  { value: "life", label: "Life" },
+  { value: "health", label: "Health" },
+];
 
 // Browse product configurations and their immutable version history.
 export function ProductConfiguration({ token }: { token: string }) {
@@ -27,6 +52,8 @@ export function ProductConfiguration({ token }: { token: string }) {
   const [working, setWorking] = useState("");
   const [productRefresh, setProductRefresh] = useState(0);
   const [pendingVersion, setPendingVersion] = useState<string | null>(null);
+  const [choosingFamily, setChoosingFamily] = useState(false);
+  const [builder, setBuilder] = useState<BuilderRequest | null>(null);
 
   // Load every administrator-visible product configuration on entry.
   useEffect(() => {
@@ -74,6 +101,52 @@ export function ProductConfiguration({ token }: { token: string }) {
     setSelectedCode(productCode);
     setProductRefresh((current) => current + 1);
     await refreshHistory(productCode);
+  }
+
+  // Open the guided builder blank, pinned to the chosen family.
+  function startBlankBuilder(family: ProductFamily) {
+    setChoosingFamily(false);
+    setBuilder({ source: "blank", family });
+  }
+
+  // Load the selected product's active configuration and open it as a
+  // clone, so the new draft starts from an already-valid version.
+  async function startCloneBuilder() {
+    if (!selectedProduct?.active_version) return;
+    setMessage("");
+    try {
+      const configuration = await readProductVersionConfiguration(
+        token,
+        selectedProduct.product_code,
+        selectedProduct.active_version,
+      );
+      setBuilder({
+        source: "clone",
+        family: selectedProduct.family as ProductFamily,
+        activeConfiguration: configuration,
+      });
+    } catch (error) {
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "The active configuration could not be loaded.",
+      );
+    }
+  }
+
+  // Open the guided builder pre-filled from an uploaded YAML's preview.
+  function startUploadBuilder(configuration: BuilderConfiguration) {
+    setBuilder({
+      source: "upload",
+      family: configuration.family,
+      activeConfiguration: configuration,
+    });
+  }
+
+  // Close the guided builder once its draft has imported or been cancelled.
+  async function finishBuilder(productCode: string) {
+    setBuilder(null);
+    await handleImported(productCode);
   }
 
   // Report a nested panel outcome in the screen-level message area.
@@ -137,6 +210,14 @@ export function ProductConfiguration({ token }: { token: string }) {
   return (
     <>
       <PageHeading
+        action={
+          <Button
+            onClick={() => setChoosingFamily((current) => !current)}
+            variant="secondary"
+          >
+            Create product
+          </Button>
+        }
         eyebrow="Administrator workspace"
         title="Product configuration"
         description={
@@ -144,6 +225,19 @@ export function ProductConfiguration({ token }: { token: string }) {
           + "or activating a configuration."
         }
       />
+      {choosingFamily ? (
+        <div className="form-actions">
+          {FAMILIES.map((option) => (
+            <Button
+              key={option.value}
+              onClick={() => startBlankBuilder(option.value)}
+              variant="secondary"
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       {message ? (
         <p className="form-error" role="alert">
           {message}
@@ -193,6 +287,14 @@ export function ProductConfiguration({ token }: { token: string }) {
                 Active version: {selectedProduct.active_version ?? "None"}
                 {activeMetadata ? ` · ${activeMetadata}` : ""}
               </p>
+              {selectedProduct.active_version ? (
+                <Button
+                  onClick={() => void startCloneBuilder()}
+                  variant="secondary"
+                >
+                  Create version
+                </Button>
+              ) : null}
               {loadingHistory ? (
                 <p className="muted" role="status">
                   Loading version history.
@@ -235,7 +337,29 @@ export function ProductConfiguration({ token }: { token: string }) {
           )}
         </Panel>
       </div>
+      {builder ? (
+        <Panel title="Guided builder">
+          <div className="form-actions">
+            <Button onClick={() => setBuilder(null)} variant="quiet">
+              Close builder
+            </Button>
+          </div>
+          <ProductBuilder
+            activeConfiguration={
+              builder.source === "blank"
+                ? undefined
+                : builder.activeConfiguration
+            }
+            family={builder.family}
+            onImported={(code) => void finishBuilder(code)}
+            onStatus={reportStatus}
+            source={builder.source}
+            token={token}
+          />
+        </Panel>
+      ) : null}
       <ProductImport
+        onHydrate={startUploadBuilder}
         onImported={handleImported}
         onStatus={reportStatus}
         token={token}

@@ -7,21 +7,68 @@ import {
   validateProductConfiguration,
 } from "./api";
 import { Button, EmptyState, Panel } from "./components";
+import type { BuilderConfigurationPreview } from "./product-builder-state";
 import { yamlHash } from "./ui-state";
-import type { ProductConfigurationPreview } from "./types";
+import type { ReconciliationDefinition, ReconciliationKind } from "./types";
+
+// Administrator-readable names for the fixed reconciliation kinds.
+const KIND_LABELS: Record<ReconciliationKind, string> = {
+  ncb_match: "No-claim bonus match",
+  asset_match: "Asset identifier match",
+  policy_lapse: "Policy lapse window",
+};
+
+// Describe each source-to-field pair one configured check reads.
+function describeInputs(inputs: Record<string, string>): string {
+  return Object.entries(inputs)
+    .map(([source, field]) => `${source} → ${field}`)
+    .join(", ");
+}
+
+// Render the configured reconciliation definitions of a current preview.
+function ReconciliationList({
+  checks,
+}: {
+  checks: ReconciliationDefinition[];
+}) {
+  if (checks.length === 0) {
+    return (
+      <p className="panel-note">
+        No reconciliation checks are configured for this version.
+      </p>
+    );
+  }
+  return (
+    <div
+      aria-label="Configured reconciliation checks"
+      className="mini-list"
+      role="list"
+    >
+      {checks.map((check) => (
+        <div className="mini-row" key={check.code} role="listitem">
+          <strong>{check.code}</strong>
+          <span>{KIND_LABELS[check.kind]}</span>
+          <small>{describeInputs(check.inputs)}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // Validate, preview, and import one administrator-authored YAML draft.
 export function ProductImport({
   token,
   onImported,
+  onHydrate,
   onStatus,
 }: {
   token: string;
   onImported: (productCode: string) => Promise<void>;
+  onHydrate: (configuration: BuilderConfigurationPreview) => void;
   onStatus: (next: { message?: string; notice?: string }) => void;
 }) {
   const [yamlText, setYamlText] = useState("");
-  const [preview, setPreview] = useState<ProductConfigurationPreview | null>(
+  const [preview, setPreview] = useState<BuilderConfigurationPreview | null>(
     null,
   );
   const [previewHash, setPreviewHash] = useState<string | null>(null);
@@ -172,20 +219,33 @@ export function ProductImport({
           </p>
         ) : null}
         {previewIsCurrent && preview ? (
-          <div className="metric-strip">
-            <div>
-              <strong>{preview.field_count}</strong>
-              <span>Fields</span>
+          <>
+            <div className="metric-strip">
+              <div>
+                <strong>{preview.field_count}</strong>
+                <span>Fields</span>
+              </div>
+              <div>
+                <strong>{preview.document_count}</strong>
+                <span>Documents</span>
+              </div>
+              <div>
+                <strong>{preview.routing_rule_count}</strong>
+                <span>Routing rules</span>
+              </div>
+              <div>
+                <strong>{preview.reconciliation_count}</strong>
+                <span>Reconciliations</span>
+              </div>
             </div>
-            <div>
-              <strong>{preview.document_count}</strong>
-              <span>Documents</span>
-            </div>
-            <div>
-              <strong>{preview.routing_rule_count}</strong>
-              <span>Routing rules</span>
-            </div>
-          </div>
+            <ReconciliationList checks={preview.reconciliations} />
+            <Button
+              onClick={() => onHydrate(preview)}
+              variant="secondary"
+            >
+              Edit in guided builder
+            </Button>
+          </>
         ) : (
           <EmptyState
             title="No preview yet"

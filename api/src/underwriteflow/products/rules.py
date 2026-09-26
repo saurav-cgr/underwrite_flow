@@ -25,7 +25,10 @@ class RuleEvaluation(BaseModel):
 
 
 # Evaluate one supported fictional condition against submitted application data.
-def condition_matches(condition: dict[str, object], payload: dict[str, object]) -> bool:
+def condition_matches(
+    condition: dict[str, object],
+    payload: dict[str, object],
+) -> bool:
     actual = payload.get(condition.get("field"))
     operator = condition_operator(condition)
     expected = condition_value(condition)
@@ -40,7 +43,10 @@ def condition_matches(condition: dict[str, object], payload: dict[str, object]) 
 
 
 # Evaluate one configured rule and preserve its deterministic route metadata.
-def evaluate_rule(rule: RoutingRule, payload: dict[str, object]) -> RuleEvaluation:
+def evaluate_rule(
+    rule: RoutingRule,
+    payload: dict[str, object],
+) -> RuleEvaluation:
     if condition_operator(rule.condition) not in SUPPORTED_OPERATORS:
         raise ProductRuleError("unsupported rule operator")
     return RuleEvaluation(

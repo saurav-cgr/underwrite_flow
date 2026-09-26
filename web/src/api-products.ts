@@ -1,19 +1,26 @@
 // Administrator product configuration and reference document calls.
 import type {
+  JourneyType,
   ProductCatalogItem,
   ProductConfigurationChange,
   ProductConfigurationItem,
-  ProductConfigurationPreview,
   ProductVersionHistoryItem,
   ReferenceDocument,
 } from "./types";
-import { request } from "./api-core";
+import type {
+  BuilderConfiguration,
+  BuilderConfigurationPreview,
+} from "./product-builder-state";
+import { request, requestBlob } from "./api-core";
 
-// Load active product fields from the backend-owned catalog.
+// Load active product fields from the backend-owned catalog, optionally
+// filtered to one journey's supported products and applicable fields.
 export async function listCatalog(
   token: string,
+  journey?: JourneyType,
 ): Promise<ProductCatalogItem[]> {
-  return request("/products/catalog", token);
+  const query = journey ? `?journey=${encodeURIComponent(journey)}` : "";
+  return request(`/products/catalog${query}`, token);
 }
 
 // Load all product configurations visible to an administrator.
@@ -43,11 +50,11 @@ export async function validateProductConfiguration(
   });
 }
 
-// Preview normalized configuration counts without changing persisted products.
+// Preview one YAML's normalized configuration and counts, unpersisted.
 export async function previewProductConfiguration(
   token: string,
   yamlText: string,
-): Promise<ProductConfigurationPreview> {
+): Promise<BuilderConfigurationPreview> {
   return request("/products/preview", token, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -82,6 +89,33 @@ export async function activateProductConfiguration(
       body: JSON.stringify({ version }),
     },
   );
+}
+
+// Read one persisted version's normalized configuration for the builder.
+export async function readProductVersionConfiguration(
+  token: string,
+  productCode: string,
+  version: string,
+): Promise<BuilderConfiguration> {
+  return request(
+    `/products/${encodeURIComponent(productCode)}` +
+      `/versions/${encodeURIComponent(version)}`,
+    token,
+  );
+}
+
+// Export one persisted version as canonical YAML text.
+export async function exportProductVersion(
+  token: string,
+  productCode: string,
+  version: string,
+): Promise<string> {
+  const { blob } = await requestBlob(
+    `/products/${encodeURIComponent(productCode)}` +
+      `/versions/${encodeURIComponent(version)}/export`,
+    token,
+  );
+  return blob.text();
 }
 
 // Attach one administrator reference document to a product version.

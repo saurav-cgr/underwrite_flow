@@ -10,9 +10,12 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.audit.events import build_audit_event
-from underwriteflow.auth.dependencies import require_permission, require_role
-from underwriteflow.auth.schemas import Permission, UserRole
+from underwriteflow.audit.events import build_audit_event, supersedes_details
+from underwriteflow.auth.dependencies import (
+    require_permission,
+    require_underwriter,
+)
+from underwriteflow.auth.schemas import Permission
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
     Case,
@@ -24,7 +27,16 @@ from underwriteflow.persistence.models import (
     Submission,
     Validation,
 )
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.persistence.repositories import AuditRepository
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
+from underwriteflow.reviews.commands import (
+    recover_review_command,
+    require_specialist_label,
+    review_response_for_record,
+)
 from underwriteflow.reviews.evidence import (
     FALLBACK_SPECIALIST_LABEL,
     build_review_start_response,
@@ -37,95 +49,19 @@ from underwriteflow.reviews.schemas import (
 from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.state import thread_config
-from underwriteflow.workflow.triage import (
-    build_triage_graph,
-    resolve_final_route,
-)
+from underwriteflow.workflow.triage import build_triage_graph
+
+# Specialist-label helpers moved to commands.py; re-exported for callers
+# that historically imported them from this module.
+__all__ = [
+    "router",
+    "FALLBACK_SPECIALIST_LABEL",
+    "recover_review_command",
+    "require_specialist_label",
+    "review_response_for_record",
+]
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
-
-
-# Reconstruct the public response from an idempotent persisted review record.
-def review_response_for_record(
-    case_id: UUID, review: Review, status: str | None = None
-) -> ReviewResponse:
-    completed_statuses = {
-        "confirmed",
-        "overridden",
-        "needs_information",
-        "manual_review",
-    }
-    if status in completed_statuses:
-        review_status = status
-    elif review.action == "request_information":
-        review_status = "needs_information"
-    elif review.selected_route is None:
-        review_status = "manual_review"
-    elif review.action == "override":
-        review_status = "overridden"
-    else:
-        review_status = "confirmed"
-    return ReviewResponse(
-        case_id=case_id,
-        action=review.action,
-        selected_route=review.selected_route,
-        status=review_status,
-    )
-
-
-# Require a configured specialist label when the resolved route is specialist.
-def require_specialist_label(
-    command: ReviewCommand,
-    recommended_route: str | None,
-    configuration: ProductConfiguration | None,
-) -> None:
-    route, _ = resolve_final_route(command, recommended_route)
-    if route != "specialist":
-        return
-    if not command.specialist_label:
-        raise HTTPException(
-            status_code=422,
-            detail="A specialist label is required for specialist review",
-        )
-    allowed_labels = (
-        configuration.specialist_labels
-        if configuration is not None
-        else [FALLBACK_SPECIALIST_LABEL]
-    )
-    if command.specialist_label not in allowed_labels:
-        raise HTTPException(
-            status_code=422,
-            detail="Specialist label is not configured for this product",
-        )
-
-
-# Repair only invalid specialist metadata from a completed legacy checkpoint.
-def recover_review_command(
-    stored: ReviewCommand,
-    retry: ReviewCommand,
-    recommended_route: str | None,
-    configuration: ProductConfiguration | None,
-) -> ReviewCommand:
-    try:
-        require_specialist_label(
-            stored,
-            recommended_route,
-            configuration,
-        )
-        return stored
-    except HTTPException:
-        repaired = ReviewCommand.model_validate(
-            {
-                **stored.model_dump(),
-                "specialist_label": retry.specialist_label,
-            }
-        )
-        require_specialist_label(
-            repaired,
-            recommended_route,
-            configuration,
-        )
-        return repaired
 
 
 # Return the persisted pending review without starting any workflow work.
@@ -162,12 +98,17 @@ async def start_review(
             detail="Case recommendation is unavailable",
         )
     try:
-        configuration = ProductConfiguration.model_validate(
-            product_version.configuration
+        # The review view shows only what this case's journey asks for, so a
+        # renewal-only field can never appear on a new-business review.
+        configuration = filter_configuration_for_journey(
+            ProductConfiguration.model_validate(
+                product_version.configuration
+            ),
+            case.journey_type,
         )
-    except ValidationError:
-        # An unreadable pinned configuration still opens for human review
-        # with no derived requirements and no selectable specialist labels.
+    except (ValidationError, ValueError):
+        # An unreadable or journey-inapplicable pinned configuration still
+        # opens for human review with no derived requirements.
         configuration = None
     documents = list(
         await session.scalars(
@@ -191,6 +132,16 @@ async def start_review(
     application = (
         stored_application if isinstance(stored_application, dict) else {}
     )
+    reconciliation = list(
+        await session.scalars(
+            select(Validation)
+            .where(
+                Validation.case_id == case_id,
+                Validation.rule_code.like("reconciliation:%"),
+            )
+            .order_by(Validation.rule_code)
+        )
+    )
     return build_review_start_response(
         case_id,
         recommendation,
@@ -199,6 +150,8 @@ async def start_review(
         extracted_fields,
         failures,
         configuration,
+        reconciliation,
+        journey=case.journey_type,
     )
 
 
@@ -208,9 +161,8 @@ async def read_review_document(
     case_id: UUID,
     document_id: UUID,
     request: Request,
-    reviewer: dict[str, str] = Depends(
-        require_role(UserRole.UNDERWRITER.value)
-    ),
+    reviewer: dict[str, str] = Depends(require_underwriter()),
+    _: dict[str, str] = Depends(require_permission(Permission.REVIEW_READ)),
     session: AsyncSession = Depends(get_session),
 ) -> FileResponse:
     del reviewer
@@ -249,8 +201,9 @@ async def resume_review(
     case_id: UUID,
     command: ReviewCommand,
     request: Request,
-    reviewer: dict[str, str] = Depends(
-        require_role(UserRole.UNDERWRITER.value)
+    reviewer: dict[str, str] = Depends(require_underwriter()),
+    _: dict[str, str] = Depends(
+        require_permission(Permission.CASES_OVERRIDE)
     ),
     session: AsyncSession = Depends(get_session),
 ) -> ReviewResponse:
@@ -268,7 +221,9 @@ async def resume_review(
         )
     )
     if existing_review is not None:
-        return review_response_for_record(case_id, existing_review, case.status)
+        return review_response_for_record(
+            case_id, existing_review, case.journey_type, case.status
+        )
     product_version = await session.scalar(
         select(ProductVersion).where(
             ProductVersion.id == case.product_version_id
@@ -352,18 +307,23 @@ async def resume_review(
         override_reason=command_to_persist.reason,
     )
     session.add(review)
+    superseded = await AuditRepository().latest_event_id(
+        session, ("underwriter_reviewed",), case_id=case_id
+    )
     session.add(
         build_audit_event(
             "underwriter_reviewed",
             {
                 "review_id": review.id,
                 "review_cycle": case.review_cycle,
+                "journey": case.journey_type,
                 "action": command_to_persist.action,
                 "recommended_route": recommendation.get("route"),
                 "selected_route": result.get("final_route"),
                 "specialist_label": command_to_persist.specialist_label,
                 "status": result["review_status"],
                 "reason": command_to_persist.reason,
+                **supersedes_details(superseded),
             },
             case_id=case_id,
             actor_user_id=UUID(reviewer["sub"]),
@@ -371,4 +331,6 @@ async def resume_review(
     )
     case.status = result["review_status"]
     await session.commit()
-    return review_response_for_record(case_id, review, result["review_status"])
+    return review_response_for_record(
+        case_id, review, case.journey_type, result["review_status"]
+    )

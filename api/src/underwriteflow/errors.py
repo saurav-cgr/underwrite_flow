@@ -71,4 +71,7 @@ def error_response(
             details=details,
         )
     )
-    return JSONResponse(status_code=status_code, content=payload.model_dump(exclude_none=True))
+    return JSONResponse(
+        status_code=status_code,
+        content=payload.model_dump(exclude_none=True),
+    )

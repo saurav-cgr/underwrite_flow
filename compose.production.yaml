@@ -1,0 +1,17 @@
+# Production-mode override for `compose.yaml`.
+#
+# This file selects the `production` environment mode only. The evaluation
+# data loader refuses to run in that mode. It is not a claim of production
+# readiness, security hardening, or compliance for this MVP.
+#
+# Use with:
+#   docker compose -f compose.yaml -f compose.production.yaml config
+
+services:
+  bootstrap:
+    environment:
+      ENVIRONMENT_MODE: production
+
+  api:
+    environment:
+      ENVIRONMENT_MODE: production

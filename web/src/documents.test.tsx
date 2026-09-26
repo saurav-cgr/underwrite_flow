@@ -28,6 +28,8 @@ const CONFIGURATION: CaseConfiguration = {
   product_code: "motor-private-car",
   product_version: "v1",
   rulebook_version: "v1",
+  journey: "new_business",
+  application: {},
   fields: [],
   documents: [
     {
@@ -37,6 +39,7 @@ const CONFIGURATION: CaseConfiguration = {
       required: true,
       accepted_types: ["application/pdf"],
       condition: null,
+      stage: "supporting",
     },
     {
       code: "inspection_photo",
@@ -49,6 +52,7 @@ const CONFIGURATION: CaseConfiguration = {
         operator: "greater_than",
         value: 12,
       },
+      stage: "supporting",
     },
   ],
 };
@@ -59,6 +63,7 @@ const CASE: CaseRecord = {
   product_version: "v1",
   rulebook_version: "v1",
   status: "new",
+  journey: "new_business",
 };
 
 const UPLOADED: DocumentRecord = {
@@ -235,5 +240,29 @@ describe("replacement upload counting", () => {
     expect(
       screen.getByRole("progressbar").getAttribute("aria-valuenow"),
     ).toBe("100");
+  });
+});
+
+// Verify a mutable draft case offers a route back to edit its answers.
+describe("answer editing", () => {
+  it("navigates to the application screen for a mutable draft", async () => {
+    const { onNavigate } = renderScreen(CASE);
+    const user = userEvent.setup();
+
+    const edit = await screen.findByRole("button", { name: "Edit answers" });
+    await user.click(edit);
+
+    expect(onNavigate).toHaveBeenCalledWith("application");
+  });
+
+  it("hides answer editing once review has started", async () => {
+    renderScreen({ ...CASE, status: "underwriter_review" });
+
+    await waitFor(() =>
+      expect(screen.queryByText("No files uploaded yet.")).toBeTruthy(),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Edit answers" }),
+    ).toBeNull();
   });
 });

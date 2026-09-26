@@ -51,3 +51,9 @@ output/
 *.sqlite
 *.sqlite3
 .cache/
+evaluation/results/
+
+# Local agent and tooling configuration
+.specify/
+.agents/
+.claude/

@@ -1,0 +1,20 @@
+name: evaluation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  evaluate-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run isolated evaluation stack
+        run: make evaluate-e2e
+      - name: Retain evaluation result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-e2e-result
+          path: evaluation/results/e2e.json
+          if-no-files-found: warn

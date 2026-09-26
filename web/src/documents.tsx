@@ -15,10 +15,12 @@ import {
   intakeActionFor,
   requiredDocuments,
   satisfiedRequirementCount,
-} from "./ui-state";import type {
+} from "./ui-state";
+import type {
   CaseConfiguration,
   CaseRecord,
   DocumentRecord,
+  DocumentStage,
   ResolvedDocument,
   Screen,
 } from "./types";
@@ -67,12 +69,18 @@ export function DocumentsScreen({
   token,
   onNavigate,
   onCaseChange,
+  stageFilter,
+  onContinue,
+  continueLabel,
 }: {
   configuration: CaseConfiguration;
   caseRecord: CaseRecord;
   token: string;
   onNavigate: (screen: Screen) => void;
   onCaseChange: (caseRecord: CaseRecord) => void;
+  stageFilter?: DocumentStage;
+  onContinue?: () => void;
+  continueLabel?: string;
 }) {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [message, setMessage] = useState("");
@@ -83,10 +91,14 @@ export function DocumentsScreen({
   );
   const [pendingRemoval, setPendingRemoval] =
     useState<DocumentRecord | null>(null);
-  const required = requiredDocuments(configuration.documents);
+  const inStage = (document: ResolvedDocument) =>
+    !stageFilter || document.stage === stageFilter;
+  const required = requiredDocuments(configuration.documents).filter(inStage);
   const otherDocuments = configuration.documents.filter(
     (document) =>
-      !document.required && document.requirement !== "not_applicable",
+      !document.required
+      && document.requirement !== "not_applicable"
+      && inStage(document),
   );
   const receivedCount = satisfiedRequirementCount(
     required,
@@ -96,7 +108,7 @@ export function DocumentsScreen({
     required.length === 0
       ? 100
       : Math.round((receivedCount / required.length) * 100);
-  const intake = intakeActionFor(caseRecord.status);
+  const intake = onContinue ? null : intakeActionFor(caseRecord.status);
   const ready = required.every((document) =>
     documents.some((stored) => stored.document_code === document.code),
   );
@@ -185,8 +197,16 @@ export function DocumentsScreen({
   return (
     <>
       <PageHeading
-        eyebrow="Supporting evidence"
-        title="Add your documents."
+        eyebrow={
+          stageFilter === "prior_policy"
+            ? "Prior policy"
+            : "Supporting evidence"
+        }
+        title={
+          stageFilter === "prior_policy"
+            ? "Upload your existing policy."
+            : "Add your documents."
+        }
         description={
           "Upload synthetic files only. The review team sees metadata and "
           + "evidence links, not hidden browser state."
@@ -297,18 +317,32 @@ export function DocumentsScreen({
               ))}
             </div>
           )}
-          {intake && !ready ? (
+          {(intake || onContinue) && !ready ? (
             <p className="muted">
-              Upload every required document to submit this case.
+              {onContinue
+                ? "Upload every required document to continue."
+                : "Upload every required document to submit this case."}
             </p>
           ) : null}
           <div className="form-actions">
-            {intake ? (
+            {onContinue ? (
+              <Button disabled={!ready} onClick={onContinue}>
+                {continueLabel ?? "Continue"}
+              </Button>
+            ) : intake ? (
               <Button
                 disabled={submitting || !ready}
                 onClick={() => handleIntake(intake.kind)}
               >
                 {submitting ? "Submitting…" : intake.label}
+              </Button>
+            ) : null}
+            {intake ? (
+              <Button
+                onClick={() => onNavigate("application")}
+                variant="quiet"
+              >
+                Edit answers
               </Button>
             ) : null}
             <Button onClick={() => onNavigate("tracking")} variant="quiet">

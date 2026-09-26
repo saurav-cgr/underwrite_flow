@@ -6,10 +6,24 @@ from typing import Any
 from langgraph.types import Send
 
 from underwriteflow.providers.protocol import ExtractionProvider
-from underwriteflow.providers.schemas import ExtractionRequest
-from underwriteflow.providers.service import ProviderError, TransientProviderError
+from underwriteflow.providers.schemas import (
+    DocumentPage,
+    ExtractionRequest,
+    ExtractionResult,
+    FieldSpecification,
+)
+from underwriteflow.providers.service import (
+    ProviderError,
+    TransientProviderError,
+    trusted_page_locator,
+)
+from underwriteflow.workflow.reconciliation import reconcile
 from underwriteflow.workflow.reducers import sort_results
-from underwriteflow.workflow.state import DocumentResult, DocumentWorkerState, EvidenceState
+from underwriteflow.workflow.state import (
+    DocumentResult,
+    DocumentWorkerState,
+    EvidenceState,
+)
 
 MAX_DOCUMENT_BRANCHES = 3
 
@@ -29,18 +43,49 @@ def branch_failures(
     ]
 
 
-# Extract one document branch with retries limited to transient provider failures.
+# Report one branch's provider metadata without copying document content.
+def provider_metadata(
+    provider: ExtractionProvider,
+    result: ExtractionResult | None,
+    attempts: int,
+    error_code: str | None,
+) -> dict[str, object]:
+    usage = result.usage if result is not None else None
+    return {
+        "attempts": attempts,
+        "provider": provider.name,
+        "model": usage.model if usage else None,
+        "prompt_tokens": usage.prompt_tokens if usage else None,
+        "completion_tokens": usage.completion_tokens if usage else None,
+        "usage_unavailable": usage.unavailable if usage else True,
+        "request_hash": result.request_hash if result else "",
+        "result_hash": result.result_hash if result else "",
+        "error_code": error_code,
+    }
+
+
+# Extract one document branch; retry only transient provider failures.
 async def extract_document(
     state: DocumentWorkerState,
     provider: ExtractionProvider,
     retry_count: int,
 ) -> dict[str, list[DocumentResult]]:
     document = state["document"]
+    # Trusted page boundaries let a provider line number become a page locator.
+    pages = [
+        DocumentPage.model_validate(page)
+        for page in document.get("pages", [])
+    ]
     request = ExtractionRequest(
         document_name=document["document_id"],
         content=document["content"],
         requested_fields=state["requested_fields"],
         reference_content=state.get("reference_content", ""),
+        field_specifications=[
+            FieldSpecification.model_validate(specification)
+            for specification in state.get("field_specifications", [])
+        ],
+        pages=pages,
     )
     attempts = 0
     while True:
@@ -59,19 +104,31 @@ async def extract_document(
                 "results": [
                     {
                         "document_id": document["document_id"],
+                        "document_code": document.get("document_code"),
                         "filename": document["filename"],
                         "fields": (
                             []
                             if unrequested
                             else [
-                                field.model_dump(mode="json")
+                                field.model_copy(
+                                    update={
+                                        "source_locator": (
+                                            trusted_page_locator(
+                                                pages,
+                                                field.source_locator,
+                                            )
+                                        )
+                                    }
+                                ).model_dump(mode="json")
                                 for field in accepted
                             ]
                         ),
-                        "error_code": (
-                            "unrequested_field" if unrequested else None
+                        **provider_metadata(
+                            provider,
+                            result,
+                            attempts,
+                            "unrequested_field" if unrequested else None,
                         ),
-                        "attempts": attempts,
                     }
                 ]
             }
@@ -85,10 +142,12 @@ async def extract_document(
             "results": [
                 {
                     "document_id": document["document_id"],
+                    "document_code": document.get("document_code"),
                     "filename": document["filename"],
                     "fields": [],
-                    "error_code": error_code,
-                    "attempts": attempts,
+                    **provider_metadata(
+                        provider, None, attempts, error_code
+                    ),
                 }
             ]
         }
@@ -110,6 +169,9 @@ def fan_out_documents(state: EvidenceState) -> list[Send] | str:
             {
                 "document": document,
                 "requested_fields": state.get("requested_fields", []),
+                "field_specifications": state.get(
+                    "field_specifications", []
+                ),
                 "reference_content": state.get("reference_content", ""),
             },
         )
@@ -188,19 +250,33 @@ def absent_requested_fields(
 # Reconcile successful fields sequentially after all document branches finish.
 def reconcile_evidence(state: EvidenceState) -> dict[str, object]:
     reconciled: list[dict[str, object]] = []
-    ordered_results = state.get("ordered_results") or sort_results(state.get("results", []))
+    ordered_results = state.get("ordered_results") or sort_results(
+        state.get("results", [])
+    )
     for result in ordered_results:
         for field in result["fields"]:
             reconciled.append(
                 {
                     "document_id": result["document_id"],
+                    "document_code": result.get("document_code"),
                     **field,
                 }
             )
+    checks = state.get("reconciliation_checks", [])
+    # Reconciliation is a pure step, so it runs inside the join and never
+    # performs its own database, provider, or audit work.
+    outcome = reconcile(
+        checks=checks,
+        application=state.get("application", {}),
+        evidence=reconciled,
+        rule_version=state.get("rule_version", ""),
+    )
     return {
         "reconciled_fields": reconciled,
         "conflicts": conflicting_fields(reconciled),
         "missing_information": absent_requested_fields(
             reconciled, state.get("requested_fields", [])
         ),
+        "reconciliation_results": outcome["results"],
+        "reconciliation_status": outcome["overall_status"],
     }

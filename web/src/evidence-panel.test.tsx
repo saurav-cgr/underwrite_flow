@@ -17,6 +17,7 @@ import type { ReviewStart } from "./types";
 
 const PACK: ReviewStart = {
   case_id: "case-id",
+  journey: "new_business",
   status: "awaiting_human_review",
   recommendation: { route: "specialist", factors: ["specialist_signal"] },
   summary: {
@@ -67,6 +68,47 @@ const PACK: ReviewStart = {
   ],
   conflicts: [],
   missing_information: ["inspection_photo"],
+  reconciliation: [
+    {
+      check_code: "motor_ncb_match",
+      kind: "ncb_match",
+      status: "FLAGGED_DISCREPANCY",
+      comparisons: [
+        {
+          field_key: "ncb_percent",
+          left: 35,
+          right: 20,
+          matched: false,
+          evidence: [
+            { document_id: "doc-1", source_locator: "page:1" },
+          ],
+          explanation_code: "ncb_mismatch",
+          confidence_source: "deterministic",
+        },
+      ],
+      discrepancies: [
+        {
+          code: "ncb_mismatch",
+          field_key: "ncb_percent",
+          expected: 35,
+          actual: 20,
+        },
+      ],
+      evidence: [{ document_id: "doc-1", source_locator: "page:1" }],
+      missing_inputs: [],
+      rule_version: "v1",
+    },
+    {
+      check_code: "motor_renewal_lapse",
+      kind: "policy_lapse",
+      status: "MISSING_EVIDENCE",
+      comparisons: [],
+      discrepancies: [],
+      evidence: [],
+      missing_inputs: ["application"],
+      rule_version: "v1",
+    },
+  ],
   extraction_failures: [
     {
       rule_code: "document:doc-1",
@@ -75,6 +117,34 @@ const PACK: ReviewStart = {
   ],
   specialist_options: ["motor inspection"],
 };
+
+// Verify each configured check is shown with words, values, and provenance.
+describe("configured checks", () => {
+  it("lists each check with its status in words", () => {
+    render(<EvidencePanel pack={PACK} token="session" />);
+
+    expect(screen.getByText("motor_ncb_match")).toBeTruthy();
+    expect(screen.getByText("flagged discrepancy")).toBeTruthy();
+    expect(screen.getByText("missing evidence")).toBeTruthy();
+  });
+
+  it("shows comparison values, provenance, and confidence source", () => {
+    render(<EvidencePanel pack={PACK} token="session" />);
+
+    expect(screen.getByText(/35 versus 20/)).toBeTruthy();
+    expect(
+      screen.getByText(/ncb_mismatch · from deterministic · doc-1 page:1/),
+    ).toBeTruthy();
+  });
+
+  it("names the input a check could not read", () => {
+    render(<EvidencePanel pack={PACK} token="session" />);
+
+    expect(
+      screen.getByText("No usable value for: application"),
+    ).toBeTruthy();
+  });
+});
 
 function stubObjectUrl() {
   Object.defineProperty(URL, "createObjectURL", {

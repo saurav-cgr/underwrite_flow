@@ -63,7 +63,7 @@ class Client:
 @pytest.mark.parametrize(
     ("status", "expected_posts"),
     [
-        ("new", 5),
+        ("new", 6),
         ("underwriter_review", 2),
         ("confirmed", 1),
         ("overridden", 1),
@@ -87,7 +87,7 @@ def test_recover_case_handles_each_recoverable_status(
     assert len(posts) == expected_posts
 
 
-# Verify a resumed new case uploads only the missing configured document.
+# Verify a resumed new case uploads only the missing configured documents.
 def test_recover_case_skips_existing_documents() -> None:
     client = Client("new", ["identity_record"])
 
@@ -99,9 +99,12 @@ def test_recover_case_skips_existing_documents() -> None:
     )
 
     uploads = [call for call in client.calls if "/documents" in call[1]]
-    assert len(uploads) == 2
+    assert len(uploads) == 3
     assert uploads[0][0] == "get"
-    assert uploads[1][2]["data"]["document_code"] == "vehicle_record"
+    assert [call[2]["data"]["document_code"] for call in uploads[1:]] == [
+        "vehicle_record",
+        "registration_certificate",
+    ]
     filename, content, content_type = uploads[1][2]["files"]["document"]
     assert filename == "vehicle.pdf"
     assert content_type == "application/pdf"

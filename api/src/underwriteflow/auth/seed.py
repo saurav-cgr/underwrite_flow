@@ -15,8 +15,16 @@ from underwriteflow.persistence.models import User
 
 DEMO_USERS: tuple[tuple[str, str, UserRole], ...] = (
     ("applicant@synthetic.test", "Synthetic Applicant", UserRole.APPLICANT),
-    ("underwriter@synthetic.test", "Synthetic Underwriter", UserRole.UNDERWRITER),
-    ("administrator@synthetic.test", "Synthetic Administrator", UserRole.ADMINISTRATOR),
+    (
+        "underwriter@synthetic.test",
+        "Synthetic Underwriter",
+        UserRole.UNDERWRITER,
+    ),
+    (
+        "administrator@synthetic.test",
+        "Synthetic Administrator",
+        UserRole.ADMINISTRATOR,
+    ),
 )
 
 
@@ -58,7 +66,11 @@ async def run_seed() -> None:
     database = Database(settings.database_url)
     try:
         async with database.session_factory() as session:
-            users = await seed_demo_users(session, passwords, AuthService(settings.session_secret))
+            users = await seed_demo_users(
+                session,
+                passwords,
+                AuthService(settings.session_secret),
+            )
             if len(users) != len(DEMO_USERS):
                 raise RuntimeError("demo user seed is incomplete")
     finally:

@@ -4,16 +4,29 @@ from collections import defaultdict
 import pytest
 from langgraph.checkpoint.memory import MemorySaver
 
-from underwriteflow.providers.schemas import ExtractedField, ExtractionRequest, ExtractionResult
-from underwriteflow.providers.service import ProviderError, TransientProviderError
+from underwriteflow.providers.schemas import (
+    ExtractedField,
+    ExtractionRequest,
+    ExtractionResult,
+)
+from underwriteflow.providers.service import (
+    ProviderError,
+    TransientProviderError,
+)
 from underwriteflow.workflow.graph import build_evidence_graph, thread_config
 
 
 class RecordingProvider:
     """Deterministic provider that records branch calls for graph tests."""
 
+    name = "recording"
+
     # Configure synthetic failures and concurrency counters for a test run.
-    def __init__(self, failures: set[str] | None = None, transient_once: str | None = None) -> None:
+    def __init__(
+        self,
+        failures: set[str] | None = None,
+        transient_once: str | None = None,
+    ) -> None:
         self.failures = failures or set()
         self.transient_once = transient_once
         self.calls: list[str] = []
@@ -30,7 +43,10 @@ class RecordingProvider:
         self.attempts[document_id] += 1
         if document_id in self.failures:
             raise ProviderError("synthetic provider failure")
-        if document_id == self.transient_once and self.attempts[document_id] == 1:
+        if (
+            document_id == self.transient_once
+            and self.attempts[document_id] == 1
+        ):
             raise TransientProviderError("synthetic transient failure")
         self.current += 1
         self.max_concurrency = max(self.max_concurrency, self.current)
@@ -51,6 +67,8 @@ class RecordingProvider:
 # Return the same field value for every document so nothing conflicts.
 class AgreeingProvider:
     """Deterministic provider returning one shared value for each field."""
+
+    name = "agreeing"
 
     # Return one synthetic field with a value every document agrees on.
     async def extract(self, request: ExtractionRequest) -> ExtractionResult:
@@ -136,7 +154,7 @@ async def test_evidence_graph_rejects_unrequested_provider_fields() -> None:
     assert result["reconciled_fields"] == []
 
 
-# Verify all documents complete in stable order with no more than three active branches.
+# Verify stable ordering with no more than three active branches.
 @pytest.mark.asyncio
 async def test_evidence_graph_batches_documents_and_sorts_results() -> None:
     provider = RecordingProvider()
@@ -205,7 +223,7 @@ async def test_evidence_graph_retries_only_transient_branch_errors() -> None:
     assert all(item["error_code"] is None for item in result["ordered_results"])
 
 
-# Verify existing document results enable delta-only processing on a stable thread.
+# Verify existing results enable delta-only processing on a stable thread.
 @pytest.mark.asyncio
 async def test_evidence_graph_skips_already_processed_documents() -> None:
     provider = RecordingProvider()
@@ -229,12 +247,14 @@ async def test_evidence_graph_skips_already_processed_documents() -> None:
     )
 
     assert provider.calls == ["doc-1"]
-    assert [item["document_id"] for item in result["ordered_results"]] == ["doc-0", "doc-1"]
+    assert [
+        item["document_id"] for item in result["ordered_results"]
+    ] == ["doc-0", "doc-1"]
 
 
 # Verify all previously processed documents still reconcile their stored fields.
 @pytest.mark.asyncio
-async def test_evidence_graph_reconciles_when_no_documents_need_processing() -> None:
+async def test_evidence_graph_reconciles_without_new_documents() -> None:
     provider = RecordingProvider()
     graph = build_evidence_graph(provider)
     existing = [

@@ -272,6 +272,8 @@ def test_submission_without_extractable_evidence_needs_information() -> None:
             )
             assert start.status_code == 200, start.text
             assert start.json()["summary"]["missing_information"] == [
+                "ncb_percent",
+                "policy_expiry",
                 "prior_claims",
                 "vehicle_age",
                 "vehicle_use",

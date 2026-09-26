@@ -8,6 +8,7 @@ import "./forms.css";
 import "./documents.css";
 import "./queue.css";
 import "./review.css";
+import "./evidence.css";
 import "./admin.css";
 import "./entry.css";
 import "./responsive.css";

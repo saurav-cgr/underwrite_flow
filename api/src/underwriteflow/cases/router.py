@@ -17,9 +17,14 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from underwriteflow.auth.dependencies import authorize_case_access, require_permission
+from underwriteflow.auth.dependencies import (
+    AuthorizationDenied,
+    authorize_case_access,
+    require_permission,
+)
 from underwriteflow.auth.schemas import Permission
 from underwriteflow.cases.schemas import (
+    ApplicationUpdate,
     CaseConfigurationResponse,
     CaseCreate,
     CaseDocumentResponse,
@@ -34,7 +39,11 @@ from underwriteflow.cases.service import (
     document_is_required,
     field_is_visible,
 )
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.cases.validation import UnsupportedFieldError
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.cases.submission import SubmissionService
 from underwriteflow.providers.factory import build_provider
@@ -53,19 +62,27 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 # Build the safe case response from its pinned product version.
 async def case_response(session: AsyncSession, case: Case) -> CaseResponse:
     product_version = await session.scalar(
-        select(ProductVersion).where(ProductVersion.id == case.product_version_id)
+        select(ProductVersion).where(
+            ProductVersion.id == case.product_version_id
+        )
     )
     rulebook = await session.scalar(
-        select(RulebookVersion).where(RulebookVersion.id == case.rulebook_version_id)
+        select(RulebookVersion).where(
+            RulebookVersion.id == case.rulebook_version_id
+        )
     )
     if product_version is None or rulebook is None:
-        raise HTTPException(status_code=500, detail="Case configuration is unavailable")
+        raise HTTPException(
+            status_code=500,
+            detail="Case configuration is unavailable",
+        )
     return CaseResponse(
         id=case.id,
         product_code=product_version.configuration["product_code"],
         product_version=product_version.version,
         rulebook_version=rulebook.version,
         status=case.status,
+        journey=case.journey_type,
     )
 
 
@@ -84,8 +101,13 @@ async def create_case(
             UploadStorage(Path(request.app.state.settings.upload_root))
         ).create_case(session, UUID(current["sub"]), application)
         return await case_response(session, case)
+    except UnsupportedFieldError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
     except CaseValidationError:
-        raise HTTPException(status_code=422, detail="Invalid case submission") from None
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid case submission",
+        ) from None
 
 
 # List every case owned by the authenticated identity, newest first.
@@ -114,7 +136,12 @@ async def get_authorized_case(
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     if not authorize_case_access(current, case.applicant_user_id):
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise AuthorizationDenied(
+            403,
+            "case_ownership",
+            actor_user_id=UUID(current["sub"]),
+            case_id=case.id,
+        )
     return case
 
 
@@ -125,7 +152,8 @@ async def read_case(
     current: dict[str, str] = Depends(require_permission(Permission.CASE_READ)),
     session: AsyncSession = Depends(get_session),
 ) -> CaseResponse:
-    return await case_response(session, await get_authorized_case(case_id, current, session))
+    case = await get_authorized_case(case_id, current, session)
+    return await case_response(session, case)
 
 
 # Return the pinned configuration and resolved requirements for one case.
@@ -154,8 +182,9 @@ async def read_case_configuration(
             detail="Case configuration is unavailable",
         )
     try:
-        configuration = ProductConfiguration.model_validate(
-            product_version.configuration
+        configuration = filter_configuration_for_journey(
+            ProductConfiguration.model_validate(product_version.configuration),
+            case.journey_type,
         )
     except ValidationError:
         raise HTTPException(
@@ -171,6 +200,8 @@ async def read_case_configuration(
         product_code=configuration.product_code,
         product_version=product_version.version,
         rulebook_version=rulebook.version,
+        journey=case.journey_type,
+        application=payload,
         fields=[
             CaseFieldResponse(
                 key=field.key,
@@ -193,10 +224,48 @@ async def read_case_configuration(
                 required=document_is_required(document, payload),
                 accepted_types=document.accepted_types,
                 condition=document.condition,
+                stage=document.stage,
             )
             for document in configuration.documents
         ],
     )
+
+
+# Replace an owned, still-mutable case's stored draft answers.
+@router.put("/{case_id}/application", response_model=CaseResponse)
+async def replace_application(
+    case_id: UUID,
+    application: ApplicationUpdate,
+    request: Request,
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> CaseResponse:
+    case = await session.scalar(select(Case).where(Case.id == case_id))
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    if case.applicant_user_id != UUID(current["sub"]):
+        raise AuthorizationDenied(
+            403,
+            "case_ownership",
+            actor_user_id=UUID(current["sub"]),
+            case_id=case.id,
+        )
+    try:
+        await CaseService(
+            UploadStorage(Path(request.app.state.settings.upload_root))
+        ).replace_application(
+            session, case, application, UUID(current["sub"])
+        )
+    except UnsupportedFieldError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    except CaseValidationError:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid application replacement",
+        ) from None
+    return await case_response(session, case)
 
 
 # Submit an owned case for evidence processing and human review.
@@ -263,8 +332,13 @@ async def list_documents(
     session: AsyncSession = Depends(get_session),
 ) -> list[DocumentResponse]:
     await get_authorized_case(case_id, current, session)
-    documents = await session.scalars(select(Document).where(Document.case_id == case_id))
-    return [DocumentResponse.model_validate(document, from_attributes=True) for document in documents]
+    documents = await session.scalars(
+        select(Document).where(Document.case_id == case_id)
+    )
+    return [
+        DocumentResponse.model_validate(document, from_attributes=True)
+        for document in documents
+    ]
 
 
 # Store one supported applicant document for an owned case.
@@ -274,7 +348,9 @@ async def upload_document(
     request: Request,
     document: UploadFile = File(...),
     document_code: str = Form(...),
-    current: dict[str, str] = Depends(require_permission(Permission.CASE_WRITE)),
+    current: dict[str, str] = Depends(
+        require_permission(Permission.CASE_WRITE)
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> DocumentResponse:
     case = await get_authorized_case(case_id, current, session)
@@ -285,7 +361,10 @@ async def upload_document(
             session, case, document, document_code, UUID(current["sub"])
         )
     except (CaseValidationError, StorageValidationError):
-        raise HTTPException(status_code=422, detail="Invalid document upload") from None
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid document upload",
+        ) from None
     return DocumentResponse.model_validate(stored, from_attributes=True)
 
 

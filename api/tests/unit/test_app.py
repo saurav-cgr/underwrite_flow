@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from underwriteflow.app import create_app
+from underwriteflow.config import Settings
 from underwriteflow.errors import http_error_message
 
 
@@ -98,4 +99,57 @@ def test_health_allows_local_web_origin() -> None:
     )
 
     assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert response.headers["access-control-allow-origin"] == (
+        "http://localhost:5173"
+    )
+
+
+# Verify the environment status exposes only safe mode information.
+def test_environment_status_exposes_only_mode_and_loading_flag() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/api/v1/environment")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "environment": "development",
+        "evaluation_loading_allowed": True,
+    }
+
+
+# Verify production reports that evaluation loading is refused.
+def test_environment_status_reports_production_refusal() -> None:
+    settings = Settings(_env_file=None, environment_mode="production")
+    client = TestClient(create_app(settings))
+
+    response = client.get("/api/v1/environment")
+
+    assert response.json() == {
+        "environment": "production",
+        "evaluation_loading_allowed": False,
+    }
+
+
+# Verify the status body never leaks a credential, URL, key, or path.
+def test_environment_status_hides_every_other_setting() -> None:
+    settings = Settings(
+        _env_file=None,
+        gemini_api_key="synthetic-demonstration-key",
+        session_secret="synthetic-demonstration-secret",
+    )
+    client = TestClient(create_app(settings))
+
+    body = client.get("/api/v1/environment").text
+
+    assert set(client.get("/api/v1/environment").json()) == {
+        "environment",
+        "evaluation_loading_allowed",
+    }
+    for leaked in (
+        settings.gemini_api_key,
+        settings.session_secret,
+        settings.database_url,
+        settings.upload_root,
+        settings.refresh_token_pepper,
+    ):
+        assert leaked not in body

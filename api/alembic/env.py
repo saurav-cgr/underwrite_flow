@@ -1,6 +1,7 @@
 """Alembic environment for the PostgreSQL business schema."""
 
 import asyncio
+import os
 import re
 from logging.config import fileConfig
 from pathlib import Path
@@ -15,6 +16,13 @@ config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Let the same DATABASE_URL the application reads target migrations at a
+# different host (e.g. the isolated evaluation stack), instead of the
+# static dev default baked into alembic.ini.
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata
 

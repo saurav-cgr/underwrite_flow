@@ -5,9 +5,35 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
 from underwriteflow.reviews.schemas import ReviewCommand
+from underwriteflow.workflow.reconciliation import (
+    APPLICATION_SOURCE,
+    STATUS_FLAGGED,
+)
 from underwriteflow.workflow.state import TriageState
 
 LOW_CONFIDENCE_THRESHOLD = 0.8
+
+
+# Report whether one reconciliation check ended in a discrepancy.
+def has_flagged_discrepancy(state: TriageState) -> bool:
+    return any(
+        result.get("status") == STATUS_FLAGGED
+        for result in state.get("reconciliation_results", [])
+    )
+
+
+# Report whether a check could not read the document evidence it needs.
+#
+# An unanswered optional claim is a check that does not apply; a claim whose
+# configured document supplied nothing is missing evidence for the queue.
+def has_missing_document_evidence(state: TriageState) -> bool:
+    return any(
+        any(
+            source != APPLICATION_SOURCE
+            for source in result.get("missing_inputs", [])
+        )
+        for result in state.get("reconciliation_results", [])
+    )
 
 
 # Report whether any reconciled field has unknown or low confidence.
@@ -27,7 +53,11 @@ def assemble_case_summary(state: TriageState) -> dict[str, dict[str, object]]:
         "summary": {
             "evidence": state.get("evidence", []),
             "conflicts": state.get("conflicts", []),
-            "missing_information": sorted(set(state.get("missing_information", []))),
+            "missing_information": sorted(
+                set(state.get("missing_information", []))
+            ),
+            "reconciliation_results": state.get("reconciliation_results", []),
+            "reconciliation_status": state.get("reconciliation_status", ""),
             "risk_signals": state.get("risk_signals", []),
             "open_questions": sorted(set(state.get("missing_information", []))),
         }
@@ -38,18 +68,26 @@ def assemble_case_summary(state: TriageState) -> dict[str, dict[str, object]]:
 def recommend_triage_route(state: TriageState) -> dict[str, dict[str, object]]:
     validations = state.get("validations", [])
     triggered_routes = {
-        item.get("route") for item in validations if item.get("status") == "triggered"
+        item.get("route")
+        for item in validations
+        if item.get("status") == "triggered"
     }
     if state.get("unsupported_product"):
         route, factor = "manual", "unsupported_product"
     elif "manual" in triggered_routes:
         route, factor = "manual", "manual_rule"
-    elif state.get("missing_information") or "needs_information" in triggered_routes:
+    elif (
+        state.get("missing_information")
+        or has_missing_document_evidence(state)
+        or "needs_information" in triggered_routes
+    ):
+        # Missing evidence stays a queue state, never a final triage route.
         route, factor = "needs_information", "missing_information"
     elif (
         state.get("risk_signals")
         or state.get("conflicts")
         or state.get("low_confidence")
+        or has_flagged_discrepancy(state)
         or any(item.get("status") == "error" for item in validations)
     ):
         route, factor = "specialist", "specialist_signal"
@@ -78,7 +116,12 @@ def human_review(state: TriageState) -> dict[str, dict[str, object]]:
         }
     )
     command = ReviewCommand.model_validate(decision)
-    return {"review_command": command.model_dump(mode="json", exclude_none=True)}
+    return {
+        "review_command": command.model_dump(
+            mode="json",
+            exclude_none=True,
+        )
+    }
 
 
 # Resolve one human command into the final route and the review status.

@@ -12,7 +12,11 @@ class ProductRepository:
     """Keep product persistence queries out of API handlers."""
 
     # Find one product by its stable code.
-    async def find_product(self, session: AsyncSession, code: str) -> Product | None:
+    async def find_product(
+        self,
+        session: AsyncSession,
+        code: str,
+    ) -> Product | None:
         return await session.scalar(select(Product).where(Product.code == code))
 
     # Lock one product row so concurrent activation changes serialize.
@@ -41,7 +45,10 @@ class ProductRepository:
             select(ProductVersion)
             .join(Product, Product.id == ProductVersion.product_id)
             .where(Product.code == code)
-            .order_by(ProductVersion.created_at.desc(), ProductVersion.version.desc())
+            .order_by(
+                ProductVersion.created_at.desc(),
+                ProductVersion.version.desc(),
+            )
         )
         return list(result)
 
@@ -50,6 +57,8 @@ class ProductRepository:
         self, session: AsyncSession, product_id: UUID
     ) -> list[ProductVersion]:
         result = await session.scalars(
-            select(ProductVersion).where(ProductVersion.product_id == product_id)
+            select(ProductVersion).where(
+                ProductVersion.product_id == product_id
+            )
         )
         return list(result)

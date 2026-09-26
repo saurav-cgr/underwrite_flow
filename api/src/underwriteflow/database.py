@@ -17,8 +17,14 @@ class Database:
 
     # Create an engine without opening a database connection.
     def __init__(self, database_url: str) -> None:
-        self.engine: AsyncEngine = create_async_engine(database_url, pool_pre_ping=True)
-        self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
+        self.engine: AsyncEngine = create_async_engine(
+            database_url,
+            pool_pre_ping=True,
+        )
+        self.session_factory = async_sessionmaker(
+            self.engine,
+            expire_on_commit=False,
+        )
 
     # Confirm the configured database accepts a minimal query.
     async def ping(self) -> None:

@@ -1,18 +1,25 @@
+import json
+
 import pytest
 from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
+from fixtures.auth import session_for
+
 from underwriteflow.app import create_app
 from underwriteflow.auth.dependencies import get_current_session
-from underwriteflow.persistence.models import AuditEvent, Product, ProductVersion
+from underwriteflow.persistence.models import (
+    AuditEvent,
+    Product,
+    ProductVersion,
+)
 from underwriteflow.products.schemas import ProductConfiguration
 from underwriteflow.products.service import (
     ProductConfigurationError,
     ProductService,
     load_configuration,
 )
-
 
 class FakeSession:
     """Capture service writes without a database connection."""
@@ -32,6 +39,10 @@ class FakeSession:
     async def commit(self) -> None:
         return None
 
+    # Report that no earlier audit event exists in the fake transaction.
+    async def scalar(self, statement: object) -> None:
+        del statement
+        return None
 
 class ConflictSession(FakeSession):
     """Represent a commit that loses the concurrent activation race."""
@@ -44,11 +55,15 @@ class ConflictSession(FakeSession):
     async def rollback(self) -> None:
         return None
 
-
 class FakeRepository:
     """Return one product with a replaceable active version."""
 
-    def __init__(self, product: Product, target: ProductVersion, active: ProductVersion) -> None:
+    def __init__(
+        self,
+        product: Product,
+        target: ProductVersion,
+        active: ProductVersion,
+    ) -> None:
         self.product = product
         self.target = target
         self.active = active
@@ -81,6 +96,39 @@ class FakeRepository:
         del session, product_id
         return [self.active, self.target]
 
+# Build one small fictional configuration in YAML for lifecycle tests.
+def simple_configuration(version: str = "v1") -> str:
+    return f"""
+product_code: synthetic-motor
+title: Synthetic Motor
+family: motor
+scope: Fictional demonstration only
+description: Synthetic product configuration
+version: {version}
+fields:
+  - key: vehicle_age
+    label: Vehicle age
+    type: integer
+    required: true
+    help_text: Enter a fictional vehicle age.
+documents:
+  - code: synthetic_identity
+    title: Synthetic identity record
+    requirement: required
+    accepted_types: [application/pdf]
+routing_rules:
+  - code: synthetic_specialist
+    condition: {{field: vehicle_age, operator: greater_than, value: 12}}
+    route: specialist
+    specialist_label: motor inspection
+specialist_labels: [motor inspection]
+"""
+
+# Build the stored configuration payload an activation test needs.
+def stored_configuration(version: str = "v1") -> dict:
+    return load_configuration(simple_configuration(version)).model_dump(
+        mode="json"
+    )
 
 # Verify a structured fictional YAML product loads into a typed configuration.
 def test_load_configuration_preserves_version_identity() -> None:
@@ -117,25 +165,37 @@ specialist_labels: [motor inspection]
     assert configuration.product_code == "synthetic-motor"
     assert configuration.version == "v1"
 
-
 # Verify incomplete configurations cannot enter the product store.
 def test_invalid_configuration_is_rejected() -> None:
     with pytest.raises(ProductConfigurationError):
         load_configuration("product_code: incomplete\n")
-
 
 # Verify activation retires the old version and records an audit event.
 @pytest.mark.asyncio
 async def test_activation_replaces_active_version() -> None:
     product_id = uuid4()
     product = Product(
-        id=product_id, code="synthetic-motor", title="Synthetic Motor", family="motor", status="active"
+        id=product_id,
+        code="synthetic-motor",
+        title="Synthetic Motor",
+        family="motor",
+        status="active",
     )
     active = ProductVersion(
-        id=uuid4(), product_id=product_id, version="v1", configuration={}, content_hash="one", status="active"
+        id=uuid4(),
+        product_id=product_id,
+        version="v1",
+        configuration=stored_configuration("v1"),
+        content_hash="one",
+        status="active",
     )
     target = ProductVersion(
-        id=uuid4(), product_id=product_id, version="v2", configuration={}, content_hash="two", status="draft"
+        id=uuid4(),
+        product_id=product_id,
+        version="v2",
+        configuration=stored_configuration("v2"),
+        content_hash="two",
+        status="draft",
     )
     session = FakeSession()
     repository = FakeRepository(product, target, active)
@@ -148,10 +208,10 @@ async def test_activation_replaces_active_version() -> None:
     assert active.status == "retired"
     assert target.status == "active"
     assert any(
-        isinstance(event, AuditEvent) and event.event_type == "configuration_activated"
+        isinstance(event, AuditEvent)
+        and event.event_type == "configuration_activated"
         for event in session.added
     )
-
 
 # Verify a lost activation race becomes a typed configuration conflict.
 @pytest.mark.asyncio
@@ -168,7 +228,7 @@ async def test_activation_reports_a_lost_concurrent_race() -> None:
         id=uuid4(),
         product_id=product_id,
         version="v1",
-        configuration={},
+        configuration=stored_configuration("v1"),
         content_hash="one",
         status="active",
     )
@@ -176,7 +236,7 @@ async def test_activation_reports_a_lost_concurrent_race() -> None:
         id=uuid4(),
         product_id=product_id,
         version="v2",
-        configuration={},
+        configuration=stored_configuration("v2"),
         content_hash="two",
         status="draft",
     )
@@ -187,14 +247,50 @@ async def test_activation_reports_a_lost_concurrent_race() -> None:
             ConflictSession(), "synthetic-motor", "v2", uuid4()
         )
 
+# Verify activation refuses a version whose stored references no longer hold.
+@pytest.mark.asyncio
+async def test_activation_refuses_stale_stored_references() -> None:
+    product_id = uuid4()
+    product = Product(
+        id=product_id,
+        code="synthetic-motor",
+        title="Synthetic Motor",
+        family="motor",
+        status="active",
+    )
+    active = ProductVersion(
+        id=uuid4(),
+        product_id=product_id,
+        version="v1",
+        configuration=stored_configuration("v1"),
+        content_hash="one",
+        status="active",
+    )
+    target = ProductVersion(
+        id=uuid4(),
+        product_id=product_id,
+        version="v2",
+        configuration={"product_code": "synthetic-motor"},
+        content_hash="two",
+        status="draft",
+    )
+    service = ProductService(repository=FakeRepository(product, target, active))
+
+    with pytest.raises(ProductConfigurationError, match="no longer valid"):
+        await service.activate(FakeSession(), "synthetic-motor", "v2", uuid4())
+
+    assert target.status == "draft"
+    assert active.status == "active"
 
 # Verify only administrators can validate product configuration.
 def test_product_validation_is_administrator_only() -> None:
     app = create_app()
 
     # Supply a synthetic applicant identity to the authorization dependency.
-    def applicant_session() -> dict[str, str]:
-        return {"sub": str(uuid4()), "role": "Applicant"}
+    def applicant_session() -> dict[str, object]:
+        return session_for(
+            "applicant", "00000000-0000-0000-0000-000000000101"
+        )
 
     app.dependency_overrides[get_current_session] = applicant_session
     response = TestClient(app).post(
@@ -204,14 +300,13 @@ def test_product_validation_is_administrator_only() -> None:
 
     assert response.status_code == 403
 
-
 # Verify administrators can validate a well-formed product without persistence.
 def test_administrator_can_validate_product() -> None:
     app = create_app()
 
     # Supply a synthetic administrator identity to the authorization dependency.
-    def administrator_session() -> dict[str, str]:
-        return {"sub": str(uuid4()), "role": "Administrator"}
+    def administrator_session() -> dict[str, object]:
+        return session_for("administrator")
 
     app.dependency_overrides[get_current_session] = administrator_session
     response = TestClient(app).post(
@@ -224,7 +319,11 @@ scope: Fictional demonstration only
 description: Synthetic product configuration
 version: v1
 fields: [{key: age, label: Age, type: integer, help_text: Synthetic age}]
-documents: [{code: identity, title: Identity, requirement: required, accepted_types: [application/pdf]}]
+documents:
+  - code: identity
+    title: Identity
+    requirement: required
+    accepted_types: [application/pdf]
 routing_rules:
   - code: standard
     condition: {field: age, operator: greater_than, value: 0}
@@ -234,8 +333,10 @@ specialist_labels: [synthetic review]
     )
 
     assert response.status_code == 200
-    assert response.json() == {"product_code": "synthetic-motor", "version": "v1"}
-
+    assert response.json() == {
+        "product_code": "synthetic-motor",
+        "version": "v1",
+    }
 
 # Verify a configuration cannot advertise an unsupported content type.
 def test_configuration_rejects_unsupported_content_types() -> None:
@@ -266,3 +367,20 @@ routing_rules:
 specialist_labels: [synthetic review]
 """
         )
+
+# Verify a configuration submitted as JSON is accepted through the same path.
+def test_json_configuration_is_accepted() -> None:
+    payload = load_configuration(simple_configuration()).model_dump(mode="json")
+
+    configuration = load_configuration(json.dumps(payload))
+
+    assert configuration.product_code == "synthetic-motor"
+    assert configuration.version == "v1"
+
+# Verify malformed JSON is refused as an invalid configuration.
+def test_malformed_json_is_refused() -> None:
+    with pytest.raises(ProductConfigurationError) as refused:
+        load_configuration('{"product_code": "synthetic-motor",}')
+
+    assert "not valid JSON or YAML" in str(refused.value)
+

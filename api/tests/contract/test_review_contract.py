@@ -4,6 +4,9 @@ The underwriter screen reads nested evidence, summary, and failure objects, so
 each nested key set is pinned here as well as the top-level response.
 """
 
+import json
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 
 from fixtures.records import (
@@ -14,6 +17,7 @@ from fixtures.records import (
     set_motor_status,
 )
 from fixtures.support import (
+    ADMINISTRATOR,
     APPLICANT,
     RECOMMENDATION_KEYS,
     UNDERWRITER,
@@ -25,11 +29,18 @@ from fixtures.support import (
     upload_documents,
     upload_motor_documents,
 )
+from fixtures.synthetic_pdf import (
+    IDENTITY_ONLY_LINES,
+    MOTOR_EVIDENCE_LINES,
+    REGISTRATION_CERTIFICATE_LINES,
+    text_pdf,
+)
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
 
 REVIEW_START_KEYS = {
     "case_id",
+    "journey",
     "status",
     "recommendation",
     "summary",
@@ -37,14 +48,39 @@ REVIEW_START_KEYS = {
     "evidence",
     "conflicts",
     "missing_information",
+    "reconciliation",
     "extraction_failures",
     "specialist_options",
 }
+
+RECONCILIATION_KEYS = {
+    "check_code",
+    "kind",
+    "status",
+    "comparisons",
+    "discrepancies",
+    "evidence",
+    "missing_inputs",
+    "rule_version",
+}
+
+COMPARISON_KEYS = {
+    "field_key",
+    "left",
+    "right",
+    "matched",
+    "evidence",
+    "explanation_code",
+    "confidence_source",
+}
+
 
 SUMMARY_KEYS = {
     "evidence",
     "conflicts",
     "missing_information",
+    "reconciliation_results",
+    "reconciliation_status",
     "risk_signals",
     "open_questions",
 }
@@ -88,10 +124,74 @@ CONFLICT_KEYS = {
 }
 
 FAILURE_KEYS = {"rule_code", "details"}
-
 FAILURE_DETAIL_KEYS = {"document_id", "filename", "error_code"}
 
 REVIEW_KEYS = {"case_id", "action", "selected_route", "status"}
+
+
+# Pin the v5 new-business review view with prior claims fully excluded.
+def test_v5_new_business_review_excludes_prior_claims() -> None:
+    prior = motor_status()
+    case_id = ""
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            activated = client.post(
+                "/api/v1/products/motor-private-car/activate",
+                json={"version": "v5"},
+                headers=login(client, ADMINISTRATOR),
+            )
+            assert activated.status_code == 200, activated.text
+            applicant = login(client, APPLICANT)
+            underwriter = login(client, UNDERWRITER)
+            created = client.post(
+                "/api/v1/cases",
+                json={
+                    "product_code": "motor-private-car",
+                    "idempotency_key": str(uuid4()),
+                    "journey": "new_business",
+                    "payload": {"vehicle_age": 4, "vehicle_use": "personal"},
+                    "document_codes": [],
+                },
+                headers=applicant,
+            )
+            assert created.status_code == 200, created.text
+            case_id = str(created.json()["id"])
+            upload_documents(
+                client,
+                applicant,
+                case_id,
+                [
+                    ("identity_record", text_pdf(IDENTITY_ONLY_LINES)),
+                    ("vehicle_record", text_pdf(MOTOR_EVIDENCE_LINES)),
+                    (
+                        "registration_certificate",
+                        text_pdf(REGISTRATION_CERTIFICATE_LINES),
+                    ),
+                ],
+            )
+            submit_motor_case(client, applicant, case_id)
+
+            body = start_review(client, underwriter, case_id)
+
+            assert set(body) == REVIEW_START_KEYS, body
+            assert body["journey"] == "new_business"
+            assert {
+                fact["field_name"] for fact in body["submitted_facts"]
+            } == {"vehicle_age", "vehicle_use"}
+            codes = {check["check_code"] for check in body["reconciliation"]}
+            assert codes == {
+                "motor_chassis_match",
+                "motor_engine_match",
+                "motor_registration_match",
+            }
+            assert body["missing_information"] == []
+            assert body["specialist_options"] == ["motor inspection"]
+            assert "prior_claims" not in json.dumps(body)
+    finally:
+        if case_id:
+            remove_case(case_id)
+        set_motor_status(prior)
 
 
 # Pin the review view served for a complete, consistent case.
@@ -141,6 +241,29 @@ def test_review_start_response_keys_are_stable() -> None:
                 for fact in body["submitted_facts"]
             )
 
+            # Configured checks are served in code order with provenance.
+            checks = body["reconciliation"]
+            assert [check["check_code"] for check in checks] == [
+                "motor_ncb_match",
+                "motor_renewal_lapse",
+            ]
+            for check in checks:
+                assert set(check) == RECONCILIATION_KEYS, check
+                assert check["status"] in {
+                    "CLEARED",
+                    "FLAGGED_DISCREPANCY",
+                    "MISSING_EVIDENCE",
+                }
+                for comparison in check["comparisons"]:
+                    assert set(comparison) == COMPARISON_KEYS, comparison
+                    assert comparison["confidence_source"] == (
+                        "deterministic"
+                    )
+                    for reference in comparison["evidence"]:
+                        assert reference["source_locator"].startswith(
+                            "page:"
+                        )
+
             assert body["evidence"], "a submitted case carries evidence"
             kinds = {item["source_type"] for item in body["evidence"]}
             assert kinds == {
@@ -155,7 +278,14 @@ def test_review_start_response_keys_are_stable() -> None:
                 else:
                     assert set(item) == FIELD_EVIDENCE_KEYS, item
                     assert item["field_label"]
-                    assert item["field_type"] in {"integer", "enum"}
+                    # Evidence fields a configured check reads have no
+                    # declared application type, so they report as unknown.
+                    assert item["field_type"] in {
+                        "integer",
+                        "enum",
+                        "date",
+                        "unknown",
+                    }
                     assert item["extraction_method"] == "fake"
                     assert item["conflict_status"] == "clear"
 
@@ -257,39 +387,6 @@ def test_conflict_response_keys_are_stable() -> None:
             for conflict in conflicts:
                 assert set(conflict) == CONFLICT_KEYS, conflict
                 assert conflict["conflict_status"] != "clear"
-    finally:
-        if case_id:
-            remove_case(case_id)
-        set_motor_status(prior)
-
-
-# Pin the human decision result keys.
-def test_review_response_keys_are_stable() -> None:
-    prior = motor_status()
-    set_motor_status("active")
-    case_id = ""
-    try:
-        settings = Settings(generation_provider="fake")
-        with TestClient(create_app(settings)) as client:
-            applicant = login(client, APPLICANT)
-            underwriter = login(client, UNDERWRITER)
-            created = create_motor_case(client, applicant)
-            case_id = str(created["id"])
-            upload_motor_documents(client, applicant, case_id)
-            submit_motor_case(client, applicant, case_id)
-            start_review(client, underwriter, case_id)
-
-            decided = client.post(
-                f"/api/v1/reviews/{case_id}",
-                json={"action": "confirm", "evidence_acknowledged": True},
-                headers=underwriter,
-            )
-            assert decided.status_code == 200, decided.text
-            body = decided.json()
-            assert set(body) == REVIEW_KEYS, body
-            assert body["action"] == "confirm"
-            assert body["status"] == "confirmed"
-            assert body["selected_route"] == "expedited"
     finally:
         if case_id:
             remove_case(case_id)

@@ -11,20 +11,28 @@ from underwriteflow.cases.evidence_persistence import (
     clear_previous_evidence,
     persist_case_evidence,
 )
-from underwriteflow.cases.service import CaseValidationError, missing_document_codes
+from underwriteflow.cases.local_reading import (
+    extract_documents,
+    load_reference_content,
+)
+from underwriteflow.cases.service import (
+    CaseValidationError,
+    field_specifications,
+    missing_document_codes,
+    requested_field_keys,
+)
+from underwriteflow.cases.validation import validate_complete_application
 from underwriteflow.persistence.models import (
     Case,
     Document,
     ProductVersion,
-    ReferenceDocument,
     Submission,
 )
-from underwriteflow.providers.extraction import (
-    ExtractionError,
-    LocalDocumentExtractor,
-)
 from underwriteflow.providers.protocol import ExtractionProvider
-from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.products.schemas import (
+    ProductConfiguration,
+    filter_configuration_for_journey,
+)
 from underwriteflow.workflow.checkpoint import postgres_checkpointer
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.nodes import branch_failures
@@ -34,8 +42,6 @@ from underwriteflow.workflow.triage import (
     build_triage_graph,
     has_low_confidence,
 )
-
-MAX_REFERENCE_CHARS = 50_000
 
 
 class SubmissionService:
@@ -54,44 +60,15 @@ class SubmissionService:
         self.database_url = database_url
         self.retry_count = retry_count
 
-    # Read local text for every document, recording typed extraction failures.
-    def extract_documents(
-        self, documents: list[Document]
-    ) -> tuple[list[dict[str, str]], list[dict[str, object]]]:
-        extractor = LocalDocumentExtractor()
-        inputs: list[dict[str, str]] = []
-        failures: list[dict[str, object]] = []
-        for document in documents:
-            try:
-                local = extractor.extract(
-                    self.upload_root / document.storage_key,
-                    document.content_type,
-                )
-            except ExtractionError:
-                failures.append(
-                    {
-                        "document_id": str(document.id),
-                        "filename": document.filename,
-                        "error_code": "extraction_failed",
-                    }
-                )
-                continue
-            inputs.append(
-                {
-                    "document_id": str(document.id),
-                    "filename": document.filename,
-                    "content": "\n".join(page.text for page in local.pages),
-                }
-            )
-        return inputs, failures
-
     # Run the bounded evidence graph and return its reconciled output.
     async def run_evidence_graph(
         self,
         case: Case,
-        document_inputs: list[dict[str, str]],
+        document_inputs: list[dict[str, object]],
         requested_fields: list[str],
         reference_content: str = "",
+        application: dict[str, object] | None = None,
+        configuration: ProductConfiguration | None = None,
     ) -> dict[str, object]:
         graph = build_evidence_graph(
             self.provider, retry_count=self.retry_count
@@ -101,51 +78,30 @@ class SubmissionService:
                 "case_id": str(case.id),
                 "documents": document_inputs,
                 "requested_fields": requested_fields,
+                "field_specifications": (
+                    field_specifications(configuration, requested_fields)
+                    if configuration is not None
+                    else []
+                ),
                 "reference_content": reference_content,
+                "application": application or {},
+                "reconciliation_checks": (
+                    [
+                        check.model_dump(mode="json")
+                        for check in configuration.reconciliations
+                    ]
+                    if configuration is not None
+                    else []
+                ),
+                "rule_version": (
+                    configuration.version
+                    if configuration is not None
+                    else ""
+                ),
                 "results": [],
             },
             config=thread_config(str(case.id), case.review_cycle),
         )
-
-    # Read the pinned version's administrator references as background text.
-    async def load_reference_content(
-        self, session: AsyncSession, case: Case
-    ) -> str:
-        product_version = await session.scalar(
-            select(ProductVersion).where(
-                ProductVersion.id == case.product_version_id
-            )
-        )
-        if product_version is None:
-            return ""
-        documents = list(
-            await session.scalars(
-                select(ReferenceDocument).where(
-                    ReferenceDocument.product_id
-                    == product_version.product_id,
-                    ReferenceDocument.version == product_version.version,
-                )
-            )
-        )
-        extractor = LocalDocumentExtractor()
-        texts: list[str] = []
-        for document in documents:
-            if not document.storage_key or not document.content_type:
-                continue
-            try:
-                local = extractor.extract(
-                    self.upload_root / document.storage_key,
-                    document.content_type,
-                )
-            except ExtractionError:
-                continue
-            texts.append(
-                document.filename
-                + ":\n"
-                + "\n".join(page.text for page in local.pages)
-            )
-        # Reference text is background only and stays inside the provider bound.
-        return "\n\n".join(texts)[:MAX_REFERENCE_CHARS]
 
     # Reuse a paused checkpoint or run triage up to the human interrupt.
     async def run_triage_graph(
@@ -195,6 +151,12 @@ class SubmissionService:
             "conflicts": list(evidence_result.get("conflicts", [])),
             "missing_information": list(
                 evidence_result.get("missing_information", [])
+            ),
+            "reconciliation_results": list(
+                evidence_result.get("reconciliation_results", [])
+            ),
+            "reconciliation_status": str(
+                evidence_result.get("reconciliation_status", "")
             ),
             "risk_signals": product_result.get("risk_signals", []),
             "validations": product_result.get("validations", []),
@@ -305,10 +267,13 @@ class SubmissionService:
         if product_version is None:
             raise CaseValidationError("case configuration is unavailable")
         try:
-            configuration = ProductConfiguration.model_validate(
-                product_version.configuration
+            configuration = filter_configuration_for_journey(
+                ProductConfiguration.model_validate(
+                    product_version.configuration
+                ),
+                case.journey_type,
             )
-        except ValidationError:
+        except (ValidationError, ValueError):
             # A pinned configuration the application can no longer read cannot
             # be processed deterministically, so a human decides the route.
             return await self.route_unsupported_case(
@@ -329,23 +294,23 @@ class SubmissionService:
                 select(Document).where(Document.case_id == case.id)
             )
         )
-        missing = missing_document_codes(
-            configuration,
-            [
-                document.document_code
-                for document in documents
-                if document.document_code
-            ],
-            payload,
-        )
+        document_codes = [
+            document.document_code
+            for document in documents
+            if document.document_code
+        ]
+        validate_complete_application(payload, document_codes, configuration)
+        missing = missing_document_codes(configuration, document_codes, payload)
         if missing:
             raise CaseValidationError(
                 "missing documents: " + ", ".join(missing)
             )
         if clear_evidence:
             await clear_previous_evidence(session, case)
-        requested_fields = [field.key for field in configuration.fields]
-        document_inputs, extraction_failures = self.extract_documents(documents)
+        requested_fields = requested_field_keys(configuration, payload)
+        document_inputs, extraction_failures = extract_documents(
+            self.upload_root, documents
+        )
         product_result = await build_product_subgraph(configuration).ainvoke(
             {
                 "product_code": configuration.product_code,
@@ -353,9 +318,16 @@ class SubmissionService:
                 "rule_results": [],
             }
         )
-        reference_content = await self.load_reference_content(session, case)
+        reference_content = await load_reference_content(
+            session, self.upload_root, case
+        )
         evidence_result = await self.run_evidence_graph(
-            case, document_inputs, requested_fields, reference_content
+            case,
+            document_inputs,
+            requested_fields,
+            reference_content,
+            application=payload,
+            configuration=configuration,
         )
         triage_values = await self.run_triage_graph(
             case,
