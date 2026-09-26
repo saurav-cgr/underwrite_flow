@@ -43,6 +43,7 @@ uploads/
 tmp/
 output/
 .langgraph_api/
+data/regulatory/
 *.log
 *.pid
 
@@ -57,3 +58,4 @@ evaluation/results/
 .specify/
 .agents/
 .claude/
+.serena/
