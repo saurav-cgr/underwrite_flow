@@ -121,3 +121,23 @@ scripts/                         Deterministic setup and smoke utilities
 - Read `docs/PRD.md` and `docs/IMPLEMENTATION_PLAN.md` before implementing a step.
 - Treat fictional rules and evaluation labels as demonstrations, never genuine Indian underwriting guidance.
 - Prefer the smallest safe change that satisfies the approved step.
+
+## Work Rules
+- Work on one feature at a time
+- Only start the next feature after the current one passes end-to-end verification
+- Don't "also refactor" feature B while implementing feature A
+
+## Definition of Done
+- Feature complete = end-to-end verification passed, not "code is written"
+- Required verification levels:
+  1. Unit tests pass
+  2. Integration tests pass
+  3. End-to-end flow verification passes
+- Do not proceed to level 2 if level 1 fails
+- Do not proceed to level 3 if level 2 fails
+
+## Validation Hierarchy
+- Level 1: Unit tests (Must pass)
+- Level 2: Integration tests (Must pass)
+- Level 3: End-to-end tests (Must pass when cross-component changes are involved)
+- Skipping any required level = Not Complete
