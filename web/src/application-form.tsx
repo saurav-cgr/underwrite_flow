@@ -173,13 +173,20 @@ export function ApplicationForm({
     rawValue: string,
     checked: boolean,
   ) {
+    if ((type === "integer" || type === "number") && rawValue === "") {
+      setValues((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+      setErrors((current) => ({ ...current, [key]: "" }));
+      return;
+    }
     const value =
       type === "boolean"
         ? checked
         : type === "integer" || type === "number"
-          ? rawValue === ""
-            ? ""
-            : Number(rawValue)
+          ? Number(rawValue)
           : rawValue;
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));

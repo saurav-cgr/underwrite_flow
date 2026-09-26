@@ -42,6 +42,7 @@ export function App() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductCatalogItem | null>(null);
   const [caseRecord, setCaseRecord] = useState<CaseRecord | null>(null);
+  const caseRestoredRef = useRef(false);
   const [configuration, setConfiguration] =
     useState<CaseConfiguration | null>(null);
   const [queueItem, setQueueItem] = useState<QueueItem | null>(null);
@@ -98,9 +99,13 @@ export function App() {
       .catch(() => setMessage("Eligible products could not be loaded."));
   }, [journey, session]);
 
-  // Restore the latest open case, and its journey, after a reload.
+  // Restore the latest open case, and its journey, once after a reload.
+  // Runs only the first time a session is available, so deliberately
+  // starting a fresh application afterward is never overwritten by an
+  // old, already-decided case reappearing as the active one.
   useEffect(() => {
-    if (session?.role !== "Applicant" || caseRecord) return;
+    if (session?.role !== "Applicant" || caseRestoredRef.current) return;
+    caseRestoredRef.current = true;
     listCases(session.token)
       .then((cases) => {
         const latest = cases.find((item) => isOpenCase(item.status));
@@ -110,7 +115,7 @@ export function App() {
         }
       })
       .catch(() => setMessage("Existing cases could not be loaded."));
-  }, [caseRecord, session]);
+  }, [session]);
 
   // Load the configuration version the applicant's case is pinned to, so a
   // newer active version never changes an existing case's requirements.
@@ -162,6 +167,7 @@ export function App() {
   // Clear local UI state without retaining a bearer token.
   function handleSignOut() {
     setSession(null);
+    caseRestoredRef.current = false;
     setJourney(null);
     setSelectedProduct(null);
     setCaseRecord(null);
@@ -184,6 +190,8 @@ export function App() {
     setSelectedProduct(product);
     setRenewalFormDone(false);
     if (journey !== "renewal" || !session) {
+      setCaseRecord(null);
+      setConfiguration(null);
       navigate("application");
       return;
     }
