@@ -64,10 +64,6 @@ evaluation/results/
 .agents/
 .codex/
 .serena/
-.specify/extensions
-.specify/extensions.yml
-.specify/init-options.json
-.specify/integration.json
-.specify/integrations/
+.specify/
 
 specs/008-rag-guidance/reviews/
