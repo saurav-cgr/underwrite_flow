@@ -85,9 +85,11 @@ class GeminiProvider:
             ) as client:
                 response = await client.post(
                     url,
-                    params={"key": self.api_key},
                     content=request_payload,
-                    headers={"Content-Type": "application/json"},
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": self.api_key,
+                    },
                 )
                 response.raise_for_status()
                 body = response.json()

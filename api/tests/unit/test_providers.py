@@ -92,6 +92,11 @@ async def test_gemini_hashes_exact_payloads(
     assert isinstance(transmitted, bytes)
     assert result.request_hash == hashlib.sha256(transmitted).hexdigest()
     assert result.result_hash == hashlib.sha256(raw.encode()).hexdigest()
+    assert "params" not in captured
+    assert captured["headers"] == {
+        "Content-Type": "application/json",
+        "x-goog-api-key": "synthetic-key",
+    }
 
 # Verify configured literal PII is removed before Gemini transmission.
 @pytest.mark.asyncio
