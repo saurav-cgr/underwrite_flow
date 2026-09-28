@@ -27,6 +27,7 @@ from underwriteflow.knowledge.errors import (
     KnowledgeError,
     KnowledgeValidationError,
 )
+from underwriteflow.knowledge.embedding_writer import write_embeddings
 from underwriteflow.knowledge.repository import KnowledgeRepository
 from underwriteflow.persistence.knowledge_models import (
     KnowledgePassage,
@@ -34,6 +35,7 @@ from underwriteflow.persistence.knowledge_models import (
 )
 from underwriteflow.persistence.repositories import AuditRepository
 from underwriteflow.products.schemas import ProductConfiguration
+from underwriteflow.providers.embedding import EmbeddingProvider
 
 
 # Hash normalized corpus data so formatting-only imports are idempotent.
@@ -168,9 +170,11 @@ class KnowledgeService:
         self,
         repository: KnowledgeRepository | None = None,
         audit_repository: AuditRepository | None = None,
+        embedding_provider: EmbeddingProvider | None = None,
     ) -> None:
         self.repository = repository or KnowledgeRepository()
         self.audit = audit_repository or AuditRepository()
+        self.embedding_provider = embedding_provider
 
     # Validate a guideline without writing it to PostgreSQL.
     async def validate(
@@ -199,6 +203,16 @@ class KnowledgeService:
         if existing is not None:
             if existing.content_hash != content_hash:
                 raise KnowledgeConflictError("version identity already exists")
+            passages = await self.repository.list_passages(
+                session, existing.id
+            )
+            if any(passage.embedding is None for passage in passages):
+                await write_embeddings(
+                    session,
+                    existing.id,
+                    self.embedding_provider,
+                )
+                await session.commit()
             return existing
         report = await validation_report(session, self.repository, corpus)
         version = KnowledgeVersion(
@@ -221,6 +235,12 @@ class KnowledgeService:
             await session.flush()
             for section in corpus.sections:
                 session.add(passage_from_section(version.id, corpus, section))
+            await session.flush()
+            await write_embeddings(
+                session,
+                version.id,
+                self.embedding_provider,
+            )
             self.audit.append(
                 session,
                 build_audit_event(

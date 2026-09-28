@@ -1,8 +1,14 @@
 services:
+  bootstrap:
+    environment:
+      GENERATION_PROVIDER: fake
+      EMBEDDING_PROVIDER: fake
+
   api:
     command: ["python", "/app/scripts/smoke.py"]
     environment:
       GENERATION_PROVIDER: fake
+      EMBEDDING_PROVIDER: fake
       LANGSMITH_TRACING: "false"
     volumes:
       - ./scripts:/app/scripts:ro

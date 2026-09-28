@@ -11,6 +11,7 @@ marks the loop done. It records the story and criteria ready for checking.
 - Maker self-assessment: <evidence believed ready>
 - Open questions / risks: <checker or human attention>
 - Handoff: ready-for-check
+
 -->
 
 ## Iteration 1 - 2026-09-28
@@ -244,4 +245,108 @@ marks the loop done. It records the story and criteria ready for checking.
   the maker's view, not a verdict.
 - Open questions / risks: Checker should confirm preview summary performs one
   count query plus one bounded page query for large corpora.
+- Handoff: ready-for-check
+
+## Iteration 15 - 2026-09-28
+- Story: US3
+- Targeted criteria: D3
+- Worktree: in place
+- Change: Added additive migration `10_knowledge_retrieval.py` with pgvector,
+  generated full-text search, GIN, and HNSW indexes; added custom `Vector`
+  type and passage mapping. Added deterministic and Gemini embedding
+  providers, bounded import embedding writes, case facts, hybrid RRF
+  retrieval, 30-question life evaluation data, and evaluation script. Added
+  unit, migration, embedding, retrieval, and recall coverage.
+- Maker self-assessment: D3 is maker-ready. Focused US3 tests pass 17 tests;
+  retrieval evaluation passes 30/30; `make test-api` passes 606 tests;
+  `make test-web` passes 177 tests; web build and `make smoke` pass. This is
+  the maker's view, not a verdict.
+- Open questions / risks: Checker should inspect Gemini batch endpoint shape,
+  generated-column ORM mapping, exact-code lexical ranking, and active-version
+  selection in the evaluation script. No new migration is required.
+- Handoff: ready-for-check
+
+## Iteration 16 - 2026-09-28
+- Story: US3 review repair
+- Targeted criteria: D3; review findings R001-R002
+- Worktree: in place
+- Change: Changed `knowledge/import_corpora.py` to use the configured
+  embedding provider, with provider-identity coverage in
+  `api/tests/unit/test_import_corpora.py`. Added intent comments for nested
+  vector serializers in `persistence/vector.py`. Set fake provider explicitly
+  for smoke/evaluation bootstrap services.
+- Maker self-assessment: D3 remains maker-ready. Repair tests pass 12 tests;
+  `make test-api` passes 606 tests; `make test-web` passes 177 tests; web
+  build and `make smoke` pass. This is the maker's view, not a verdict.
+- Open questions / risks: Checker should rerun review-20260928-175000.md and
+  verify Gemini bootstrap/query provider identity with approved credentials.
+- Handoff: ready-for-check
+
+## Iteration 17 - 2026-09-28
+- Story: US3 review repair
+- Targeted criteria: D3; review finding R003
+- Worktree: in place
+- Change: Added Gemini API key, embedding model, no-training acknowledgement,
+  host allowlist, redaction terms, and timeout settings to the Compose
+  bootstrap service. Added contract coverage requiring bootstrap and API
+  embedding settings to match, plus Gemini builder configuration coverage.
+  Smoke and evaluation bootstrap overrides keep fake embeddings deterministic.
+- Maker self-assessment: D3 remains maker-ready. R003 tests pass 22 tests;
+  `make test-api` passes 608 tests; `make smoke` passes. This is the maker's
+  view, not a verdict.
+- Open questions / risks: Checker should rerun the R003 review with a
+  credentialed Gemini configuration; live provider calls remain opt-in.
+- Handoff: ready-for-check
+
+## Iteration 18 - 2026-09-28
+- Targeted criteria: D3; checker failures for test coverage and comments
+- Worktree: in place
+- Change: Added intent comments before nested helpers in
+  `api/tests/integration/test_retrieval.py:34`,
+  `api/tests/integration/test_retrieval_recall.py:24`,
+  `api/tests/integration/test_knowledge_embeddings.py:40`, and
+  `api/tests/unit/test_embedding_providers.py:45`. Added an absent-age
+  retrieval assertion at `api/tests/integration/test_retrieval.py:66` and
+  migration assertions for `vector(768)` and `vector_cosine_ops` at
+  `api/tests/integration/test_knowledge_migration.py:70-103`.
+- Maker self-assessment: D3 appears maker-ready. Focused repair tests pass
+  18 tests; `make test-api` passes 608 tests; `make smoke` passes. This is
+  the maker's view, not a verdict.
+- Open questions / risks: Checker should independently rerun the US3
+  checkpoint and confirm the named tests now lock every required detail.
+- Handoff: ready-for-check
+
+## Iteration 19 - 2026-09-28
+- Targeted criteria: D3; DEBT-012 and DEBT-013
+- Worktree: in place
+- Change: Added explicit `EMBEDDING_PROVIDER` selection in
+  `api/src/underwriteflow/config.py:34` and
+  `api/src/underwriteflow/providers/embedding.py:149`. Local Compose,
+  evaluation, smoke, and `.env.example` use fake embeddings; approved Gemini
+  keeps explicit acknowledgement, host, key, and redaction checks. Retrieval
+  integration tests no longer activate drafts and recall selects shipped `g1`
+  by identity in `api/tests/integration/test_retrieval_recall.py:35`.
+- Maker self-assessment: DEBT-012 and DEBT-013 appear addressed; D3 remains
+  checker-pass. Checker should verify fresh local startup, provider parity,
+  and that retrieval tests leave active guideline state unchanged. This is the
+  maker's view, not a verdict.
+- Open questions / risks: Existing development data already has retired `g1`
+  from earlier checker probes; restore requires the documented local reset or
+  a new corpus version. No reset performed.
+- Handoff: ready-for-check
+
+## Iteration 20 - 2026-09-28
+- Targeted criteria: D2/D3 review findings R001-R002
+- Worktree: in place
+- Change: `web/src/knowledge-admin.tsx:14-20,190-210` now renders passage
+  identifier, topic, age band, and sum-assured band; UI assertions cover all
+  metadata in `web/src/knowledge-admin.test.tsx:49-58`. The embedding builder
+  now rejects configured Ollama embeddings in
+  `api/src/underwriteflow/providers/embedding.py:149-156`, with unit coverage
+  in `api/tests/unit/test_embedding_providers.py:97-108`.
+- Maker self-assessment: R001 and R002 appear addressed. Focused web/API
+  tests pass; `make test-web` passes 177 tests; web build passes. This is the
+  maker's view, not a verdict.
+- Open questions / risks: Checker should verify metadata labels against FR-001
+  and confirm Ollama rejection is preferable to an adapter.
 - Handoff: ready-for-check

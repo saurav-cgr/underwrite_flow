@@ -38,3 +38,18 @@ contract or copy full logs here.
   pagination with administrator page controls. (iteration 13, 2026-09-28)
 - [M-011] Knowledge summaries use SQL passage counts; preview pages never load
   all passage bodies for metadata. (iteration 14, 2026-09-28)
+- [M-012] Retrieval uses fake embeddings for bootstrap and backfills missing
+  embeddings on idempotent imports; Gemini remains opt-in. (iteration 15)
+- [M-013] Bootstrap now builds the configured embedding provider; smoke and
+  evaluation explicitly select fake embeddings. (iteration 16)
+- [M-014] Bootstrap mirrors API Gemini embedding settings; deterministic
+  Compose overrides set fake provider explicitly. (iteration 17)
+- [M-015] US3 repair tests now assert absent-fact filtering, vector width, and
+  cosine index operator class; nested helpers carry intent comments.
+  (iteration 18)
+- [M-016] Corpus embedding provider is explicit; local Compose selects fake,
+  while approved Gemini selection remains opt-in and guarded. Retrieval tests
+  avoid activation side effects. (iteration 19)
+- [M-017] Knowledge preview renders stable key, topic, age band, and
+  sum-assured band; Ollama embeddings fail explicitly until an adapter exists.
+  (iteration 20)

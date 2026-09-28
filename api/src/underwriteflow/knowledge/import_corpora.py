@@ -10,6 +10,7 @@ from underwriteflow.config import get_settings
 from underwriteflow.database import Database
 from underwriteflow.knowledge.service import KnowledgeService
 from underwriteflow.persistence.models import User
+from underwriteflow.providers.embedding import build_embedding_provider
 
 
 # Import every mounted corpus without activating any version.
@@ -21,8 +22,11 @@ async def import_corpora(root: Path = Path("/app/knowledge-config")) -> None:
             admin = await session.scalar(
                 select(User).where(User.role == UserRole.ADMINISTRATOR.value)
             )
+            provider = build_embedding_provider(settings)
             for path in sorted(root.glob("*/*.yaml")):
-                await KnowledgeService().import_guideline(
+                await KnowledgeService(
+                    embedding_provider=provider
+                ).import_guideline(
                     session,
                     path.read_text(),
                     admin.id if admin else None,

@@ -42,7 +42,12 @@ beforeEach(() => {
         passage_key: "life-cover-high-sum-assured",
         title: "High requested cover",
         topic: "cover-amount",
-        bands: {},
+        bands: {
+          age_min: 18,
+          age_max: 40,
+          sum_assured_min: 1000000,
+          sum_assured_max: 5000000,
+        },
         label: "SYNTHETIC - FOR DEMONSTRATION ONLY",
         body: "Synthetic passage body.",
         thresholds: [],
@@ -68,6 +73,13 @@ describe("knowledge administration", () => {
     expect(await screen.findByText("threshold_mismatch")).toBeTruthy();
     expect(
       screen.getByText("SYNTHETIC - FOR DEMONSTRATION ONLY"),
+    ).toBeTruthy();
+    expect(screen.getByText(/Identifier: life-cover-high-sum-assured/))
+      .toBeTruthy();
+    expect(screen.getByText(/Topic: cover-amount/)).toBeTruthy();
+    expect(screen.getByText(/Age band: 18 to 40/)).toBeTruthy();
+    expect(
+      screen.getByText(/Sum-assured band: 1000000 to 5000000/),
     ).toBeTruthy();
   });
 

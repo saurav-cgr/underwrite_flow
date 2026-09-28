@@ -65,6 +65,25 @@ def test_base_compose_declares_development_mode() -> None:
         assert "development" in environment["ENVIRONMENT_MODE"], name
 
 
+# Verify bootstrap receives every Gemini embedding setting used by the API.
+def test_bootstrap_shares_gemini_embedding_settings() -> None:
+    compose = _load_compose(BASE_PATH)
+    api = _environment(compose["services"]["api"])
+    bootstrap = _environment(compose["services"]["bootstrap"])
+
+    for key in (
+        "EMBEDDING_PROVIDER",
+        "GEMINI_API_KEY",
+        "GEMINI_EMBEDDING_MODEL",
+        "GEMINI_NO_TRAINING_ACKNOWLEDGED",
+        "PROVIDER_ALLOWED_HOSTS",
+        "PII_REDACTION_TERMS",
+        "PROVIDER_TIMEOUT_SECONDS",
+    ):
+        assert key in bootstrap
+        assert bootstrap[key] == api[key]
+
+
 # Verify the isolated evaluation stack declares evaluation mode.
 def test_evaluation_compose_declares_evaluation_mode() -> None:
     compose = _load_compose(EVALUATION_PATH)

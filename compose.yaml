@@ -33,6 +33,17 @@ services:
       ENVIRONMENT_MODE: ${ENVIRONMENT_MODE:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
+      GENERATION_PROVIDER: >-
+        ${GENERATION_PROVIDER:-gemini}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fake}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_EMBEDDING_MODEL: >-
+        ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
+      GEMINI_NO_TRAINING_ACKNOWLEDGED: >-
+        ${GEMINI_NO_TRAINING_ACKNOWLEDGED:-false}
+      PROVIDER_ALLOWED_HOSTS:
+      PII_REDACTION_TERMS: ${PII_REDACTION_TERMS:-[]}
+      PROVIDER_TIMEOUT_SECONDS: ${PROVIDER_TIMEOUT_SECONDS:-30}
     depends_on:
       db:
         condition: service_healthy
@@ -61,8 +72,11 @@ services:
       REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-28800}
       REFRESH_TOKEN_PEPPER: ${REFRESH_TOKEN_PEPPER:-synthetic-local-refresh-pepper}
       GENERATION_PROVIDER: ${GENERATION_PROVIDER:-gemini}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fake}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
+      GEMINI_EMBEDDING_MODEL: >-
+        ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
       GEMINI_NO_TRAINING_ACKNOWLEDGED: >-
         ${GEMINI_NO_TRAINING_ACKNOWLEDGED:-false}
       PROVIDER_ALLOWED_HOSTS:

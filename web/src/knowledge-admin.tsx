@@ -16,6 +16,12 @@ import type {
 
 const PREVIEW_PAGE_SIZE = 100;
 
+// Format optional lower and upper bounds for reviewer-readable metadata.
+function displayBand(min: number | null, max: number | null): string {
+  if (min === null && max === null) return "none";
+  return `${min ?? "unbounded"} to ${max ?? "unbounded"}`;
+}
+
 // Render administrator import, preview, and activation controls.
 export function KnowledgeAdmin({ token }: { token: string }) {
   const [versions, setVersions] = useState<KnowledgeVersion[]>([]);
@@ -184,6 +190,21 @@ export function KnowledgeAdmin({ token }: { token: string }) {
               <article key={passage.passage_key} className="mini-row">
                 <div>
                   <strong>{passage.title}</strong>
+                  <small>
+                    Identifier: {passage.passage_key} · Topic: {passage.topic}
+                  </small>
+                  <small>
+                    Age band: {displayBand(
+                      passage.bands.age_min ?? null,
+                      passage.bands.age_max ?? null,
+                    )}
+                  </small>
+                  <small>
+                    Sum-assured band: {displayBand(
+                      passage.bands.sum_assured_min ?? null,
+                      passage.bands.sum_assured_max ?? null,
+                    )}
+                  </small>
                   <p>{passage.body}</p>
                   <small>{passage.label}</small>
                 </div>

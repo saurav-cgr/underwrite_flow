@@ -31,8 +31,10 @@ class Settings(BaseSettings):
         "underwriteflow"
     )
     generation_provider: Literal["fake", "gemini", "ollama"] = "gemini"
+    embedding_provider: Literal["fake", "gemini", "ollama"] | None = None
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.1-flash-lite"
+    gemini_embedding_model: str = "gemini-embedding-001"
     gemini_no_training_acknowledged: bool = False
     provider_allowed_hosts: tuple[ProviderHost, ...] = Field(
         default=("generativelanguage.googleapis.com", "ollama"),

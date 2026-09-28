@@ -3,8 +3,16 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import (
+    Computed,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from underwriteflow.persistence.models import (
@@ -12,6 +20,7 @@ from underwriteflow.persistence.models import (
     IdentifiedRecord,
     TimestampedRecord,
 )
+from underwriteflow.persistence.vector import Vector
 
 
 class KnowledgeVersion(IdentifiedRecord, TimestampedRecord, Base):
@@ -61,6 +70,19 @@ class KnowledgePassage(IdentifiedRecord, Base):
     body: Mapped[str] = mapped_column(Text, nullable=False)
     label: Mapped[str] = mapped_column(String(64), nullable=False)
     source_locator: Mapped[str | None] = mapped_column(String(500))
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "to_tsvector('english', "
+            "coalesce(passage_key, '') || ' ' || "
+            "coalesce(topic, '') || ' ' || "
+            "coalesce(title, '') || ' ' || "
+            "coalesce(body, ''))",
+            persisted=True,
+        ),
+        nullable=True,
+    )
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(768))
 
 
 class CaseKnowledgePin(TimestampedRecord, Base):

@@ -169,55 +169,55 @@ tests/contract/test_knowledge_api.py -q`; `make test-api`;
 pinned version and bands. **Independent test**: recall at least 0.9 on 30
 life questions with the fake embedder.
 
-- [ ] T025 [US3] Extend `tests/integration/test_knowledge_migration.py`
+- [x] T025 [US3] Extend `tests/integration/test_knowledge_migration.py`
   with failing checks: `vector` extension present, `embedding vector(768)`,
   generated `search_vector`, GIN and HNSW (`vector_cosine_ops`) indexes.
-- [ ] T026 [US3] [NEEDS APPROVAL] Create
+- [x] T026 [US3] [NEEDS APPROVAL] Create
   `alembic/versions/10_knowledge_retrieval.py`: `CREATE EXTENSION IF NOT
   EXISTS vector`, add both columns and indexes to `knowledge_passages`.
-- [ ] T027 [US3] Write failing tests in `tests/unit/test_vector_type.py`:
+- [x] T027 [US3] Write failing tests in `tests/unit/test_vector_type.py`:
   list of floats binds as `'[a,b,...]'` and reads back equal.
-- [ ] T028 [US3] Implement `Vector` `UserDefinedType` in
+- [x] T028 [US3] Implement `Vector` `UserDefinedType` in
   `src/underwriteflow/persistence/vector.py`; map `embedding` on
   `KnowledgePassage`.
-- [ ] T029 [US3] Write failing tests in
+- [x] T029 [US3] Write failing tests in
   `tests/unit/test_embedding_providers.py`: fake is deterministic, 768
   dims, unit length, closer for shared words; Gemini adapter (via
   `httpx.MockTransport`) posts `batchEmbedContents` to the approved host
   with `outputDimensionality: 768`, applies redaction, maps 408/429/5xx to
   `TransientProviderError`, never includes the key in errors.
-- [ ] T030 [US3] [NEEDS APPROVAL] Implement `EmbeddingProvider`,
+- [x] T030 [US3] [NEEDS APPROVAL] Implement `EmbeddingProvider`,
   `FakeEmbeddingProvider`, `GeminiEmbeddingProvider`,
   `build_embedding_provider` in `src/underwriteflow/providers/
   embedding.py`; add `gemini_embedding_model = "gemini-embedding-001"` to
   `src/underwriteflow/config.py` and `GEMINI_EMBEDDING_MODEL` to
   `.env.example`.
-- [ ] T031 [US3] Write failing test in
+- [x] T031 [US3] Write failing test in
   `tests/integration/test_knowledge_embeddings.py`: import stores an
   embedding for every passage, at most 100 per provider call.
-- [ ] T032 [US3] Implement embedding at import in
+- [x] T032 [US3] Implement embedding at import in
   `src/underwriteflow/knowledge/embedding_writer.py`, called from
   `knowledge/service.py`.
-- [ ] T033 [US3] Write failing tests in `tests/unit/test_case_facts.py`:
+- [x] T033 [US3] Write failing tests in `tests/unit/test_case_facts.py`:
   age in whole years at submission date (day before birthday counts one
   less), `requested_cover` becomes sum assured, absent values are `None`.
-- [ ] T034 [US3] Implement `case_facts(payload, submitted_on)` in
+- [x] T034 [US3] Implement `case_facts(payload, submitted_on)` in
   `src/underwriteflow/knowledge/case_facts.py`.
-- [ ] T035 [US3] Write failing tests in `tests/unit/test_rank_fusion.py`:
+- [x] T035 [US3] Write failing tests in `tests/unit/test_rank_fusion.py`:
   RRF with `k = 60`; ties sort by `passage_key`.
-- [ ] T036 [US3] Write failing tests in
+- [x] T036 [US3] Write failing tests in
   `tests/integration/test_retrieval.py`: only pinned-version results;
   non-overlapping bands excluded; absent fact skips its filter; query
   `high_cover_standard` ranks its section in top five; every result has
   `version` and `passage_key`.
-- [ ] T037 [US3] Implement `fuse_ranks` and `retrieve(session, embedder,
+- [x] T037 [US3] Implement `fuse_ranks` and `retrieve(session, embedder,
   version_id, query, facts, limit=5)` in
   `src/underwriteflow/knowledge/retrieval.py` with bound parameters.
-- [ ] T038 [US3] Write failing test in
+- [x] T038 [US3] Write failing test in
   `tests/integration/test_retrieval_recall.py`: loads
   `/app/evaluation/retrieval/life-individual-term.yaml`, asserts 30
   questions and top-five recall at least 0.9.
-- [ ] T039 [US3] Write `evaluation/retrieval/life-individual-term.yaml`
+- [x] T039 [US3] Write `evaluation/retrieval/life-individual-term.yaml`
   (30 synthetic questions, label, expected section ids) and
   `scripts/evaluate_retrieval.py`, which measures recall against the
   running stack with the configured provider: fake is the end-to-end
