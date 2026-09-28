@@ -55,7 +55,6 @@ data/regulatory/
 evaluation/results/
 
 # Local agent and tooling configuration
-.specify/
 .agents/
 .claude/
 .serena/
@@ -65,3 +64,9 @@ evaluation/results/
 .agents/
 .codex/
 .serena/
+.specify/extensions
+.specify/extensions.yml
+.specify/init-options.json
+.specify/integration.json
+.specify/integrations/
+
