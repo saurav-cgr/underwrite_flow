@@ -78,6 +78,7 @@ function shellLinks(role: Role): ShellLink[] {
       label: "Product configuration",
       icon: "settings",
     },
+    { screen: "knowledge", label: "Knowledge store", icon: "file" },
     { screen: "queue", label: "All queues", icon: "inbox" },
   ];
 }

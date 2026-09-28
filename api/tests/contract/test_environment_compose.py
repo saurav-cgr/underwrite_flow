@@ -176,6 +176,22 @@ def test_rendered_production_stack_keeps_the_baseline_bootstrap() -> None:
     assert "import_configs" in command
 
 
+# Verify development and evaluation bootstrap import mounted corpora as drafts.
+def test_bootstrap_services_import_mounted_knowledge() -> None:
+    for path, service_name in (
+        (BASE_PATH, "bootstrap"),
+        (EVALUATION_PATH, "evaluation-bootstrap"),
+    ):
+        compose = _load_compose(path)
+        service = compose["services"][service_name]
+        assert "underwriteflow.knowledge.import_corpora" in (
+            _command_text(service)
+        )
+        assert "./knowledge-config:/app/knowledge-config:ro" in service[
+            "volumes"
+        ]
+
+
 # Verify no rendered production service loads evaluation data on startup.
 def test_rendered_production_stack_never_loads_data() -> None:
     rendered = _rendered_production()

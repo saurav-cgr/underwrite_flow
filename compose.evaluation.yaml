@@ -32,7 +32,8 @@ services:
       - -c
       - >-
         alembic upgrade head &&
-        python -m underwriteflow.products.import_configs
+        python -m underwriteflow.products.import_configs &&
+        python -m underwriteflow.knowledge.import_corpora
     environment:
       ENVIRONMENT_MODE: evaluation
       DATABASE_URL: "postgresql+asyncpg://underwriteflow:synthetic-evaluation-\
@@ -43,6 +44,7 @@ services:
         condition: service_healthy
     volumes:
       - ./product-config:/app/product-config:ro
+      - ./knowledge-config:/app/knowledge-config:ro
     networks:
       - evaluation
 
@@ -94,6 +96,7 @@ services:
       - /data/uploads
     volumes:
       - ./evaluation:/app/evaluation:ro
+      - ./knowledge-config:/app/knowledge-config:ro
       - ./product-config:/app/product-config:ro
       - ./scripts:/app/scripts:ro
     networks:

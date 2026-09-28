@@ -134,3 +134,114 @@ marks the loop done. It records the story and criteria ready for checking.
 - Open questions / risks: Checker should rerun the US1 checkpoint and inspect
   test isolation around product activation.
 - Handoff: ready-for-check
+
+## Iteration 9 - 2026-09-28
+- Story: US2
+- Targeted criteria: D2
+- Worktree: in place
+- Change: Added migration `09_knowledge_base.py`, knowledge ORM and
+  lifecycle services, administrator API, case pinning, draft bootstrap import,
+  Compose mounts, and the administrator knowledge screen. Added US2 API and
+  web tests and FK-safe fixture cleanup.
+- Maker self-assessment: D2 is maker-ready. Focused US2 tests pass; full API
+  gate passes 583 tests, full web gate passes 175 tests, web build passes, and
+  `make smoke` passes. This is the maker's view, not a verdict.
+- Open questions / risks: Checker should inspect activation race behavior,
+  invalid-draft reporting, pin ordering, and the quickstart US2 flow.
+- Handoff: ready-for-check
+
+## Iteration 10 - 2026-09-28
+- Targeted criteria: R002 staff-review follow-up; no RAG criterion changed
+- Worktree: in place
+- Change: Added isolated recovery coverage in
+  `api/tests/unit/test_evaluation_loader.py:218` for restoring present but
+  corrupted evaluation-document bytes.
+- Maker self-assessment: R002 now has unit-level regression coverage. R001
+  remains intentionally unchanged because the reviewer marked its current
+  corpus-scale cost negligible. This is the maker's view, not a verdict.
+- Open questions / risks: This follow-up is outside US2 implementation scope;
+  checker should confirm no broader performance change is warranted.
+- Handoff: ready-for-check
+
+## Iteration 11 - 2026-09-28
+- Targeted criteria: US2 staff-review findings R001-R005; D2 unchanged
+- Worktree: in place
+- Change: Added bootstrap-import and Compose coverage in
+  `api/tests/unit/test_import_corpora.py:11` and
+  `api/tests/contract/test_environment_compose.py:180`; expanded lifecycle
+  idempotence, conflict, and activation-audit assertions in
+  `api/tests/integration/test_knowledge_lifecycle.py:76`; expanded every
+  knowledge API endpoint and role refusal in
+  `api/tests/contract/test_knowledge_api.py:40`; added public submission,
+  resubmission, g1/g2 pin stability, and pin-audit coverage in
+  `api/tests/integration/test_knowledge_pinning.py:184`; preserved real audit
+  timestamps in `api/src/underwriteflow/knowledge/pins.py:47`; added YAML
+  import status coverage in `web/src/knowledge-admin.test.tsx:74`; updated
+  the audit contract for the new pin event in
+  `api/tests/contract/test_audit_contract.py:54`.
+- Maker self-assessment: Latest US2 review findings appear addressed; D2
+  remains maker-ready. Full API, web, build, and smoke gates pass. This is the
+  maker's view, not a verdict.
+- Open questions / risks: Checker should independently rerun the US2
+  checkpoint and inspect the new public pinning flow and audit ordering.
+- Handoff: ready-for-check
+
+## Iteration 12 - 2026-09-28
+- Targeted criteria: D2; checker failures 1-3
+- Worktree: in place
+- Change: Mapped concurrent import and activation `IntegrityError` to
+  `KnowledgeConflictError` in
+  `api/src/underwriteflow/knowledge/service.py:211-235,284-332`;
+  made activation idempotent for an already-active version at lines 265-271;
+  flushed sibling retirement before target activation at lines 291-298;
+  added lifecycle and concurrency regression coverage in
+  `api/tests/integration/test_knowledge_lifecycle.py:84-195`.
+- Maker self-assessment: D2 remains maker-ready. US2 checkpoint passes 8
+  tests; `make test-api` passes 589 tests; `make test-web` passes 176 tests;
+  web build and `make smoke` pass. This is the maker's view, not a verdict.
+- Open questions / risks: Checker should independently reproduce the three
+  reported races and verify API responses remain 409 without duplicate audit
+  events. No new migration required.
+- Handoff: ready-for-check
+
+## Iteration 13 - 2026-09-28
+- Targeted criteria: D2; staff warnings R001, RC02/R003, R002
+- Worktree: in place
+- Change: Added unlocked knowledge reads and SQL passage pagination in
+  `api/src/underwriteflow/knowledge/repository.py:91-147` and switched
+  summary/preview reads in
+  `api/src/underwriteflow/knowledge/router.py:38,133-143`;
+  validated corpora against named product versions and required active status
+  only during activation in
+  `api/src/underwriteflow/knowledge/service.py:117-160,287-289`;
+  added offset-page and inactive-version regression coverage in
+  `api/tests/contract/test_knowledge_api.py:68-88` and
+  `api/tests/integration/test_knowledge_lifecycle.py:129-150`.
+  Added administrator next/previous preview controls and API query coverage
+  in `web/src/api-knowledge.ts:29-45`,
+  `web/src/knowledge-admin.tsx:72-95,190-221`, and
+  `web/src/knowledge-admin.test.tsx:76-107`.
+- Maker self-assessment: D2 remains maker-ready. US2 checkpoint passes 9
+  tests; `make test-api` passes 590 tests; `make test-web` passes 177 tests;
+  web build and `make smoke` pass. This is the maker's view, not a verdict.
+- Open questions / risks: Checker should confirm R001 read paths never call
+  `FOR UPDATE`, R002 activation semantics, and R003 SQL-level pagination.
+  `RC02` was treated as the latest review's R003 label.
+- Handoff: ready-for-check
+
+## Iteration 14 - 2026-09-28
+- Targeted criteria: D2; latest staff warning R001
+- Worktree: in place
+- Change: Added SQL `COUNT` in
+  `api/src/underwriteflow/knowledge/repository.py:149-158`; changed
+  `KnowledgeService.summary` to use it at
+  `api/src/underwriteflow/knowledge/service.py:246-264`; added a unit
+  regression test in `api/tests/unit/test_knowledge_service.py:11-35` that
+  rejects passage-body loading during summary.
+- Maker self-assessment: D2 remains maker-ready. US2 checkpoint passes 9
+  tests; focused summary test passes; `make test-api` passes 591 tests;
+  `make test-web` passes 177 tests; web build and `make smoke` pass. This is
+  the maker's view, not a verdict.
+- Open questions / risks: Checker should confirm preview summary performs one
+  count query plus one bounded page query for large corpora.
+- Handoff: ready-for-check

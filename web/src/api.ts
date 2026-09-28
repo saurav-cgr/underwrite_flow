@@ -12,6 +12,7 @@ import { request } from "./api-core";
 export * from "./api-core";
 export * from "./api-products";
 export * from "./api-staff";
+export * from "./api-knowledge";
 
 // Create a session for a synthetic demo account.
 export async function createSession(

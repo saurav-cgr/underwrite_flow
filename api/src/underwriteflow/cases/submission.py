@@ -22,6 +22,7 @@ from underwriteflow.cases.service import (
     requested_field_keys,
 )
 from underwriteflow.cases.validation import validate_complete_application
+from underwriteflow.knowledge.pins import pin_case_knowledge
 from underwriteflow.persistence.models import (
     Case,
     Document,
@@ -259,6 +260,7 @@ class SubmissionService:
         event_type: str,
         clear_evidence: bool,
     ) -> dict[str, object]:
+        await pin_case_knowledge(session, case, actor_user_id)
         product_version = await session.scalar(
             select(ProductVersion).where(
                 ProductVersion.id == case.product_version_id

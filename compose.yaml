@@ -27,7 +27,8 @@ services:
       - -c
       - >-
         alembic upgrade head &&
-        python -m underwriteflow.products.import_configs
+        python -m underwriteflow.products.import_configs &&
+        python -m underwriteflow.knowledge.import_corpora
     environment:
       ENVIRONMENT_MODE: ${ENVIRONMENT_MODE:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}

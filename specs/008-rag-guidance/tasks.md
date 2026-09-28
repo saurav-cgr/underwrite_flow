@@ -94,22 +94,22 @@ Report and wait for `continue`.
 per product; cases pin the active version. **Independent test**: pin
 stays `g1` after `g2` activates; both activations audited.
 
-- [ ] T012 [US2] Write failing test in
+- [x] T012 [US2] Write failing test in
   `tests/integration/test_knowledge_migration.py`: after `alembic upgrade
   head`, tables `knowledge_versions`, `knowledge_passages`,
   `case_knowledge_pins` exist; a second `active` row for the same
   (scope, product) violates `uq_knowledge_versions_one_active`.
-- [ ] T013 [US2] [NEEDS APPROVAL] Create
+- [x] T013 [US2] [NEEDS APPROVAL] Create
   `alembic/versions/09_knowledge_base.py` (down_revision
   `08_case_journey`) with the three tables from `data-model.md` minus
   `search_vector`, `embedding`, and the regulation-only columns; both
   unique indexes use `coalesce(product_id, '00000000-0000-0000-0000-
   000000000000')`.
-- [ ] T014 [US2] Add ORM models `KnowledgeVersion`, `KnowledgePassage`,
+- [x] T014 [US2] Add ORM models `KnowledgeVersion`, `KnowledgePassage`,
   `CaseKnowledgePin` on the shared `Base` in
   `src/underwriteflow/persistence/knowledge_models.py`; leave
   `persistence/models.py` (395 lines) unchanged.
-- [ ] T015 [US2] Write failing tests in
+- [x] T015 [US2] Write failing tests in
   `tests/integration/test_knowledge_lifecycle.py`: import creates a
   `draft` with a validation report; activation of an invalid draft or one
   whose `aligned_product_version` is not the active product version is
@@ -117,42 +117,42 @@ stays `g1` after `g2` activates; both activations audited.
   same product only and appends `knowledge_version_activated` with
   previous version and `supersedes_event_id`; same identity with new
   content raises conflict; same content re-import is idempotent.
-- [ ] T016 [US2] Implement `src/underwriteflow/knowledge/repository.py`
+- [x] T016 [US2] Implement `src/underwriteflow/knowledge/repository.py`
   (SQLAlchemy expressions only) and `src/underwriteflow/knowledge/
   service.py` (`import_guideline`, `activate`, `retire`), mirroring
   `ProductService.activate`: flush retirement first, map `IntegrityError`
   to a conflict.
-- [ ] T017 [US2] Write failing contract tests in
+- [x] T017 [US2] Write failing contract tests in
   `tests/contract/test_knowledge_api.py` for `/knowledge/validate`,
   `/knowledge/import`, `/knowledge/versions`, `/preview` (limit at most
   100), `/activate`, `/retire` per `contracts/rest-api.md`; Underwriter
   and Applicant get 403.
-- [ ] T018 [US2] Implement `src/underwriteflow/knowledge/schemas.py` and
+- [x] T018 [US2] Implement `src/underwriteflow/knowledge/schemas.py` and
   `src/underwriteflow/knowledge/router.py` (guards
   `PRODUCT_CONFIG_WRITE`/`PRODUCT_CONFIG_READ`); include the router in
   `src/underwriteflow/app.py`.
-- [ ] T019 [US2] Write failing tests in
+- [x] T019 [US2] Write failing tests in
   `tests/integration/test_knowledge_pinning.py`: submitted case pins the
   active `g1`; after `g2` activates, the first case keeps `g1` and a new
   case pins `g2`; no active version stores null pins; resubmission keeps
   the first pin; `case_guidance_pinned` audit event exists.
-- [ ] T020 [US2] Implement insert-once `pin_case_knowledge` (PostgreSQL
+- [x] T020 [US2] Implement insert-once `pin_case_knowledge` (PostgreSQL
   `insert ... on_conflict_do_nothing`) in
   `src/underwriteflow/knowledge/pins.py`; call it once at processing start
   in `src/underwriteflow/cases/submission.py`.
-- [ ] T021 [US2] Write failing test in
+- [x] T021 [US2] Write failing test in
   `tests/unit/test_import_corpora.py`: bootstrap import loads every
   `knowledge-config/*/*.yaml` as a draft and never activates.
-- [ ] T022 [US2] Implement `src/underwriteflow/knowledge/import_corpora.py`
+- [x] T022 [US2] Implement `src/underwriteflow/knowledge/import_corpora.py`
   and append `python -m underwriteflow.knowledge.import_corpora` to the
   `bootstrap` command in `compose.yaml` and `compose.evaluation.yaml`
   (add the read-only mount there too); update
   `tests/contract/test_environment_compose.py` expectations.
-- [ ] T023 [US2] Write failing Vitest tests in
+- [x] T023 [US2] Write failing Vitest tests in
   `web/src/knowledge-admin.test.tsx`: lists versions, imports YAML, shows
   validation issues, preview shows each passage label as text, activate
   is keyboard operable, results announced with `role="status"`.
-- [ ] T024 [US2] Implement `web/src/types-knowledge.ts`,
+- [x] T024 [US2] Implement `web/src/types-knowledge.ts`,
   `web/src/api-knowledge.ts`, `web/src/knowledge-admin.tsx`; add the
   screen to administrator navigation in `web/src/admin.tsx`.
 

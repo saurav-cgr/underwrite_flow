@@ -21,3 +21,20 @@ contract or copy full logs here.
   2026-09-28)
 - [M-005] Journey contract tests must select motor v1 before draft creation;
   active product state is shared across tests. (iteration 8, 2026-09-28)
+- [M-006] Repository migration 08 uses revision id `08`; US2 migration chains
+  from that id and keeps knowledge pins FK-safe in test cleanup. (iteration 9,
+  2026-09-28)
+- [M-007] Evaluation-document recovery now has isolated unit coverage for
+  present-but-corrupt files; unconditional hashing remains accepted at current
+  corpus scale. (iteration 10, 2026-09-28)
+- [M-008] US2 review coverage must exercise bootstrap import, every knowledge
+  endpoint, public submission pinning, and activation audit metadata; pin
+  audit timestamps use database defaults. (iteration 11, 2026-09-28)
+- [M-009] Knowledge imports map identity races to domain conflicts; activation
+  flushes sibling retirement before target activation and repeats are no-ops.
+  (iteration 12, 2026-09-28)
+- [M-010] Knowledge validation aligns to the named product version; activation
+  alone requires that version to be active. Read previews use unlocked SQL
+  pagination with administrator page controls. (iteration 13, 2026-09-28)
+- [M-011] Knowledge summaries use SQL passage counts; preview pages never load
+  all passage bodies for metadata. (iteration 14, 2026-09-28)

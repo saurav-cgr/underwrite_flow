@@ -40,6 +40,7 @@ BUSINESS_TABLES = (
     "recommendations",
     "reviews",
     "handoffs",
+    "case_knowledge_pins",
 )
 
 
