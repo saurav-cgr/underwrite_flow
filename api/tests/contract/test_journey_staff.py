@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from fixtures.records import remove_case
+from fixtures.records import motor_status, remove_case, set_motor_status
 from fixtures.support import (
     ADMINISTRATOR,
     APPLICANT,
@@ -19,6 +19,8 @@ from underwriteflow.config import Settings
 
 # Verify journey flows through queue, review, audit, and completion views.
 def test_journey_appears_in_queue_review_audit_and_completion() -> None:
+    prior = motor_status()
+    set_motor_status("active", "v1")
     case_id = ""
     try:
         settings = Settings(generation_provider="fake")
@@ -96,3 +98,4 @@ def test_journey_appears_in_queue_review_audit_and_completion() -> None:
     finally:
         if case_id:
             remove_case(case_id)
+        set_motor_status(prior, "v1")

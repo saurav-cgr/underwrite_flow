@@ -19,6 +19,7 @@ CONFIGURATION_FILES = (
     "motor-private-car-v5.yaml",
     "life-individual-term.yaml",
     "life-individual-term-v2.yaml",
+    "life-individual-term-v3.yaml",
     "health-individual-family-floater.yaml",
     "health-individual-family-floater-v2.yaml",
     "health-individual-family-floater-v3.yaml",

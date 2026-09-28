@@ -36,6 +36,7 @@ services:
       db:
         condition: service_healthy
     volumes:
+      - ./knowledge-config:/app/knowledge-config:ro
       - ./product-config:/app/product-config:ro
 
   api:
@@ -99,6 +100,7 @@ services:
       - ./compose.evaluation.yaml:/compose.evaluation.yaml:ro
       - ./compose.production.yaml:/compose.production.yaml:ro
       - ./evaluation:/app/evaluation:ro
+      - ./knowledge-config:/app/knowledge-config:ro
       - ./product-config:/app/product-config:ro
       - ./scripts:/app/scripts:ro
       - uploads_data:/data/uploads
