@@ -59,3 +59,9 @@ evaluation/results/
 .agents/
 .claude/
 .serena/
+.github/skills/
+.github/agents/
+.github/prompts/
+.agents/
+.codex/
+.serena/

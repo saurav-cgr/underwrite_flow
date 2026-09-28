@@ -16,7 +16,11 @@
 - **Git:** Never force-push. Preserve user changes and unrelated files. Check staged files for secrets before every commit.
 - **SQL:** Use SQLAlchemy expressions or bound parameters. Never interpolate user-controlled values into SQL.
 - **Escalation:** Ask before schema migrations, new dependencies, authentication or authorization changes, provider changes, enabling external tracing, destructive resets, column drops, or broad architecture rewrites.
-- **Plan approval gate:** Follow `docs/IMPLEMENTATION_PLAN.md` one implementation step at a time. At the end of each step, stop and report changed files, verification, remaining risks, and the proposed commit. Wait for the user to review and explicitly say `continue`. Only then commit that approved step and begin the next one. Never combine steps or pre-build a later step.
+- **Plan approval gate:** Follow the active `specs/NNN-*/tasks.md` on
+  `rag-implementation`, one story at a time. At the end of each story, stop
+  and report changed files, verification, remaining risks, and the proposed
+  commit. Wait for the user to say `continue`. Only then commit, push, and
+  start the next story. Never combine stories or pre-build a later one..
 - **File size:** Keep every hand-written project file below 400 lines. Split a file before it reaches 400 lines along a clear responsibility boundary. Generated files, lockfiles, and immutable migration snapshots are exempt; explain any other exception before proceeding.
 - **Line length:** Set the IDE ruler to 80 columns. Keep each hand-written
   line at or below 80 characters and wrap longer lines for readability.
@@ -114,7 +118,7 @@ scripts/                         Deterministic setup and smoke utilities
 
 **Ask first:** anything listed under Escalation, plus changes to human-approval boundaries, real insurer integrations, real applicant data, production compliance claims, or retention/deletion policy.
 
-**Proceed within the current approved step:** focused tests, documentation, lint fixes, responsive/accessibility repairs, and incremental code that stays inside the approved files and contracts.
+- Read `docs/PRD.md` and the active spec, plan, and tasks before implementing.
 
 ## Reminders
 
