@@ -38,6 +38,30 @@ tests/integration/test_specialist_brief.py -q`; `make test-api`;
 **Goal**: Checksum-verified IRDAI clauses, badged, side by side, never in
 routing. **Independent test**: altered file rejected; routes identical.
 
+**Open questions (resolve with the user before T072/T073)**, recorded
+2026-09-28 by the checker after probing `data/regulatory/`:
+
+- Q1 Scanned PDF: `general_mc_2024.pdf` (the only motor-specific IRDAI
+  circular) yields 0 characters from `pypdf` on its first five pages.
+  With `pypdf` only, motor gets almost no IRDAI clauses. Decide: reuse
+  the existing local OCR path for scanned regulation pages, or source a
+  text-based copy and update the manifest checksum.
+- Q2 `.doc` file: `insurance_act_1938.doc` is reported, not imported,
+  per T072. Decide: accept that, or convert it to PDF by hand and update
+  its manifest entry and SHA-256.
+- Q3 Mount: neither Compose file mounts `data/regulatory/`. US7 needs a
+  read-only mount like `knowledge-config`; Compose change needs approval.
+- Q4 Upload and verify (user decision 2026-09-28: add it): Administrator
+  uploads a regulation PDF from the web app; accept it only when its
+  SHA-256 matches an existing `manifest.yaml` entry, else reject and
+  audit `regulation_file_rejected`. Manifest stays the allowlist. Before
+  implementation, run `/speckit.clarify` to amend FR-014, the
+  `/knowledge/regulation/import` contract, T075, and T080, and settle
+  the size limit and where accepted bytes are stored (git-ignored, no
+  object storage). Q3 still applies to manifest-folder import.
+- Note: `policyholders_mc_2024.pdf` is 91 MB for 109 pages but has text;
+  expect slow import, not failure.
+
 - [ ] T070 [US7] Extend `tests/integration/test_knowledge_migration.py`:
   `knowledge_passages` gains `product_lines`, `topic_tags`,
   `suggested_tags`, `limits`, `source_locator`.
