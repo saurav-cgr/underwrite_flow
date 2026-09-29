@@ -53,3 +53,32 @@ contract or copy full logs here.
 - [M-017] Knowledge preview renders stable key, topic, age band, and
   sum-assured band; Ollama embeddings fail explicitly until an adapter exists.
   (iteration 20)
+- [M-018] Provider adapters preserve citations; pinned explainer validation
+  owns filtering, audit, and complete missing-item coverage. (iteration 30)
+- [M-019] Unsupported Ollama guidance disables explanation only; submission
+  still runs deterministic triage. (iteration 31)
+- [M-020] Evaluation guidance uses active guideline IDs and the real
+  RouteExplainer through the triage graph; graph output owns route comparison.
+  (iteration 32)
+- [M-021] Playwright package and E2E image stay on matching 1.63.0 versions;
+  generated test results stay ignored. (iteration 33)
+- [M-022] Vitest 5.0.2 major bump approved by user 2026-09-29 and recorded
+  under T053. (iteration 34)
+- [M-023] Explainer retrieval catches only ProviderError and SQLAlchemyError,
+  logs class and case id; SC-003 test requires a produced explanation.
+  (iteration 35)
+- [M-024] Explainer retrieval runs in a savepoint; integration tests that
+  need an active guideline use the `active_guideline` fixture, which
+  restores prior state. `submission.py` must stay under 400 lines.
+  (iteration 36)
+- [M-025] SC-003 passes a draft guideline directly to evaluation; submission
+  fixture retires its temporary active version, then restores prior status by
+  bound SQL because retired versions cannot be reactivated. (iteration 37)
+- [M-026] API test-session teardown restores the prior life guideline, falling
+  back to shipped `g1` if another test deletes the captured version.
+  (iteration 37)
+- [M-027] Life-guideline test teardown restores the exact pre-run status and
+  `activated_at` snapshot, including no active guideline; E2E uses the
+  `web_node_modules` volume. (iteration 38)
+- [M-028] Destructive migration tests use a disposable database; E2E and web
+  services use separate native-dependency volumes. (iteration 39)

@@ -12,6 +12,7 @@ from underwriteflow.audit.events import (
     supersedes_details,
     version_details,
 )
+from underwriteflow.knowledge.case_guidance import store_route_explanation
 from underwriteflow.persistence.models import (
     Case,
     Document,
@@ -255,6 +256,12 @@ async def persist_case_evidence(
         existing.status = "pending_human_review"
         existing.summary = summary
         existing.workflow_version = WORKFLOW_VERSION
+    await store_route_explanation(
+        session,
+        case,
+        triage_values,
+        actor_user_id,
+    )
     case.status = "underwriter_review"
     details = await cycle_details(
         session,

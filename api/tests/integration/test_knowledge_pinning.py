@@ -1,9 +1,11 @@
 """Case-start pinning coverage for the versioned knowledge store."""
 
 import asyncio
+from collections.abc import Iterator
 from pathlib import Path
 
 import psycopg
+import pytest
 from fastapi.testclient import TestClient
 from uuid import uuid4
 from sqlalchemy import select
@@ -52,6 +54,42 @@ def activate_guideline(
         headers=headers,
     )
     assert response.status_code == 200, response.text
+
+
+# Read the active life guideline id, if the stack has one.
+def active_guideline_id() -> str | None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        row = connection.execute(
+            "SELECT k.id FROM knowledge_versions k JOIN products p"
+            " ON p.id = k.product_id WHERE k.scope = 'guideline'"
+            " AND k.status = 'active' AND p.code = 'life-individual-term'"
+        ).fetchone()
+    return str(row[0]) if row else None
+
+
+# Restore the prior active guideline after activation-pinning coverage.
+@pytest.fixture
+def prior_active_guideline() -> Iterator[str | None]:
+    prior = active_guideline_id()
+    yield prior
+    with psycopg.connect(DATABASE_URL) as connection:
+        connection.execute(
+            "UPDATE knowledge_versions SET status = %s "
+            "WHERE product_id = (SELECT id FROM products WHERE code = %s) "
+            "AND scope = %s AND status = %s",
+            ("retired", "life-individual-term", "guideline", "active"),
+        )
+        if prior:
+            connection.execute(
+                "UPDATE knowledge_versions SET status = %s WHERE id = %s",
+                ("active", prior),
+            )
+        connection.commit()
+        restored = connection.execute(
+            "SELECT status FROM knowledge_versions WHERE id = %s",
+            (prior,),
+        ).fetchone() if prior else None
+    assert restored == ("active",) if prior else restored is None
 
 
 # Create a life case with its required synthetic identity document.
@@ -183,7 +221,10 @@ def test_case_processing_creates_one_knowledge_pin() -> None:
 
 # Verify public submission pins g1, preserves it through resubmission, and
 # pins g2 for a new case after g2 activation.
-def test_submission_pins_guideline_version_once() -> None:
+def test_submission_pins_guideline_version_once(
+    prior_active_guideline: str | None,
+) -> None:
+    del prior_active_guideline
     case_ids: list[str] = []
     first_version = f"pin-g1-{uuid4().hex[:8]}"
     second_version = f"pin-g2-{uuid4().hex[:8]}"

@@ -40,3 +40,19 @@ def case_facts(
     if cover is None:
         cover = _value(payload, "sum_assured")
     return {"age": age, "sum_assured": cover}
+
+
+# Build the serializable guidance context for one pinned case.
+def build_guidance_context(
+    case: Any, configuration: Any, facts: dict[str, Any], pin: Any
+) -> dict[str, Any]:
+    guideline = pin.guideline_version_id
+    regulation = pin.regulation_version_id
+    return {
+        "case_id": str(case.id),
+        "product_code": configuration.product_code,
+        "age": facts.get("age"),
+        "sum_assured": facts.get("sum_assured"),
+        "guideline_version_id": str(guideline) if guideline else None,
+        "regulation_version_id": str(regulation) if regulation else None,
+    }

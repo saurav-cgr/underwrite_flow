@@ -1,26 +1,79 @@
 """Guards for the additive case-journey migration.
 
-This suite drives alembic against the live test database directly, so it
-fails until revision 08 adds a non-null ``cases.journey_type`` column that
-defaults and backfills to ``new_business``, enforces a two-value check
-constraint, and whose downgrade removes only what this revision introduces.
+This suite drives alembic against a throwaway database, so it fails until
+revision 08 adds a non-null ``cases.journey_type`` column that defaults and
+backfills to ``new_business``, enforces a two-value check constraint, and
+whose downgrade removes only what this revision introduces.
 """
 
+import os
 import subprocess
+from collections.abc import Iterator
 from uuid import uuid4
 
 import psycopg
 import pytest
 
+ADMIN_DATABASE_URL = (
+    "postgresql://underwriteflow:synthetic-local-password@"
+    "db:5433/postgres"
+)
+JOURNEY_DATABASE = "underwriteflow_journey_migration"
 DATABASE_URL = (
     "postgresql://underwriteflow:synthetic-local-password@"
-    "db:5433/underwriteflow"
+    f"db:5433/{JOURNEY_DATABASE}"
+)
+ASYNC_DATABASE_URL = (
+    "postgresql+asyncpg://underwriteflow:synthetic-local-password@"
+    f"db:5433/{JOURNEY_DATABASE}"
 )
 
 
-# Run one alembic subcommand against the live migration chain.
+# Run one alembic subcommand against the isolated migration database.
 def run_alembic(*args: str) -> None:
-    subprocess.run(["alembic", *args], cwd="/app", check=True)
+    environment = dict(os.environ, DATABASE_URL=ASYNC_DATABASE_URL)
+    subprocess.run(
+        ["alembic", *args], cwd="/app", check=True, env=environment
+    )
+
+
+# Run one Python module against the isolated migration database.
+def run_module(module: str) -> None:
+    environment = dict(
+        os.environ,
+        DATABASE_URL=ASYNC_DATABASE_URL,
+        DEMO_APPLICANT_PASSWORD="underwriteflow-demo-applicant",
+        DEMO_UNDERWRITER_PASSWORD="underwriteflow-demo-underwriter",
+        DEMO_ADMINISTRATOR_PASSWORD="underwriteflow-demo-administrator",
+    )
+    subprocess.run(
+        ["python", "-m", module], cwd="/app", check=True, env=environment
+    )
+
+
+# Recreate one exact-name throwaway database for migration destructive tests.
+def recreate_database() -> None:
+    with psycopg.connect(ADMIN_DATABASE_URL, autocommit=True) as connection:
+        connection.execute(
+            f'DROP DATABASE IF EXISTS "{JOURNEY_DATABASE}" WITH (FORCE)'
+        )
+        connection.execute(f'CREATE DATABASE "{JOURNEY_DATABASE}"')
+
+
+# Initialize and remove the isolated database around the migration test.
+@pytest.fixture(scope="module")
+def journey_database() -> Iterator[None]:
+    recreate_database()
+    run_alembic("upgrade", "head")
+    run_module("underwriteflow.products.import_configs")
+    run_module("underwriteflow.auth.seed")
+    try:
+        yield
+    finally:
+        with psycopg.connect(ADMIN_DATABASE_URL, autocommit=True) as connection:
+            connection.execute(
+                f'DROP DATABASE IF EXISTS "{JOURNEY_DATABASE}" WITH (FORCE)'
+            )
 
 
 # Read the live column names for one table.
@@ -104,7 +157,9 @@ def insert_case_with_journey(
 # Given a case row created before revision 08, when it upgrades and
 # downgrades, then journey_type backfills, enforces its constraint, and the
 # downgrade removes only the column this revision adds.
-def test_revision_08_upgrade_backfill_constraint_and_downgrade() -> None:
+def test_revision_08_upgrade_backfill_constraint_and_downgrade(
+    journey_database,
+) -> None:
     run_alembic("downgrade", "07")
     assert "journey_type" not in table_columns("cases")
 

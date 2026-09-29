@@ -10,20 +10,22 @@ DATABASE_URL = (
 )
 
 
-# Verify the three US2 tables and the one-active uniqueness rule exist.
+# Verify the knowledge tables and the one-active uniqueness rule exist.
 def test_knowledge_tables_and_active_index() -> None:
     with psycopg.connect(DATABASE_URL) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT table_name FROM information_schema.tables "
-                "WHERE table_name IN (%s, %s, %s) ORDER BY table_name",
+                "WHERE table_name IN (%s, %s, %s, %s) ORDER BY table_name",
                 (
+                    "case_guidance",
                     "knowledge_versions",
                     "knowledge_passages",
                     "case_knowledge_pins",
                 ),
             )
             assert [row[0] for row in cursor.fetchall()] == [
+                "case_guidance",
                 "case_knowledge_pins",
                 "knowledge_passages",
                 "knowledge_versions",
@@ -32,6 +34,19 @@ def test_knowledge_tables_and_active_index() -> None:
                 "SELECT indexname FROM pg_indexes "
                 "WHERE indexname = %s",
                 ("uq_knowledge_versions_one_active",),
+            )
+            assert cursor.fetchone() is not None
+
+
+# Verify stored guidance has one immutable slot per case cycle and kind.
+def test_case_guidance_unique_cycle_kind() -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT constraint_name FROM "
+                "information_schema.table_constraints "
+                "WHERE table_name = %s AND constraint_name = %s",
+                ("case_guidance", "uq_case_guidance_cycle_kind"),
             )
             assert cursor.fetchone() is not None
 

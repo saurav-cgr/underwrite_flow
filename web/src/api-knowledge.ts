@@ -4,6 +4,7 @@ import type {
   KnowledgeImportResult,
   KnowledgePreview,
   KnowledgeVersion,
+  GuidanceResponse,
 } from "./types-knowledge";
 
 // List guideline versions, newest first.
@@ -50,4 +51,12 @@ export function activateKnowledge(
   return request(`/knowledge/versions/${versionId}/activate`, token, {
     method: "POST",
   });
+}
+
+// Read the stored explanation once for one underwriter review screen.
+export function fetchGuidance(
+  token: string,
+  caseId: string,
+): Promise<GuidanceResponse> {
+  return request(`/reviews/${caseId}/guidance`, token);
 }

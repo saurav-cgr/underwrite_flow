@@ -12,7 +12,7 @@
 | D1 | US1 | Phase 3, T001, and shared gate pass | human-signed |
 | D2 | US2 | Phase 4 and shared gate pass | human-signed |
 | D3 | US3 | Phase 5 and shared gate pass | human-signed |
-| D4 | US4 | Phase 6 and shared gate pass | pending |
+| D4 | US4 | Phase 6 and shared gate pass | human-signed |
 | D5 | US5 | Phase 7 and shared gate pass | pending |
 | D6 | US6 | Phase 8 and shared gate pass | pending |
 | D7 | US7 | Phase 9 and shared gate pass | pending |
@@ -48,7 +48,7 @@ pass, and no blocking debt remains.
 ## Budget
 
 - Max iterations: 100
-- Iterations run: 20
+- Iterations run: 39
 - Per iteration: exactly one story, the lowest numbered story not yet
   human-signed. Stop at that story's checkpoint.
 - Isolation: none
@@ -85,5 +85,5 @@ pass, and no blocking debt remains.
 
 ## State
 
-- Phase: checked (D3 human-signed; next story US4)
-- Last updated: 2026-09-28
+- Phase: checked (D4 human-signed, iteration 39; next D5)
+- Last updated: 2026-09-29

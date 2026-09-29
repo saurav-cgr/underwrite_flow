@@ -1,4 +1,5 @@
-.PHONY: test-api test-web smoke probe evaluate-e2e load-evaluation-data \
+.PHONY: test-api test-web test-e2e smoke probe evaluate-e2e \
+	load-evaluation-data \
 	load-evaluation-data-eval
 
 test-api:
@@ -9,6 +10,11 @@ test-api:
 
 test-web:
 	docker compose run --rm web npm test -- --run
+
+test-e2e:
+	GENERATION_PROVIDER=fake EMBEDDING_PROVIDER=fake docker compose \
+		--profile e2e up --build --abort-on-container-exit \
+		--exit-code-from web-e2e web-e2e
 
 smoke:
 	docker compose -f compose.yaml -f compose.smoke.yaml up --build \

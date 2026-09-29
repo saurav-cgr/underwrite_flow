@@ -350,3 +350,337 @@ marks the loop done. It records the story and criteria ready for checking.
 - Open questions / risks: Checker should verify metadata labels against FR-001
   and confirm Ollama rejection is preferable to an adapter.
 - Handoff: ready-for-check
+
+## Iteration 21 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T040-T041
+- Worktree: in place
+- Change: Added additive migration `11_case_guidance.py`, mapped
+  `CaseGuidance` in `persistence/knowledge_models.py`, and extended
+  `test_knowledge_migration.py` for the table and unique cycle-kind key.
+  Rebuilt the bootstrap image so the new revision is available.
+- Maker self-assessment: T040-T041 appear ready; D4 remains pending because
+  guidance provider, workflow, persistence, API, web, and shared gates remain.
+  This is the maker's view, not a verdict.
+- Open questions / risks: Checker should verify downgrade scope, foreign-key
+  behavior, and the migration against a fresh database.
+- Handoff: ready-for-check
+
+## Iteration 22 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T042-T043
+- Worktree: in place
+- Change: Added deterministic and Gemini guidance contracts in
+  `api/src/underwriteflow/providers/guidance.py`. Added bounded word-count,
+  pinned citation, JSON-mode, untrusted-context, redaction, and builder tests
+  in `api/tests/unit/test_guidance_provider.py`.
+- Maker self-assessment: T042-T043 appear ready; D4 remains pending because
+  workflow integration, storage, API, web, and shared gates remain. This is
+  the maker's view, not a verdict.
+- Open questions / risks: Checker should inspect citation validation against
+  retrieved versions and verify provider failures never expose credentials.
+- Handoff: ready-for-check
+
+## Iteration 23 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T044-T045
+- Worktree: in place
+- Change: Added pinned retrieval and bounded fallback behavior in
+  `api/src/underwriteflow/knowledge/explainer.py`; added the optional
+  `workflow/explain.py` node and triage edge; added guidance context and
+  route explanation state; passed configured guidance and embedding providers
+  into case submission. Added four focused node tests.
+- Maker self-assessment: T044-T045 appear ready; D4 remains pending because
+  stored guidance, API, web, e2e, and shared gates remain. This is the maker's
+  view, not a verdict.
+- Open questions / risks: Checker should verify async graph checkpoint
+  behavior, audit-event commit ordering, and no route mutation on fallbacks.
+- Handoff: ready-for-check
+
+## Iteration 24 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T046-T050
+- Worktree: in place
+- Change: Added insert-once `case_guidance` persistence and
+  `route_explanation_stored` audit events; wired storage after triage. Added
+  underwriter-only `GET /reviews/{case_id}/guidance`, contract coverage,
+  restart-stability/duplicate-write integration coverage, and five-read timing
+  coverage.
+- Maker self-assessment: T046-T050 appear ready; D4 remains pending because
+  web work, e2e timing, and shared gates remain. This is the maker's view,
+  not a verdict.
+- Open questions / risks: Checker should verify real generated guidance is
+  stored before the interrupt and the route remains unchanged across all
+  evaluation cases.
+- Handoff: ready-for-check
+
+## Iteration 25 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T051
+- Worktree: in place
+- Change: Moved the route-selection and decision controls into
+  `web/src/review-actions.tsx`; `web/src/case-review.tsx` now owns only case
+  review state and layout. Existing case-review tests pass unchanged.
+- Maker self-assessment: T051 appears ready; D4 remains pending because the
+  guidance panel, Playwright timing test, and shared gates remain. This is the
+  maker's view, not a verdict.
+- Open questions / risks: Checker should verify keyboard behavior and the
+  action form's behavior remains identical in needs-information and manual
+  routes.
+- Handoff: ready-for-check
+
+## Iteration 26 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T052 and T055
+- Worktree: in place
+- Change: Added typed guidance API contracts and `fetchGuidance`; added
+  accessible `GuidancePanel` with one stored read, citations, missing-item
+  reasons, synthetic label, template badge, and unavailable status; mounted
+  it in `case-review.tsx`. Added Vitest coverage and kept existing review
+  tests passing.
+- Maker self-assessment: T052 and T055 appear ready; D4 remains pending
+  because Playwright setup/timing and shared gates remain. This is the maker's
+  view, not a verdict.
+- Open questions / risks: Checker should verify one request on case opening,
+  keyboard/accessibility behavior, and no generation call from the browser.
+- Handoff: ready-for-check
+
+## Iteration 27 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T053
+- Worktree: in place
+- Change: Added exact-pinned Playwright 1.55.0 setup, Vite e2e exclusion and
+  internal-host allowlist, Compose health checks, and `make test-e2e`.
+- Maker self-assessment: T053 appears ready; D4 remains pending until the
+  Playwright scenario and complete shared checkpoint pass. This is the
+  maker's view, not a verdict.
+- Open questions / risks: Checker should verify the Compose health dependency
+  and dependency lock consistency.
+- Handoff: ready-for-check
+
+## Iteration 28 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T054
+- Worktree: in place
+- Change: Added the five-case Playwright timing flow with synthetic applicant
+  setup, explicit v5 activation, route-shaped inputs, and underwriter queue
+  checks. The final run printed `468, 452, 561, 410, 510` milliseconds.
+- Maker self-assessment: T054 appears ready; D4 remains pending until the
+  complete shared checkpoint pass. This is the maker's view, not a verdict.
+- Open questions / risks: Checker should verify route coverage and whether
+  the blank synthetic image intentionally exercises needs-information state.
+- Handoff: ready-for-check
+
+## Iteration 29 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; T040-T055 and shared checkpoint
+- Worktree: in place
+- Change: Ran migration, focused API tests, full API gate, full web gate,
+  web build, smoke, API restart health, and exact `make test-e2e`.
+- Maker self-assessment: All US4 tasks are checked; D4 is ready for an
+  independent checker pass. This is the maker's view, not a verdict.
+- Open questions / risks: npm reports four existing dependency audit findings
+  in the Playwright container; no live provider check was run.
+- Handoff: ready-for-check
+
+## Iteration 30 - 2026-09-28
+- Story: US4
+- Targeted criteria: D4; staff findings R001-R004
+- Worktree: in place
+- Change: Provider parsing now preserves unknown citations for explainer-side
+  filtering and `citation_dropped` audit events. Generated explanations now
+  fall back when any requested missing item lacks a valid cited reason. Added
+  Gemini adapter-path and missing-item omission tests, plus real submission,
+  checkpoint restart, and human-resume integration coverage. Removed the
+  reported trailing whitespace.
+- Maker self-assessment: D4 is maker-ready after the staff repairs. This is
+  the maker's view, not a verdict.
+- Open questions / risks: Checker should verify the new active-corpus graph
+  test and independently rerun the US4 checkpoint.
+- Handoff: ready-for-check
+
+## Iteration 31 - 2026-09-29
+- Story: US4 checker-failure repair
+- Targeted criteria: D4; checker failures from iteration 30
+- Worktree: in place
+- Change: Ollama guidance now disables optional explanation generation without
+  aborting submission in `api/src/underwriteflow/providers/guidance.py:277`.
+  Added all-90 route comparison with the optional explanation node enabled
+  and disabled in `api/src/underwriteflow/evaluation/runner.py:50` and
+  `api/tests/integration/test_route_explanation.py:239`. Contract now reads
+  review state before and after guidance in
+  `api/tests/contract/test_guidance_api.py:17`. Added the missing nested-test
+  intent comment in `api/tests/unit/test_explain_node.py:255`.
+  Reworked `web/e2e/guidance-timing.spec.ts` to activate life guideline data,
+  create one case per route plus needs-information, verify route coverage,
+  and assert stored explanation text within three seconds.
+- Maker self-assessment: D4 appears maker-ready. This is the maker's view,
+  not a verdict.
+- Verification: focused API tests 5 pass; `make test-api` 627 pass;
+  `make test-web` 180 pass; web build passes; smoke passes; E2E passes with
+  timings 476, 428, 548, 450, 512 ms. `make test-e2e` build was blocked by
+  Docker registry timeout; equivalent no-build Compose E2E passed.
+- Open questions / risks: Checker should independently rerun full US4
+  checkpoint, inspect npm audit findings, and verify Ollama submission with
+  its provider profile.
+- Handoff: ready-for-check
+
+## Iteration 32 - 2026-09-29
+- Story: US4 checker-failure repair
+- Targeted criteria: D4; T046/SC-003
+- Worktree: in place
+- Change: Replaced the evaluation runner's stub explainer and direct route
+  calculation with `build_triage_graph` and the real `RouteExplainer` in
+  `api/src/underwriteflow/evaluation/runner.py:20-196`. Guidance-enabled runs
+  load active guideline IDs, use fake providers, and read recommendations
+  from graph output. Added fresh staff review at
+  `specs/008-rag-guidance/reviews/review-20260929-085740.md`.
+- Maker self-assessment: D4 is maker-ready. This is the maker's view, not a
+  verdict.
+- Verification: focused US4 tests 36 pass; `make test-api` 627 pass;
+  `make test-web` 180 pass; web build passes; `make smoke` passes;
+  `git diff --check` passes.
+- Open questions / risks: Checker should independently mutation-test the
+  graph-output assertion, inspect active guideline pin behavior, and review
+  the two staff conditions: npm audit findings and unignored test output.
+- Handoff: ready-for-check
+
+## Iteration 33 - 2026-09-29
+- Story: US4 staff-warning repair
+- Targeted criteria: D4; staff findings R001-R002
+- Worktree: in place
+- Change: Upgraded exact web test dependencies to Playwright 1.63.0 and
+  Vitest 5.0.2 in `web/package.json` and `web/package-lock.json`. Matched the
+  E2E image to `mcr.microsoft.com/playwright:v1.63.0-noble` in
+  `compose.yaml`. Added `web/test-results/` to `.gitignore`.
+- Maker self-assessment: D4 remains maker-ready; both staff warnings appear
+  resolved. This is the maker's view, not a verdict.
+- Verification: `npm audit --audit-level=high` reports 0 vulnerabilities;
+  web tests 180 pass; web build passes; E2E passes with timings 469, 433,
+  369, 406, 336 ms; `git diff --check` passes.
+- Open questions / risks: Checker should independently inspect dependency
+  compatibility and rerun the shared story checkpoint.
+- Handoff: ready-for-check
+
+## Iteration 34 - 2026-09-29
+- Story: US4 escalation-gate repair
+- Targeted criteria: D4; checker iteration 33 failure (vitest major bump)
+- Worktree: in place
+- Change: User approved the `vitest` 3.2.7 to 5.0.2 bump in session; approval
+  recorded under T053 in `specs/008-rag-guidance/tasks.md`. Restored two
+  blank lines removed in `api/src/underwriteflow/cases/submission.py`
+  (class docstring, before `run_evidence_graph`; staff R005).
+- Maker self-assessment: D4 appears maker-ready. This is the maker's view,
+  not a verdict.
+- Verification: submission tests 10 pass. Full gate not rerun; no code
+  behavior changed since checker iteration 33 (all other gates passed).
+- Open questions / risks: DEBT-020, DEBT-021, staff R002-R004 still open.
+- Handoff: ready-for-check
+
+## Iteration 35 - 2026-09-29
+- Story: US4 debt repair
+- Targeted criteria: D4; DEBT-020, DEBT-021 (staff R002)
+- Worktree: in place
+- Change: `RouteExplainer` retrieval catch narrowed from `Exception` to
+  `(ProviderError, SQLAlchemyError)` and now logs case id and exception
+  class only (`knowledge/explainer.py`). Test asserts the log and no message
+  leak (`tests/unit/test_explain_node.py`). Evaluation records now carry
+  `explanation_status` (`evaluation/runner.py`); SC-003 test asserts at least
+  one generated/template explanation
+  (`tests/integration/test_route_explanation.py`).
+- Maker self-assessment: DEBT-020 and DEBT-021 resolved; D4 stays
+  maker-ready. This is the maker's view, not a verdict.
+- Verification: `make test-api` 627 pass, 100% coverage. Web, build, smoke,
+  E2E not rerun (no web change).
+- Open questions / risks: other exception types from `retrieve` (e.g. a
+  non-Provider embedding error) now propagate and fail submission; checker
+  should confirm that is acceptable. Shared-session abort on DB error still
+  unhandled. Staff R003, R004 open.
+- Handoff: ready-for-check
+
+## Iteration 36 - 2026-09-29
+- Story: US4 checker-failure repair (iteration 35 verdict)
+- Targeted criteria: D4; failures (1) transaction abort, (2) order-dependent
+  SC-003 test, (3) `submission.py` at 400 lines
+- Worktree: in place
+- Change: (1) `RouteExplainer` runs `retrieve` inside
+  `session.begin_nested()` so a failed query rolls back a savepoint only
+  (`knowledge/explainer.py`); new
+  `test_retrieval_database_error_keeps_session_usable` runs `SELECT 1/0` on a
+  real session then a follow-up statement; removing the savepoint fails it.
+  (2) New `active_guideline` fixture in
+  `tests/integration/test_route_explanation.py` activates a unique life
+  guideline and restores the prior active one (or retires its own); used by
+  the SC-003 and submission-graph tests, so SC-003 passes alone and leaves
+  the dev DB unchanged. (3) Guidance context dict moved to
+  `build_guidance_context` in `knowledge/case_facts.py`; `submission.py` is
+  now 390 lines.
+- Maker self-assessment: D4 appears maker-ready. This is the maker's view,
+  not a verdict.
+- Verification: `make test-api` 628 pass, 100% coverage; SC-003 test alone
+  passes with no active guideline; savepoint mutant killed. Web, build,
+  smoke, E2E not rerun (no web or Compose change).
+- Open questions / risks: vitest 5.0.2 approval is user-stated in session,
+  recorded in tasks.md T053; checker cannot see the session, human to
+  confirm. Staff R003, R004 open.
+- Handoff: ready-for-check
+
+## Iteration 37 - 2026-09-29
+- Story: US4 checker-failure repair
+- Targeted criteria: D4; DEBT-021 and active guideline fixture cleanup
+- Worktree: in place
+- Change: `evaluate_cases` now accepts explicit guideline IDs. SC-003 imports
+  a draft guideline and passes its ID without activating it. The submission
+  fixture asserts temporary-version retirement and restores the prior active
+  version with bound SQL, then asserts the restored status.
+- Maker self-assessment: DEBT-021 and the reported database-state failure
+  appear repaired; D4 is maker-ready. This is the maker's view, not a verdict.
+- Verification: focused route-explanation file 4 passed; SC-003 alone passed;
+  submission graph test alone passed; `make test-api` passed with 628 tests;
+  active life guideline stayed unchanged across both isolated tests;
+  `git diff --check` passed. Web tests, web build, smoke, and E2E not rerun.
+- Open questions / risks: checker should verify direct status restoration is
+  acceptable for test cleanup and rerun the complete US4 checkpoint. The full
+  API gate exposed other activation tests mutating guideline state; a session
+  fixture now restores the prior state after the full suite. DEBT-021 remains
+  open pending checker verification. Vitest 5.0.2 approval remains recorded
+  in T053 and M-022. Staff R003 and R004 remain open.
+- Handoff: ready-for-check
+
+## Iteration 38 - 2026-09-29
+- Story: US4 checker-failure repair
+- Targeted criteria: D4; staff R003, R004, DEBT-022
+- Worktree: in place
+- Change: `web-e2e` now mounts `web_node_modules`, preventing `npm ci` from
+  writing host dependencies. `RouteExplainer` retries only
+  `TransientProviderError` up to `retry_count`; non-transient failures still
+  use the deterministic template. Test teardown snapshots and restores every
+  pre-existing life-guideline status and `activated_at`, including no active
+  version, without a `g1` fallback.
+- Maker self-assessment: R003, R004, and DEBT-022 appear ready for checker
+  review; D4 remains maker-ready. This is the maker's view, not a verdict.
+- Verification: focused API tests pass (11); `make test-api`, `make test-web`,
+  web build, smoke, and `make test-e2e` pass. E2E timings: 327, 304, 344,
+  255, and 331 ms. `git diff --check` passes.
+- Open questions / risks: checker should independently verify retry scope,
+  no-active-state restoration, and named-volume isolation.
+- Handoff: ready-for-check
+
+## Iteration 39 - 2026-09-29
+- Story: US4 checker-failure repair
+- Targeted criteria: D4; R003, DEBT-022, criterion 7
+- Worktree: in place
+- Change: Isolated `test_journey_migration.py` in disposable database
+  `underwriteflow_journey_migration`; `web-e2e` now uses its own
+  `web_e2e_node_modules` volume. Added staff review
+  `reviews/review-20260929-111953.md`.
+- Maker self-assessment: D4 is maker-ready after the two reported failures
+  are repaired and the fresh staff review is recorded. This is the maker's
+  view, not a verdict.
+- Verification: focused migration test 1 passed; `make test-api` 629 passed;
+  `make test-web` 180 passed; web build passed; `make smoke` passed; no-build
+  Playwright E2E passed. Canonical `make test-e2e` hit a Docker registry
+  timeout loading `node:24-alpine`.
+- Open questions / risks: checker should rerun canonical E2E when registry
+  access works and independently verify the disposable database cleanup.
+- Handoff: ready-for-check

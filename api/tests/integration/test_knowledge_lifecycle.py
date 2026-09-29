@@ -29,9 +29,14 @@ def corpus(version: str, aligned: str = "v3") -> str:
     path = Path("/app/knowledge-config/life-individual-term/g1.yaml")
     if not path.exists():
         path = Path("knowledge-config/life-individual-term/g1.yaml")
-    return path.read_text().replace("version: g1", f"version: {version}") \
-        .replace("aligned_product_version: v3", 
-                 f"aligned_product_version: {aligned}")
+    return (
+        path.read_text()
+        .replace("version: g1", f"version: {version}")
+        .replace(
+            "aligned_product_version: v3",
+            f"aligned_product_version: {aligned}",
+        )
+    )
 
 
 # Import one corpus through the public administrator endpoint.

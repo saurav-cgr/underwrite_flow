@@ -23,6 +23,11 @@ from underwriteflow.cases.service import (
 )
 from underwriteflow.cases.validation import validate_complete_application
 from underwriteflow.knowledge.pins import pin_case_knowledge
+from underwriteflow.knowledge.case_facts import (
+    build_guidance_context,
+    case_facts,
+)
+from underwriteflow.knowledge.explainer import RouteExplainer
 from underwriteflow.persistence.models import (
     Case,
     Document,
@@ -30,6 +35,8 @@ from underwriteflow.persistence.models import (
     Submission,
 )
 from underwriteflow.providers.protocol import ExtractionProvider
+from underwriteflow.providers.embedding import EmbeddingProvider
+from underwriteflow.providers.guidance import GuidanceProvider
 from underwriteflow.products.schemas import (
     ProductConfiguration,
     filter_configuration_for_journey,
@@ -47,7 +54,6 @@ from underwriteflow.workflow.triage import (
 
 class SubmissionService:
     """Run the bounded evidence workflow for one submitted case."""
-
     # Configure the provider, upload volume, and retry bound for this run.
     def __init__(
         self,
@@ -55,11 +61,15 @@ class SubmissionService:
         upload_root: str,
         database_url: str,
         retry_count: int = 2,
+        guidance_provider: GuidanceProvider | None = None,
+        embedding_provider: EmbeddingProvider | None = None,
     ) -> None:
         self.provider = provider
         self.upload_root = Path(upload_root)
         self.database_url = database_url
         self.retry_count = retry_count
+        self.guidance_provider = guidance_provider
+        self.embedding_provider = embedding_provider
 
     # Run the bounded evidence graph and return its reconciled output.
     async def run_evidence_graph(
@@ -106,11 +116,25 @@ class SubmissionService:
 
     # Reuse a paused checkpoint or run triage up to the human interrupt.
     async def run_triage_graph(
-        self, case: Case, state: dict[str, object]
+        self,
+        session: AsyncSession,
+        case: Case,
+        state: dict[str, object],
     ) -> dict[str, object]:
         config = thread_config(str(case.id), case.review_cycle)
         async with postgres_checkpointer(self.database_url) as checkpointer:
-            graph = build_triage_graph(checkpointer=checkpointer)
+            explainer = None
+            if self.guidance_provider and self.embedding_provider:
+                explainer = RouteExplainer(
+                    session,
+                    self.guidance_provider,
+                    self.embedding_provider,
+                    self.retry_count,
+                )
+            graph = build_triage_graph(
+                checkpointer=checkpointer,
+                explainer=explainer,
+            )
             snapshot = await graph.aget_state(config)
             if snapshot.values.get("recommendation"):
                 return dict(snapshot.values)
@@ -125,6 +149,7 @@ class SubmissionService:
         evidence_result: dict[str, object],
         product_result: dict[str, object],
         extraction_failures: list[dict[str, object]],
+        guidance_context: dict[str, object] | None = None,
     ) -> dict[str, object]:
         reconciled = list(evidence_result.get("reconciled_fields", []))
         evidence = [
@@ -166,6 +191,7 @@ class SubmissionService:
                 *branch_failures(evidence_result),
             ],
             "low_confidence": has_low_confidence(reconciled),
+            "guidance_context": guidance_context or {},
         }
 
     # Route a case whose pinned configuration cannot be read to manual review.
@@ -192,6 +218,7 @@ class SubmissionService:
             "details": {"reason": "unreadable_product_configuration"},
         }
         triage_values = await self.run_triage_graph(
+            session,
             case,
             {
                 "case_id": str(case.id),
@@ -260,7 +287,7 @@ class SubmissionService:
         event_type: str,
         clear_evidence: bool,
     ) -> dict[str, object]:
-        await pin_case_knowledge(session, case, actor_user_id)
+        pin = await pin_case_knowledge(session, case, actor_user_id)
         product_version = await session.scalar(
             select(ProductVersion).where(
                 ProductVersion.id == case.product_version_id
@@ -291,6 +318,10 @@ class SubmissionService:
         if submission is None:
             raise CaseValidationError("case submission is unavailable")
         payload = submission.payload.get("application", {})
+        facts = case_facts(payload, submission.submitted_at)
+        guidance_context = build_guidance_context(
+            case, configuration, facts, pin
+        )
         documents = list(
             await session.scalars(
                 select(Document).where(Document.case_id == case.id)
@@ -332,6 +363,7 @@ class SubmissionService:
             configuration=configuration,
         )
         triage_values = await self.run_triage_graph(
+            session,
             case,
             self.build_triage_state(
                 case,
@@ -339,6 +371,7 @@ class SubmissionService:
                 evidence_result,
                 product_result,
                 extraction_failures,
+                guidance_context,
             ),
         )
         await persist_case_evidence(

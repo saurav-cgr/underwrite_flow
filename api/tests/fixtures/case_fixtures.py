@@ -258,6 +258,7 @@ def remove_case(case_id: UUID) -> None:
                     "DELETE FROM recommendations WHERE case_id = %s",
                     "DELETE FROM documents WHERE case_id = %s",
                     "DELETE FROM submissions WHERE case_id = %s",
+                    "DELETE FROM case_guidance WHERE case_id = %s",
                     "DELETE FROM case_knowledge_pins WHERE case_id = %s",
                     "DELETE FROM cases WHERE id = %s",
                 ):

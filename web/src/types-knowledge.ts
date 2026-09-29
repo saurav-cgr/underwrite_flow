@@ -33,3 +33,32 @@ export interface KnowledgePreview {
 export interface KnowledgeImportResult extends KnowledgeVersion {
   validation: { valid: boolean; issues: Record<string, unknown>[] };
 }
+
+export interface GuidanceCitation {
+  version: string;
+  passage_key: string;
+}
+
+export interface MissingGuidanceItem {
+  item: string;
+  reason: string;
+  citations: GuidanceCitation[];
+}
+
+export interface RouteExplanation {
+  status: "generated" | "template" | "unavailable";
+  text: string;
+  missing_items: MissingGuidanceItem[];
+  citations: GuidanceCitation[];
+  label: string;
+}
+
+export interface GuidanceResponse {
+  pinned: {
+    guideline_version: string | null;
+    regulation_version: string | null;
+  };
+  route_explanation: RouteExplanation;
+  specialist_brief: null;
+  suggested_citations: GuidanceCitation[];
+}

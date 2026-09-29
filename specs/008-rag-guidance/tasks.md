@@ -236,20 +236,20 @@ tests/integration/test_retrieval_recall.py -q`; `make test-api`;
 **Goal**: Stored, cited explanation before the pause; route unchanged.
 **Independent test**: identical text after restart and resume.
 
-- [ ] T040 [US4] Extend `tests/integration/test_knowledge_migration.py`:
+- [x] T040 [US4] Extend `tests/integration/test_knowledge_migration.py`:
   `case_guidance` exists with unique `(case_id, review_cycle, kind)`.
-- [ ] T041 [US4] [NEEDS APPROVAL] Create
+- [x] T041 [US4] [NEEDS APPROVAL] Create
   `alembic/versions/11_case_guidance.py`; add `CaseGuidance` to
   `persistence/knowledge_models.py`.
-- [ ] T042 [US4] Write failing tests in
+- [x] T042 [US4] Write failing tests in
   `tests/unit/test_guidance_provider.py`: fake `explain` is
   deterministic; output over 120 words or citing keys outside the
   retrieved set is rejected; Gemini adapter uses JSON mode, a system
   instruction marking case content untrusted, and redaction.
-- [ ] T043 [US4] [NEEDS APPROVAL] Implement `GuidanceProvider`
+- [x] T043 [US4] [NEEDS APPROVAL] Implement `GuidanceProvider`
   (`explain`, `answer`), fake, Gemini, and builder in
   `src/underwriteflow/providers/guidance.py`.
-- [ ] T044 [US4] Write failing tests in `tests/unit/test_explain_node.py`:
+- [x] T044 [US4] Write failing tests in `tests/unit/test_explain_node.py`:
   provider error, no valid citation, or no relevant passage gives
   `template` (triggered rules plus cited section titles); retrieval error
   or no pin gives `unavailable`; a citation key absent from the pinned
@@ -257,44 +257,44 @@ tests/integration/test_retrieval_recall.py -q`; `make test-api`;
   key; `recommendation` is never modified; needs-information lists each
   missing item with reason and citation; manual and unsupported cases
   produce no explanation.
-- [ ] T045 [US4] Implement `RouteExplainer` in
+- [x] T045 [US4] Implement `RouteExplainer` in
   `src/underwriteflow/knowledge/explainer.py` and node `explain_route` in
   `src/underwriteflow/workflow/explain.py`; add `guidance_context` and
   `route_explanation` to `TriageState` in `workflow/state.py`; insert the
   node between `recommend_triage_route` and `human_review` in
   `workflow/triage.py` via an optional `explainer` argument.
-- [ ] T046 [US4] Write failing tests in
+- [x] T046 [US4] Write failing tests in
   `tests/integration/test_route_explanation.py`: recommended routes for
   all 90 cases in `/app/evaluation/cases.json` are identical with guidance
   enabled (pins and explainer) and disabled (SC-003); one stored row per
   cycle;
   a new graph on the same thread after restart returns identical text;
   `route_explanation_stored` audit event.
-- [ ] T047 [US4] Implement insert-once storage in
+- [x] T047 [US4] Implement insert-once storage in
   `src/underwriteflow/knowledge/case_guidance.py`, called from
   `cases/evidence_persistence.py`; build `guidance_context` (ids and
   numbers only) and pass the explainer in `cases/submission.py`.
-- [ ] T048 [US4] Write failing contract test in
+- [x] T048 [US4] Write failing contract test in
   `tests/contract/test_guidance_api.py` for `GET /reviews/{case_id}/
   guidance`: shape and label per contract; 403 for Administrator and
   Applicant; route unchanged after the call.
-- [ ] T049 [US4] Write failing test in
+- [x] T049 [US4] Write failing test in
   `tests/integration/test_guidance_latency.py`: with a stored
   explanation, each of 5 `GET /reviews/{case_id}/guidance` calls returns
   in under 3 seconds (SC-008).
-- [ ] T050 [US4] Implement `src/underwriteflow/knowledge/
+- [x] T050 [US4] Implement `src/underwriteflow/knowledge/
   guidance_router.py` (guard `require_underwriter()`); include in
   `app.py`.
-- [ ] T051 [US4] Split the action form and override dialog out of
+- [x] T051 [US4] Split the action form and override dialog out of
   `web/src/case-review.tsx` (395 lines) into `web/src/review-actions.tsx`
   with no behavior change; `web/src/case-review.test.tsx` passes before
   and after.
-- [ ] T052 [US4] Write failing Vitest tests in
+- [x] T052 [US4] Write failing Vitest tests in
   `web/src/guidance-panel.test.tsx`: text, citations, synthetic label as
   text, missing items, template badge, and "explanation unavailable" in
   `role="status"`; opening a case renders the stored explanation after
   exactly one guidance request, with no polling or generation call.
-- [ ] T053 [US4] [NEEDS APPROVAL] (approved 2026-09-28) Add exact-pinned
+- [x] T053 [US4] [NEEDS APPROVAL] (approved 2026-09-28) Add exact-pinned
   `@playwright/test` to `web/package.json` devDependencies and
   `web/package-lock.json`; add `web/playwright.config.ts` (`testDir:
   "e2e"`, `baseURL: "http://web:5173"`); exclude `e2e/**` from Vitest in
@@ -302,13 +302,15 @@ tests/integration/test_retrieval_recall.py -q`; `make test-api`;
   `compose.yaml` using the `mcr.microsoft.com/playwright` image whose tag
   matches the pinned version, mounting `./web`, depending on healthy
   `api` and `web`, running `npx playwright test`; add `make test-e2e`.
-- [ ] T054 [US4] Write failing Playwright test
+  Approval 2026-09-29: `vitest` 3.2.7 to 5.0.2 major bump, to clear
+  npm audit findings (user approved in session).
+- [x] T054 [US4] Write failing Playwright test
   `web/e2e/guidance-timing.spec.ts`: creates 5 fictional cases through
   the API as the synthetic applicant with `GENERATION_PROVIDER=fake`
   (one per route plus needs-information), signs in as Underwriter, opens
   each from the review queue, and asserts the explanation text is
   visible within 3,000 ms of the click (SC-008); prints the five times.
-- [ ] T055 [US4] Implement `web/src/guidance-panel.tsx`, add
+- [x] T055 [US4] Implement `web/src/guidance-panel.tsx`, add
   `fetchGuidance` to `web/src/api-knowledge.ts`, mount in
   `web/src/case-review.tsx`.
 

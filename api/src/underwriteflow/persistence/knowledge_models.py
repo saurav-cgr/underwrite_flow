@@ -11,6 +11,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
@@ -99,3 +100,29 @@ class CaseKnowledgePin(TimestampedRecord, Base):
     regulation_version_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("knowledge_versions.id")
     )
+
+
+class CaseGuidance(IdentifiedRecord, TimestampedRecord, Base):
+    """Stored explanation for one case review cycle."""
+
+    __tablename__ = "case_guidance"
+    __table_args__ = (
+        UniqueConstraint(
+            "case_id",
+            "review_cycle",
+            "kind",
+            name="uq_case_guidance_cycle_kind",
+        ),
+    )
+
+    case_id: Mapped[UUID] = mapped_column(
+        ForeignKey("cases.id"), nullable=False
+    )
+    review_cycle: Mapped[int] = mapped_column(Integer, nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    body: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    citations: Mapped[list] = mapped_column(JSONB, nullable=False)
+    provider: Mapped[str | None] = mapped_column(String(50))
+    model: Mapped[str | None] = mapped_column(String(200))
+    request_hash: Mapped[str | None] = mapped_column(String(64))

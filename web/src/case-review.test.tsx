@@ -12,6 +12,21 @@ vi.mock("./api", () => ({
   submitReview: vi.fn(),
 }));
 
+vi.mock("./api-knowledge", () => ({
+  fetchGuidance: vi.fn().mockResolvedValue({
+    pinned: { guideline_version: "g1", regulation_version: null },
+    route_explanation: {
+      status: "generated",
+      text: "Synthetic stored explanation.",
+      missing_items: [],
+      citations: [{ version: "g1", passage_key: "synthetic-section" }],
+      label: "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    },
+    specialist_brief: null,
+    suggested_citations: [],
+  }),
+}));
+
 import { completeCase, startReview, submitReview } from "./api";
 import { CaseReview } from "./case-review";
 import "./test-setup";
