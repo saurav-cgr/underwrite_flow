@@ -25,6 +25,7 @@ vi.mock("./api-knowledge", () => ({
     specialist_brief: null,
     suggested_citations: [],
   }),
+  listQuestions: vi.fn().mockResolvedValue([]),
 }));
 
 import { completeCase, startReview, submitReview } from "./api";

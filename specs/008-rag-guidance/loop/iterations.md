@@ -684,3 +684,127 @@ marks the loop done. It records the story and criteria ready for checking.
 - Open questions / risks: checker should rerun canonical E2E when registry
   access works and independently verify the disposable database cleanup.
 - Handoff: ready-for-check
+
+## Iteration 40 - 2026-09-29
+- Story: US5 Underwriter Case Q&A
+- Targeted criteria: D5
+- Worktree: in place
+- Change: T056-T063. User approved T057 migration in this session.
+  - `api/alembic/versions/12_case_questions.py`: additive `case_questions`
+    table with 1-1,000 character check and `(case_id, created_at)` index.
+  - `persistence/knowledge_models.py`: `CaseQuestion`.
+  - `knowledge/questions.py`: `ask_question` / `list_questions`. Retrieval
+    uses the pinned guideline only. Passages need fused score > 1/61, so
+    vector and lexical retrieval must agree. No hit, no pin, provider error,
+    or no valid citation stores exactly `not covered by guidelines`.
+    Foreign citations emit `citation_dropped` (`output_kind: case_answer`).
+    `case_question_answered` audit holds ids, covered, and citation keys.
+  - `providers/guidance.py`: `GuidanceRequest.untrusted` carries the
+    question and extracted evidence. Gemini `answer` uses a separate
+    untrusted-data system instruction. Fake `answer` ignores untrusted
+    content.
+  - `knowledge/guidance_router.py`: `POST`/`GET
+    /reviews/{case_id}/questions` (201, 422, 403, 404).
+  - Web: `guidance-questions.tsx` mounted in `guidance-panel.tsx`;
+    `api-knowledge.ts` and `types-knowledge.ts` extended.
+  - Tests: `test_case_questions.py` (7), contract additions (4),
+    migration test, Gemini answer unit test, Vitest
+    `guidance-questions.test.tsx` (5). Injection fixture in
+    `tests/fixtures/injection.py`. `remove_case` deletes `case_questions`.
+- Maker self-assessment: D5 is maker-ready. This is the maker's view, not a
+  verdict.
+- Verification: new tests failed before implementation; `alembic upgrade
+  head` reaches `12_case_questions`; focused API tests 13 passed;
+  `make test-api` 642 passed at 100% coverage; `make test-web` 185 passed;
+  web build passed; `make smoke` exit 0. Live quickstart US5 against the
+  running stack: covered answer cites `g1:life-occupation-hazardous`;
+  uncovered answer is exact fallback; injected twin gives the same answer
+  and citations and the same route; 3 audit rows without question text;
+  shared history is oldest first; Administrator and Applicant get 403 on
+  both endpoints.
+- Open questions / risks:
+  - Live PDF extraction does not store the injected `document_note` line
+    (it keeps configured fields only), so the live run proves route and
+    answer stability, not provider isolation. The integration test proves
+    isolation by seeding extracted evidence directly.
+  - Relevance gate 1/61 is coarse (ponytail comment in `questions.py`).
+  - Provider failure is stored as the fallback phrase, not an error.
+  - Fresh staff review for US5 is not yet recorded (criterion 7).
+  - Bootstrap image needed a rebuild to see migration 12.
+  - The live check left two synthetic life cases in developer data.
+- Handoff: ready-for-check
+
+## Iteration 41 - 2026-09-29
+- Story: US5 checker-failure repair
+- Targeted criteria: D5; checker iteration 40 failures (1)-(3)
+- Worktree: in place
+- Change:
+  - (1) `knowledge/guidance_router.py`: `_optional` builds the guidance
+    and embedding providers, mapping `ProviderError` to `None` with a
+    class-name warning. `knowledge/questions.py`: a `None` embedder yields
+    no passages, so the answer is the exact fallback with no provider call.
+    Contract test `test_question_unusable_providers_return_fallback`
+    (unacknowledged Gemini, Ollama) returns 201 fallback.
+  - (3) `questions.py`: provider text equal to `not covered by guidelines`
+    clears citations, so `covered=false`. Integration test
+    `test_cited_fallback_text_is_not_covered`. Fake `answer` now honours
+    `text_override`.
+  - (2) Staff review `reviews/review-20260929-134127.md`: APPROVED WITH
+    CONDITIONS, 0 blockers, 3 warnings, 5 suggestions. Written in the maker
+    session; not independent.
+  - Review R002 repaired after the review: `web/src/guidance-panel.tsx`
+    also mounts `GuidanceQuestions` when the explanation fetch fails;
+    Vitest `keeps questions available when guidance fails`.
+- Maker self-assessment: D5 is maker-ready. This is the maker's view, not a
+  verdict.
+- Verification: both new API tests failed before the fix; the new Vitest
+  test failed before the R002 fix. Focused API suites 22 passed;
+  `make test-api` 644 passed at 100% coverage; `make test-web` 186 passed
+  (after R002); web build passed; `make smoke` exit 0 (before R002, API-only
+  change since). No lines over 80 columns; files below 400 lines.
+- Open questions / risks:
+  - Review R001: injection coverage seeds `extracted_fields`; live PDF
+    extraction does not store the injected line.
+  - Review R003: migration 12 needs human confirmation before commit
+    freezes it.
+  - Staff review ran in the maker session; checker should weigh that
+    against criterion 7's role split.
+  - Suggestions R004-R008 left unapplied.
+- Handoff: ready-for-check
+
+## Iteration 42 - 2026-09-29
+- Story: US5 checker-failure repair
+- Targeted criteria: D5; checker failure: injection fixture inserted
+  `extracted_fields` directly, so no uploaded document or extraction path
+  was tested (T058).
+- Worktree: in place
+- Change:
+  - `api/tests/fixtures/injection.py`: replaced the direct
+    `extracted_fields` insert with synthetic identity-record PDFs. The
+    injected PDF puts the instruction in the configured `holder_name`
+    field (life v3 `life_identity_match` evidence field); the clean twin
+    uses `Synthetic Holder`.
+  - `api/tests/integration/test_case_questions.py`: new
+    `submit_life_case` creates a life v3 case, uploads the PDF, and
+    submits through the normal API extraction path (fake extraction
+    provider), then repins the case to the draft test guideline.
+    `test_injection_is_untrusted_and_matches_clean_twin` now asserts the
+    injected text was stored by extraction, both twins have the same route,
+    the answer is covered, answer and citations match, and the text reaches
+    the provider only in `untrusted`.
+- Maker self-assessment: D5 is maker-ready. This is the maker's view, not a
+  verdict.
+- Verification: focused `test_case_questions.py` 8 passed; `make test-api`
+  644 passed at 100% coverage. Test-only change, so web tests, web build,
+  and smoke were not rerun (iteration 41: 186 web, build, smoke passed).
+  No line over 80 columns.
+- Open questions / risks:
+  - The test was not red first: production code already handled the case;
+    this iteration strengthens coverage only.
+  - `test_case_questions.py` is 399 lines, at the limit; the next addition
+    must split it.
+  - The test activates product life v3, as
+    `test_route_explanation.py` already does; shared active-product state.
+  - The repin to the draft guideline uses a bound SQL update after
+    submission, because submission pins only an active guideline.
+- Handoff: ready-for-check

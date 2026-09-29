@@ -116,3 +116,39 @@ def test_retrieval_columns_and_indexes() -> None:
                 "ix_knowledge_passages_search_vector",
             ]
             assert "vector_cosine_ops" in indexes[0][1]
+
+
+# Verify the shared Q&A history table matches the data model.
+def test_case_questions_table_columns() -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT column_name, data_type, is_nullable "
+                "FROM information_schema.columns "
+                "WHERE table_name = %s ORDER BY column_name",
+                ("case_questions",),
+            )
+            assert cursor.fetchall() == [
+                ("answer", "text", "NO"),
+                ("asked_by_user_id", "uuid", "NO"),
+                ("case_id", "uuid", "NO"),
+                ("citations", "jsonb", "NO"),
+                ("covered", "boolean", "NO"),
+                ("created_at", "timestamp with time zone", "NO"),
+                ("id", "uuid", "NO"),
+                ("model", "character varying", "YES"),
+                ("provider", "character varying", "YES"),
+                ("question", "text", "NO"),
+            ]
+            cursor.execute(
+                "SELECT count(*) FROM information_schema.table_constraints "
+                "WHERE table_name = %s AND constraint_type = %s",
+                ("case_questions", "FOREIGN KEY"),
+            )
+            assert cursor.fetchone() == (2,)
+            cursor.execute(
+                "SELECT count(*) FROM information_schema.check_constraints "
+                "WHERE constraint_name = %s",
+                ("ck_case_questions_question_length",),
+            )
+            assert cursor.fetchone() == (1,)

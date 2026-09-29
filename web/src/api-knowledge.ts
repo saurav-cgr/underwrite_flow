@@ -1,6 +1,7 @@
 // Administrator API calls for versioned guideline knowledge.
 import { request } from "./api-core";
 import type {
+  CaseQuestion,
   KnowledgeImportResult,
   KnowledgePreview,
   KnowledgeVersion,
@@ -59,4 +60,25 @@ export function fetchGuidance(
   caseId: string,
 ): Promise<GuidanceResponse> {
   return request(`/reviews/${caseId}/guidance`, token);
+}
+
+// Read every underwriter's questions for one case, oldest first.
+export function listQuestions(
+  token: string,
+  caseId: string,
+): Promise<CaseQuestion[]> {
+  return request(`/reviews/${caseId}/questions`, token);
+}
+
+// Ask one question answered only from the case's pinned guidance.
+export function askQuestion(
+  token: string,
+  caseId: string,
+  question: string,
+): Promise<CaseQuestion> {
+  return request(`/reviews/${caseId}/questions`, token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
 }

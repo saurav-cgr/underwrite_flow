@@ -4,6 +4,8 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
     Computed,
     DateTime,
     ForeignKey,
@@ -126,3 +128,28 @@ class CaseGuidance(IdentifiedRecord, TimestampedRecord, Base):
     provider: Mapped[str | None] = mapped_column(String(50))
     model: Mapped[str | None] = mapped_column(String(200))
     request_hash: Mapped[str | None] = mapped_column(String(64))
+
+
+class CaseQuestion(IdentifiedRecord, TimestampedRecord, Base):
+    """One underwriter question and its cited or fallback answer."""
+
+    __tablename__ = "case_questions"
+    __table_args__ = (
+        CheckConstraint(
+            "char_length(question) BETWEEN 1 AND 1000",
+            name="ck_case_questions_question_length",
+        ),
+    )
+
+    case_id: Mapped[UUID] = mapped_column(
+        ForeignKey("cases.id"), nullable=False
+    )
+    asked_by_user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id"), nullable=False
+    )
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    covered: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    citations: Mapped[list] = mapped_column(JSONB, nullable=False)
+    provider: Mapped[str | None] = mapped_column(String(50))
+    model: Mapped[str | None] = mapped_column(String(200))

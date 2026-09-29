@@ -62,3 +62,13 @@ export interface GuidanceResponse {
   specialist_brief: null;
   suggested_citations: GuidanceCitation[];
 }
+
+export interface CaseQuestion {
+  id: string;
+  question: string;
+  answer: string;
+  covered: boolean;
+  citations: GuidanceCitation[];
+  asked_by: string;
+  created_at: string;
+}

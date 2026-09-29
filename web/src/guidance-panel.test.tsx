@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./api-knowledge", () => ({
   fetchGuidance: vi.fn(),
+  listQuestions: vi.fn().mockResolvedValue([]),
+  askQuestion: vi.fn(),
 }));
 
 import { fetchGuidance } from "./api-knowledge";
@@ -83,5 +85,13 @@ describe("guidance panel", () => {
         name: "Explanation unavailable.",
       }),
     ).toBeTruthy();
+  });
+
+  // Verify Q&A stays available when the stored explanation fails to load.
+  it("keeps questions available when guidance fails", async () => {
+    vi.mocked(fetchGuidance).mockRejectedValue(new Error("offline"));
+    render(<GuidancePanel token="session" caseId="case-id" />);
+
+    expect(await screen.findByLabelText("Ask about this case")).toBeTruthy();
   });
 });

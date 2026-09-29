@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ApiError } from "./api-core";
 import { fetchGuidance } from "./api-knowledge";
 import { Panel } from "./components";
+import { GuidanceQuestions } from "./guidance-questions";
 import type { GuidanceResponse } from "./types-knowledge";
 
 // Render one stored, cited explanation without polling or regeneration.
@@ -42,6 +43,7 @@ export function GuidancePanel({
         <p aria-label="Explanation unavailable." role="status">
           Explanation unavailable. {message}
         </p>
+        <GuidanceQuestions caseId={caseId} token={token} />
       </Panel>
     );
   }
@@ -83,6 +85,7 @@ export function GuidancePanel({
           Explanation unavailable.
         </p>
       ) : null}
+      <GuidanceQuestions caseId={caseId} token={token} />
     </Panel>
   );
 }

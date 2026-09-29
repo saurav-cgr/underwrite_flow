@@ -82,3 +82,12 @@ contract or copy full logs here.
   `web_node_modules` volume. (iteration 38)
 - [M-028] Destructive migration tests use a disposable database; E2E and web
   services use separate native-dependency volumes. (iteration 39)
+- [M-029] User approved T057 migration `12_case_questions` on 2026-09-29.
+  Q&A relevance gate: fused score > 1/61 (vector and lexical agree); case
+  text reaches providers only in `GuidanceRequest.untrusted`. (iteration 40)
+- [M-030] Q&A endpoints build providers through `_optional`; unusable
+  provider settings store the fallback (201), never 500. Cited fallback
+  text is not covered. (iteration 41)
+- [M-031] Q&A injection coverage uploads a life v3 identity PDF with the
+  instruction in `holder_name` and submits through normal extraction; never
+  seed `extracted_fields` directly for T058. (iteration 42)

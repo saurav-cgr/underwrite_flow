@@ -328,12 +328,12 @@ timing, five times recorded in the story report).
 **Goal**: Cited answers or the exact fallback; audited; shared history.
 **Independent test**: injection fixture leaves answer and route unchanged.
 
-- [ ] T056 [US5] Extend `tests/integration/test_knowledge_migration.py`:
+- [x] T056 [US5] Extend `tests/integration/test_knowledge_migration.py`:
   `case_questions` exists per `data-model.md`.
-- [ ] T057 [US5] [NEEDS APPROVAL] Create
+- [x] T057 [US5] [NEEDS APPROVAL] Create
   `alembic/versions/12_case_questions.py`; add `CaseQuestion` to
   `persistence/knowledge_models.py`.
-- [ ] T058 [US5] Write failing tests in
+- [x] T058 [US5] Write failing tests in
   `tests/integration/test_case_questions.py`: covered answer cites at
   least one pinned passage; no retrieval hit returns exactly `not covered
   by guidelines` with no provider call; provider answer without valid
@@ -345,18 +345,18 @@ timing, five times recorded in the story report).
   twin case without that text;
   `case_question_answered` audit has ids, no question text; history
   returns every underwriter's rows oldest first.
-- [ ] T059 [US5] Implement `ask_question` and `list_questions` in
+- [x] T059 [US5] Implement `ask_question` and `list_questions` in
   `src/underwriteflow/knowledge/questions.py`; add the injection fixture
   under `tests/fixtures/`.
-- [ ] T060 [US5] Write failing contract tests in
+- [x] T060 [US5] Write failing contract tests in
   `tests/contract/test_guidance_api.py` for `POST` and `GET
   /reviews/{case_id}/questions`: 201 shape, 422 outside 1 to 1,000
   characters, 403 Administrator and Applicant, 404 unknown case.
-- [ ] T061 [US5] Add both endpoints to `knowledge/guidance_router.py`.
-- [ ] T062 [US5] Write failing Vitest tests in
+- [x] T061 [US5] Add both endpoints to `knowledge/guidance_router.py`.
+- [x] T062 [US5] Write failing Vitest tests in
   `web/src/guidance-questions.test.tsx`: labelled input, keyboard submit,
   busy status, fallback shown with text cue, history list.
-- [ ] T063 [US5] Implement `web/src/guidance-questions.tsx` and mount it
+- [x] T063 [US5] Implement `web/src/guidance-questions.tsx` and mount it
   inside `web/src/guidance-panel.tsx`.
 
 **Checkpoint US5**: `API alembic upgrade head`; `API pytest
