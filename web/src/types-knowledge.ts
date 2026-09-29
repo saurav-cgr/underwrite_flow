@@ -53,13 +53,29 @@ export interface RouteExplanation {
   label: string;
 }
 
+export interface SpecialistBriefData {
+  evidence: {
+    field_name: string;
+    value: unknown;
+    document: string | null;
+    source_locator: string;
+  }[];
+  rules: string[];
+  passages: {
+    title: string;
+    body: string;
+    citation: GuidanceCitation;
+  }[];
+  label: string;
+}
+
 export interface GuidanceResponse {
   pinned: {
     guideline_version: string | null;
     regulation_version: string | null;
   };
   route_explanation: RouteExplanation;
-  specialist_brief: null;
+  specialist_brief: SpecialistBriefData | null;
   suggested_citations: GuidanceCitation[];
 }
 

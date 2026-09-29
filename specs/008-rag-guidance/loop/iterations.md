@@ -808,3 +808,246 @@ marks the loop done. It records the story and criteria ready for checking.
   - The repin to the draft guideline uses a bound SQL update after
     submission, because submission pins only an active guideline.
 - Handoff: ready-for-check
+
+## Iteration 43 - 2026-09-29
+- Story: US6 specialist brief
+- Targeted criteria: D6
+- Worktree: in place
+- Change:
+  - `api/src/underwriteflow/knowledge/brief.py` (new): pure
+    `build_brief`; `None` unless route is specialist; evidence items with
+    field, value, document filename, and source locator; triggered rule
+    codes; passages; at most three suggested citations.
+  - `knowledge/case_guidance.py`: `store_specialist_brief` selects pinned
+    guideline passages whose `thresholds` contain a triggered rule code
+    (JSONB containment, ordered by passage key), inserts one
+    `specialist_brief` row per case cycle (status `template`,
+    insert-once), and emits `specialist_brief_stored` audit.
+  - `cases/evidence_persistence.py`: calls it after the route
+    explanation.
+  - `knowledge/guidance_router.py`: `specialist_brief` and
+    `suggested_citations` returned from stored row; shared `_citation`
+    helper strips `version_id`.
+  - Web: `specialist-brief.tsx` (new); `guidance-panel.tsx` renders the
+    brief and reports suggestions via `onSuggestions`; `case-review.tsx`
+    passes them to `review-actions.tsx`, whose optional citation buttons
+    append `[version:passage_key]` to the reason.
+  - Tests (T064/T066/T068): unit 3, integration 1, Vitest 3.
+- Maker self-assessment: D6 is maker-ready. This is the maker's view, not a
+  verdict.
+- Verification: new unit and integration tests failed before
+  implementation (import error; no brief). Focused API 4 passed; focused
+  web 7 passed. `make test-api` 648 passed at 100% target coverage;
+  `make test-web` 189 passed; web build exit 0; `make smoke` exit 0.
+  Live quickstart US6 probe on running stack: hazardous case routes
+  specialist, brief has evidence with document and `page:1`, rule
+  `hazardous_occupation_specialist`, passage and suggestion
+  `g1:life-occupation-hazardous`; office twin routes expedited with no
+  brief; Applicant GET 403. Probe cases removed. Changed files below 400
+  lines, no line over 80 columns, `git diff --check` clean.
+- Open questions / risks:
+  - Passage choice uses exact threshold rule-code match, not hybrid
+    retrieval (R9 says "retrieved for those rule codes"). Deterministic
+    and needs no embedder; checker should confirm this reading.
+  - "Override dialog" is the existing reason textarea; suggestions show
+    there whenever present, not only while overriding.
+  - Integration fixture needs `cover_start_date`, income record, and
+    previous policy; otherwise life v3 routes needs_information. A
+    submit failure before `try` leaks the case (two leaked cases were
+    removed during development).
+  - No staff review run yet for US6 (criterion 7).
+  - Brief evidence exposes extracted values to underwriters, as the
+    evidence panel already does.
+- Handoff: ready-for-check
+
+## Iteration 44 - 2026-09-29
+- Story: US6 specialist brief
+- Targeted criteria: D6 (repairs C043 failure 1: `_rule_passages` bypassed
+  hybrid retrieval and band filters)
+- Worktree: in place
+- Change:
+  - `api/src/underwriteflow/knowledge/case_guidance.py`:
+    `_rule_passages` now calls `knowledge.retrieval.retrieve` with the
+    space-joined triggered rule codes as the query and the case `age`
+    and `sum_assured` facts as band filters, inside a savepoint, and
+    returns the fused ranking as the brief passages with
+    `version`/`version_id`/`passage_key` citations. It returns no
+    passages when the embedder, pinned version, or triggered codes are
+    missing, and on `ProviderError` or `SQLAlchemyError` it logs a
+    sanitized warning and returns none, so guidance failure never fails
+    the submission.
+  - `api/src/underwriteflow/cases/evidence_persistence.py`:
+    `persist_case_evidence` takes an `embedder` argument and passes it to
+    `store_specialist_brief`.
+  - `api/src/underwriteflow/cases/submission.py`: both
+    `persist_case_evidence` calls pass `embedder=self.embedding_provider`.
+  - `api/tests/integration/test_specialist_brief.py`: new
+    `test_brief_passages_follow_banded_hybrid_retrieval` (written first;
+    failed with `TypeError` before the fix) stores a brief through
+    `store_specialist_brief` and asserts the stored passages and the
+    top-three suggestions equal a direct `retrieve()` ranking for the
+    rule-code query with the case facts, that the exact-match rule-code
+    passage ranks first, and that more than one passage is returned (the
+    superseded containment query returned one).
+- Maker self-assessment: D6 appears maker-ready. This is the maker's
+  view, not a verdict.
+- Verification: focused US6 unit plus integration 5 passed.
+  `make test-api` 649 passed, exit 0, 100% target coverage on
+  `workflow/reconciliation.py`. `make test-web` 191 passed, 27 files.
+  `docker compose run --rm web npm run build` exit 0. `make smoke`
+  exit 0. First API-gate attempt failed 4 tests in
+  `tests/integration/test_audit_enrichment.py` and
+  `tests/integration/test_audit_sanitization.py` while a concurrent
+  review-probe run held the shared development database; those tests
+  pass alone (6 passed), and the clean rerun passed 649.
+- Open questions / risks:
+  - Staff review `review-20260929-163106.md` R001: no relevance floor,
+    so weakly related fused passages can be shown as cited passages and
+    suggestions. Needs acceptance or a later gate.
+  - Staff review R003-R007 remain open suggestions (audit-event
+    assertion, stored `version_id`, retrieval before the insert-once
+    check, suggestions always visible, unguarded stored brief body).
+- Handoff: ready-for-check
+
+## Iteration 45 - 2026-09-29
+- Story: US6 specialist brief
+- Targeted criteria: D6 (repairs staff review `review-20260929-163106.md`
+  R002: stale per-case guidance state)
+- Worktree: in place
+- Change:
+  - `web/src/guidance-panel.tsx`: the fetch effect clears `guidance`,
+    `message`, and the parent suggestions before each request, so a case
+    switch stops rendering the previous case's brief, a failed fetch
+    cannot leave a citation that is appended to another case's override
+    reason, and one failure no longer pins later cases to the error
+    branch.
+  - `web/src/app.tsx`: `CaseReview` is keyed on `queueItem.case_id`, so
+    per-case review state remounts on a case switch.
+  - `web/src/guidance-panel.test.tsx`: two new tests (written first; both
+    failed before the fix): a case switch with a failing fetch clears the
+    stale guidance text and reports `[]` suggestions; a later case loads
+    normally after an earlier failure.
+- Maker self-assessment: R002 is addressed; D6 appears maker-ready. This
+  is the maker's view, not a verdict.
+- Verification: focused Vitest `src/guidance-panel.test.tsx` 6 passed.
+  `make test-web` 191 passed (27 files). Web production build exit 0.
+  `make smoke` exit 0. The API gate recorded in iteration 44 (649
+  passed) predates this iteration's web-only change.
+- Open questions / risks: R001 remains open. Suggestions still render
+  whenever present rather than only in the override dialog (R006,
+  accepted in iteration 43 as a superset of the requirement).
+- Handoff: ready-for-check
+
+## Iteration 46 - 2026-09-29
+- Story: US6 specialist brief
+- Targeted criteria: D6 (repairs DEBT-036 / staff review
+  `review-20260929-163106.md` R004, R006, R007; D6 was checker-pass but the
+  guard blocked sign-off on DEBT-036)
+- Worktree: in place
+- Change:
+  - `web/src/review-actions.tsx`: the suggested-citation group renders only
+    while `overriding` is true, so citations appear only inside the override
+    dialog (R006, user-required at guard Q3).
+  - `web/src/review-actions.test.tsx`: the harness now controls `overriding`;
+    new failing-first tests assert the group is hidden outside the dialog and
+    shown inside it; the two acceptance tests render the override state.
+  - `api/src/underwriteflow/knowledge/case_guidance.py`: `_rule_passages`
+    stores only `version` and `passage_key` per passage citation, dropping
+    the internal `version_id` from the JSONB body and the suggestion list
+    (R004).
+  - `api/src/underwriteflow/knowledge/guidance_router.py`: new
+    `_brief_response` validates the stored brief body and, on
+    `ValidationError`, logs the error class and serves no brief instead of a
+    500 (R007). Suggested citations are suppressed with the brief.
+  - `api/tests/integration/test_specialist_brief.py`: the stored-brief
+    helper now returns the stored citation dicts and asserts they hold
+    exactly `version` and `passage_key`; new
+    `test_corrupt_stored_brief_is_ignored` inserts a corrupt brief row and
+    asserts `GET /reviews/{id}/guidance` answers 200 with
+    `specialist_brief` null and no suggestions.
+- Maker self-assessment: R004, R006, and R007 appear addressed; D6 appears
+  maker-ready for a fresh checker pass. This is the maker's view, not a
+  verdict.
+- Verification:
+  - Red-first: `review-actions.test.tsx` failed 1 of 4 before the gate (the
+    `Suggested citations` group still rendered); the stored-citation
+    assertion failed with `assert False`; the corrupt-brief test raised
+    `ValidationError` from `guidance_router.py:216`. All three pass after.
+  - Focused US6 checkpoint plus contract: 13 passed.
+  - `make test-api` 650 passed, 100% target coverage, exit 0 (was 649).
+  - `make test-web` 193 passed, 27 files (was 191).
+  - Web production build exit 0. `make smoke` exit 0. Gates ran one at a
+    time; no concurrent runs touched the shared database.
+  - Scan: no changed file reaches 400 lines (`test_specialist_brief.py` 341);
+    no line exceeds 80 columns; every new function has an intent comment;
+    nothing staged; `git diff --check` clean.
+- Open questions / risks:
+  - Consequence of the literal R006 fix the user chose: `overriding` is set
+    only by the needs-information branch, so a specialist-routed case (the
+    only route that produces a brief) never renders the suggestion buttons.
+    The brief still lists the same passages under "Guideline passages". The
+    checker and human should confirm US6 scenario 2 is satisfied by the
+    override dialog alone, or ask for an override mode in the confirm panel.
+    Resolved by the user in session, 2026-09-29: "R006 is fine." The user
+    accepts that suggestions appear only in the override dialog, so a
+    specialist case shows its passages through the brief and offers no
+    suggestion buttons there. The checker should not fail D6 on this point.
+  - DEBT-036 stays `open` in the ledger until the checker and human verify.
+    R003 (audit assertion) and R005 (retrieval before the insert-once check)
+    in DEBT-035 remain acknowledged, non-blocking.
+  - No browser walkthrough of the revised panel was recorded; the dev DB has
+    no active life guideline.
+- Handoff: ready-for-check
+
+## Iteration 47 - 2026-09-29
+- Targeted criteria: D6 (US6), repairing the C045 failure (R007).
+- Worktree: in place.
+- Change:
+  - `api/src/underwriteflow/knowledge/guidance_router.py`: new
+    `_brief_citations(brief, brief_response)` helper converts stored brief
+    citations and drops items that are not objects, `None`, or a non-list
+    citation column; `get_guidance` now calls it instead of mapping
+    `brief.citations` directly. `_explanation_response` also ignores a
+    stored explanation body that is not an object (same defect class: a
+    corrupt row previously raised `AttributeError` on `body.get`).
+  - `api/tests/integration/test_guidance_read_robustness.py` (new, 117
+    lines): the corrupt-row tests moved out of
+    `test_specialist_brief.py` (which hit 406 lines) into this file, beside
+    the original `test_corrupt_stored_brief_is_ignored`, plus two new
+    regressions: `test_corrupt_stored_brief_citations_are_ignored` (valid
+    body, citations `["bad", {...}]` keeps only the object and answers 200)
+    and `test_corrupt_stored_explanation_body_is_ignored` (body `["bad"]`
+    answers 200 with an empty template explanation).
+  - `api/tests/integration/test_specialist_brief.py`: corrupt-row block
+    removed; now 302 lines.
+- Maker self-assessment: R007 appears addressed and the two new tests
+  reproduce the C045 probe inside the real app and database; D6 appears
+  maker-ready for an independent checker pass. This is the maker's view, not
+  a verdict.
+- Verification:
+  - Red-first: with the loop's working copy of `guidance_router.py` replaced
+    by its HEAD revision, `pytest -k corrupt` failed
+    `test_corrupt_stored_brief_citations_are_ignored` and
+    `test_corrupt_stored_explanation_body_is_ignored`; the iteration 46
+    brief-body test still passed. The working copy was restored and its
+    sha256 matched the pre-revert backup.
+  - Focused US6 unit plus integration plus the new file: 8 passed.
+  - `make test-api` 652 passed, 100% target coverage, exit 0 (was 650).
+  - `make test-web` 193 passed, 27 files. Web production build exit 0.
+    `make smoke` exit 0. Gates ran one at a time; the `api` container was
+    restarted after smoke stopped it and is up.
+  - Scan: `guidance_router.py` 308 lines, `test_specialist_brief.py` 302,
+    `test_guidance_read_robustness.py` 117; no line over 80 columns; every
+    new function has an intent comment; nothing is staged; no secret-like
+    file is present.
+- Open questions / risks:
+  - `git diff --check` reports `specs/008-rag-guidance/loop/verdicts.md:163:
+    new blank line at EOF`. That file is the checker's; the maker did not
+    edit it. The checker should drop the stray blank line.
+  - Dev DB still has no active life guideline (361 draft, 3 retired) and the
+    test suite keeps adding draft guideline rows (DEBT-013/022 pattern).
+    Iteration 47 did not change that.
+  - The `_explanation_response` body guard is slightly wider than C045's
+    suggested smallest fix. It is the same defect class (corrupt stored row
+    answers 500) and is covered by its own regression test.
+- Handoff: ready-for-check

@@ -6,6 +6,7 @@ import { EvidencePanel } from "./evidence-panel";
 import { GuidancePanel } from "./guidance-panel";
 import { Icon } from "./icons";
 import { ReviewActions } from "./review-actions";
+import type { GuidanceCitation } from "./types-knowledge";
 import { decisionSummary, reviewDecisionBody } from "./ui-state";
 import type {
   QueueItem,
@@ -32,6 +33,7 @@ export function CaseReview({
   const [overriding, setOverriding] = useState(false);
   const [specialistLabel, setSpecialistLabel] = useState("");
   const [reason, setReason] = useState("");
+  const [suggestions, setSuggestions] = useState<GuidanceCitation[]>([]);
   const [message, setMessage] = useState("");
   const [handoffFailed, setHandoffFailed] = useState(false);
   const [working, setWorking] = useState(false);
@@ -241,7 +243,11 @@ export function CaseReview({
             </p>
           </section>
           {start ? <EvidencePanel pack={start} token={token} /> : null}
-          <GuidancePanel caseId={item.case_id} token={token} />
+          <GuidancePanel
+            caseId={item.case_id}
+            onSuggestions={setSuggestions}
+            token={token}
+          />
           <Panel title="Evidence acknowledgement">
             <label className="check-row">
               <input
@@ -273,6 +279,7 @@ export function CaseReview({
           selectedRoute={selectedRoute}
           specialistLabel={specialistLabel}
           start={start}
+          suggestedCitations={suggestions}
         />
       </div>
     </>

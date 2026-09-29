@@ -4,15 +4,18 @@ import { ApiError } from "./api-core";
 import { fetchGuidance } from "./api-knowledge";
 import { Panel } from "./components";
 import { GuidanceQuestions } from "./guidance-questions";
-import type { GuidanceResponse } from "./types-knowledge";
+import { SpecialistBrief } from "./specialist-brief";
+import type { GuidanceCitation, GuidanceResponse } from "./types-knowledge";
 
 // Render one stored, cited explanation without polling or regeneration.
 export function GuidancePanel({
   token,
   caseId,
+  onSuggestions,
 }: {
   token: string;
   caseId: string;
+  onSuggestions?: (citations: GuidanceCitation[]) => void;
 }) {
   const [guidance, setGuidance] = useState<GuidanceResponse | null>(null);
   const [message, setMessage] = useState("");
@@ -20,9 +23,14 @@ export function GuidancePanel({
   // Fetch durable guidance exactly once for the current case and session.
   useEffect(() => {
     let active = true;
+    setGuidance(null);
+    setMessage("");
+    onSuggestions?.([]);
     fetchGuidance(token, caseId)
       .then((response) => {
-        if (active) setGuidance(response);
+        if (!active) return;
+        setGuidance(response);
+        onSuggestions?.(response.suggested_citations);
       })
       .catch((error) => {
         if (!active) return;
@@ -35,6 +43,7 @@ export function GuidancePanel({
     return () => {
       active = false;
     };
+    // The parent callback is a state setter, so it never needs a refetch.
   }, [caseId, token]);
 
   if (message) {
@@ -84,6 +93,9 @@ export function GuidancePanel({
         <p aria-label="Explanation unavailable." role="status">
           Explanation unavailable.
         </p>
+      ) : null}
+      {guidance.specialist_brief ? (
+        <SpecialistBrief brief={guidance.specialist_brief} />
       ) : null}
       <GuidanceQuestions caseId={caseId} token={token} />
     </Panel>

@@ -94,4 +94,52 @@ describe("guidance panel", () => {
 
     expect(await screen.findByLabelText("Ask about this case")).toBeTruthy();
   });
+
+  // Verify a case switch drops the previous case's brief and citations.
+  it("clears stale guidance when the case changes", async () => {
+    const onSuggestions = vi.fn();
+    vi.mocked(fetchGuidance).mockResolvedValue({
+      ...GUIDANCE,
+      suggested_citations: [
+        { version: "g1", passage_key: "life-occupation-hazardous" },
+      ],
+    });
+    const { rerender } = render(
+      <GuidancePanel
+        token="session"
+        caseId="case-one"
+        onSuggestions={onSuggestions}
+      />,
+    );
+    await screen.findByText("Standard review uses high cover guidance.");
+    vi.mocked(fetchGuidance).mockRejectedValue(new Error("offline"));
+    rerender(
+      <GuidancePanel
+        token="session"
+        caseId="case-two"
+        onSuggestions={onSuggestions}
+      />,
+    );
+
+    expect(await screen.findByLabelText("Ask about this case")).toBeTruthy();
+    expect(
+      screen.queryByText("Standard review uses high cover guidance."),
+    ).toBeNull();
+    expect(onSuggestions).toHaveBeenLastCalledWith([]);
+  });
+
+  // Verify one failed case does not pin later cases to the error branch.
+  it("reloads a later case after a failed fetch", async () => {
+    vi.mocked(fetchGuidance).mockRejectedValue(new Error("offline"));
+    const { rerender } = render(
+      <GuidancePanel token="session" caseId="case-one" />,
+    );
+    expect(await screen.findByLabelText("Ask about this case")).toBeTruthy();
+    vi.mocked(fetchGuidance).mockResolvedValue(GUIDANCE);
+    rerender(<GuidancePanel token="session" caseId="case-two" />);
+
+    expect(
+      await screen.findByText("Standard review uses high cover guidance."),
+    ).toBeTruthy();
+  });
 });

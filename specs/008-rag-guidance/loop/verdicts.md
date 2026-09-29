@@ -25,6 +25,10 @@ sources. Record each story's checkpoint, shared gate, and staff review.
 | D5 | 40 | US5: Phase 7 and shared gate | Separate checker session. T056-T063 checked; `alembic upgrade head` and `alembic current` reach `12_case_questions (head)`; focused migration, provider, integration, and contract suite 25 pass; focused Q&A Vitest 5 pass. Changed hand-written files are below 400 lines and have no lines over 80 columns; intent comments present; nothing staged; no committed secret assignment found. FAILED: (1) adversarial no-pin probe with `generation_provider=gemini`, fake embeddings, and no Gemini acknowledgement: `POST /reviews/{case_id}/questions` returns 500 `internal_error`, not 201 with exact fallback. `post_question` eagerly calls `build_guidance_provider` before `ask_question` can detect the missing pin and skip the provider, violating T058's no-hit/no-provider-call outcome and FR-019. Temporary probe removed. (2) criterion 7: latest staff review `review-20260929-111953.md` predates iteration 40; no staff review covers US5. (3) source inspection: valid citations make `covered=true` even if provider text equals the exact fallback phrase, conflicting with the data-model outcome invariant. Not rerun after failure established: full API/web/build/smoke gates or live quickstart. | fail | high | 2026-09-29 |
 | D5 | 41 | US5: Phase 7 and shared gate (iteration 40 failure repairs) | Separate checker session. Human confirmed migration 12. `alembic upgrade head` and `current` reach `12_case_questions (head)`; focused API suite 27 pass; focused web suite 9 pass; `make test-api` 644 pass at 100% target coverage; `make test-web` 186 pass; web build and `make smoke` exit 0. Live API quickstart: covered answer 201 with one citation; uncovered answer 201 with exact fallback; history 200; Administrator POST and Applicant GET 403; answer audits present. Prior failures fixed: unusable provider settings return 201 fallback; cited exact fallback becomes uncovered; R002 web error branch mounts Q&A. Scan: changed hand-written files below 400 lines and at most 80 columns; intent comments present; nothing staged; no committed secret assignment found. Staff review `review-20260929-134127.md` is recorded; checker verified its post-review R002 repair. FAILED: T058 and the US5 independent test require an injection fixture document. `tests/fixtures/injection.py` inserts an `extracted_fields` row directly and creates no document or extraction path. Maker and staff review both confirm live PDF extraction drops the injected `document_note`; therefore the test cannot prove an uploaded document instruction reaches the provider only as untrusted data. | fail | high | 2026-09-29 |
 | D5 | 42 | US5 gate | C042 evidence below | pass | high | 2026-09-29 |
+| D6 | 43 | US6 gate | C043 evidence below | fail | high | 2026-09-29 |
+| D6 | 45 | US6 gate (repairs C043, review R002) | C044 evidence below | pass | high | 2026-09-29 |
+| D6 | 46 | US6 gate (repairs DEBT-036: R004, R006, R007) | C045 evidence below | fail | high | 2026-09-29 |
+| D6 | 47 | US6 gate (repairs C045, R007) | C046 evidence below | pass | high | 2026-09-29 |
 
 ## C042 evidence
 
@@ -52,3 +56,133 @@ sources. Record each story's checkpoint, shared gate, and staff review.
   Nothing is staged. Staff review `review-20260929-134127.md` covers US5;
   iteration 42 resolves its R001 test-quality warning. No new implementation
   followed it.
+
+## C043 evidence
+
+- Separate checker session. T064-T069 are checked.
+- Focused unit tests: 3 passed. Focused integration test: 1 passed. Full unit
+  suite: 418 passed. Full integration suite: 162 passed.
+- `make test-api`: 648 passed with 100% target coverage. `make test-web`:
+  189 passed. Web production build and `make smoke` exited 0.
+- Live HTTP probe against the running stack passed. Hazardous occupation
+  produced a specialist brief with sourced evidence, triggered rule, passage,
+  and one suggestion. Office occupation produced no brief or suggestions.
+  Applicant guidance access returned 403. Synthetic probe cases were removed.
+- Changed implementation and test files remain below 400 lines and at most
+  80 columns. Named functions have intent comments. `git diff --check` passed.
+  Nothing is staged; no secret-like file is present.
+- FAILED: R9 requires top passages retrieved for triggered rule codes. FR-007
+  requires hybrid semantic and exact-wording retrieval with matching bands.
+  `_rule_passages` bypasses `knowledge.retrieval.retrieve`, ignores case bands,
+  and orders exact threshold matches by passage key. Suggestions are therefore
+  not the required top hybrid-retrieval results.
+- FAILED: shared criterion 7 requires a recorded staff review. Latest review
+  is `review-20260929-134127.md` for US5 and predates iteration 43. Maker also
+  records that no US6 staff review has run.
+- Red-first history is not independently verifiable because new tests remain
+  untracked. No comprehension debt opened because D6 has definite failures.
+
+## C044 evidence
+
+- Separate checker session. T064-T069 are checked. Staff review
+  `review-20260929-163106.md` covers US6 (iteration 44). Iteration 45
+  repairs its R002 warning; no later implementation followed.
+- Focused US6 unit plus integration: 5 passed.
+- `make test-api`: 649 passed, 100% target coverage, exit 0.
+  `make test-web`: 191 passed, 27 files. Web production build exit 0.
+  `make smoke` exit 0. Gates ran one after another, with no concurrent
+  use of the shared database.
+- C043 failure 1 fixed: `_rule_passages` calls `retrieve` with the rule
+  code query and the case `age` and `sum_assured` facts. A temporary
+  mutation probe monkeypatched `retrieve` two ways: facts dropped, and
+  results reordered by passage key. The regression test
+  `test_brief_passages_follow_banded_hybrid_retrieval` failed for both
+  mutants. The probe file was removed.
+- C043 failure 2 fixed: a US6 staff review is recorded (see above).
+- Iteration 45 mutation probe: a copy of `guidance-panel.tsx` without the
+  three state resets fails both new tests. The unchanged file passes all
+  6 tests. The probe files were removed.
+- Wiring probe: a temporary Vitest test rendered `CaseReview` with a
+  mocked brief. It found the `Specialist brief` heading. Clicking
+  `Use citation g1: life-occ` appended `[g1:life-occ]` to the reason
+  field. The probe file was removed. No permanent test covers this
+  wiring (DEBT-034).
+- Live HTTP quickstart US6 against the running stack (fake providers):
+  - With no active life guideline (current dev DB state), the hazardous
+    case routes to specialist. The brief lists 21 sourced evidence items
+    and `hazardous_occupation_specialist`, with no passages and no
+    suggestions. The office twin routes expedited with no brief.
+    Applicant `GET /guidance` returns 403.
+  - With a probe guideline imported and activated, the brief pins that
+    guideline. Passages are `life-occupation-hazardous`,
+    `life-age-eighteen-to-forty`, `life-cover-up-to-standard-limit`,
+    `life-health-declaration-complete`, `life-health-statement-required`.
+    Suggestions are the first three. The response contains no
+    `version_id` or `storage_key`. A second fetch is identical.
+  - Probe cases were removed. Guideline statuses were restored to the
+    snapshot, and the restore was checked.
+- Observation: the dev DB has no active life guideline (278 draft, 3
+  retired). The cause is not established. The quickstart shows passages
+  only after an Administrator activates a guideline.
+- Changed and new implementation and test files are below 400 lines and
+  at most 80 columns. Every named function has an intent comment.
+  `git diff --check` passed. Nothing is staged; no secret-like file is
+  present. Loop ledger files keep the existing exception.
+- Red-first history for T064-T068 is not independently verifiable
+  because the tests are untracked. The mutation probes substitute for it.
+- R001 (no relevance floor) remains open. Passages 4 and 5 in the live
+  probe are weak matches for the hazardous rule. Opened as DEBT-033.
+
+## C045 evidence
+
+- Separate checker session; this session did not produce iteration 46.
+  T064-T069 are checked. Iteration 46 invalidates C044, so every gate
+  was rerun.
+- Focused US6 unit plus integration: 6 passed.
+- `make test-api`: 650 passed, 100% target coverage, exit 0.
+  `make test-web`: 193 passed, 27 files. Web production build exit 0.
+  `make smoke` exit 0. Gates ran one after another. Smoke stops the
+  `api` container; the checker restarted it.
+- R006 verified: a temporary mutation that dropped `overriding &&` from
+  the suggestion group made `hides stored suggestions outside the
+  override dialog` fail (1 of 4). The original file was restored and
+  compared byte for byte. User accepted in session that a specialist
+  case shows no suggestion buttons ("R006 is fine").
+- R004 verified: `_rule_passages` stores only `version` and
+  `passage_key`; the integration helper asserts exactly those keys.
+- R007 incomplete (fail): `_brief_response` guards only the stored
+  `body`. `get_guidance` still maps `brief.citations` with `_citation`
+  and no `isinstance(item, dict)` filter, unlike `_explanation_response`.
+  A temporary integration probe stored a valid body `{"rules": []}` with
+  `citations=["bad"]`. `GET /reviews/{id}/guidance` answered 500
+  `internal_error`. The probe file was removed. Smallest fix: filter
+  non-dict items (as `_explanation_response` does), or build the
+  suggestion list inside the guarded path, plus one regression test.
+- Scan: changed and new files are below 400 lines and at most 80
+  columns. Every named function has an intent comment. Nothing is
+  staged. `git diff --check` clean.
+
+## C046 evidence
+
+- Separate checker session; this session did not produce iteration 47.
+  T064-T069 are checked. The C045 checker pass on R004 and R006 still
+  holds; iteration 47 changed only the guidance read path and tests.
+- Focused US6 unit, integration, and `test_guidance_read_robustness.py`:
+  8 passed.
+- `make test-api`: 652 passed, 100% target coverage, exit 0.
+  `make test-web`: 193 passed. Web production build exit 0. `make smoke`
+  exit 0. Gates ran one after another; the checker restarted `api` after
+  smoke stopped it.
+- R007 verified on the brief path: a temporary probe stored five corrupt
+  brief shapes (body `None`; citations `5`; citations `{"a": 1}`; a
+  passage whose citation is a string; body `"text"` with a nested
+  version object). `GET /reviews/{id}/guidance` answered 200 for all
+  five. The probe file was removed.
+- Out of D6 scope, recorded as DEBT-037: the same probe found three
+  corrupt route-explanation shapes that still answer 500
+  (`missing_items: 5`; a missing item with `citations: 5`; row
+  `citations: 5`). This is US4 read-path code signed off under D4.
+- Scan: changed and new files are below 400 lines and at most 80
+  columns. Every named function has an intent comment. Nothing is
+  staged. The checker removed its own stray blank line at the end of
+  this file, which `git diff --check` reported.

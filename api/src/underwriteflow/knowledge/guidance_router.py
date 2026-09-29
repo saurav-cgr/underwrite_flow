@@ -7,7 +7,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,12 +55,38 @@ class RouteExplanationResponse(BaseModel):
     label: str = SYNTHETIC_LABEL
 
 
+class BriefEvidenceResponse(BaseModel):
+    """One extracted value with its source document locator."""
+
+    field_name: str
+    value: object = None
+    document: str | None = None
+    source_locator: str
+
+
+class BriefPassageResponse(BaseModel):
+    """One pinned passage matched to a triggered rule code."""
+
+    title: str
+    body: str
+    citation: GuidanceCitationResponse
+
+
+class SpecialistBriefResponse(BaseModel):
+    """Deterministic brief shown only for specialist-routed cases."""
+
+    evidence: list[BriefEvidenceResponse] = Field(default_factory=list)
+    rules: list[str] = Field(default_factory=list)
+    passages: list[BriefPassageResponse] = Field(default_factory=list)
+    label: str = SYNTHETIC_LABEL
+
+
 class GuidanceResponse(BaseModel):
     """Complete guidance panel response for one review cycle."""
 
     pinned: dict[str, str | None]
     route_explanation: RouteExplanationResponse
-    specialist_brief: None = None
+    specialist_brief: SpecialistBriefResponse | None = None
     suggested_citations: list[GuidanceCitationResponse] = Field(
         default_factory=list
     )
@@ -159,13 +185,17 @@ async def get_guidance(
     recommendation = await session.scalar(
         select(Recommendation).where(Recommendation.case_id == case_id)
     )
-    guidance = await session.scalar(
-        select(CaseGuidance).where(
-            CaseGuidance.case_id == case_id,
-            CaseGuidance.review_cycle == case.review_cycle,
-            CaseGuidance.kind == "route_explanation",
+    stored = {
+        row.kind: row
+        for row in await session.scalars(
+            select(CaseGuidance).where(
+                CaseGuidance.case_id == case_id,
+                CaseGuidance.review_cycle == case.review_cycle,
+            )
         )
-    )
+    }
+    guidance = stored.get("route_explanation")
+    brief = stored.get("specialist_brief")
     guideline_version = await _version_name(
         session,
         pin.guideline_version_id if pin else None,
@@ -176,12 +206,15 @@ async def get_guidance(
     explanation = _explanation_response(guidance)
     if recommendation and recommendation.route == "manual":
         explanation = _unavailable_response()
+    brief_response = _brief_response(brief)
     return GuidanceResponse(
         pinned={
             "guideline_version": guideline_version,
             "regulation_version": regulation_version,
         },
         route_explanation=explanation,
+        specialist_brief=brief_response,
+        suggested_citations=_brief_citations(brief, brief_response),
     )
 
 
@@ -202,11 +235,10 @@ def _explanation_response(
     if guidance is None:
         return _unavailable_response()
     body = guidance.body or {}
+    if not isinstance(body, dict):
+        body = {}
     citations = [
-        GuidanceCitationResponse(
-            version=str(item.get("version", "")),
-            passage_key=str(item.get("passage_key", "")),
-        )
+        _citation(item)
         for item in guidance.citations or []
         if isinstance(item, dict)
     ]
@@ -215,10 +247,7 @@ def _explanation_response(
             item=str(item.get("item", "")),
             reason=str(item.get("reason", "")),
             citations=[
-                GuidanceCitationResponse(
-                    version=str(citation.get("version", "")),
-                    passage_key=str(citation.get("passage_key", "")),
-                )
+                _citation(citation)
                 for citation in item.get("citations", [])
                 if isinstance(citation, dict)
             ],
@@ -232,6 +261,43 @@ def _explanation_response(
         missing_items=missing,
         citations=citations,
     )
+
+
+# Convert one stored citation into the public shape without version ids.
+def _citation(item: dict[str, object]) -> GuidanceCitationResponse:
+    return GuidanceCitationResponse(
+        version=str(item.get("version", "")),
+        passage_key=str(item.get("passage_key", "")),
+    )
+
+
+# Convert one stored brief body, ignoring a row that no longer validates.
+def _brief_response(
+    brief: CaseGuidance | None,
+) -> SpecialistBriefResponse | None:
+    if brief is None:
+        return None
+    try:
+        return SpecialistBriefResponse.model_validate(brief.body)
+    except ValidationError as error:
+        LOGGER.warning(
+            "stored specialist brief unusable: error=%s",
+            type(error).__name__,
+        )
+        return None
+
+
+# Convert stored brief citations, dropping rows that are not objects.
+def _brief_citations(
+    brief: CaseGuidance | None,
+    brief_response: SpecialistBriefResponse | None,
+) -> list[GuidanceCitationResponse]:
+    if brief is None or brief_response is None:
+        return []
+    stored = brief.citations if isinstance(brief.citations, list) else []
+    return [
+        _citation(item) for item in stored if isinstance(item, dict)
+    ]
 
 
 # Return the fixed safe response when no stored explanation exists.

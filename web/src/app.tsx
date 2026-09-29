@@ -312,6 +312,7 @@ export function App() {
     activeScreen = "review";
     content = (
       <CaseReview
+        key={queueItem.case_id}
         item={queueItem}
         onNavigate={navigate}
         token={session.token}

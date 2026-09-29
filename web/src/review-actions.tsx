@@ -1,6 +1,7 @@
 import { Button } from "./components";
 import { Icon } from "./icons";
 import type { ReviewStart } from "./types";
+import type { GuidanceCitation } from "./types-knowledge";
 
 const ROUTES = [
   {
@@ -35,6 +36,7 @@ export function ReviewActions({
   onReasonChange,
   onDecision,
   onOverrideChange,
+  suggestedCitations = [],
 }: {
   start: ReviewStart | null;
   selectedRoute: string;
@@ -49,8 +51,16 @@ export function ReviewActions({
   onReasonChange: (reason: string) => void;
   onDecision: (action: "confirm" | "override" | "request_information") => void;
   onOverrideChange: (value: boolean) => void;
+  suggestedCitations?: GuidanceCitation[];
 }) {
   const showRouteOptions = !needsInformation || overriding;
+
+  // Append one accepted citation tag to the underwriter's reason text.
+  function acceptCitation(citation: GuidanceCitation) {
+    const tag = `[${citation.version}:${citation.passage_key}]`;
+    onReasonChange(reason ? `${reason} ${tag}` : tag);
+  }
+
   return (
     <aside className="decision-panel">
       <h2>Your decision</h2>
@@ -109,6 +119,26 @@ export function ReviewActions({
           value={reason}
         />
       </label>
+      {/* Suggestions belong to the override dialog, not the open panel. */}
+      {overriding && suggestedCitations.length > 0 ? (
+        <div aria-label="Suggested citations" role="group">
+          <p className="muted">Suggested citations (optional)</p>
+          {suggestedCitations.slice(0, 3).map((citation) => (
+            <button
+              aria-label={
+                `Use citation ${citation.version}: ${citation.passage_key}`
+              }
+              className="btn btn-quiet"
+              disabled={locked}
+              key={`${citation.version}:${citation.passage_key}`}
+              onClick={() => acceptCitation(citation)}
+              type="button"
+            >
+              {citation.version}: {citation.passage_key}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="decision-actions">
         {needsInformation && !overriding ? (
           <>

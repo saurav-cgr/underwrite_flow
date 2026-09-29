@@ -91,3 +91,39 @@ contract or copy full logs here.
 - [M-031] Q&A injection coverage uploads a life v3 identity PDF with the
   instruction in `holder_name` and submits through normal extraction; never
   seed `extracted_fields` directly for T058. (iteration 42)
+- [M-032] (superseded by M-033) US6 brief passages first came from pinned
+  guideline thresholds whose `rule_code` matches a triggered rule (JSONB
+  containment), not retrieval. Life v3 specialist fixtures need
+  `cover_start_date`, income record, and previous policy to avoid
+  needs_information. (iteration 43)
+- [M-033] US6 brief passages come from `knowledge.retrieval.retrieve` with
+  the triggered rule codes as the query and the case age and sum-assured
+  facts as band filters, inside a savepoint. The submission service passes
+  its embedding provider through `persist_case_evidence`; retrieval failure
+  degrades to no passages, never a failed submission. (iteration 44,
+  2026-09-29)
+- [M-034] Per-case underwriter state must reset on a case switch: the
+  guidance effect clears guidance, message, and suggestions, and
+  `CaseReview` is keyed on the case id. (iteration 45, 2026-09-29)
+- [M-035] Do not run two Compose test runs against the shared development
+  database at once: a concurrent run made
+  `tests/integration/test_audit_enrichment.py` and
+  `tests/integration/test_audit_sanitization.py` fail on active product
+  version state. Both pass alone and in the clean full run. (iteration 44,
+  2026-09-29)
+- [M-036] Override suggestions render only while `overriding` is true, and
+  that flag is set only by the needs-information branch, so specialist
+  briefs never show suggestion buttons. Stored brief citations keep only
+  `version` and `passage_key`; a corrupt stored brief body degrades to no
+  brief. (iteration 46, 2026-09-29)
+- [M-037] User accepted the R006 consequence, 2026-09-29 ("R006 is fine"):
+  a specialist case shows its passages in the brief and no suggestion
+  buttons. R006 is closed by acceptance; do not reopen it on the D6
+  recheck. (iteration 46, 2026-09-29)
+- [M-038] Every stored guidance row must be read defensively: brief
+  citations map through a filter that keeps only objects, and an
+  explanation body that is not an object is treated as empty. Corrupt-row
+  regressions live in
+  `api/tests/integration/test_guidance_read_robustness.py`, which exists so
+  `test_specialist_brief.py` stays under 400 lines. (iteration 47,
+  2026-09-29)

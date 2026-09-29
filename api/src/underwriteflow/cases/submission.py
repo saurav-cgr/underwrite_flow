@@ -242,6 +242,7 @@ class SubmissionService:
             [],
             documents,
             event_type=event_type,
+            embedder=self.embedding_provider,
         )
         return {
             "status": "underwriter_review",
@@ -384,6 +385,7 @@ class SubmissionService:
             extraction_failures,
             documents,
             event_type=event_type,
+            embedder=self.embedding_provider,
         )
         return {
             "status": "underwriter_review",

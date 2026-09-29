@@ -9,24 +9,24 @@ Continuation of [tasks.md](tasks.md). The rules, shorthand (`API`,
 **Independent test**: hazardous-occupation fixture shows brief and
 suggestions.
 
-- [ ] T064 [US6] Write failing tests in
+- [x] T064 [US6] Write failing tests in
   `tests/unit/test_specialist_brief.py`: brief lists evidence with source
   locators, triggered rule codes, and passages for those codes; no brief
   for other routes; at most three suggested citations.
-- [ ] T065 [US6] Implement `build_brief` in
+- [x] T065 [US6] Implement `build_brief` in
   `src/underwriteflow/knowledge/brief.py`.
-- [ ] T066 [US6] Write failing test in
+- [x] T066 [US6] Write failing test in
   `tests/integration/test_specialist_brief.py`: the fixture stores a
   `specialist_brief` row and `GET /reviews/{id}/guidance` returns it with
   `suggested_citations`.
-- [ ] T067 [US6] Store the brief in `knowledge/case_guidance.py` and
+- [x] T067 [US6] Store the brief in `knowledge/case_guidance.py` and
   return it from `knowledge/guidance_router.py`.
-- [ ] T068 [US6] Write failing Vitest tests in
+- [x] T068 [US6] Write failing Vitest tests in
   `web/src/specialist-brief.test.tsx` and
   `web/src/review-actions.test.tsx`: brief sections render; accepting a
   suggestion adds its citation to the override reason; ignoring is
   allowed.
-- [ ] T069 [US6] Implement `web/src/specialist-brief.tsx`; add
+- [x] T069 [US6] Implement `web/src/specialist-brief.tsx`; add
   suggestions to `web/src/review-actions.tsx`.
 
 **Checkpoint US6**: `API pytest tests/unit/test_specialist_brief.py
