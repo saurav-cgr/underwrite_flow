@@ -26,6 +26,9 @@ from underwriteflow.errors import (
 )
 from underwriteflow.evaluation.router import router as evaluation_router
 from underwriteflow.knowledge.router import router as knowledge_router
+from underwriteflow.knowledge.regulation_router import (
+    router as regulation_router,
+)
 from underwriteflow.knowledge.guidance_router import (
     router as guidance_router,
 )
@@ -190,5 +193,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(completion_router, prefix="/api/v1")
     app.include_router(evaluation_router, prefix="/api/v1")
     app.include_router(knowledge_router, prefix="/api/v1")
+    app.include_router(regulation_router, prefix="/api/v1")
     app.include_router(guidance_router, prefix="/api/v1")
     return app

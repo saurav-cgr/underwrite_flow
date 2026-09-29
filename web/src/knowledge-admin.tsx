@@ -4,10 +4,13 @@ import { ApiError } from "./api-core";
 import {
   activateKnowledge,
   importKnowledge,
+  importRegulation,
   listKnowledgeVersions,
+  listRegulationVersions,
   previewKnowledge,
 } from "./api-knowledge";
 import { Badge, Button, EmptyState, PageHeading, Panel } from "./components";
+import { KnowledgeTags } from "./knowledge-tags";
 import type {
   KnowledgeImportResult,
   KnowledgePreview,
@@ -25,6 +28,7 @@ function displayBand(min: number | null, max: number | null): string {
 // Render administrator import, preview, and activation controls.
 export function KnowledgeAdmin({ token }: { token: string }) {
   const [versions, setVersions] = useState<KnowledgeVersion[]>([]);
+  const [regulations, setRegulations] = useState<KnowledgeVersion[]>([]);
   const [selected, setSelected] = useState<KnowledgeVersion | null>(null);
   const [preview, setPreview] = useState<KnowledgePreview | null>(null);
   const [yamlText, setYamlText] = useState("");
@@ -38,6 +42,9 @@ export function KnowledgeAdmin({ token }: { token: string }) {
     listKnowledgeVersions(token)
       .then(setVersions)
       .catch((error) => setMessage(errorMessage(error)));
+    listRegulationVersions(token)
+      .then(setRegulations)
+      .catch(() => setRegulations([]));
   }, [token]);
 
   // Convert API failures into one bounded message for the screen.
@@ -95,6 +102,25 @@ export function KnowledgeAdmin({ token }: { token: string }) {
       );
     } catch (error) {
       setMessage(errorMessage(error));
+    }
+  }
+
+  // Import the regulatory manifest, storing one selected upload first.
+  async function handleRegulationImport(file: File | undefined) {
+    setWorking(true);
+    setMessage("");
+    setNotice("");
+    try {
+      const result = await importRegulation(token, file);
+      setRegulations(await listRegulationVersions(token));
+      setNotice(
+        `Regulation ${result.version} is ${result.status} with ` +
+          `${result.passage_count} clauses.`,
+      );
+    } catch (error) {
+      setMessage(errorMessage(error));
+    } finally {
+      setWorking(false);
     }
   }
 
@@ -168,6 +194,43 @@ export function KnowledgeAdmin({ token }: { token: string }) {
             </ul>
           )}
         </Panel>
+        <Panel title="Regulatory corpus">
+          <label className="field" htmlFor="regulation-file">
+            <span>Regulation PDF (optional, checked against the manifest)</span>
+            <input
+              id="regulation-file"
+              onChange={(event) =>
+                void handleRegulationImport(event.target.files?.[0])
+              }
+              type="file"
+            />
+          </label>
+          <Button
+            disabled={working}
+            onClick={() => void handleRegulationImport(undefined)}
+          >
+            Import manifest folder
+          </Button>
+          {regulations.length > 0 ? (
+            <ul aria-label="Regulation versions" className="mini-list">
+              {regulations.map((version) => (
+                <li key={version.id}>
+                  <span>
+                    <strong>{version.version}</strong>
+                    <small>{version.passage_count} clauses</small>
+                  </span>
+                  <Badge tone={version.status}>{version.status}</Badge>
+                  <Button
+                    disabled={working}
+                    onClick={() => void handlePreview(version)}
+                  >
+                    {`Preview ${version.version}`}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </Panel>
       </div>
       {preview ? (
         <Panel title={`Preview ${preview.version.version}`}>
@@ -207,6 +270,14 @@ export function KnowledgeAdmin({ token }: { token: string }) {
                   </small>
                   <p>{passage.body}</p>
                   <small>{passage.label}</small>
+                  <KnowledgeTags
+                    editable={preview.version.status === "draft"}
+                    passageKey={passage.passage_key}
+                    suggestedTags={passage.suggested_tags}
+                    token={token}
+                    topicTags={passage.topic_tags}
+                    versionId={preview.version.id}
+                  />
                 </div>
               </article>
             ))}

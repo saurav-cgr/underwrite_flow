@@ -38,68 +38,75 @@ tests/integration/test_specialist_brief.py -q`; `make test-api`;
 **Goal**: Checksum-verified IRDAI clauses, badged, side by side, never in
 routing. **Independent test**: altered file rejected; routes identical.
 
-**Open questions (resolve with the user before T072/T073)**, recorded
-2026-09-28 by the checker after probing `data/regulatory/`:
+**Open questions (resolved with the user 2026-09-29)**:
 
-- Q1 Scanned PDF: `general_mc_2024.pdf` (the only motor-specific IRDAI
-  circular) yields 0 characters from `pypdf` on its first five pages.
-  With `pypdf` only, motor gets almost no IRDAI clauses. Decide: reuse
-  the existing local OCR path for scanned regulation pages, or source a
-  text-based copy and update the manifest checksum.
-- Q2 `.doc` file: `insurance_act_1938.doc` is reported, not imported,
-  per T072. Decide: accept that, or convert it to PDF by hand and update
-  its manifest entry and SHA-256.
-- Q3 Mount: neither Compose file mounts `data/regulatory/`. US7 needs a
-  read-only mount like `knowledge-config`; Compose change needs approval.
-- Q4 Upload and verify (user decision 2026-09-28: add it): Administrator
-  uploads a regulation PDF from the web app; accept it only when its
-  SHA-256 matches an existing `manifest.yaml` entry, else reject and
-  audit `regulation_file_rejected`. Manifest stays the allowlist. Before
-  implementation, run `/speckit.clarify` to amend FR-014, the
-  `/knowledge/regulation/import` contract, T075, and T080, and settle
-  the size limit and where accepted bytes are stored (git-ignored, no
-  object storage). Q3 still applies to manifest-folder import.
+- Q1 Scanned PDF: `general_mc_2024.pdf` is image-only on all 38 pages
+  (0 characters). Decision: reuse the existing local OCR path
+  (`pdftoppm` plus `tesseract`) for pages whose `pypdf` text is empty;
+  a page or document whose OCR fails is reported, not fatal.
+- Q2 `.doc` file: keep `insurance_act_1938.doc` report-only; no hand
+  conversion.
+- Q3 Mount: add `./data/regulatory:/app/data/regulatory:ro` to the
+  `api` and `bootstrap` services in `compose.yaml`. Approved.
+- Q4 Upload and verify: approved for this story. `POST
+  /knowledge/regulation/import` takes an optional `file` part, accepts
+  it only when its SHA-256 matches a manifest entry, writes the verified
+  bytes to that entry's declared file name under `data/regulatory/`,
+  and rejects otherwise with 422 and a `regulation_file_rejected` audit.
+  The limit is 100 MB per file. The manifest is never edited. FR-014,
+  FR-015, US7 scenario 2a, and the REST contract are amended. Q3 still
+  applies to folder import.
 - Note: `policyholders_mc_2024.pdf` is 91 MB for 109 pages but has text;
   expect slow import, not failure.
 
-- [ ] T070 [US7] Extend `tests/integration/test_knowledge_migration.py`:
+- [x] T070 [US7] Extend `tests/integration/test_knowledge_migration.py`:
   `knowledge_passages` gains `product_lines`, `topic_tags`,
   `suggested_tags`, `limits`, `source_locator`.
-- [ ] T071 [US7] [NEEDS APPROVAL] Create
+- [x] T071 [US7] [NEEDS APPROVAL] Create
   `alembic/versions/13_regulation_passages.py`; map the columns.
-- [ ] T072 [US7] Write failing tests in
+  **Not required**: migration `09_knowledge_base.py` already created all
+  five columns and the ORM maps them, so US7 adds no schema. Approved
+  migration is therefore withdrawn; `test_regulation_passage_columns_present`
+  locks the columns instead.
+- [x] T072 [US7] Write failing tests in
   `tests/unit/test_regulation_manifest.py` using synthetic PDFs from
   `tests/fixtures/synthetic_pdf.py` and a temp manifest: checksum
   mismatch rejected, unlisted file ignored, missing file and `.doc`
   reported, clauses split at numbered headings with `<id>#page:<n>`,
   label `PUBLIC REGULATION - INFORMATIONAL`.
-- [ ] T073 [US7] Implement `src/underwriteflow/knowledge/regulation.py`
+- [x] T073 [US7] Implement `src/underwriteflow/knowledge/regulation.py`
   (manifest read, SHA-256, `pypdf` text, clause split).
-- [ ] T074 [US7] Write failing tests in
-  `tests/integration/test_regulation_import.py`: import makes a draft,
-  audits `regulation_file_rejected`, fills `suggested_tags`; tag accept
-  works only on drafts (409 otherwise) and audits
-  `regulation_tags_accepted`; activation pins new cases.
-- [ ] T075 [US7] Implement `src/underwriteflow/knowledge/
-  regulation_service.py` and `src/underwriteflow/knowledge/
-  regulation_router.py` (`POST /knowledge/regulation/import`, `PUT
-  .../tags`); include in `app.py`.
-- [ ] T076 [US7] Write test in
+- [x] T074 [US7] Write failing tests in
+  `tests/integration/test_regulation_import.py`: folder import makes a
+  draft, audits `regulation_file_rejected`, fills `suggested_tags`; an
+  approved upload stores the declared file name and an unlisted or
+  altered upload is rejected 422 with nothing written; tag accept works
+  only on drafts (409 otherwise) and audits `regulation_tags_accepted`;
+  activation pins new cases.
+- [x] T075 [US7] Implement `src/underwriteflow/knowledge/
+  regulation_service.py`, `regulation_upload.py`, and `src/
+  underwriteflow/knowledge/regulation_router.py` (`POST
+  /knowledge/regulation/import` with an optional 100 MB `file` part, `PUT
+  .../tags`); write verified upload bytes to the manifest's declared file
+  name under `data/regulatory/`, audit `regulation_file_rejected`, and
+  include both routers in `app.py`.
+- [x] T076 [US7] Write test in
   `tests/integration/test_regulation_route_isolation.py`: routes for all
   evaluation fixtures are identical with and without an active regulation
   version; `workflow/` and `products/rules.py` never import
   `underwriteflow.knowledge.regulation`.
-- [ ] T077 [US7] Write failing contract test in
+- [x] T077 [US7] Write failing contract test in
   `tests/contract/test_guidance_api.py` for `GET /reviews/{id}/guidance/
   passages/{key}`: at most three related clauses, each labelled.
-- [ ] T078 [US7] Implement the endpoint in `knowledge/guidance_router.py`
+- [x] T078 [US7] Implement the endpoint in `knowledge/guidance_router.py`
   using meaning-only retrieval on the pinned regulation version.
-- [ ] T079 [US7] Write failing Vitest tests in
+- [x] T079 [US7] Write failing Vitest tests in
   `web/src/regulation-side.test.tsx` and
   `web/src/knowledge-tags.test.tsx`.
-- [ ] T080 [US7] Implement `web/src/regulation-side.tsx` (mounted from
+- [x] T080 [US7] Implement `web/src/regulation-side.tsx` (mounted from
   `guidance-panel.tsx`) and `web/src/knowledge-tags.tsx` (mounted from
-  `knowledge-admin.tsx`).
+  `knowledge-admin.tsx`): the administrator screen offers regulation
+  import (with an optional file upload) and tag acceptance on drafts.
 
 **Checkpoint US7**: `API alembic upgrade head`; `API pytest
 tests/unit/test_regulation_manifest.py

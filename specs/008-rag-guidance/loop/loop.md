@@ -15,7 +15,7 @@
 | D4 | US4 | Phase 6 and shared gate pass | human-signed |
 | D5 | US5 | Phase 7 and shared gate pass | human-signed |
 | D6 | US6 | Phase 8 and shared gate pass | human-signed |
-| D7 | US7 | Phase 9 and shared gate pass | pending |
+| D7 | US7 | Phase 9 and shared gate pass | human-signed |
 | D8 | US8 | Phase 10 and shared gate pass | pending |
 | D9 | US9 | Phases 11-12 and shared gate pass | pending |
 
@@ -48,7 +48,7 @@ pass, and no blocking debt remains.
 ## Budget
 
 - Max iterations: 100
-- Iterations run: 47
+- Iterations run: 49
 - Per iteration: exactly one story, the lowest numbered story not yet
   human-signed. Stop at that story's checkpoint.
 - Isolation: none
@@ -85,8 +85,11 @@ pass, and no blocking debt remains.
 
 ## State
 
-- Phase: signed. D6 human-signed 2026-09-29 (checker C046). Loop not
-  done: D7-D9 pending. Next: checker commits D6 after the user's
-  `continue`, then `/speckit.loop.run` for US7 (resolve Phase 9 open
-  questions first).
+- Phase: checked. Checker C048 graded iteration 49: D7 pass, high
+  confidence (all gates rerun, live quickstart probed). Non-blocking
+  notes recorded as DEBT-045 and DEBT-046.
+- D7 human-signed 2026-09-29 (see `debt.md` sign-off log).
+- Loop not done: D1-D7 human-signed, D8-D9 pending.
+  Next: checker commit and push of US7 after the user's `continue`,
+  then `/speckit.loop.run` for US8.
 - Last updated: 2026-09-29

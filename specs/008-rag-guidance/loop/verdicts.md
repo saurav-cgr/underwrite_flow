@@ -29,6 +29,8 @@ sources. Record each story's checkpoint, shared gate, and staff review.
 | D6 | 45 | US6 gate (repairs C043, review R002) | C044 evidence below | pass | high | 2026-09-29 |
 | D6 | 46 | US6 gate (repairs DEBT-036: R004, R006, R007) | C045 evidence below | fail | high | 2026-09-29 |
 | D6 | 47 | US6 gate (repairs C045, R007) | C046 evidence below | pass | high | 2026-09-29 |
+| D7 | 48 | US7 gate | C047 evidence below | fail | high | 2026-09-29 |
+| D7 | 49 | US7 gate (repairs C047, review R001-R006) | C048 evidence below | pass | high | 2026-09-29 |
 
 ## C042 evidence
 
@@ -186,3 +188,96 @@ sources. Record each story's checkpoint, shared gate, and staff review.
   columns. Every named function has an intent comment. Nothing is
   staged. The checker removed its own stray blank line at the end of
   this file, which `git diff --check` reported.
+
+## C047 evidence
+
+- Separate checker session; this session did not produce iteration 48.
+  T070-T080 are checked. T071 is withdrawn: migration 09 already has the
+  five passage columns, and `test_regulation_passage_columns_present`
+  locks them.
+- `alembic current` = `12_case_questions (head)`. The US7 checkpoint,
+  migration, pinning, and guidance contract suites: 39 passed.
+- `make test-api`: 677 passed, 100% target coverage. `make test-web`:
+  197 passed, 29 files. Web production build succeeded. `make smoke`
+  exit 0. `git check-ignore` matches `data/regulatory/` (`.gitignore:47`)
+  for the manifest and for uploaded PDFs.
+- FAILED (1), FR-014 upload: a temporary probe imported a manifest whose
+  second entry was missing, then uploaded that entry's approved bytes.
+  The second import answered 201 with the same version id. It reported
+  `late.pdf` as `loaded` with 1 clause, but `passage_count` stayed 2.
+  The file was written, but its clause never reached any version. The
+  version name and content hash come from manifest entries only
+  (`regulation_version`), so `_draft_version` returns the old draft
+  unchanged. The report and the stored version disagree. Smallest fix:
+  include the loaded files (or their clause keys) in the content hash,
+  so a new file set makes a new draft. Add one regression test for
+  import, then upload, then import. The probe file was removed.
+- FAILED (2), criterion 4: `web/src/knowledge-admin.tsx:176` is 85
+  columns (`) : (            <ul aria-label="Knowledge versions" ...`).
+  A merged line; the maker's scan claimed no line over 80.
+- FAILED (3), criterion 7: no staff review covers US7. The latest review
+  (`review-20260929-163106.md`) covers US6 only.
+- Notes (non-blocking): `test_routes_are_identical_with_and_without_
+  regulation` calls `evaluate_cases()` with guidance disabled, so no
+  code path it runs reads the database. It proves nothing beyond the
+  import-isolation test. The routing-import check globs only top-level
+  `workflow/*.py`; that is sufficient today because no subpackage
+  exists. `store_upload` joins `root / entry.file` without a path check,
+  so a manifest entry such as `../x` would be written outside the
+  folder. The manifest is operator-controlled, so this is low risk.
+  Web tag acceptance sends no `limits`, so each accept clears any stored
+  limits (no UI sets them yet). Mount deviation is DEBT-038.
+- Scan: no changed file reaches 400 lines. The only new long line is the
+  one above; `compose.yaml` long lines are pre-existing. Every named
+  Python and TypeScript function has an intent comment. Nothing is
+  staged. `git diff --check` is clean.
+
+## C048 evidence
+
+- Separate checker session; this session did not produce iteration 49.
+  T070-T080 are checked. T071 stays withdrawn (columns from migration
+  09, locked by `test_regulation_passage_columns_present`).
+- `alembic upgrade head` then `alembic current` = `12_case_questions
+  (head)`. US7 checkpoint plus guidance contract and knowledge migration
+  suites: 41 passed.
+- `make test-api`: 682 passed, 100% target coverage, exit 0.
+  `make test-web`: 197 passed, 29 files, exit 0. Web production build
+  exit 0. `make smoke` exit 0. `git check-ignore` matches
+  `data/regulatory/` (`.gitignore:47`); no file under it is tracked.
+- C047 repairs confirmed at source: `regulation_version` hashes manifest
+  entries plus every clause key, product lines, title, and body;
+  `test_upload_after_first_import_reaches_a_version` and
+  `test_manifest_product_lines_change_creates_new_version` pass.
+  `ManifestEntry.file` now rejects any path component, which closes the
+  C047 `../x` note. Staff review `reviews/review-20260929-190000.md`
+  covers US7: APPROVED WITH CONDITIONS, 0 blockers; R007 and R008 are
+  DEBT-043 and DEBT-044.
+- Live stack quickstart (API on :8000, real nine-document manifest):
+  - Altered upload named `general_mc_2024.pdf` answered 422
+    `regulation_upload_rejected`; the folder listing was unchanged.
+  - Import as Underwriter 403, Applicant 403, anonymous 401.
+  - Folder import 201, draft `r-e631b86c23ba`, 1144 clauses; eight PDFs
+    `loaded` (including OCR-only `general_mc_2024.pdf`, 27 clauses);
+    `insurance_act_1938.doc` reported `unsupported_format`. Preview
+    rows carry `PUBLIC REGULATION - INFORMATIONAL`. The new draft name
+    differs from active `r-eb1720874ed0` because iteration 49 changed
+    the identity formula; expected.
+  - `GET /reviews/{id}/guidance/passages/life-age-eighteen-to-forty` on
+    a case pinned to both versions: 200, guideline passage labelled
+    synthetic, two related clauses each labelled
+    `PUBLIC REGULATION - INFORMATIONAL` with topic `regulation`.
+    Administrator 403, anonymous 401, unknown key 404.
+- Notes (non-blocking):
+  - Related clauses return `source_locator: null`:
+    `retrieve_by_meaning` omits the locator, so the side panel shows no
+    page citation. The contract requires only the label.
+  - Re-importing content identical to a retired version returns that
+    retired version, which cannot be reactivated, so a corpus revert
+    needs a content change. Same identity rule as the guideline path.
+  - Live probe hit a case pinned to a test-fixture regulation version
+    (`circular#1`), so the dev DB mixes test and demo rows (DEBT-041).
+- Scan: no changed file reaches 400 lines; only `compose.yaml` lines
+  34, 68, 74 exceed 80 columns and all exist in HEAD. Every named
+  Python and TypeScript function has an intent comment (three
+  decorator-block false positives checked by hand). Nothing staged.
+  `git diff --check` clean.

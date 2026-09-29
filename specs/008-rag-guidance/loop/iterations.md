@@ -1051,3 +1051,131 @@ marks the loop done. It records the story and criteria ready for checking.
     suggested smallest fix. It is the same defect class (corrupt stored row
     answers 500) and is covered by its own regression test.
 - Handoff: ready-for-check
+
+## Iteration 48 - 2026-09-29
+- Story: US7
+- Targeted criteria: D7
+- Worktree: in place
+- Change: Ran `/speckit.clarify` first, because the approved upload feature
+  needed a spec amendment, and recorded three answers in
+  `specs/008-rag-guidance/spec.md` (FR-014, FR-015, US7 scenario 2a, edge
+  cases, a 2026-09-29 clarification session), `contracts/rest-api.md`,
+  `plan.md`, and `tasks-us6-us9.md`. Then implemented US7 end to end.
+  New: `knowledge/regulation.py` (manifest, SHA-256, clause split),
+  `knowledge/regulation_upload.py` (streamed verified upload),
+  `knowledge/regulation_service.py` (import, tags, shared activation),
+  `knowledge/regulation_router.py`, `knowledge/regulation_view.py`
+  (related clauses), `tests/fixtures/regulation.py`,
+  `tests/unit/test_regulation_manifest.py`,
+  `tests/integration/test_regulation_import.py`,
+  `tests/integration/test_regulation_route_isolation.py`,
+  `web/src/regulation-side.tsx`, `web/src/knowledge-tags.tsx` and their
+  tests. Changed: `providers/extraction.py` (additive `ocr_page`),
+  `knowledge/retrieval.py` (`retrieve_by_meaning`), `knowledge/pins.py`
+  (pin the active regulation version, previously always null),
+  `knowledge/router.py` (regulation list scope, activation dispatch),
+  `app.py`, `config.py` (`regulatory_root`), `compose.yaml` (mount),
+  `api/tests/conftest.py` (shared regulation fixtures),
+  `api/tests/integration/test_knowledge_migration.py`,
+  `api/tests/integration/test_knowledge_pinning.py`,
+  `api/tests/contract/test_guidance_api.py`, and the web files
+  `api-knowledge.ts`, `types-knowledge.ts`, `guidance-panel.tsx`,
+  `knowledge-admin.tsx`, plus the `case-review`, `guidance-panel`, and
+  `knowledge-admin` test mocks.
+- Verification:
+  - Red-first: unit manifest (14) and integration import (6) tests failed
+    before their modules existed; the passage contract test failed 404
+    before the endpoint. T070's column test cannot be red-first because
+    migration 09 already created the columns; T071's migration was
+    therefore withdrawn as unnecessary.
+  - Focused US7 checkpoint plus migration, pinning, and guidance contract
+    suites: 36 passed.
+  - `make test-api` 677 passed, 100% target coverage, exit 0.
+  - `make test-web` 197 passed, 29 files. Web production build exit 0.
+    `make smoke` exit 0. `git check-ignore data/regulatory/manifest.yaml`
+    → `.gitignore:47`.
+  - Live quickstart US7 on the real nine-file corpus: import 201 in 67 s
+    for version `r-eb1720874ed0` with 1144 clauses; the 38-page scanned
+    `general_mc_2024.pdf` produced 27 clauses through OCR; the `.doc` was
+    reported `unsupported_format`; tag accept 200, activate 200, then a
+    second tag accept 409.
+  - Live probe found and fixed a real defect: the shipped manifest's
+    unquoted YAML dates raised `manifest_invalid`; `ManifestEntry.date`
+    now accepts a YAML date and a unit test covers it.
+  - Scan: no changed file reaches 400 lines; no changed line exceeds 80
+    columns; every new function has an intent comment (flags are decorator
+    blocks); nothing staged; no secret pattern; `git diff --check` clean.
+- Maker self-assessment: D7 appears maker-ready. This is the maker's view,
+  not a verdict.
+- Open questions / risks:
+  - Approval deviation: Q3 approved a read-only mount for `api` and
+    `bootstrap`, but an approved upload must write into the manifest
+    folder, so `api` mounts `./data/regulatory` read-write while
+    `bootstrap` stays read-only. Needs human confirmation.
+  - No staff review covers US7 yet; criterion 7 is unmet until one is
+    recorded.
+  - `T071` was withdrawn rather than done; the checker should confirm that
+    migration 09 already provides every regulation passage column.
+  - The live endpoint uses the configured embedding provider (fake
+    locally); no caller passes a provider into the import path.
+  - Dev DB now holds the real regulation version `r-eb1720874ed0` as
+    active, with 1144 clauses, and two test drafts from earlier runs.
+- Handoff: ready-for-check
+
+## Iteration 49 - 2026-09-29
+- Story: US7 repair
+- Targeted criteria: D7 (checker-fail in C047)
+- Worktree: in place
+- Change: Repaired both C047 blockers and the three staff-review
+  warnings, then fixed the review's three cheap notes.
+  - C047 (1) version identity: `regulation_version` in
+    `knowledge/regulation.py` now hashes the loaded clause set
+    (passage key, product lines, title, body) as well as the manifest
+    entries, so an upload after an earlier import creates a newer draft
+    instead of silently returning the old one. Regression test
+    `test_upload_after_first_import_reaches_a_version` (import, upload,
+    import) proved red before the fix.
+  - C047 (2) `web/src/knowledge-admin.tsx` `) : ( <ul ...` merged line
+    split; a repo-wide scan of every changed non-documentation file now
+    reports no line over 80 columns.
+  - C047 (3) staff review `reviews/review-20260929-190000.md` recorded
+    for US7: APPROVED WITH CONDITIONS, 0 blockers.
+  - Staff R001: the same identity now hashes `product_lines`, with
+    regression test `test_manifest_product_lines_change_creates_new_version`.
+  - Staff R002: `test_routes_are_identical_with_and_without_regulation`
+    runs both comparisons with `guidance_enabled=True`, so each run reads
+    the knowledge tables, and it asserts the fixture's active version has
+    at least one clause.
+  - Staff R003: authorization refusals added for the four new endpoints
+    (`test_regulation_endpoints_require_administrator` for the two
+    administrator endpoints plus one anonymous probe, and
+    `test_guidance_passage_rejects_other_roles` for the underwriter
+    endpoint).
+  - Staff R004: the administrator notice reports the returned status, not
+    a hardcoded "draft". R005: an unreadable listed file is now reported
+    as `unreadable` instead of failing the whole import. R006:
+    meaning-only retrieval returns `topic`, so related clauses no longer
+    carry an empty topic.
+- Verification:
+  - Focused regulation suites after the fixes: 26 passed. Contract suites
+    with the new refusals: 12 passed.
+  - `make test-api` 682 passed, 100% target coverage, exit 0 (was 679).
+  - `make test-web` 197 passed, 29 files. Web production build exit 0.
+    `make smoke` exit 0.
+  - Scan of every changed non-documentation file: no line over 80
+    columns, `api/src/underwriteflow/knowledge/regulation_service.py` is
+    324 lines and `regulation_upload.py` 116; nothing staged;
+    `git diff --check` clean.
+- Maker self-assessment: D7 appears maker-ready again. This is the maker's
+  view, not a verdict.
+- Open questions / risks:
+  - The review's R007 (the read-only `./data/regulatory` mount on
+    `bootstrap` is unused, and the git-ignored manifest has no fetch
+    path, so the allowlist is not reproducible from a fresh clone) and
+    R008 (`write_embeddings` is unguarded, and the guidance panel issues
+    one related-clause request per citation) are recorded as DEBT-043 and
+    DEBT-044.
+  - The reviewer's own gate run reported 679 API tests before this
+    iteration's additions; the checker should rerun the checkpoint.
+  - DEBT-038 (write mount on `api`) still needs human confirmation.
+- Handoff: ready-for-check

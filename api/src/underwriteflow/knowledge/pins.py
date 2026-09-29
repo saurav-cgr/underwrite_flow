@@ -32,12 +32,18 @@ async def pin_case_knowledge(
                 KnowledgeVersion.status == "active",
             )
         )
+    regulation_id = await session.scalar(
+        select(KnowledgeVersion.id).where(
+            KnowledgeVersion.scope == "regulation",
+            KnowledgeVersion.status == "active",
+        )
+    )
     statement = (
         insert(CaseKnowledgePin)
         .values(
             case_id=case.id,
             guideline_version_id=guideline_id,
-            regulation_version_id=None,
+            regulation_version_id=regulation_id,
         )
         .on_conflict_do_nothing(index_elements=[CaseKnowledgePin.case_id])
     )
@@ -48,7 +54,7 @@ async def pin_case_knowledge(
             {
                 "case_id": case.id,
                 "guideline_version_id": guideline_id,
-                "regulation_version_id": None,
+                "regulation_version_id": regulation_id,
             },
             case_id=case.id,
             actor_user_id=actor_user_id,

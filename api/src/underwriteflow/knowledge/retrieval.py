@@ -161,3 +161,43 @@ async def retrieve(
         for item in fused
         if item["passage_key"] in by_key
     ]
+
+
+# Retrieve the closest passages by embedding distance alone.
+async def retrieve_by_meaning(
+    session: AsyncSession,
+    embedder: EmbeddingProvider,
+    version_id: UUID,
+    query: str,
+    limit: int = 3,
+) -> list[dict[str, Any]]:
+    if not 1 <= limit <= 50:
+        raise ValueError("limit must be between 1 and 50")
+    version = await session.get(KnowledgeVersion, version_id)
+    if version is None:
+        return []
+    vector = (await embedder.embed([query]))[0]
+    distance = KnowledgePassage.embedding.op("<=>")(
+        bindparam("query_embedding", vector, type_=Vector(768))
+    )
+    rows = await session.execute(
+        select(KnowledgePassage)
+        .where(
+            KnowledgePassage.version_id == version_id,
+            KnowledgePassage.embedding.is_not(None),
+        )
+        .order_by(distance, KnowledgePassage.passage_key)
+        .limit(limit)
+    )
+    return [
+        {
+            "version": version.version,
+            "version_id": str(version.id),
+            "passage_key": passage.passage_key,
+            "title": passage.title,
+            "body": passage.body,
+            "topic": passage.topic,
+            "label": passage.label,
+        }
+        for passage in rows.scalars()
+    ]

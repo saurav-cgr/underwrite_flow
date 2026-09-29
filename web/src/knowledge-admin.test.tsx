@@ -6,14 +6,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("./api-knowledge", () => ({
   activateKnowledge: vi.fn(),
   importKnowledge: vi.fn(),
+  importRegulation: vi.fn(),
   listKnowledgeVersions: vi.fn(),
+  listRegulationVersions: vi.fn(),
   previewKnowledge: vi.fn(),
+  acceptRegulationTags: vi.fn(),
 }));
 
 import {
   activateKnowledge,
   importKnowledge,
   listKnowledgeVersions,
+  listRegulationVersions,
   previewKnowledge,
 } from "./api-knowledge";
 import { KnowledgeAdmin } from "./knowledge-admin";
@@ -34,6 +38,7 @@ const VERSION = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(listKnowledgeVersions).mockResolvedValue([VERSION]);
+  vi.mocked(listRegulationVersions).mockResolvedValue([]);
   vi.mocked(previewKnowledge).mockResolvedValue({
     version: VERSION,
     validation: VERSION.validation!,

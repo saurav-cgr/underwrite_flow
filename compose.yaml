@@ -50,6 +50,7 @@ services:
     volumes:
       - ./knowledge-config:/app/knowledge-config:ro
       - ./product-config:/app/product-config:ro
+      - ./data/regulatory:/app/data/regulatory:ro
 
   api:
     build:
@@ -117,6 +118,7 @@ services:
       - ./evaluation:/app/evaluation:ro
       - ./knowledge-config:/app/knowledge-config:ro
       - ./product-config:/app/product-config:ro
+      - ./data/regulatory:/app/data/regulatory
       - ./scripts:/app/scripts:ro
       - uploads_data:/data/uploads
 

@@ -6,6 +6,16 @@ vi.mock("./api-knowledge", () => ({
   fetchGuidance: vi.fn(),
   listQuestions: vi.fn().mockResolvedValue([]),
   askQuestion: vi.fn(),
+  fetchPassageGuidance: vi.fn().mockResolvedValue({
+    passage: {
+      passage_key: "synthetic-section",
+      title: "Synthetic section",
+      body: "Synthetic passage body.",
+      topic: "claim",
+      label: "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    },
+    related_regulation: [],
+  }),
 }));
 
 import { fetchGuidance } from "./api-knowledge";

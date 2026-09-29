@@ -128,3 +128,30 @@ def test_knowledge_admin_lifecycle_contract() -> None:
                     request["json"] = body
                 response = getattr(client, method)(path, **request)
                 assert response.status_code == 403, (method, path)
+
+# Verify only administrators can touch the regulatory corpus endpoints.
+def test_regulation_endpoints_require_administrator() -> None:
+    version_id = uuid4()
+    with TestClient(create_app()) as client:
+        applicant = login(client, APPLICANT)
+        underwriter = login(client, UNDERWRITER)
+        protected = [
+            ("post", "/api/v1/knowledge/regulation/import", None),
+            (
+                "put",
+                f"/api/v1/knowledge/versions/{version_id}/passages/"
+                "circular%231/tags",
+                {"topic_tags": [], "limits": []},
+            ),
+        ]
+        for headers in (applicant, underwriter):
+            for method, path, body in protected:
+                request = {"headers": headers}
+                if body is not None:
+                    request["json"] = body
+                response = getattr(client, method)(path, **request)
+                assert response.status_code == 403, (method, path)
+        anonymous = client.post(
+            "/api/v1/knowledge/regulation/import",
+        )
+        assert anonymous.status_code == 401

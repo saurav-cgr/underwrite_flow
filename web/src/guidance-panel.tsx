@@ -4,6 +4,7 @@ import { ApiError } from "./api-core";
 import { fetchGuidance } from "./api-knowledge";
 import { Panel } from "./components";
 import { GuidanceQuestions } from "./guidance-questions";
+import { RegulationSide } from "./regulation-side";
 import { SpecialistBrief } from "./specialist-brief";
 import type { GuidanceCitation, GuidanceResponse } from "./types-knowledge";
 
@@ -94,6 +95,14 @@ export function GuidancePanel({
           Explanation unavailable.
         </p>
       ) : null}
+      {explanation.citations.map((citation) => (
+        <RegulationSide
+          caseId={caseId}
+          key={`${citation.version}:${citation.passage_key}`}
+          passageKey={citation.passage_key}
+          token={token}
+        />
+      ))}
       {guidance.specialist_brief ? (
         <SpecialistBrief brief={guidance.specialist_brief} />
       ) : null}

@@ -127,3 +127,39 @@ contract or copy full logs here.
   `api/tests/integration/test_guidance_read_robustness.py`, which exists so
   `test_specialist_brief.py` stays under 400 lines. (iteration 47,
   2026-09-29)
+- [M-039] US7 needs no migration: migration `09_knowledge_base.py` already
+  creates `product_lines`, `topic_tags`, `suggested_tags`, `limits`, and
+  `source_locator` on `knowledge_passages`. The planned
+  `13_regulation_passages.py` is withdrawn; a migration test locks the
+  columns instead. (iteration 48, 2026-09-29)
+- [M-040] The regulation manifest must accept an unquoted YAML date; the
+  shipped `manifest.yaml` uses date scalars, not strings, and typing the
+  field as `str` makes every real import answer 422 `manifest_invalid`.
+  (iteration 48, 2026-09-29)
+- [M-041] Regulation uploads are verified by streaming to a `.part` file
+  while hashing, then `os.replace` onto the manifest's declared file name;
+  a refusal commits its own `regulation_file_rejected` audit before the
+  request fails, because a raising handler would otherwise lose it.
+  (iteration 48, 2026-09-29)
+- [M-042] Regulation activation is a shared, product-less scope, so it
+  runs through `RegulationService.activate` dispatched by scope in
+  `knowledge/router.py`; `pin_case_knowledge` pins the active regulation
+  version for every product. The pinning test reads the active regulation
+  instead of asserting null. (iteration 48, 2026-09-29)
+- [M-043] A regulation clause body is capped at 6000 characters and its
+  key is `<manifest id>#<heading number>` with a
+  `<id>#page:<n>` source locator; a repeated heading number stays body
+  text so keys never collide. (iteration 48, 2026-09-29)
+- [M-044] A regulation version is identified by the manifest entries
+  plus every loaded clause (key, product lines, title, body). Identity
+  must cover everything the draft stores, or a later upload or a
+  manifest edit silently returns the older draft while the report
+  claims the file loaded. (iteration 49, 2026-09-29)
+- [M-045] A tag-only accept must keep stored limits: the request omits
+  `limits` and the service only overwrites them when the key is
+  present. (iteration 49, 2026-09-29)
+- [M-046] Route isolation is only meaningful when both comparison runs
+  have guidance enabled, because `evaluate_cases(guidance_enabled=
+  False)` never opens the knowledge tables. Manifest file names must
+  be plain names; an unreadable listed file is reported, never fatal.
+  (iteration 49, 2026-09-29)

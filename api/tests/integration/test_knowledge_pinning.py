@@ -214,7 +214,14 @@ def test_case_processing_creates_one_knowledge_pin() -> None:
                 (case_id, "case_guidance_pinned"),
             )
             audit_count = cursor.fetchone()[0]
-    assert pin == (None, None)
+        active_regulation = connection.execute(
+            "SELECT id FROM knowledge_versions WHERE scope = %s "
+            "AND status = %s",
+            ("regulation", "active"),
+        ).fetchone()
+    # Motor has no guideline corpus, so only the shared regulation pins.
+    assert pin[0] is None
+    assert pin[1] == (active_regulation[0] if active_regulation else None)
     assert audit_count == 1
     remove_case(case_id)
 

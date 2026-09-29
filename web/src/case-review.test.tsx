@@ -26,6 +26,16 @@ vi.mock("./api-knowledge", () => ({
     suggested_citations: [],
   }),
   listQuestions: vi.fn().mockResolvedValue([]),
+  fetchPassageGuidance: vi.fn().mockResolvedValue({
+    passage: {
+      passage_key: "synthetic-section",
+      title: "Synthetic section",
+      body: "Synthetic passage body.",
+      topic: "claim",
+      label: "SYNTHETIC - FOR DEMONSTRATION ONLY",
+    },
+    related_regulation: [],
+  }),
 }));
 
 import { completeCase, startReview, submitReview } from "./api";

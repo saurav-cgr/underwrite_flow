@@ -31,8 +31,19 @@ exists with different content. 422 when the file cannot be parsed.
 
 ### POST `/knowledge/regulation/import` (admin-config)
 
-Body: none. Reads the manifest, verifies checksums, loads a draft
-regulation version. 201 `{"id", "version", "files": [<load report>]}`.
+Body: multipart, one optional `file` part (at most 100 MB).
+
+With a file: the API accepts it only when its SHA-256 equals a
+`manifest.yaml` entry; it writes the bytes to that entry's declared file
+name under `data/regulatory/`. A file that is absent from the manifest,
+whose SHA-256 differs, or larger than 100 MB is rejected 422, audited
+`regulation_file_rejected`, and writes nothing.
+
+Either way it then verifies the manifest, loads every locally present
+linked file into one draft regulation version, and returns 201
+`{"id", "version", "files": [{"file", "status", "reason",
+"clause_count"}]}`. `status` is `loaded`, `reported`, or `rejected`;
+`.doc` and missing files are `reported`. The manifest is never edited.
 
 ### GET `/knowledge/versions?scope=&product_code=` (admin-read)
 

@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from underwriteflow.auth.dependencies import require_underwriter
 from underwriteflow.database import get_session
 from underwriteflow.knowledge.questions import ask_question, list_questions
+from underwriteflow.knowledge.regulation_view import related_clauses
 from underwriteflow.persistence.knowledge_models import (
     CaseGuidance,
     CaseKnowledgePin,
+    KnowledgePassage,
     KnowledgeVersion,
 )
 from underwriteflow.persistence.models import Case, Recommendation
@@ -98,6 +100,26 @@ class QuestionRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
 
 
+class PinnedPassageResponse(BaseModel):
+    """One pinned passage shown beside its related regulation clauses."""
+
+    passage_key: str
+    title: str
+    body: str
+    topic: str
+    label: str
+    source_locator: str | None = None
+
+
+class PassageGuidanceResponse(BaseModel):
+    """One pinned guideline passage and its related regulation clauses."""
+
+    passage: PinnedPassageResponse
+    related_regulation: list[PinnedPassageResponse] = Field(
+        default_factory=list
+    )
+
+
 class QuestionResponse(BaseModel):
     """Stored question with its cited answer or the fallback phrase."""
 
@@ -138,6 +160,70 @@ async def post_question(
     )
     await session.commit()
     return result
+
+
+# Return one pinned passage and the clauses related to it by meaning.
+@router.get(
+    "/{case_id}/guidance/passages/{passage_key}",
+    response_model=PassageGuidanceResponse,
+)
+async def get_guidance_passage(
+    case_id: UUID,
+    passage_key: str,
+    request: Request,
+    _: dict[str, object] = Depends(require_underwriter()),
+    session: AsyncSession = Depends(get_session),
+) -> PassageGuidanceResponse:
+    await _case_or_404(session, case_id)
+    pin = await session.scalar(
+        select(CaseKnowledgePin).where(CaseKnowledgePin.case_id == case_id)
+    )
+    passage = None
+    if pin is not None and pin.guideline_version_id is not None:
+        passage = await session.scalar(
+            select(KnowledgePassage).where(
+                KnowledgePassage.version_id == pin.guideline_version_id,
+                KnowledgePassage.passage_key == passage_key,
+            )
+        )
+    if passage is None:
+        raise HTTPException(status_code=404, detail="Passage not found")
+    settings = request.app.state.settings
+    query = f"{passage.title} {passage.body}"
+    related = await related_clauses(
+        session,
+        _optional(build_embedding_provider, settings),
+        pin.regulation_version_id if pin else None,
+        query,
+    )
+    return PassageGuidanceResponse(
+        passage=_passage_response(passage),
+        related_regulation=[
+            _passage_response(item) for item in related
+        ],
+    )
+
+
+# Convert one stored passage into the public passage response.
+def _passage_response(passage: KnowledgePassage | dict) -> (
+    PinnedPassageResponse
+):
+    if isinstance(passage, dict):
+        return PinnedPassageResponse(
+            passage_key=str(passage.get("passage_key", "")),
+            title=str(passage.get("title", "")),
+            body=str(passage.get("body", "")),
+            topic=str(passage.get("topic", "")),
+            label=str(passage.get("label", "")),
+        )
+    return PinnedPassageResponse(
+        passage_key=passage.passage_key,
+        title=passage.title,
+        body=passage.body,
+        topic=passage.topic,
+        label=passage.label,
+        source_locator=passage.source_locator,
+    )
 
 
 # List every underwriter's questions for one case, oldest first.

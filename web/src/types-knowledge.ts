@@ -34,6 +34,43 @@ export interface KnowledgeImportResult extends KnowledgeVersion {
   validation: { valid: boolean; issues: Record<string, unknown>[] };
 }
 
+export interface RegulationFileReport {
+  file: string;
+  status: "loaded" | "reported" | "rejected";
+  reason: string | null;
+  clause_count: number;
+}
+
+export interface RegulationImportResult extends KnowledgeVersion {
+  files: RegulationFileReport[];
+}
+
+export interface RegulationTagLimit {
+  field: string;
+  operator: string;
+  value: number;
+}
+
+export interface RegulationTags {
+  passage_key: string;
+  topic_tags: string[];
+  limits: RegulationTagLimit[];
+}
+
+export interface PinnedPassage {
+  passage_key: string;
+  title: string;
+  body: string;
+  topic: string;
+  label: string;
+  source_locator?: string | null;
+}
+
+export interface PassageGuidance {
+  passage: PinnedPassage;
+  related_regulation: PinnedPassage[];
+}
+
 export interface GuidanceCitation {
   version: string;
   passage_key: string;

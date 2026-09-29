@@ -6,6 +6,9 @@ import type {
   KnowledgePreview,
   KnowledgeVersion,
   GuidanceResponse,
+  PassageGuidance,
+  RegulationImportResult,
+  RegulationTags,
 } from "./types-knowledge";
 
 // List guideline versions, newest first.
@@ -60,6 +63,58 @@ export function fetchGuidance(
   caseId: string,
 ): Promise<GuidanceResponse> {
   return request(`/reviews/${caseId}/guidance`, token);
+}
+
+// List regulation versions, newest first.
+export function listRegulationVersions(
+  token: string,
+): Promise<KnowledgeVersion[]> {
+  return request("/knowledge/versions?scope=regulation", token);
+}
+
+// Import the manifest folder, storing one approved upload first if given.
+export function importRegulation(
+  token: string,
+  file?: File,
+): Promise<RegulationImportResult> {
+  const body = new FormData();
+  if (file) body.append("file", file);
+  return request("/knowledge/regulation/import", token, {
+    method: "POST",
+    body,
+  });
+}
+
+// Accept administrator topic tags on one regulation draft clause.
+export function acceptRegulationTags(
+  token: string,
+  versionId: string,
+  passageKey: string,
+  topicTags: string[],
+): Promise<RegulationTags> {
+  return request(
+    `/knowledge/versions/${versionId}/passages/` +
+      `${encodeURIComponent(passageKey)}/tags`,
+    token,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic_tags: topicTags }),
+    },
+  );
+}
+
+// Read one pinned passage beside its related regulation clauses.
+export function fetchPassageGuidance(
+  token: string,
+  caseId: string,
+  passageKey: string,
+): Promise<PassageGuidance> {
+  return request(
+    `/reviews/${caseId}/guidance/passages/` +
+      `${encodeURIComponent(passageKey)}`,
+    token,
+  );
 }
 
 // Read every underwriter's questions for one case, oldest first.

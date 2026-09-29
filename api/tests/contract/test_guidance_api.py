@@ -1,13 +1,146 @@
 """Underwriter-only stored guidance API contract tests."""
 
-from uuid import uuid4
+from pathlib import Path
+from uuid import UUID, uuid4
 
+import psycopg
 from fastapi.testclient import TestClient
 
 from fixtures.records import remove_case, seed_case
+from fixtures.regulation import (
+    listed_entry,
+    write_document,
+    write_manifest,
+)
 from fixtures.support import ADMINISTRATOR, APPLICANT, UNDERWRITER, login
 from underwriteflow.app import create_app
 from underwriteflow.config import Settings
+
+DATABASE_URL = (
+    "postgresql://underwriteflow:synthetic-local-password@"
+    "db:5433/underwriteflow"
+)
+
+# Four numbered clauses so a limit of three is observable.
+REGULATION_CLAUSES = [
+    "1. Claim settlement\nInsurers settle motor claims within thirty days.",
+    "2. Cover amount\nCover limits follow the sum insured.",
+    "3. Disclosure\nEvery policyholder receives a prospectus.",
+    "4. Renewal\nA renewal notice is issued before expiry.",
+]
+
+# The guideline passage whose related clauses the endpoint resolves.
+CLAIM_PASSAGE_BODY = (
+    "Claims must be settled within thirty days of receiving evidence."
+)
+
+
+# Insert one active motor guideline section for passage lookups.
+def seed_motor_guideline() -> str:
+    with psycopg.connect(DATABASE_URL) as connection:
+        product_id = connection.execute(
+            "SELECT id FROM products WHERE code = %s",
+            ("motor-private-car",),
+        ).fetchone()[0]
+        version_id = connection.execute(
+            "INSERT INTO knowledge_versions (id, scope, product_id, version, "
+            "content_type, status, content_hash, source, validation) VALUES "
+            "(gen_random_uuid(), 'guideline', %s, %s, 'synthetic_guidance', "
+            "'active', %s, '{}', '{}') RETURNING id",
+            (product_id, f"contract-{uuid4().hex[:8]}", "c" * 64),
+        ).fetchone()[0]
+        connection.execute(
+            "INSERT INTO knowledge_passages (id, version_id, passage_key, "
+            "product_lines, topic, topic_tags, suggested_tags, limits, "
+            "thresholds, title, body, label) VALUES "
+            "(gen_random_uuid(), %s, %s, '[]', 'claim', '[]', '[]', '[]', "
+            "'[]', %s, %s, 'SYNTHETIC - FOR DEMONSTRATION ONLY')",
+            (
+                version_id,
+                "motor-claim-clause",
+                "Claim settlement duty",
+                CLAIM_PASSAGE_BODY,
+            ),
+        )
+        connection.commit()
+    return str(version_id)
+
+
+# Pin one seeded case to the guideline and regulation versions under test.
+def pin_case(case_id: UUID, guideline_id: str, regulation_id: str) -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        connection.execute(
+            "INSERT INTO case_knowledge_pins (case_id, guideline_version_id, "
+            "regulation_version_id) VALUES (%s, %s, %s)",
+            (case_id, guideline_id, regulation_id),
+        )
+        connection.commit()
+
+
+# Remove the seeded case and both knowledge versions under test.
+def remove_seeded(case_id: UUID, version_ids: list[str]) -> None:
+    remove_case(case_id)
+    with psycopg.connect(DATABASE_URL) as connection:
+        for version_id in version_ids:
+            connection.execute(
+                "DELETE FROM knowledge_passages WHERE version_id = %s",
+                (version_id,),
+            )
+            connection.execute(
+                "DELETE FROM knowledge_versions WHERE id = %s",
+                (version_id,),
+            )
+        connection.commit()
+
+
+# Verify at most three labelled clauses sit beside a guideline passage.
+def test_guidance_passage_lists_related_regulation(
+    regulation_client: tuple[TestClient, dict[str, str], Path],
+) -> None:
+    client, admin, root = regulation_client
+    write_document(root, "circular.pdf", REGULATION_CLAUSES)
+    write_manifest(root, [listed_entry(root, "circular.pdf")])
+    imported = client.post(
+        "/api/v1/knowledge/regulation/import", headers=admin
+    )
+    assert imported.status_code == 201, imported.text
+    regulation_id = imported.json()["id"]
+    activated = client.post(
+        f"/api/v1/knowledge/versions/{regulation_id}/activate",
+        headers=admin,
+    )
+    assert activated.status_code == 200, activated.text
+    guideline_id = seed_motor_guideline()
+    case_id = uuid4()
+    seed_case(case_id)
+    pin_case(case_id, guideline_id, regulation_id)
+    try:
+        underwriter = login(client, UNDERWRITER)
+        response = client.get(
+            f"/api/v1/reviews/{case_id}/guidance/passages/motor-claim-clause",
+            headers=underwriter,
+        )
+        unknown = client.get(
+            f"/api/v1/reviews/{case_id}/guidance/passages/missing-clause",
+            headers=underwriter,
+        )
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["passage"]["passage_key"] == "motor-claim-clause"
+        assert body["passage"]["body"] == CLAIM_PASSAGE_BODY
+        related = body["related_regulation"]
+        assert 1 <= len(related) <= 3
+        assert {item["label"] for item in related} == {
+            "PUBLIC REGULATION - INFORMATIONAL"
+        }
+        assert all(
+            item["passage_key"].startswith("circular#")
+            for item in related
+        )
+        assert unknown.status_code == 404, unknown.text
+    finally:
+        remove_seeded(case_id, [guideline_id, regulation_id])
 
 
 # Verify a submitted case exposes stable guidance shape to underwriters.
@@ -50,6 +183,27 @@ def test_underwriter_guidance_shape_and_route_stability() -> None:
             assert before.json()["recommendation"]["route"] == (
                 after.json()["recommendation"]["route"]
             )
+    finally:
+        remove_case(case_id)
+
+
+# Verify applicants and administrators cannot read related clauses.
+def test_guidance_passage_rejects_other_roles() -> None:
+    case_id = uuid4()
+    seed_case(case_id)
+    try:
+        settings = Settings(generation_provider="fake")
+        with TestClient(create_app(settings)) as client:
+            path = (
+                f"/api/v1/reviews/{case_id}/guidance/passages/"
+                "motor-claim-clause"
+            )
+            applicant = client.get(path, headers=login(client, APPLICANT))
+            administrator = client.get(
+                path, headers=login(client, ADMINISTRATOR)
+            )
+            assert applicant.status_code == 403
+            assert administrator.status_code == 403
     finally:
         remove_case(case_id)
 

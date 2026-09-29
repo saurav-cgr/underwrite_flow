@@ -89,7 +89,10 @@ Post-design re-check: unchanged. No violation needs Complexity Tracking.
 4. **US4**: Alembic `11_case_guidance.py`; Gemini guidance adapter.
    `@playwright/test` dev dependency: approved 2026-09-28.
 5. **US5**: Alembic `12_case_questions.py`.
-6. **US7**: Alembic `13_regulation_passages.py`.
+6. **US7**: no migration. Migration `09_knowledge_base.py` already created
+   `product_lines`, `topic_tags`, `suggested_tags`, `limits`, and
+   `source_locator` on `knowledge_passages`, so the planned
+   `13_regulation_passages.py` was withdrawn (2026-09-29).
 
 ## Story delivery map
 
@@ -120,7 +123,9 @@ One story at a time; each ends with the report-and-`continue` gate.
 - **US6**: `knowledge/brief.py`; suggested citations. Web: brief panel
   and override-dialog suggestions.
 - **US7**: `knowledge/regulation.py` (manifest, checksum, clause split);
-  tag and related-clause endpoints. Web: side-by-side view, tag review.
+  `regulation_upload.py`, `regulation_service.py`, `regulation_router.py`
+  (verified upload, tags, shared activation), `regulation_view.py` (related
+  clauses). Web: side-by-side view, tag review.
   Tests first: checksum, skip, route isolation.
 - **US8**: `knowledge/conformance.py`; preview keys; activation audit.
   Web: preview flags and diff. Tests first: flags never block.

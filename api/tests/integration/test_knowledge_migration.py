@@ -152,3 +152,30 @@ def test_case_questions_table_columns() -> None:
                 ("ck_case_questions_question_length",),
             )
             assert cursor.fetchone() == (1,)
+
+
+# Verify the passage columns a regulatory clause needs already exist.
+def test_regulation_passage_columns_present() -> None:
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT column_name, data_type, is_nullable "
+                "FROM information_schema.columns "
+                "WHERE table_name = %s AND column_name IN (%s, %s, %s, %s, "
+                "%s) ORDER BY column_name",
+                (
+                    "knowledge_passages",
+                    "product_lines",
+                    "topic_tags",
+                    "suggested_tags",
+                    "limits",
+                    "source_locator",
+                ),
+            )
+            assert cursor.fetchall() == [
+                ("limits", "jsonb", "NO"),
+                ("product_lines", "jsonb", "NO"),
+                ("source_locator", "character varying", "YES"),
+                ("suggested_tags", "jsonb", "NO"),
+                ("topic_tags", "jsonb", "NO"),
+            ]

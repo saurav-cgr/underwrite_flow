@@ -33,6 +33,20 @@ rules, any change to route precedence.
 - Q: Can other underwriters see a case's past Q&A? → A: Yes; every
   underwriter sees the full Q&A history of a case.
 
+### Session 2026-09-29
+
+- Q: Where should the API store the bytes of an uploaded regulation PDF
+  that passes the checksum check? → A: Write the verified bytes to
+  `data/regulatory/<file name declared by the manifest>`; the manifest
+  is never edited and stays the only allowlist.
+- Q: What per-file size limit should the regulation upload accept? →
+  A: 100 MB per file; the existing 10 MB applicant-document cap is
+  unchanged and regulation upload stays a separate administrator path.
+- Q: Should one upload call also load the clauses into a draft version?
+  → A: Yes; `POST /knowledge/regulation/import` takes an optional file,
+  verifies, stores, and audits it, then loads every locally present
+  manifest document into a draft and returns one report.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Life Guideline Corpus (Priority: P1)
@@ -225,6 +239,9 @@ regulatory corpus and confirm identical routes.
 2. **Given** a file whose checksum differs, or a file absent from the
    manifest, **When** loading runs, **Then** that file is rejected and
    reported.
+2a. **Given** an administrator who uploads a document equal to an
+   unlisted file, **When** the upload runs, **Then** it is rejected,
+   audited `regulation_file_rejected`, and no bytes are written.
 3. **Given** a guideline section, **When** a reviewer views it, **Then**
    the most related clauses from the pinned regulatory version, found by
    meaning, appear beside it.
@@ -281,6 +298,10 @@ for motor and health.
   citation is dropped and logged; FR-019 decides the outcome.
 - A regulatory file is missing locally: that document is skipped and
   reported; the rest load.
+- An uploaded regulatory file is over 100 MB, or absent from the
+  manifest, or its SHA-256 differs from the manifest entry: rejected
+  before any clause is stored; a checksum or allowlist failure is
+  audited `regulation_file_rejected`.
 - Unsupported or manual cases: no route explanation is generated.
 
 ## Requirements *(mandatory)*
@@ -324,9 +345,16 @@ for motor and health.
   exchange, and every conformance flag at activation.
 - **FR-014**: Regulatory clauses MUST load only from documents listed in
   `data/regulatory/manifest.yaml` whose checksum matches, badged
-  `PUBLIC REGULATION - INFORMATIONAL`.
+  `PUBLIC REGULATION - INFORMATIONAL`. An administrator MAY upload a
+  document to `POST /knowledge/regulation/import`; the system MUST
+  accept it only when its SHA-256 matches a manifest entry, MUST write
+  the verified bytes to that entry's declared file name under
+  `data/regulatory/`, MUST accept at most 100 MB per file, and MUST
+  otherwise reject it, audit `regulation_file_rejected`, and write
+  nothing. The manifest is never edited by an upload.
 - **FR-015**: Regulatory text MUST stay out of version control and out of
-  route calculation.
+  route calculation; `data/regulatory/` stays git-ignored, including
+  uploaded files.
 - **FR-016**: Specialist-routed cases MUST receive a brief with evidence
   sources, triggered rules, and cited passages.
 - **FR-017**: The rules preview MUST show possible regulatory conflicts and

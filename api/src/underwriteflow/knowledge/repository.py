@@ -168,3 +168,16 @@ class KnowledgeRepository:
             )
         )
         return list(result)
+
+    # List active versions of one shared scope that no product owns.
+    async def list_active_shared(
+        self, session: AsyncSession, scope: str
+    ) -> list[KnowledgeVersion]:
+        result = await session.scalars(
+            select(KnowledgeVersion).where(
+                KnowledgeVersion.scope == scope,
+                KnowledgeVersion.product_id.is_(None),
+                KnowledgeVersion.status == "active",
+            )
+        )
+        return list(result)

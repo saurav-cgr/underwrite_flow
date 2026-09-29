@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     )
     refresh_token_pepper: str = "synthetic-local-refresh-pepper"
     upload_root: str = "/data/uploads"
+    regulatory_root: str = "/app/data/regulatory"
     cors_origins: tuple[str, ...] = (
         "http://localhost:5173",
         "http://127.0.0.1:5173",

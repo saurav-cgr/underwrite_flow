@@ -14,6 +14,7 @@ from underwriteflow.knowledge.errors import (
     KnowledgeValidationError,
 )
 from underwriteflow.knowledge.repository import KnowledgeRepository
+from underwriteflow.knowledge.regulation_service import RegulationService
 from underwriteflow.knowledge.schemas import (
     KnowledgePreviewResponse,
     KnowledgeYamlPayload,
@@ -22,11 +23,18 @@ from underwriteflow.knowledge.service import KnowledgeService
 
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+SHARED_SCOPES = {"regulation"}
 
 
 # Require guideline scope for the first versioned knowledge API.
 def validate_scope(scope: str) -> None:
     if scope != "guideline":
+        raise HTTPException(status_code=422, detail="unsupported scope")
+
+
+# Accept a shared scope for reading, which loads no product corpus.
+def validate_list_scope(scope: str) -> None:
+    if scope != "guideline" and scope not in SHARED_SCOPES:
         raise HTTPException(status_code=422, detail="unsupported scope")
 
 
@@ -99,7 +107,7 @@ async def list_knowledge_versions(
     session: AsyncSession = Depends(get_session),
 ) -> list[dict]:
     if scope is not None:
-        validate_scope(scope)
+        validate_list_scope(scope)
     rows = await KnowledgeRepository().list_versions(
         session, scope, product_code
     )
@@ -176,10 +184,15 @@ async def activate_knowledge(
     ),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
+    actor = UUID(admin["sub"])
+    existing = await KnowledgeRepository().find(session, version_id)
+    service = (
+        RegulationService()
+        if existing is not None and existing.scope in SHARED_SCOPES
+        else KnowledgeService()
+    )
     try:
-        version = await KnowledgeService().activate(
-            session, version_id, UUID(admin["sub"])
-        )
+        version = await service.activate(session, version_id, actor)
     except KnowledgeValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
     except KnowledgeConflictError as error:
