@@ -163,3 +163,17 @@ contract or copy full logs here.
   False)` never opens the knowledge tables. Manifest file names must
   be plain names; an unreadable listed file is reported, never fatal.
   (iteration 49, 2026-09-29)
+- [M-047] US8 conformance is deterministic: accepted regulation limits flag
+  thresholds, accepted topic tags produce related clauses, suggested tags
+  never match, and activation records flags without blocking.
+  (iteration 50, 2026-09-29)
+- [M-048] Conformance uses shared `condition_value` for rule shorthand;
+  activation reads real sessions only, related clauses render, and rule
+  additions/removals have mutation coverage. (iteration 51, 2026-09-29)
+- [M-049] US8 conformance limits use flagged-zone semantics: a rule flags
+  when its scalar value satisfies the accepted operator; `equals` flags equal
+  values. Accepted operators are closed and activation audits per-flag scalar
+  metadata without clause text. (iteration 52, 2026-09-29)
+- [M-050] User confirmed DEBT-049: US8 limits are flagged zones. Non-finite
+  values produce no conformance flag; API limits reject NaN and infinity.
+  (iteration 53, 2026-09-30)

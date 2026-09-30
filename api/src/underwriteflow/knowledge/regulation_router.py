@@ -1,6 +1,7 @@
 """Administrator endpoints for the informational regulatory corpus."""
 
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
 from fastapi import (
@@ -33,8 +34,14 @@ class RegulationTagLimit(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     field: str = Field(min_length=1, max_length=100)
-    operator: str = Field(min_length=1, max_length=50)
-    value: int | float
+    operator: Literal[
+        "equals",
+        "greater_than",
+        "greater_than_or_equal",
+        "less_than",
+        "less_than_or_equal",
+    ]
+    value: int | float = Field(allow_inf_nan=False)
 
 
 class RegulationTagPayload(BaseModel):

@@ -166,3 +166,9 @@ Response gains two keys; activation is never blocked by them:
 
 `POST /products/{code}/activate` (existing) records a
 `conformance_flags_recorded` audit event when flags exist and proceeds.
+
+Conformance limits use flagged-zone semantics: a flag is emitted when the
+rule's scalar value satisfies the limit operator and value. `equals` therefore
+flags equal values, while inequality operators flag values in their respective
+zones. Accepted operators are `equals`, `greater_than`,
+`greater_than_or_equal`, `less_than`, and `less_than_or_equal`.

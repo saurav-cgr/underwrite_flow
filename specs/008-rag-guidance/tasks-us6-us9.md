@@ -120,22 +120,22 @@ tests/integration/test_regulation_route_isolation.py -q`;
 **Goal**: Deterministic flags and change impact; never blocks.
 **Independent test**: flagged draft still activates.
 
-- [ ] T081 [US8] Write failing tests in `tests/unit/test_conformance.py`:
+- [x] T081 [US8] Write failing tests in `tests/unit/test_conformance.py`:
   flag when an accepted clause limit is violated; related clauses via
   accepted tags only; suggested tags never match; diff lists added,
   removed, changed thresholds and documents.
-- [ ] T082 [US8] Implement `src/underwriteflow/knowledge/conformance.py`.
-- [ ] T083 [US8] Write failing tests in
+- [x] T082 [US8] Implement `src/underwriteflow/knowledge/conformance.py`.
+- [x] T083 [US8] Write failing tests in
   `tests/integration/test_conformance_preview.py`: `POST
   /products/preview` includes `conformance` and `change_impact`;
   activation with flags succeeds and audits `conformance_flags_recorded`.
-- [ ] T084 [US8] Merge the keys with one call in
+- [x] T084 [US8] Merge the keys with one call in
   `src/underwriteflow/products/router.py` preview and one audit call in
   `activate`.
-- [ ] T085 [US8] Write failing Vitest tests in
+- [x] T085 [US8] Write failing Vitest tests in
   `web/src/conformance-preview.test.tsx`: flags, diff, label text,
   activation button stays enabled.
-- [ ] T086 [US8] Implement `web/src/conformance-preview.tsx`; mount in
+- [x] T086 [US8] Implement `web/src/conformance-preview.tsx`; mount in
   `web/src/product-import.tsx` preview.
 
 **Checkpoint US8**: `API pytest tests/unit/test_conformance.py

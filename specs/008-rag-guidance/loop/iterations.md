@@ -1179,3 +1179,122 @@ marks the loop done. It records the story and criteria ready for checking.
     iteration's additions; the checker should rerun the checkpoint.
   - DEBT-038 (write mount on `api`) still needs human confirmation.
 - Handoff: ready-for-check
+
+## Iteration 50 - 2026-09-29
+- Story: US8
+- Targeted criteria: D8
+- Worktree: in place
+- Change:
+  - Added deterministic conformance and change-impact helpers in
+    `api/src/underwriteflow/knowledge/conformance.py`; accepted regulation
+    limits flag rule thresholds, accepted topic tags produce related clauses,
+    and suggested tags never match.
+  - Extended `POST /products/preview` with conformance and change-impact
+    keys; product activation records `conformance_flags_recorded` while
+    allowing flagged versions to activate.
+  - Added focused unit and integration coverage in
+    `api/tests/unit/test_conformance.py` and
+    `api/tests/integration/test_conformance_preview.py`.
+  - Added `web/src/conformance-preview.tsx`, its Vitest coverage, and mounted
+    it in `web/src/product-import.tsx` with typed preview fields.
+  - Checked T081-T086 in `specs/008-rag-guidance/tasks-us6-us9.md`.
+- Maker self-assessment: D8 appears maker-ready. Full API, web, build, and
+  smoke gates pass. This is the maker's view, not a verdict.
+- Verification:
+  - Red-first unit collection failed before `conformance.py` existed.
+  - Focused US8 API tests: 3 passed; focused web tests: 12 passed.
+  - `make test-api`: 685 passed; `make test-web`: 199 passed; web build and
+    `make smoke` pass.
+  - Changed hand-written files stay below 400 lines and 80 columns;
+    `git diff --check` clean; nothing staged; no secret-like file added.
+- Open questions / risks: Checker should independently verify limit
+  comparison semantics, related-tag matching, activation audit contents, and
+  the US8 quickstart. D8 still needs checker verdict, staff review, and human
+  sign-off.
+- Handoff: ready-for-check
+
+## Iteration 51 - 2026-09-29
+- Story: US8 repair
+- Targeted criteria: D8 (checker-fail from iteration 50)
+- Worktree: in place
+- Change:
+  - Reused `products.schemas.condition_value` in
+    `knowledge/conformance.py`, covering `{field, equals: ...}` conditions;
+    unknown limit operators now flag instead of silently disappearing.
+  - Reused alignment scalar comparison and removed the production
+    test-double bypass from activation conformance.
+  - Added unit coverage for equals semantics and added/removed rules;
+    integration coverage now asserts audited rule codes.
+  - Rendered related accepted-tag clauses and operator/value details in
+    `web/src/conformance-preview.tsx`; added a Vitest assertion that flags do
+    not disable the import action.
+- Maker self-assessment: D8 appears maker-ready again. This is the maker's
+  view, not a verdict.
+- Verification:
+  - Focused API: 15 passed; focused web: 13 passed; web build passed.
+  - `make test-api`: 687 passed; `make test-web`: 200 passed; `make smoke`
+    passed.
+  - Changed hand-written files remain below 400 lines and 80 columns;
+    `git diff --check` clean; nothing staged; no secret-like file added.
+- Open questions / risks: Staff review and human sign-off remain pending;
+  checker should rerun the US8 quickstart and independent mutation probes.
+- Handoff: ready-for-check
+
+## Iteration 52 - 2026-09-29
+- Story: US8 staff-review repair
+- Targeted criteria: D8 (checker-fail, DEBT-049)
+- Worktree: in place
+- Change:
+  - Defined conformance limits as flagged zones in
+    `api/src/underwriteflow/knowledge/conformance.py:24-45`; `equals` now flags
+    equal scalar values, matching the documented operator semantics.
+  - Restricted accepted regulation operators in
+    `knowledge/regulation_router.py:34-45` and documented the five supported
+    operators in `specs/008-rag-guidance/contracts/rest-api.md`.
+  - Added sanitized per-flag details to the
+    `conformance_flags_recorded` audit event in
+    `products/service.py:294-313`, with integration assertions.
+  - Rendered old/new change-impact values in
+    `web/src/conformance-preview.tsx:58-70` with a regression assertion.
+- Maker self-assessment: D8 appears maker-ready again after the staff-review
+  repairs. This is the maker's view, not a verdict.
+- Verification:
+  - Focused API: 15 passed; focused web: 13 passed.
+  - `make test-api`: 687 passed, 100% target coverage.
+  - `make test-web`: 200 passed; web production build passed.
+  - `make smoke` passed; `git diff --check` clean.
+  - Changed hand-written files remain below 400 lines and 80 columns.
+- Open questions / risks: The checker and human must confirm that flagged-zone
+  semantics are the intended meaning of a conformance limit, then close
+  DEBT-049. Unknown operators in legacy stored data still conservatively flag.
+- Handoff: ready-for-check
+
+## Iteration 53 - 2026-09-30
+- Story: US8 non-finite input repair
+- Targeted criteria: D8 (checker-fail, DEBT-049 accepted by human)
+- Worktree: in place
+- Change:
+  - `_violates` now ignores non-finite `Decimal` values, so NaN and infinity
+    cannot raise during conformance preview or activation.
+  - `RegulationTagLimit.value` rejects NaN and infinity at the API boundary.
+  - Added unit coverage for NaN, positive infinity, and negative infinity in
+    both conformance evaluation and accepted regulation limits.
+  - Recorded DEBT-049 as accepted flagged-zone semantics and added staff review
+    `reviews/review-20260930-105233.md`.
+- Maker self-assessment: D8 appears maker-ready. This is the maker's view,
+  not a verdict.
+- Verification:
+  - Red-first focused regression failed with `decimal.InvalidOperation` before
+    the repair; the same test passes after the repair.
+  - Focused conformance, integration, and product tests: 16 passed.
+  - `make test-api`: 688 passed, 100% target coverage.
+  - `make test-web`: 200 passed; web production build passed.
+  - `make smoke`: passed.
+  - Staff review approved US8 with zero blockers or warnings.
+  - Changed hand-written files remain below 400 lines and 80 columns;
+    `git diff --check` passes; no secrets staged.
+- Open questions / risks: Independent checker must rerun US8 probes and record
+  the verdict. D8 human sign-off remains pending. Legacy unknown operators
+  still conservatively flag numeric values.
+- Proposed commit: `fix: harden US8 conformance comparisons`
+- Handoff: ready-for-check
