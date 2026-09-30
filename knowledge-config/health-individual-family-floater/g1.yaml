@@ -1,0 +1,76 @@
+# SYNTHETIC - FOR DEMONSTRATION ONLY
+product_code: health-individual-family-floater
+version: g1
+aligned_product_version: v3
+label: SYNTHETIC - FOR DEMONSTRATION ONLY
+topics:
+  - member-count
+  - hospitalization
+  - continuity
+  - identity
+  - member-relationship
+  - hospitalization-record
+  - previous-policy
+  - lapse-gap
+sections:
+  - id: health-hospitalization-specialist
+    title: Prior hospitalization
+    topic: hospitalization
+    thresholds:
+      - rule_code: prior_hospitalization_specialist
+        field: prior_hospitalization
+        operator: equals
+        value: true
+    body: Prior hospitalization uses specialist health review.
+  - id: health-large-floater-standard
+    title: Large family floater
+    topic: member-count
+    thresholds:
+      - rule_code: large_floater_standard
+        field: member_count
+        operator: greater_than
+        value: 4
+    body: More than 4 covered members uses standard review.
+  - id: health-member-relationship-record
+    title: Member relationship record
+    topic: member-relationship
+    thresholds:
+      - rule_code: document:member_relationship_record
+        field: member_count
+        operator: greater_than
+        value: 1
+    body: More than 1 covered member needs relationship evidence.
+  - id: health-hospitalization-record
+    title: Hospitalization record
+    topic: hospitalization-record
+    thresholds:
+      - rule_code: document:hospitalization_record
+        field: prior_hospitalization
+        operator: equals
+        value: true
+    body: Prior hospitalization needs a synthetic hospital record.
+  - id: health-member-count
+    title: Covered member count
+    topic: member-count
+    body: Covered member count supports fictional floater processing.
+  - id: health-identity-evidence
+    title: Identity evidence
+    topic: identity
+    body: Identity evidence supports fictional member reconciliation.
+  - id: health-continuity
+    title: Continuity record
+    topic: continuity
+    body: Continuity months support fictional health renewal checks.
+  - id: health-previous-policy
+    title: Previous policy
+    topic: previous-policy
+    body: Previous policy supports fictional renewal evidence checks.
+  - id: health-renewal-lapse
+    title: Renewal lapse gap
+    topic: lapse-gap
+    thresholds:
+      - rule_code: reconciliation:health_renewal_lapse
+        field: maximum_gap_days
+        operator: equals
+        value: 30
+    body: A lapse gap up to 30 days uses the fictional renewal check.

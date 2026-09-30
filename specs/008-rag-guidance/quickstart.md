@@ -110,5 +110,14 @@ A failing gate stops the next gate.
 ### US9: Motor and health
 
 - Run the US1 and US3 checks, including the end-to-end retrieval
-  script, for `motor-private-car` and `health-individual-family-floater`.
+  script, for `motor-private-car` and
+  `health-individual-family-floater`:
+
+  ```bash
+  docker compose run --rm api python /app/scripts/evaluate_retrieval.py \
+    motor-private-car
+  docker compose run --rm api python /app/scripts/evaluate_retrieval.py \
+    health-individual-family-floater
+  ```
+
 - Expect: alignment passes and recall is at least 0.90 per product.

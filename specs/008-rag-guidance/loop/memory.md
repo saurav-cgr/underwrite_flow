@@ -177,3 +177,9 @@ contract or copy full logs here.
 - [M-050] User confirmed DEBT-049: US8 limits are flagged zones. Non-finite
   values produce no conformance flag; API limits reject NaN and infinity.
   (iteration 53, 2026-09-30)
+- [M-051] US9 g1 corpora align to motor v5 and health v3; recall evaluation
+  selects the active guideline by product code. (iteration 54, 2026-09-30)
+- [M-052] Retrieval recall tests always import g1 through KnowledgeService,
+  so stored identity hashes are checked before reuse. (iteration 55, 2026-09-30)
+- [M-053] Motor and health recall questions do not pass product-specific case
+  facts until retrieval has an approved product-band design. (iteration 57)

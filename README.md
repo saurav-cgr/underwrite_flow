@@ -101,14 +101,29 @@ docker compose up --build
 ```
 
 `.env.example` lists required fields: `EMBEDDING_PROVIDER`, `GEMINI_API_KEY`,
-`GEMINI_MODEL`, `GEMINI_NO_TRAINING_ACKNOWLEDGED`, `PROVIDER_ALLOWED_HOSTS`,
-and `PII_REDACTION_TERMS`. Keep the approved Gemini host in the allowlist. Set
+`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`,
+`GEMINI_NO_TRAINING_ACKNOWLEDGED`, `PROVIDER_ALLOWED_HOSTS`, and
+`PII_REDACTION_TERMS`. Keep the approved Gemini host in the allowlist. Set
 redaction terms for deployment-specific identifiers before any request.
 Only approved, redacted synthetic task data may leave the local boundary.
 
 Without an approved project or credential, keep both provider settings at
 `fake`. The fake path needs no cloud credential and remains the default for
 local checks.
+
+### Knowledge guidance administration
+
+Administrators open Knowledge Guidance to validate, import, preview, and
+activate versioned fictional guideline YAML. The active product corpus is
+aligned to the pinned product configuration before activation. Regulation
+imports are separate, carry the `PUBLIC REGULATION - INFORMATIONAL` badge,
+and never affect route calculation. Product and regulation versions are
+stored immutably and pinned when case processing starts.
+
+Guidance retrieval uses the pinned guideline version, case facts, lexical
+search, and vector search. Results are fused deterministically and cited in
+the review panel. Use `GEMINI_EMBEDDING_MODEL` only with an approved Gemini
+embedding setup; local checks use the fake embedding provider.
 
 ## Environment mode startup paths
 

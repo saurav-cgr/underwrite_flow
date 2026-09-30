@@ -9,6 +9,20 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 CORPUS_LABEL = "SYNTHETIC - FOR DEMONSTRATION ONLY"
 SECTION_ID_PATTERN = re.compile(r"^[a-z]+(-[a-z0-9]+)+$")
 PRODUCT_TOPICS = {
+    "motor-private-car": frozenset(
+        {
+            "vehicle-age",
+            "vehicle-use",
+            "prior-claims",
+            "identity",
+            "vehicle-record",
+            "registration",
+            "inspection",
+            "previous-policy",
+            "ncb",
+            "lapse-gap",
+        }
+    ),
     "life-individual-term": frozenset(
         {
             "age",
@@ -19,6 +33,18 @@ PRODUCT_TOPICS = {
             "lapse-gap",
             "occupation",
             "previous-policy",
+        }
+    ),
+    "health-individual-family-floater": frozenset(
+        {
+            "member-count",
+            "hospitalization",
+            "continuity",
+            "identity",
+            "member-relationship",
+            "hospitalization-record",
+            "previous-policy",
+            "lapse-gap",
         }
     ),
 }

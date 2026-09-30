@@ -1298,3 +1298,105 @@ marks the loop done. It records the story and criteria ready for checking.
   still conservatively flag numeric values.
 - Proposed commit: `fix: harden US8 conformance comparisons`
 - Handoff: ready-for-check
+
+## Iteration 54 — 2026-09-30
+- Targeted criteria: D9
+- Worktree: in place
+- Change:
+  - Added motor and health topic vocabularies and g1 corpora aligned to the
+    newest product configurations in
+    `api/src/underwriteflow/knowledge/corpus.py` and
+    `knowledge-config/`.
+  - Added 30-question motor and health recall datasets and parametrized
+    `api/tests/integration/test_retrieval_recall.py` across motor, life, and
+    health.
+  - Added `api/tests/unit/test_product_corpus_alignment.py` and generalized
+    `scripts/evaluate_retrieval.py` to select a product.
+  - Updated `README.md` and `docs/ARCHITECTURE.md` with knowledge admin,
+    embedding, and retrieval guidance.
+  - Checked T087-T092 in `specs/008-rag-guidance/tasks-us6-us9.md`.
+- Maker self-assessment: D9 appears maker-ready. This is the maker's view,
+  not a verdict.
+- Verification:
+  - Focused US9 tests: 5 passed.
+  - `make test-api`: 692 passed; `make test-web`: 200 passed; web build,
+    `make smoke`, and `make evaluate-e2e` passed.
+  - Retrieval evaluation: motor 1.000 (30/30); health 1.000 (30/30).
+  - Changed hand-written files stay below 400 lines and 80 columns;
+    `git diff --check` clean; no secrets staged.
+- Open questions / risks: Checker should independently verify both corpora,
+  product-version selection, the three-product recall gate, and T091-T092.
+  D9 still needs checker verdict, staff review, and human sign-off.
+- Proposed commit: `feat: add motor and health retrieval corpora`
+- Handoff: ready-for-check
+
+## Iteration 55 — 2026-09-30
+- Targeted criteria: D9
+- Worktree: in place
+- Change:
+  - Changed `api/tests/integration/test_retrieval_recall.py` to import every
+    corpus through `KnowledgeService`, validating existing g1 content hashes
+    instead of silently reusing a stale row.
+  - Added motor and health threshold-mutation regressions in
+    `api/tests/unit/test_product_corpus_alignment.py`.
+  - Added explicit motor and health evaluator commands to
+    `specs/008-rag-guidance/quickstart.md`.
+- Maker self-assessment: D9 appears maker-ready with staff-review warnings
+  and suggestion addressed. This is the maker's view, not a verdict.
+- Verification:
+  - Focused US9 tests: 7 passed.
+  - `make test-api`: 694 passed; `git diff --check` clean.
+  - Changed hand-written files stay below 400 lines and 80 columns;
+    no secrets staged.
+- Open questions / risks: Checker should confirm stale-row identity failure,
+  mutation diagnostics, and quickstart commands. D9 still needs checker
+  verdict, staff review update, and human sign-off.
+- Proposed commit: `test: harden US9 retrieval verification`
+- Handoff: ready-for-check
+
+## Iteration 56 — 2026-09-30
+- Targeted criteria: D9 (DEBT-054)
+- Worktree: in place
+- Change:
+  - Rewrote all 30 motor and 30 health recall questions as synthetic
+    scenario questions in `evaluation/retrieval/`.
+  - Added product case facts to every question, including vehicle age,
+    claim count, vehicle use, member count, and renewal context.
+  - Kept each expected passage set and each product at exactly 30 questions.
+- Maker self-assessment: D9 appears maker-ready for DEBT-054. This is the
+  maker's view, not a verdict.
+- Verification:
+  - Focused US9 alignment and recall tests: 7 passed; both new recall sets
+    meet the 0.90 gate.
+  - `make test-api`: 694 passed; `git diff --check` passes.
+  - Changed evaluation files stay below 400 lines and 80 columns; no secrets
+    staged.
+- Open questions / risks: Separate checker should judge question quality and
+  confirm case facts are meaningful for the product. Direct evaluator commands
+  still require active motor and health guideline versions in the dev DB.
+  D9 still needs checker verdict, staff review, and human sign-off.
+- Proposed commit: `test: improve motor and health recall questions`
+- Handoff: ready-for-check
+
+## Iteration 57 — 2026-09-30
+- Targeted criteria: D9 (DEBT-054)
+- Worktree: in place
+- Change:
+  - Removed unsupported `vehicle_age`, `prior_claims`, `vehicle_use`, and
+    `member_count` facts from motor and health recall questions.
+  - Kept paraphrased scenario wording, 30 questions per product, and expected
+    passage coverage.
+  - Recorded the decision in loop memory: product-specific filters need a
+    separate approved design; recall sets stay context-free for now.
+- Maker self-assessment: D9 appears maker-ready for the checker-selected
+  drop-facts option. This is the maker's view, not a verdict.
+- Verification:
+  - Focused US9 alignment and recall tests: 7 passed.
+  - `git diff --check` passes; both datasets still contain 30 questions.
+  - No source logic, schema, provider, or route behavior changed.
+- Open questions / risks: Checker must confirm that context-free questions
+  satisfy DEBT-054, or request product-specific band support. Direct evaluator
+  commands still require active motor and health guideline versions.
+  D9 still needs checker verdict, staff review, and human sign-off.
+- Proposed commit: `test: remove unsupported recall case facts`
+- Handoff: ready-for-check

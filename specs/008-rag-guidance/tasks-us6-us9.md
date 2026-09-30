@@ -146,14 +146,14 @@ tests/integration/test_conformance_preview.py -q`; `make test-api`;
 
 **Goal**: Same alignment and recall for motor and health.
 
-- [ ] T087 [US9] Write failing parametrized test in
+- [x] T087 [US9] Write failing parametrized test in
   `tests/unit/test_product_corpus_alignment.py` for motor and health
   corpora against their newest product-config versions.
-- [ ] T088 [US9] Write `knowledge-config/motor-private-car/g1.yaml` and
+- [x] T088 [US9] Write `knowledge-config/motor-private-car/g1.yaml` and
   `knowledge-config/health-individual-family-floater/g1.yaml`.
-- [ ] T089 [US9] Parametrize `tests/integration/test_retrieval_recall.py`
+- [x] T089 [US9] Parametrize `tests/integration/test_retrieval_recall.py`
   over all three products (fails until data exists).
-- [ ] T090 [US9] Write `evaluation/retrieval/motor-private-car.yaml` and
+- [x] T090 [US9] Write `evaluation/retrieval/motor-private-car.yaml` and
   `evaluation/retrieval/health-individual-family-floater.yaml`.
 
 **Checkpoint US9**: `API pytest tests/unit/test_product_corpus_alignment.py
@@ -163,8 +163,8 @@ and health with their `g1` active and `GENERATION_PROVIDER=fake`.
 
 ## Phase 12: Polish
 
-- [ ] T091 Update `README.md` (knowledge admin, regulatory import,
+- [x] T091 Update `README.md` (knowledge admin, regulatory import,
   `GEMINI_EMBEDDING_MODEL`) and `docs/ARCHITECTURE.md` (retrieval flow).
-- [ ] T092 Run `make test-api`, `make test-web`, `WEB npm run build`,
+- [x] T092 Run `make test-api`, `make test-web`, `WEB npm run build`,
   `make smoke`, `make evaluate-e2e`; confirm no hand-written file is 400
   lines or more and no line exceeds 80 columns.
