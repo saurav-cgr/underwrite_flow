@@ -292,6 +292,10 @@ def test_confirmed_case_completes_once_and_is_auditable() -> None:
                         (case_id,),
                     )
                     cursor.execute(
+                        "DELETE FROM case_knowledge_pins WHERE case_id = %s",
+                        (case_id,),
+                    )
+                    cursor.execute(
                         "DELETE FROM cases WHERE id = %s",
                         (case_id,),
                     )

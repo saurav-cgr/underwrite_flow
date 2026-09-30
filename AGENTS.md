@@ -3,14 +3,24 @@
 ## Critical constraints
 
 - **Secrets:** Never commit `.env`, backups, API keys, credentials, or tokens. Use `.env.example` as the only configuration template. Never log or return `GEMINI_API_KEY` or `LANGSMITH_API_KEY`.
-- **Synthetic data only:** The MVP uses fictional applicants, documents, organizations, products, and underwriting rules. Never add real personal, medical, financial, vehicle, or insurer data.
+- **Data policy:** Applicants, documents, cases, organizations, products,
+  and underwriting rules are fictional. The only real content permitted is
+  public Indian regulatory text (IRDAI regulations/circulars and Acts) listed
+  in `data/regulatory/manifest.yaml`. It is git-ignored, never committed,
+  labeled `PUBLIC REGULATION - INFORMATIONAL`, and never used in route
+  calculation. Never add real personal, medical, financial, vehicle,
+  insurer-proprietary, or reinsurer data.
 - **Human authority:** UnderwriteFlow recommends a triage route only. It must never approve, decline, bind, price, issue, renew, or cancel insurance. An authenticated underwriter must confirm every final route.
 - **Schema migrations:** After `api/alembic/versions/01_initial.py` exists, treat it as the immutable fresh-schema baseline. Create an additive Alembic revision for each later schema change; never rewrite migration history.
 - **Reset safety:** Never use `docker compose down -v` unless the user explicitly requests a complete purge and acknowledges that all project volumes will be deleted.
 - **Git:** Never force-push. Preserve user changes and unrelated files. Check staged files for secrets before every commit.
 - **SQL:** Use SQLAlchemy expressions or bound parameters. Never interpolate user-controlled values into SQL.
 - **Escalation:** Ask before schema migrations, new dependencies, authentication or authorization changes, provider changes, enabling external tracing, destructive resets, column drops, or broad architecture rewrites.
-- **Plan approval gate:** Follow `docs/IMPLEMENTATION_PLAN.md` one implementation step at a time. At the end of each step, stop and report changed files, verification, remaining risks, and the proposed commit. Wait for the user to review and explicitly say `continue`. Only then commit that approved step and begin the next one. Never combine steps or pre-build a later step.
+- **Plan approval gate:** Follow the active `specs/NNN-*/tasks.md` on
+  `rag-implementation`, one story at a time. At the end of each story, stop
+  and report changed files, verification, remaining risks, and the proposed
+  commit. Wait for the user to say `continue`. Only then commit, push, and
+  start the next story. Never combine stories or pre-build a later one..
 - **File size:** Keep every hand-written project file below 400 lines. Split a file before it reaches 400 lines along a clear responsibility boundary. Generated files, lockfiles, and immutable migration snapshots are exempt; explain any other exception before proceeding.
 - **Line length:** Set the IDE ruler to 80 columns. Keep each hand-written
   line at or below 80 characters and wrap longer lines for readability.
@@ -108,10 +118,30 @@ scripts/                         Deterministic setup and smoke utilities
 
 **Ask first:** anything listed under Escalation, plus changes to human-approval boundaries, real insurer integrations, real applicant data, production compliance claims, or retention/deletion policy.
 
-**Proceed within the current approved step:** focused tests, documentation, lint fixes, responsive/accessibility repairs, and incremental code that stays inside the approved files and contracts.
+- Read `docs/PRD.md` and the active spec, plan, and tasks before implementing.
 
 ## Reminders
 
 - Read `docs/PRD.md` and `docs/IMPLEMENTATION_PLAN.md` before implementing a step.
 - Treat fictional rules and evaluation labels as demonstrations, never genuine Indian underwriting guidance.
 - Prefer the smallest safe change that satisfies the approved step.
+
+## Work Rules
+- Work on one feature at a time
+- Only start the next feature after the current one passes end-to-end verification
+- Don't "also refactor" feature B while implementing feature A
+
+## Definition of Done
+- Feature complete = end-to-end verification passed, not "code is written"
+- Required verification levels:
+  1. Unit tests pass
+  2. Integration tests pass
+  3. End-to-end flow verification passes
+- Do not proceed to level 2 if level 1 fails
+- Do not proceed to level 3 if level 2 fails
+
+## Validation Hierarchy
+- Level 1: Unit tests (Must pass)
+- Level 2: Integration tests (Must pass)
+- Level 3: End-to-end tests (Must pass when cross-component changes are involved)
+- Skipping any required level = Not Complete

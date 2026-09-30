@@ -108,6 +108,7 @@ def test_catalog_journey_filter_excludes_unsupported_products() -> None:
 # Verify an owner may replace a draft's answers before review starts.
 def test_replace_application_updates_the_stored_draft() -> None:
     prior = motor_status()
+    set_motor_status("active", "v1")
     case_id = ""
     try:
         settings = Settings(generation_provider="fake")
@@ -163,6 +164,7 @@ def test_replace_application_updates_the_stored_draft() -> None:
 # Verify a second applicant may not replace another applicant's draft.
 def test_replace_application_is_owner_only() -> None:
     prior = motor_status()
+    set_motor_status("active", "v1")
     case_id = ""
     try:
         settings = Settings(generation_provider="fake")

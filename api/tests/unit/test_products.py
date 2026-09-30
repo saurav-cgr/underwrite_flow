@@ -44,6 +44,11 @@ class FakeSession:
         del statement
         return None
 
+    # Return no optional regulation rows for conformance lifecycle tests.
+    async def scalars(self, statement: object) -> list[object]:
+        del statement
+        return []
+
 class ConflictSession(FakeSession):
     """Represent a commit that loses the concurrent activation race."""
 
@@ -383,4 +388,3 @@ def test_malformed_json_is_refused() -> None:
         load_configuration('{"product_code": "synthetic-motor",}')
 
     assert "not valid JSON or YAML" in str(refused.value)
-

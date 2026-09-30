@@ -118,6 +118,8 @@ class TriageState(TypedDict, total=False):
     recommendation: dict[str, object]
     review_request: dict[str, object]
     review_command: dict[str, object]
+    guidance_context: dict[str, object]
+    route_explanation: dict[str, object]
     final_route: str | None
     review_status: str
 

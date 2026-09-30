@@ -6,6 +6,7 @@ limit.
 
 import re
 from collections.abc import Iterable, Mapping
+from datetime import date
 from typing import Any
 
 from underwriteflow.products.rules import condition_matches
@@ -127,6 +128,19 @@ def missing_document_codes(
 
 # Validate one answered field's type and range against its declaration.
 def validate_field_value(field: ProductField, value: Any) -> None:
+    if field.type == "date":
+        try:
+            parsed_date = date.fromisoformat(value)
+            if parsed_date.isoformat() != value:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise CaseValidationError(
+                f"invalid field value: {field.key}"
+            ) from None
+        if field.validation.get("not_future") and parsed_date > date.today():
+            raise CaseValidationError(
+                f"invalid field value: {field.key}"
+            )
     if field.type == "integer" and (
         not isinstance(value, int) or isinstance(value, bool)
     ):

@@ -5,6 +5,8 @@ import asyncio
 import json
 from typing import Any
 
+from sqlalchemy import select
+
 from underwriteflow.cases.service import (
     field_specifications,
     requested_field_keys,
@@ -15,6 +17,11 @@ from underwriteflow.evaluation.dataset import (
 )
 from underwriteflow.evaluation.metrics import evaluate_records
 from underwriteflow.evaluation.tracing import trace_summary
+from underwriteflow.config import get_settings
+from underwriteflow.database import Database
+from underwriteflow.knowledge.explainer import RouteExplainer
+from underwriteflow.persistence.knowledge_models import KnowledgeVersion
+from underwriteflow.persistence.models import Product
 from underwriteflow.products.schemas import (
     ProductConfiguration,
     filter_configuration_for_journey,
@@ -23,10 +30,14 @@ from underwriteflow.providers.fake import FakeProvider
 from underwriteflow.workflow.graph import build_evidence_graph
 from underwriteflow.workflow.nodes import branch_failures
 from underwriteflow.workflow.product_subgraphs import select_product_subgraph
+from underwriteflow.providers.embedding import FakeEmbeddingProvider
+from underwriteflow.providers.guidance import FakeGuidanceProvider
+from underwriteflow.workflow.state import thread_config
 from underwriteflow.workflow.triage import (
+    build_triage_graph,
     has_low_confidence,
-    recommend_triage_route,
 )
+from langgraph.checkpoint.memory import MemorySaver
 
 
 # Read the documents a reference case supplies as evidence input.
@@ -47,6 +58,9 @@ def document_inputs(record: dict[str, Any]) -> list[dict[str, object]]:
 async def run_record(
     record: dict[str, Any],
     configurations: dict[tuple[str, str], ProductConfiguration],
+    guidance_enabled: bool = False,
+    explainer: RouteExplainer | None = None,
+    guideline_ids: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     manifest_key = (record["product_code"], record["configuration_version"])
     configuration = filter_configuration_for_journey(
@@ -86,18 +100,32 @@ async def run_record(
     reconciled = list(evidence_result.get("reconciled_fields", []))
     conflicts = list(evidence_result.get("conflicts", []))
     missing = list(evidence_result.get("missing_information", []))
-    recommendation = recommend_triage_route(
-        {
+    triage_state = {
+        "case_id": record["case_id"],
+        "evidence": reconciled,
+        "conflicts": conflicts,
+        "missing_information": missing,
+        "risk_signals": product_result.get("risk_signals", []),
+        "validations": product_result.get("validations", []),
+        "processing_failures": branch_failures(evidence_result),
+        "low_confidence": has_low_confidence(reconciled),
+        "guidance_context": {
             "case_id": record["case_id"],
-            "evidence": reconciled,
-            "conflicts": conflicts,
-            "missing_information": missing,
-            "risk_signals": product_result.get("risk_signals", []),
-            "validations": product_result.get("validations", []),
-            "processing_failures": branch_failures(evidence_result),
-            "low_confidence": has_low_confidence(reconciled),
-        }
-    )["recommendation"]
+            "product_code": record["product_code"],
+            "guideline_version_id": (guideline_ids or {}).get(
+                record["product_code"]
+            ),
+        },
+    }
+    graph = build_triage_graph(
+        checkpointer=MemorySaver(),
+        explainer=explainer if guidance_enabled else None,
+    )
+    graph_result = await graph.ainvoke(
+        triage_state,
+        config=thread_config(record["case_id"]),
+    )
+    recommendation = graph_result["recommendation"]
     return {
         **record,
         "prediction": {
@@ -115,16 +143,62 @@ async def run_record(
             ),
         },
         "workflow_succeeded": True,
+        "explanation_status": (
+            graph_result.get("route_explanation") or {}
+        ).get("status"),
     }
 
 
 # Run every reference case through the pipeline and return produced output.
-async def evaluate_cases(split: str | None = None) -> list[dict[str, Any]]:
+async def evaluate_cases(
+    split: str | None = None,
+    guidance_enabled: bool = False,
+    guideline_ids: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
     records = load_dataset()
     if split:
         records = [record for record in records if record.get("split") == split]
     configurations = load_configuration_manifest()
-    return [await run_record(record, configurations) for record in records]
+    if not guidance_enabled:
+        return [
+            await run_record(record, configurations)
+            for record in records
+        ]
+    database = Database(get_settings().database_url)
+    try:
+        async with database.session_factory() as session:
+            if guideline_ids is None:
+                result = await session.execute(
+                    select(Product.code, KnowledgeVersion.id)
+                    .join(
+                        KnowledgeVersion,
+                        KnowledgeVersion.product_id == Product.id,
+                    )
+                    .where(
+                        KnowledgeVersion.scope == "guideline",
+                        KnowledgeVersion.status == "active",
+                    )
+                )
+                guideline_ids = {
+                    code: str(version_id) for code, version_id in result
+                }
+            explainer = RouteExplainer(
+                session,
+                FakeGuidanceProvider(),
+                FakeEmbeddingProvider(),
+            )
+            return [
+                await run_record(
+                    record,
+                    configurations,
+                    guidance_enabled=True,
+                    explainer=explainer,
+                    guideline_ids=guideline_ids,
+                )
+                for record in records
+            ]
+    finally:
+        await database.close()
 
 
 # Evaluate one requested split and optionally emit a redacted trace.

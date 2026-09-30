@@ -46,7 +46,7 @@ BUSINESS_TABLES = (
     "handoffs",
 )
 
-EXPECTED_PRODUCT_VERSIONS = 10
+EXPECTED_PRODUCT_VERSIONS = 11
 
 
 # Run one bootstrap command against the throwaway baseline database.

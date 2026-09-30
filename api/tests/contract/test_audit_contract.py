@@ -53,9 +53,9 @@ def test_audit_history_is_filterable_and_read_only() -> None:
             submit_motor_case(client, applicant, case_id)
 
             events = read_audit(client, admin, case_id, "")
-            assert [event["event_type"] for event in events][-1] == (
-                "case_submitted"
-            )
+            assert {
+                event["event_type"] for event in events
+            } >= {"case_submitted", "case_guidance_pinned"}
             for event in events:
                 assert set(event) == AUDIT_EVENT_KEYS, event
                 assert str(event["case_id"]) == case_id

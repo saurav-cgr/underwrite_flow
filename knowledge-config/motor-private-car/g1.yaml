@@ -1,0 +1,77 @@
+# SYNTHETIC - FOR DEMONSTRATION ONLY
+product_code: motor-private-car
+version: g1
+aligned_product_version: v5
+label: SYNTHETIC - FOR DEMONSTRATION ONLY
+topics:
+  - vehicle-age
+  - vehicle-use
+  - prior-claims
+  - identity
+  - vehicle-record
+  - registration
+  - inspection
+  - previous-policy
+  - ncb
+  - lapse-gap
+sections:
+  - id: motor-vehicle-age-specialist
+    title: Older vehicle inspection
+    topic: vehicle-age
+    thresholds:
+      - rule_code: vehicle_age_specialist
+        field: vehicle_age
+        operator: greater_than
+        value: 12
+    body: Vehicle age above 12 needs synthetic motor inspection review.
+  - id: motor-prior-claims-standard
+    title: Prior claims
+    topic: prior-claims
+    thresholds:
+      - rule_code: prior_claims_standard
+        field: prior_claims
+        operator: greater_than
+        value: 1
+    body: More than 1 prior claim uses standard review.
+  - id: motor-vehicle-use
+    title: Vehicle use
+    topic: vehicle-use
+    body: Personal and commute use are supported fictional vehicle uses.
+  - id: motor-identity-evidence
+    title: Identity evidence
+    topic: identity
+    body: Identity evidence supports fictional applicant reconciliation.
+  - id: motor-vehicle-record
+    title: Vehicle record
+    topic: vehicle-record
+    body: Vehicle record supports fictional chassis and engine checks.
+  - id: motor-registration-certificate
+    title: Registration certificate
+    topic: registration
+    body: Registration evidence supports fictional vehicle reconciliation.
+  - id: motor-inspection-photo
+    title: Inspection photo
+    topic: inspection
+    thresholds:
+      - rule_code: document:inspection_photo
+        field: vehicle_age
+        operator: greater_than
+        value: 12
+    body: Vehicle age above 12 needs a synthetic inspection photo.
+  - id: motor-previous-policy
+    title: Previous policy
+    topic: previous-policy
+    body: Previous policy supports fictional renewal evidence checks.
+  - id: motor-ncb-record
+    title: No claim bonus
+    topic: ncb
+    body: No claim bonus evidence supports fictional renewal checks.
+  - id: motor-renewal-lapse
+    title: Renewal lapse gap
+    topic: lapse-gap
+    thresholds:
+      - rule_code: reconciliation:motor_renewal_lapse
+        field: maximum_gap_days
+        operator: equals
+        value: 30
+    body: A lapse gap up to 30 days uses the fictional renewal check.

@@ -40,7 +40,8 @@ export type Screen =
   | "queue"
   | "review"
   | "admin"
-  | "product_config";
+  | "product_config"
+  | "knowledge";
 
 export interface PermissionSummary {
   code: string;

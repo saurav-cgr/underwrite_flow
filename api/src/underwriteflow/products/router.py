@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from underwriteflow.auth.dependencies import require_permission
 from underwriteflow.auth.schemas import Permission
 from underwriteflow.database import get_session
+from underwriteflow.knowledge.conformance import preview_conformance
 from underwriteflow.persistence.models import Product, ProductVersion
 from underwriteflow.products.reference_router import (
     router as reference_router,
@@ -154,8 +155,12 @@ async def preview_configuration(
     _: dict[str, str] = Depends(
         require_permission(Permission.SCHEMAS_EDIT)
     ),
+    session: AsyncSession = Depends(get_session),
 ) -> dict:
-    return ProductService().preview(parse_configuration(payload))
+    configuration = parse_configuration(payload)
+    preview = ProductService().preview(configuration)
+    preview.update(await preview_conformance(session, configuration))
+    return preview
 
 
 # Import validated YAML as a draft version for administrator review.

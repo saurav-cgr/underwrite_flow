@@ -1,0 +1,109 @@
+# SYNTHETIC - FOR DEMONSTRATION ONLY
+product_code: life-individual-term
+version: g1
+aligned_product_version: v3
+label: SYNTHETIC - FOR DEMONSTRATION ONLY
+topics:
+  - cover-amount
+  - occupation
+  - health-declaration
+  - identity
+  - income-record
+  - previous-policy
+  - lapse-gap
+  - age
+sections:
+  - id: life-cover-high-sum-assured
+    title: High requested cover
+    topic: cover-amount
+    sum_assured_min: 10000001
+    thresholds:
+      - rule_code: high_cover_standard
+        field: requested_cover
+        operator: greater_than
+        value: 10000000
+    body: >-
+      Requested cover above 10000000 goes to standard review and needs a
+      synthetic income record.
+  - id: life-occupation-hazardous
+    title: Hazardous occupation
+    topic: occupation
+    thresholds:
+      - rule_code: hazardous_occupation_specialist
+        field: occupation_type
+        operator: equals
+        value: hazardous
+    body: >-
+      A hazardous occupation is referred to life review specialists.
+  - id: life-health-statement-required
+    title: Health statement
+    topic: health-declaration
+    thresholds:
+      - rule_code: document:health_statement
+        field: health_declaration
+        operator: equals
+        value: false
+    body: >-
+      An incomplete health declaration needs a synthetic health statement.
+  - id: life-income-record-required
+    title: Income record
+    topic: income-record
+    sum_assured_min: 10000001
+    thresholds:
+      - rule_code: document:income_record
+        field: requested_cover
+        operator: greater_than
+        value: 10000000
+    body: >-
+      Requested cover above 10000000 needs a synthetic income record.
+  - id: life-identity-evidence
+    title: Identity evidence
+    topic: identity
+    body: >-
+      Identity evidence supports holder and application reconciliation.
+  - id: life-previous-policy
+    title: Previous policy
+    topic: previous-policy
+    body: >-
+      Previous policy evidence supports fictional policy history checks.
+  - id: life-lapse-gap
+    title: Renewal lapse gap
+    topic: lapse-gap
+    thresholds:
+      - rule_code: reconciliation:life_renewal_lapse
+        field: maximum_gap_days
+        operator: equals
+        value: 30
+    body: >-
+      A policy lapse gap up to 30 days uses the fictional renewal check.
+  - id: life-age-eighteen-to-forty
+    title: Age band eighteen to forty
+    topic: age
+    age_min: 18
+    age_max: 40
+    body: >-
+      Applicants aged 18 to 40 use this fictional age band.
+  - id: life-age-forty-one-to-sixty
+    title: Age band forty-one to sixty
+    topic: age
+    age_min: 41
+    age_max: 60
+    body: >-
+      Applicants aged 41 to 60 use this fictional age band.
+  - id: life-age-sixty-one-plus
+    title: Age band sixty-one plus
+    topic: age
+    age_min: 61
+    body: >-
+      Applicants aged 61 and above use this fictional age band.
+  - id: life-cover-up-to-standard-limit
+    title: Cover up to standard limit
+    topic: cover-amount
+    sum_assured_max: 10000000
+    body: >-
+      Requested cover up to 10000000 stays below the high-cover threshold.
+  - id: life-health-declaration-complete
+    title: Health declaration complete
+    topic: health-declaration
+    body: >-
+      A complete health declaration supports ordinary fictional processing.

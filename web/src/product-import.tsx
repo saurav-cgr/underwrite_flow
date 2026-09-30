@@ -7,6 +7,7 @@ import {
   validateProductConfiguration,
 } from "./api";
 import { Button, EmptyState, Panel } from "./components";
+import { ConformancePreview } from "./conformance-preview";
 import type { BuilderConfigurationPreview } from "./product-builder-state";
 import { yamlHash } from "./ui-state";
 import type { ReconciliationDefinition, ReconciliationKind } from "./types";
@@ -239,6 +240,10 @@ export function ProductImport({
               </div>
             </div>
             <ReconciliationList checks={preview.reconciliations} />
+            <ConformancePreview
+              changeImpact={preview.change_impact}
+              conformance={preview.conformance}
+            />
             <Button
               onClick={() => onHydrate(preview)}
               variant="secondary"

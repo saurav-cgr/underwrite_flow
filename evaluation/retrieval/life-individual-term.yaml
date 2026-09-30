@@ -1,0 +1,33 @@
+# SYNTHETIC - FOR DEMONSTRATION ONLY
+product_code: life-individual-term
+questions:
+  - {id: life-q01, question: high requested cover standard review, case: {sum_assured: 15000000}, expected: [life-cover-high-sum-assured]}
+  - {id: life-q02, question: cover above ten million needs income record, case: {sum_assured: 15000000}, expected: [life-income-record-required]}
+  - {id: life-q03, question: high cover standard route, case: {sum_assured: 15000000}, expected: [life-cover-high-sum-assured]}
+  - {id: life-q04, question: requested cover over high threshold, case: {sum_assured: 15000000}, expected: [life-cover-high-sum-assured]}
+  - {id: life-q05, question: hazardous occupation life specialists, case: {}, expected: [life-occupation-hazardous]}
+  - {id: life-q06, question: hazardous occupation specialist review, case: {}, expected: [life-occupation-hazardous]}
+  - {id: life-q07, question: occupation hazard referred specialist, case: {}, expected: [life-occupation-hazardous]}
+  - {id: life-q08, question: incomplete health declaration statement, case: {}, expected: [life-health-statement-required]}
+  - {id: life-q09, question: health declaration needs statement, case: {}, expected: [life-health-statement-required]}
+  - {id: life-q10, question: health statement required, case: {}, expected: [life-health-statement-required]}
+  - {id: life-q11, question: identity evidence reconciliation, case: {}, expected: [life-identity-evidence]}
+  - {id: life-q12, question: holder identity evidence, case: {}, expected: [life-identity-evidence]}
+  - {id: life-q13, question: application identity reconciliation, case: {}, expected: [life-identity-evidence]}
+  - {id: life-q14, question: previous policy history evidence, case: {}, expected: [life-previous-policy]}
+  - {id: life-q15, question: previous policy checks, case: {}, expected: [life-previous-policy]}
+  - {id: life-q16, question: policy history evidence, case: {}, expected: [life-previous-policy]}
+  - {id: life-q17, question: lapse gap thirty days renewal check, case: {}, expected: [life-lapse-gap]}
+  - {id: life-q18, question: renewal lapse gap up to 30 days, case: {}, expected: [life-lapse-gap]}
+  - {id: life-q19, question: fictional renewal gap check, case: {}, expected: [life-lapse-gap]}
+  - {id: life-q20, question: applicant age 18 to 40 band, case: {age: 30}, expected: [life-age-eighteen-to-forty]}
+  - {id: life-q21, question: age forty applicant band, case: {age: 40}, expected: [life-age-eighteen-to-forty]}
+  - {id: life-q22, question: applicants aged 41 to 60, case: {age: 50}, expected: [life-age-forty-one-to-sixty]}
+  - {id: life-q23, question: age forty one band, case: {age: 41}, expected: [life-age-forty-one-to-sixty]}
+  - {id: life-q24, question: applicant age 61 plus, case: {age: 65}, expected: [life-age-sixty-one-plus]}
+  - {id: life-q25, question: age sixty one and above, case: {age: 61}, expected: [life-age-sixty-one-plus]}
+  - {id: life-q26, question: cover below high threshold, case: {sum_assured: 5000000}, expected: [life-cover-up-to-standard-limit]}
+  - {id: life-q27, question: requested cover up to ten million, case: {sum_assured: 10000000}, expected: [life-cover-up-to-standard-limit]}
+  - {id: life-q28, question: complete health declaration ordinary processing, case: {}, expected: [life-health-declaration-complete]}
+  - {id: life-q29, question: health declaration complete, case: {}, expected: [life-health-declaration-complete]}
+  - {id: life-q30, question: income record for high requested cover, case: {sum_assured: 15000000}, expected: [life-income-record-required]}

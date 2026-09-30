@@ -7,9 +7,11 @@ reserved keys, the deterministic order, the sanitized output shape, and the
 deterministic-provider rule.
 """
 
+import hashlib
 import json
 import sys
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 
@@ -19,7 +21,9 @@ loader = pytest.importorskip("load_evaluation_data")
 
 from underwriteflow.config import Settings  # noqa: E402
 from underwriteflow.evaluation.dataset import dataset_sha256  # noqa: E402
+from underwriteflow.persistence.models import Document  # noqa: E402
 from underwriteflow.providers.fake import FakeProvider  # noqa: E402
+from underwriteflow.storage import UploadStorage  # noqa: E402
 
 SAFE_SUCCESS_KEYS = {
     "environment",
@@ -207,6 +211,31 @@ def test_loader_runs_only_the_deterministic_fake_provider() -> None:
 
     for forbidden in ("build_provider", "GeminiProvider", "OllamaProvider"):
         assert forbidden not in source
+
+
+# Given a present but altered upload, when recovery runs, then source bytes
+# replace the altered file at the existing storage key.
+def test_recover_document_bytes_restores_corrupt_file(tmp_path: Path) -> None:
+    source = b"SYNTHETIC - FOR DEMONSTRATION ONLY"
+    storage = UploadStorage(tmp_path)
+    storage_key = "case-123/document.pdf"
+    path = tmp_path / storage_key
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"corrupted")
+    document = Document(
+        case_id=uuid4(),
+        document_code="identity_record",
+        filename="document.pdf",
+        content_type="application/pdf",
+        storage_key=storage_key,
+        content_hash=hashlib.sha256(source).hexdigest(),
+        byte_size=len(source),
+        page_count=1,
+    )
+
+    loader.recover_document_bytes(storage, document, source)
+
+    assert path.read_bytes() == source
 
 
 # Given production, when the loader runs, then it refuses before opening any
