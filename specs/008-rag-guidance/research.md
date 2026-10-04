@@ -28,7 +28,8 @@ constitution's Escalation rule before the story that uses them starts.
   `generativelanguage.googleapis.com` with `gemini-embedding-001` and
   `outputDimensionality: 768`. A deterministic `FakeEmbeddingProvider`
   hashes normalized word unigrams and bigrams into 768 dimensions and
-  L2-normalizes. Ollama is not extended in this feature.
+  L2-normalizes. Ollama is not extended in this feature. *Amended
+  2026-10-03 by R14: Ollama embeddings become an opt-in local option.*
 - **Rationale**: Reuses `httpx`, the host allowlist, redaction, timeout, and
   retry settings. The fake gives stable, content-sensitive vectors, so
   default tests and SC-002 run without network access.
@@ -188,3 +189,51 @@ constitution's Escalation rule before the story that uses them starts.
   browser or Node.
 - **Alternatives**: manual DevTools timing (not repeatable); Vitest with
   jsdom (no real rendering or network timing).
+
+## R14. Local Ollama embeddings (added 2026-10-03)
+
+- **Problem**: Gemini `batchEmbedContents` returns HTTP 429 under the
+  project quota. `write_embeddings` has no retry, and `bootstrap` runs
+  `import_corpora` on every start, so one 429 fails bootstrap and the API
+  never starts.
+- **Decision**: Add `OllamaEmbeddingProvider` in `providers/embedding.py`,
+  selected by `EMBEDDING_PROVIDER=ollama`. It calls
+  `POST {OLLAMA_BASE_URL}/api/embed` with `{"model", "input": [texts]}`
+  and reads `embeddings`. New setting `OLLAMA_EMBEDDING_MODEL`, default
+  `embeddinggemma`. Fake stays the default and the test provider; Gemini
+  stays available.
+- **Rationale**: `embeddinggemma` outputs 768 dimensions natively, so the
+  `vector(768)` column and HNSW index stay unchanged: no migration. Text
+  stays on the machine, so there is no quota. Reuses `httpx`, the
+  existing `ollama` Compose profile and volume, `OLLAMA_BASE_URL`, the
+  host allowlist (`ollama` is already listed), timeout, and the
+  transient/permanent error split. No new package.
+- **Safeguards kept**: base URL host must be in `PROVIDER_ALLOWED_HOSTS`;
+  inputs pass through `redact_personal_data` like Gemini; vectors are
+  rejected unless count and 768 width match; errors never echo payloads.
+- **Vector-space switch**: vectors from fake, Gemini, and Ollama are not
+  comparable. `write_embeddings` records
+  `embedding_model` (`"<provider>:<model>"`) in the version's `source`
+  JSON; guideline and regulation imports re-embed when any embedding is
+  `NULL` or the recorded value differs from the current provider. Bootstrap
+  automatically re-imports configured guideline YAMLs only. After a switch,
+  Administrators must re-import API-managed guideline versions and the
+  regulation manifest through their existing import endpoints. No schema
+  change: `source` already holds non-text provenance.
+- **Alternatives**:
+  1. Retry with backoff on Gemini 429 — still quota-bound, slows every
+     bootstrap; can be added later, independent of this change.
+  2. Smaller Gemini batches — does not lift a per-minute quota.
+  3. `sentence-transformers` in the API image — new heavy dependency.
+  4. Manual reset (`SET embedding = NULL`) on switch — easy to forget,
+     silent wrong results; rejected for the recorded-model check.
+- **Known ceiling**: `embeddinggemma` recommends task prefixes
+  (`task: search result | query:` / `title: none | text:`). The
+  `EmbeddingProvider.embed(texts)` contract has no query/document flag, so
+  prefixes are not sent. Add a `kind` argument if live recall falls short.
+- **Startup dependency**: with `EMBEDDING_PROVIDER=ollama`, bootstrap needs
+  the `ollama` service running and the model pulled. Not added as a hard
+  `depends_on` because the profile is optional; quickstart documents the
+  order.
+- **Approval**: provider change (Escalation). Requested by the user on
+  2026-10-03; confirm before implementation.

@@ -121,3 +121,47 @@ A failing gate stops the next gate.
   ```
 
 - Expect: alignment passes and recall is at least 0.90 per product.
+
+### US10: Local Ollama embeddings
+
+Design: [research.md](research.md) R14; `source.embedding_model` in
+[data-model.md](data-model.md).
+
+- Unit (no network): run
+  `pytest tests/unit/test_embedding_providers.py -q`.
+- Expect: request goes to `http://ollama:11434/api/embed` with
+  `{"model": "embeddinggemma", "input": [...]}`; wrong count or a
+  non-768 vector raises `ProviderError`; 429 and 503 raise
+  `TransientProviderError`; a base URL host outside
+  `PROVIDER_ALLOWED_HOSTS` is refused; `EMBEDDING_PROVIDER=ollama`
+  builds the Ollama provider with `OLLAMA_EMBEDDING_MODEL`.
+- Integration: importing the same corpus twice with one provider writes
+  embeddings once; importing again with a provider whose
+  `embedding_model` differs re-embeds every passage and updates
+  `source.embedding_model`. Same for the regulation version.
+- End-to-end (opt-in, local only, never gates acceptance). Set in `.env`:
+  `EMBEDDING_PROVIDER=ollama` and `OLLAMA_EMBEDDING_MODEL=embeddinggemma`.
+
+  ```bash
+  docker compose --profile ollama up -d ollama
+  docker compose exec ollama ollama pull embeddinggemma
+  docker compose up -d --build
+  docker compose logs bootstrap
+  ```
+
+- Expect: bootstrap completes with no 429 and no Gemini call; configured
+  guideline sources show `"ollama:embeddinggemma"`; a second
+  `docker compose up` does not re-embed.
+- After switching providers, Administrators must re-import API-managed
+  guideline YAMLs with `POST /knowledge/import` and the regulation manifest
+  with `POST /knowledge/regulation/import`. Imports re-embed versions whose
+  recorded provider differs. Keep the source YAMLs available for re-import.
+- Recall (reported, not gated):
+
+  ```bash
+  docker compose run --rm api python /app/scripts/evaluate_retrieval.py
+  ```
+
+- Switch back with `EMBEDDING_PROVIDER=fake` and restart: bootstrap
+  re-embeds configured guideline corpora. Re-import API-managed versions
+  through the same endpoints, then confirm `make smoke` passes.

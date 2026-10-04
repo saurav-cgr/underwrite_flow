@@ -20,6 +20,11 @@ clauses.
 | status | varchar(32) | `draft`, `active`, `retired` |
 | content_hash | varchar(128) | SHA-256 of normalized source |
 | source | jsonb | file names, manifest ids, checksums; never text |
+
+`source.embedding_model` (US10, research R14): `"<provider>:<model>"`
+written by `write_embeddings`, for example `"ollama:embeddinggemma"`.
+Absent or different from the current provider means re-embed on next
+import. Not a column; no migration.
 | validation | jsonb | last validation report (counts and issue codes) |
 | created_at | timestamptz | |
 | activated_at | timestamptz null | |

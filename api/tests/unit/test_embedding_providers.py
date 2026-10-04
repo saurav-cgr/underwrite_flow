@@ -8,6 +8,7 @@ from underwriteflow.config import Settings
 from underwriteflow.providers.embedding import (
     FakeEmbeddingProvider,
     GeminiEmbeddingProvider,
+    OllamaEmbeddingProvider,
     build_embedding_provider,
 )
 from underwriteflow.providers.service import (
@@ -90,32 +91,177 @@ async def test_gemini_transient_statuses_are_sanitized(status: int) -> None:
     assert "synthetic-secret" not in str(error.value)
 
 
+# Verify Ollama batches input to /api/embed and validates dimensions.
+@pytest.mark.asyncio
+async def test_ollama_embedding_request_and_validation() -> None:
+    requests: list[httpx.Request] = []
+    size = 768
+
+    # Capture requests and return vectors of the current size.
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        count = len(json.loads(request.content)["input"])
+        vectors = [[0.1] * size] * count
+        return httpx.Response(200, json={"embeddings": vectors})
+
+    provider = OllamaEmbeddingProvider(
+        "http://ollama:11434/",
+        "embeddinggemma",
+        transport=httpx.MockTransport(handler),
+    )
+    result = await provider.embed(["one", "two"])
+
+    assert len(result) == 2
+    assert str(requests[0].url) == "http://ollama:11434/api/embed"
+    assert json.loads(requests[0].content) == {
+        "model": "embeddinggemma",
+        "input": ["one", "two"],
+    }
+    size = 384
+    with pytest.raises(ProviderError, match="invalid data"):
+        await provider.embed(["one"])
+    assert await provider.embed([]) == []
+    assert len(requests) == 2
+
+
+# Verify Ollama redacts each input before sending the request.
+@pytest.mark.asyncio
+async def test_ollama_embedding_redacts_inputs() -> None:
+    requests: list[httpx.Request] = []
+
+    # Capture redacted provider requests without network access.
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={"embeddings": [[0.1] * 768]},
+        )
+
+    provider = OllamaEmbeddingProvider(
+        "http://ollama:11434",
+        "embeddinggemma",
+        pii_redaction_terms=("Synthetic Person",),
+        transport=httpx.MockTransport(handler),
+    )
+    await provider.embed(
+        ["Synthetic Person email@example.test 9876543210"]
+    )
+
+    body = requests[0].content.decode()
+    assert "Synthetic Person" not in body
+    assert "email@example.test" not in body
+    assert "9876543210" not in body
+
+
+# Verify Ollama rejects a response with the wrong number of vectors.
+@pytest.mark.asyncio
+async def test_ollama_embedding_rejects_wrong_vector_count() -> None:
+    provider = OllamaEmbeddingProvider(
+        "http://ollama:11434",
+        "embeddinggemma",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json={"embeddings": []},
+            )
+        ),
+    )
+
+    with pytest.raises(ProviderError, match="invalid data"):
+        await provider.embed(["one"])
+
+
+# Verify Ollama maps transient and permanent statuses without payload leaks.
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [408, 429, 500, 503])
+async def test_ollama_transient_statuses_are_sanitized(status: int) -> None:
+    provider = OllamaEmbeddingProvider(
+        "http://ollama:11434",
+        "embeddinggemma",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(status)
+        ),
+    )
+
+    with pytest.raises(TransientProviderError):
+        await provider.embed(["synthetic text"])
+
+
+# Verify permanent Ollama status errors use a safe provider message.
+@pytest.mark.asyncio
+async def test_ollama_permanent_status_is_provider_error() -> None:
+    provider = OllamaEmbeddingProvider(
+        "http://ollama:11434",
+        "embeddinggemma",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(400, text="private payload")
+        ),
+    )
+
+    with pytest.raises(ProviderError, match="Ollama") as error:
+        await provider.embed(["synthetic text"])
+
+    assert "private payload" not in str(error.value)
+
+
 # Verify provider selection follows deterministic and approved settings.
 def test_embedding_provider_builder() -> None:
-    provider = build_embedding_provider(Settings(generation_provider="fake"))
+    provider = build_embedding_provider(
+        Settings(
+            _env_file=None,
+            generation_provider="fake",
+            embedding_provider="fake",
+        )
+    )
     assert provider.name == "fake"
 
     provider = build_embedding_provider(
         Settings(
+            _env_file=None,
             generation_provider="gemini",
             embedding_provider="fake",
         )
     )
     assert provider.name == "fake"
 
-    with pytest.raises(ProviderError, match="Ollama"):
+    provider = build_embedding_provider(
+        Settings(
+            _env_file=None,
+            generation_provider="gemini",
+            embedding_provider="ollama",
+        )
+    )
+    assert isinstance(provider, OllamaEmbeddingProvider)
+    assert provider.model == "embeddinggemma"
+
+    provider = build_embedding_provider(
+        Settings(
+            _env_file=None,
+            generation_provider="gemini",
+            embedding_provider="ollama",
+            ollama_embedding_model="custom",
+            pii_redaction_terms=("Synthetic Person",),
+        )
+    )
+    assert isinstance(provider, OllamaEmbeddingProvider)
+    assert provider.model == "custom"
+    assert provider.pii_redaction_terms == ("Synthetic Person",)
+
+    with pytest.raises(ProviderError, match="host"):
         build_embedding_provider(
             Settings(
-                generation_provider="ollama",
                 embedding_provider="ollama",
+                ollama_base_url="http://elsewhere.test:11434",
             )
         )
 
     with pytest.raises(ProviderError, match="no-training"):
         build_embedding_provider(
             Settings(
+                _env_file=None,
                 generation_provider="gemini",
                 embedding_provider="gemini",
+                gemini_no_training_acknowledged=False,
             )
         )
 

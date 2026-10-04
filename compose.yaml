@@ -31,7 +31,8 @@ services:
         python -m underwriteflow.knowledge.import_corpora
     environment:
       ENVIRONMENT_MODE: ${ENVIRONMENT_MODE:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
+      DATABASE_URL: "${DATABASE_URL:-postgresql+asyncpg://underwriteflow:\
+        synthetic-local-password@db:5433/underwriteflow}"
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
       GENERATION_PROVIDER: >-
         ${GENERATION_PROVIDER:-gemini}
@@ -44,6 +45,9 @@ services:
       PROVIDER_ALLOWED_HOSTS:
       PII_REDACTION_TERMS: ${PII_REDACTION_TERMS:-[]}
       PROVIDER_TIMEOUT_SECONDS: ${PROVIDER_TIMEOUT_SECONDS:-30}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-embeddinggemma}
     depends_on:
       db:
         condition: service_healthy
@@ -65,13 +69,15 @@ services:
       - "8000"
     environment:
       ENVIRONMENT_MODE: ${ENVIRONMENT_MODE:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://underwriteflow:synthetic-local-password@db:5433/underwriteflow}
+      DATABASE_URL: "${DATABASE_URL:-postgresql+asyncpg://underwriteflow:\
+        synthetic-local-password@db:5433/underwriteflow}"
       SESSION_SECRET: ${SESSION_SECRET:-synthetic-local-session-secret}
       JWT_ISSUER: ${JWT_ISSUER:-underwriteflow}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-underwriteflow-web}
       ACCESS_TOKEN_TTL_SECONDS: ${ACCESS_TOKEN_TTL_SECONDS:-900}
       REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-28800}
-      REFRESH_TOKEN_PEPPER: ${REFRESH_TOKEN_PEPPER:-synthetic-local-refresh-pepper}
+      REFRESH_TOKEN_PEPPER: "${REFRESH_TOKEN_PEPPER:-synthetic-local-\
+        refresh-pepper}"
       GENERATION_PROVIDER: ${GENERATION_PROVIDER:-gemini}
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fake}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -86,6 +92,7 @@ services:
       PROVIDER_RETRY_COUNT: ${PROVIDER_RETRY_COUNT:-2}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-embeddinggemma}
       LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
       LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
       LANGSMITH_ENDPOINT: >-

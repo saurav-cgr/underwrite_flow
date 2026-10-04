@@ -51,11 +51,13 @@ async def guideline_version(
     session, corpus_path: Path
 ) -> KnowledgeVersion:
     actor = await session.scalar(select(User).limit(1))
+    corpus = yaml.safe_load(corpus_path.read_text())
+    corpus["version"] = f"recall-{corpus['version']}"
     return await KnowledgeService(
         embedding_provider=FakeEmbeddingProvider()
     ).import_guideline(
         session,
-        corpus_path.read_text(),
+        yaml.safe_dump(corpus),
         actor.id if actor else None,
     )
 

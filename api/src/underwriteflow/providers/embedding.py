@@ -1,8 +1,9 @@
-"""Deterministic and Gemini embedding providers."""
+"""Deterministic, Gemini, and Ollama embedding providers."""
 
 import hashlib
 import math
 from typing import Protocol
+from urllib.parse import urlparse
 
 import httpx
 
@@ -144,21 +145,99 @@ class GeminiEmbeddingProvider:
         return [[float(value) for value in vector] for vector in vectors]
 
 
-# Require the same host and no-training safeguards as Gemini generation.
+class OllamaEmbeddingProvider:
+    """Call a local Ollama embed endpoint; text never leaves the host."""
+
+    name = "ollama"
+
+    # Configure the local Ollama endpoint, model, and optional transport.
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        timeout_seconds: float = 30,
+        pii_redaction_terms: tuple[str, ...] = (),
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.model = model
+        self.timeout_seconds = timeout_seconds
+        self.pii_redaction_terms = pii_redaction_terms
+        self.transport = transport
+
+    # Request one Ollama batch and return validated 768-dimensional vectors.
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+        safe_texts = [
+            redact_personal_data(text, self.pii_redaction_terms)
+            for text in texts
+        ]
+        try:
+            async with httpx.AsyncClient(
+                timeout=self.timeout_seconds, transport=self.transport
+            ) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/embed",
+                    json={"model": self.model, "input": safe_texts},
+                )
+                response.raise_for_status()
+                vectors = response.json()["embeddings"]
+        except (httpx.TimeoutException, httpx.NetworkError) as error:
+            raise TransientProviderError(
+                "Ollama embedding provider is temporarily unavailable"
+            ) from error
+        except httpx.HTTPStatusError as error:
+            if is_transient_status(error.response.status_code):
+                raise TransientProviderError(
+                    "Ollama embedding provider is temporarily unavailable"
+                ) from error
+            raise ProviderError("Ollama embedding provider failed") from error
+        except (httpx.HTTPError, KeyError, TypeError, ValueError) as error:
+            raise ProviderError("Ollama embedding provider failed") from error
+        if not isinstance(vectors, list) or len(vectors) != len(texts):
+            raise ProviderError(
+                "Ollama embedding provider returned invalid data"
+            )
+        if any(
+            not isinstance(vector, list)
+            or len(vector) != EMBEDDING_DIMENSIONS
+            for vector in vectors
+        ):
+            raise ProviderError(
+                "Ollama embedding provider returned invalid data"
+            )
+        try:
+            return [
+                [float(value) for value in vector] for vector in vectors
+            ]
+        except (TypeError, ValueError) as error:
+            raise ProviderError(
+                "Ollama embedding provider returned invalid data"
+            ) from error
+
+
+# Select fake, local Ollama, or approved no-training Gemini embeddings.
 def build_embedding_provider(settings: Settings) -> EmbeddingProvider:
     provider_name = settings.embedding_provider or settings.generation_provider
+    allowed = {host.lower() for host in settings.provider_allowed_hosts}
     if provider_name == "fake":
         return FakeEmbeddingProvider()
     if provider_name == "ollama":
-        raise ProviderError(
-            "Ollama embedding provider is not supported"
+        host = (urlparse(settings.ollama_base_url).hostname or "").lower()
+        if host not in allowed:
+            raise ProviderError("Provider host is not approved")
+        return OllamaEmbeddingProvider(
+            settings.ollama_base_url,
+            settings.ollama_embedding_model,
+            timeout_seconds=settings.provider_timeout_seconds,
+            pii_redaction_terms=settings.pii_redaction_terms,
         )
     if not settings.gemini_no_training_acknowledged:
         raise ProviderError(
             "Gemini embedding provider requires a no-training project "
             "acknowledgement"
         )
-    allowed = {host.lower() for host in settings.provider_allowed_hosts}
     if EMBEDDING_HOST.lower() not in allowed:
         raise ProviderError("Provider host is not approved")
     return GeminiEmbeddingProvider(

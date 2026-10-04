@@ -65,7 +65,7 @@ def test_base_compose_declares_development_mode() -> None:
         assert "development" in environment["ENVIRONMENT_MODE"], name
 
 
-# Verify bootstrap receives every Gemini embedding setting used by the API.
+# Verify bootstrap and API share their embedding settings.
 def test_bootstrap_shares_gemini_embedding_settings() -> None:
     compose = _load_compose(BASE_PATH)
     api = _environment(compose["services"]["api"])
@@ -79,6 +79,9 @@ def test_bootstrap_shares_gemini_embedding_settings() -> None:
         "PROVIDER_ALLOWED_HOSTS",
         "PII_REDACTION_TERMS",
         "PROVIDER_TIMEOUT_SECONDS",
+        "OLLAMA_BASE_URL",
+        "OLLAMA_MODEL",
+        "OLLAMA_EMBEDDING_MODEL",
     ):
         assert key in bootstrap
         assert bootstrap[key] == api[key]

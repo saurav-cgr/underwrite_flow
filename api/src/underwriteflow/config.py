@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     )
     ollama_base_url: str = "http://ollama:11434"
     ollama_model: str = "llama3.2"
+    ollama_embedding_model: str = "embeddinggemma"
     provider_timeout_seconds: float = Field(default=30, gt=0)
     provider_retry_count: int = Field(default=2, ge=0, le=5)
     session_secret: str = "synthetic-local-session-secret"

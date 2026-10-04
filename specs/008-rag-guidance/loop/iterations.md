@@ -1400,3 +1400,215 @@ marks the loop done. It records the story and criteria ready for checking.
   D9 still needs checker verdict, staff review, and human sign-off.
 - Proposed commit: `test: remove unsupported recall case facts`
 - Handoff: ready-for-check
+
+## Iteration 58 — 2026-10-03
+- Targeted criteria: D10 (US10 increment; criterion remains pending)
+- Worktree: in place
+- Change:
+  - Reconciled Ollama provider support and builder selection in
+    `api/src/underwriteflow/providers/embedding.py:148-248`.
+  - Added `ollama_embedding_model` in `api/src/underwriteflow/config.py:49`.
+  - Added request, validation, redaction, error mapping, allowlist, and
+    builder tests in `api/tests/unit/test_embedding_providers.py:95-278`.
+  - Checked T093-T095 and T097-T099 in
+    `specs/008-rag-guidance/tasks-us10.md`.
+- Maker self-assessment: T093-T095 and T097-T099 appear complete. D10 is
+  not ready: T096 and T100-T105 remain. This is the maker's view, not a
+  verdict.
+- Verification: Ollama embedding provider unit tests pass: 16 passed.
+  Tests use `httpx.MockTransport`; `git diff --check` passes. Changed
+  hand-written code and tests stay below 400 lines and 80 columns.
+- Open questions / risks: Checker should review Ollama response validation,
+  redaction, and host allowlist. Provider-switch re-embedding tests and
+  implementation (T096, T100-T102), Compose and README wiring, and US10
+  full gates remain.
+- Handoff: ready-for-check
+
+## Iteration 59 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; T096 test increment)
+- Worktree: in place
+- Change:
+  - Added guideline same-model reuse, missing-model re-embedding, and
+    provider-switch coverage in
+    `api/tests/integration/test_knowledge_embeddings.py:78-130`.
+  - Added regulation provider-switch coverage through `RegulationService`
+    in `api/tests/integration/test_knowledge_embeddings.py:133-178`.
+  - Checked T096 in `specs/008-rag-guidance/tasks-us10.md`.
+- Maker self-assessment: T096 red tests appear complete. D10 remains
+  checker-fail and not ready; T100-T105 remain. This is the maker's view,
+  not a verdict.
+- Verification: Red-first run: 1 passed, 2 failed as expected. Failures
+  show missing embedding-model metadata and missing regulation re-embedding.
+  `git diff --check` passes. Test file is 178 lines; changed lines stay
+  within 80 columns.
+- Open questions / risks: Checker should assess T096 coverage. T100-T102
+  must implement shared model tracking and make these tests pass. The
+  existing `knowledge/service.py` is 399 lines; T101 must remain net zero.
+- Handoff: ready-for-check
+
+## Iteration 60 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; strengthen T096 regression tests)
+- Worktree: in place
+- Change:
+  - Made alternate fake model return distinct vectors in
+    `api/tests/integration/test_knowledge_embeddings.py:25-30`.
+  - Asserted every guideline passage stores new vectors after model switch
+    at `api/tests/integration/test_knowledge_embeddings.py:143`.
+  - Asserted regulation passage vector changes after model switch at
+    `api/tests/integration/test_knowledge_embeddings.py:202`.
+- Maker self-assessment: Checker R001 appears addressed in tests. D10
+  remains checker-fail and not ready. This is the maker's view, not a
+  verdict.
+- Verification: Red-first integration run: 1 passed, 2 failed as expected
+  before embedding-model tracking exists. `git diff --check` passes; test
+  file remains below 400 lines and all its lines stay within 80 columns.
+- Open questions / risks: Checker should confirm stored-vector assertions
+  reject a tag-only implementation. T100-T105 remain.
+- Handoff: ready-for-check
+
+## Iteration 61 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; T100-T102 implementation)
+- Worktree: in place
+- Change:
+  - Added `embedding_tag`, `needs_embeddings`, and source model tracking in
+    `api/src/underwriteflow/knowledge/embedding_writer.py:20`.
+  - Re-embedded guideline versions when vectors are missing or model tag
+    differs in `api/src/underwriteflow/knowledge/service.py:209`.
+  - Applied shared model checks to regulation imports in
+    `api/src/underwriteflow/knowledge/regulation_service.py:127`.
+  - Checked T100-T102 in `specs/008-rag-guidance/tasks-us10.md`.
+- Maker self-assessment: T100-T102 appear complete; D10 remains not ready.
+  This is the maker's view, not a verdict.
+- Verification: Focused provider, knowledge embedding, and regulation import
+  tests pass: 27 passed. `knowledge/service.py` remains 399 lines;
+  `git diff --check` passes.
+- Open questions / risks: Checker should inspect source metadata updates and
+  provider-switch behavior. T103-T105, full story gates, staff review, and
+  opt-in Ollama quickstart remain.
+- Handoff: ready-for-check
+
+## Iteration 62 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; T103 configuration increment)
+- Worktree: in place
+- Change: Added `OLLAMA_EMBEDDING_MODEL=embeddinggemma` to
+  `.env.example` and passed Ollama URL, models, and embedding model to both
+  bootstrap and API in `compose.yaml`.
+  Extended Compose environment parity coverage in
+  `api/tests/contract/test_environment_compose.py` and checked T103 in
+  `specs/008-rag-guidance/tasks-us10.md`.
+- Maker self-assessment: T103 appears complete. D10 remains checker-fail;
+  T104-T105 and remaining checkpoint work remain. This is the maker's view,
+  not a verdict.
+- Verification: Compose contract tests pass: 14 passed;
+  `git diff --check` passes.
+- Open questions / risks: README quickstart and full US10 gates remain.
+- Handoff: ready-for-check
+
+## Iteration 63 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; T104 documentation increment)
+- Worktree: in place
+- Change: Documented local Ollama embedding setup, provider-switch
+  re-embedding, and reported-not-gated recall in `README.md`. Put each
+  Compose command in its own `bash` block, linked duplicate development
+  setup to the quickstart to keep README below 400 lines, and checked T104
+  in `specs/008-rag-guidance/tasks-us10.md`.
+- Maker self-assessment: T104 appears complete. D10 remains checker-fail;
+  T105 and remaining checkpoint work remain. This is the maker's view, not
+  a verdict.
+- Verification: README is 399 lines; all lines are at most 80 columns.
+  `git diff --check` passes.
+- Open questions / risks: README has one line of margin under the file-size
+  limit. T105, full gates, Ollama quickstart, and staff review remain.
+- Handoff: ready-for-check
+
+## Iteration 64 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; correct T104 after DEBT-058)
+- Worktree: in place
+- Change: Replaced the false claim that bootstrap re-embeds every knowledge
+  version. README, R14, plan, task acceptance, and quickstart now say
+  bootstrap re-embeds configured guideline corpora; Administrators must
+  re-import API-managed guidelines and the regulation manifest after a
+  provider switch. Recorded the user's option B choice in M-055 and marked
+  DEBT-058 acknowledged.
+- Maker self-assessment: The T104 documentation correction appears complete.
+  D10 remains checker-fail and is not ready: the full API gate still fails.
+  This is the maker's view, not a verdict.
+- Verification: Focused US10 checkpoint tests: 27 passed. `make smoke`
+  passed. Local Ollama bootstrap completed and life recall was 1.000
+  (30/30). `make test-web`: 200 passed. Web build passed. Deterministic
+  `make test-api`: 4 failed, 700 passed; failures are in guidance API,
+  knowledge pinning, and queue completion. Initial default-provider run had
+  5 failed and 1 setup error. `git diff --check` passed. README is 399 lines;
+  changed files are below 400 lines. Staged files: none.
+- Open questions / risks: Investigate the four full-suite integration
+  failures before D10 can pass. T105 remains unchecked. Staff review remains.
+- Handoff: ready-for-check
+
+## Iteration 65 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; DEBT-059 gate-state restoration and
+  T105 polish)
+- Worktree: in place
+- Change: Applied option A with command-scoped fake-provider and
+  no-training-acknowledgement overrides. Restored motor and health `g1` to
+  draft; left `.env` unchanged. Wrapped long Compose defaults without
+  changing their resolved values, removed the long URL from `.env.example`,
+  and checked T105 in `tasks-us10.md`. Recorded DEBT-059 resolved and added
+  DEBT-060 for the regulation fixture collision.
+- Maker self-assessment: T105 appears complete. D10 remains checker-fail;
+  the independent checker must assess the full story and the iteration 61
+  persistence-test gap. This is the maker's view, not a verdict.
+- Verification: US10 checkpoint tests: 27 passed. Full deterministic
+  `make test-api`: 704 passed, 100% required coverage. `make smoke` passed.
+  `make test-web`: 200 passed. Web build passed. Compose environment
+  contract: 14 passed; Compose defaults resolve without whitespace.
+  Motor and health `g1` remain draft. Changed non-ledger files are below
+  400 lines and at most 80 columns. `git diff --check` passed; nothing is
+  staged.
+- Open questions / risks: First API gate attempt found and removed a
+  pre-existing same-identity regulation row during test cleanup; tracked as
+  DEBT-060. The isolated fresh-database run had one failure because its
+  bootstrap lacked the active life product expected by the suite. The main
+  local gate state now passes. Staff review and the iteration 61 test gap
+  remain.
+- Handoff: ready-for-check
+
+## Iteration 66 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; persistence-test gap)
+- Worktree: in place
+- Change: Re-read guideline `source` from PostgreSQL after each provider
+  switch with `session.refresh` before checking `embedding_model` in
+  `api/tests/integration/test_knowledge_embeddings.py`.
+- Maker self-assessment: The iteration 61 persistence-test gap appears
+  repaired. D10 remains checker-fail; US10 staff review remains open. This
+  is the maker's view, not a verdict.
+- Verification: Focused integration test passes: 3 passed.
+- Open questions / risks: Checker should confirm refreshed JSONB assertions
+  reject an untracked in-place source mutation. Staff review remains open.
+- Handoff: ready-for-check
+
+## Iteration 67 — 2026-10-03
+- Targeted criteria: D10 (checker-fail; staff review R001)
+- Worktree: in place
+- Change: Refresh regulation version `source` from PostgreSQL before its
+  provider-switch tag assertion in
+  `api/tests/integration/test_knowledge_embeddings.py`.
+- Maker self-assessment: R001 appears addressed. D10 appears ready for
+  independent re-check. This is the maker's view, not a verdict.
+- Verification: Focused integration test passes: 3 passed;
+  `git diff --check` passes.
+- Open questions / risks: Checker should confirm persisted regulation tag
+  assertion and review the opt-in Ollama quickstart evidence.
+- Handoff: ready-for-check
+
+## Iteration 68 — 2026-10-04
+- Targeted criteria: D10 (checker-fail; DEBT-061)
+- Worktree: in place
+- Change: `test_retrieval_recall.py` now imports each fake-provider corpus
+  under a stable `recall-<source version>` identity. Added T106 and resolved
+  DEBT-061.
+- Maker self-assessment: D10 is maker-ready after the previously passing
+  US10 gates and focused regression. This is the maker's view, not a verdict.
+- Verification: Fake-provider recall integration tests pass: 3 passed.
+- Open questions / risks: Checker should confirm recall tests leave existing
+  development corpus vectors untouched, then rerun required US10 gates.
+- Handoff: ready-for-check

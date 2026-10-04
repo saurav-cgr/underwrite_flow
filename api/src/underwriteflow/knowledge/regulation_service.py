@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriteflow.audit.events import build_audit_event, supersedes_details
-from underwriteflow.knowledge.embedding_writer import write_embeddings
+from underwriteflow.knowledge import embedding_writer
 from underwriteflow.knowledge.errors import (
     KnowledgeConflictError,
     KnowledgeError,
@@ -124,8 +124,8 @@ class RegulationService:
                 raise KnowledgeConflictError(
                     "version identity already exists"
                 )
-            if await self._needs_embeddings(session, existing.id):
-                await write_embeddings(
+            if await self._needs_embeddings(session, existing):
+                await embedding_writer.write_embeddings(
                     session, existing.id, self.embedding_provider
                 )
                 await session.commit()
@@ -174,7 +174,7 @@ class RegulationService:
                     )
                 )
             await session.flush()
-            await write_embeddings(
+            await embedding_writer.write_embeddings(
                 session, version.id, self.embedding_provider
             )
             self.audit.append(
@@ -201,10 +201,12 @@ class RegulationService:
 
     # Report whether any stored passage still needs an embedding.
     async def _needs_embeddings(
-        self, session: AsyncSession, version_id: UUID
+        self, session: AsyncSession, version: KnowledgeVersion
     ) -> bool:
-        passages = await self.repository.list_passages(session, version_id)
-        return any(passage.embedding is None for passage in passages)
+        passages = await self.repository.list_passages(session, version.id)
+        return embedding_writer.needs_embeddings(
+            version, passages, self.embedding_provider
+        )
 
     # Accept administrator tags and limits on one regulation draft.
     async def accept_tags(

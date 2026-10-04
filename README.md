@@ -59,21 +59,37 @@ state with the development database or upload volume.
 
 ### Provider boundary
 
-The default generation provider is Gemini, so extracted document content and
-application facts are sent to the Gemini API unless the fake provider is
-selected. Local corpus embeddings use the fake provider in `.env.example`.
-Set both `GENERATION_PROVIDER=fake` and `EMBEDDING_PROVIDER=fake` to keep
-synthetic processing on this machine. Ollama is available through the
-`ollama` Compose profile.
+Gemini is the default generation provider. It sends extracted content and
+application facts to Gemini unless fake is selected. Set both
+`GENERATION_PROVIDER=fake` and `EMBEDDING_PROVIDER=fake` to keep processing
+local.
 
-Uploads are validated from their bytes, and file metadata is stored in the
-local upload volume. Uploaded content is untrusted and is never treated as
-model instructions.
+#### Local Ollama embeddings
 
-LangSmith tracing is disabled by default. To opt in for synthetic evaluation,
-set `LANGSMITH_TRACING=true`, provide a local evaluation key, and use the
-APAC endpoint in `.env.example`. Trace payloads are redacted and tracing
-failures never change application behavior.
+Set `EMBEDDING_PROVIDER=ollama` in `.env`. Start Ollama and pull the model:
+
+```bash
+docker compose --profile ollama up -d ollama
+```
+
+```bash
+docker compose exec ollama ollama pull embeddinggemma
+```
+
+```bash
+docker compose up --build
+```
+
+Bootstrap re-embeds configured guideline corpora. After a switch, Admins must
+re-import other versions (`POST /knowledge/import` and
+`POST /knowledge/regulation/import`). Ollama recall is reported, not gated.
+
+Uploads are byte-validated; metadata stays in the local volume. Treat uploaded
+content as untrusted data, never as model instructions.
+
+LangSmith tracing is disabled by default. For synthetic evaluation, set
+`LANGSMITH_TRACING=true`, provide a local key, and use the APAC endpoint in
+`.env.example`. Traces are redacted; tracing failures do not affect behavior.
 
 ## Quickstart: local fake provider
 
@@ -120,10 +136,8 @@ imports are separate, carry the `PUBLIC REGULATION - INFORMATIONAL` badge,
 and never affect route calculation. Product and regulation versions are
 stored immutably and pinned when case processing starts.
 
-Guidance retrieval uses the pinned guideline version, case facts, lexical
-search, and vector search. Results are fused deterministically and cited in
-the review panel. Use `GEMINI_EMBEDDING_MODEL` only with an approved Gemini
-embedding setup; local checks use the fake embedding provider.
+Guidance retrieval uses pinned guidelines, case facts, lexical search, and
+vector search. Results are fused deterministically and cited in the review.
 
 ## Environment mode startup paths
 
@@ -131,18 +145,9 @@ Choose one path before starting the stack. Every path uses fictional data.
 
 ### Development: normal local demonstration
 
-Use development for interactive local work. It uses isolated local Compose
-state. Set the fake provider to avoid cloud credentials:
-
-```bash
-cp .env.example .env
-# Edit .env: set ENVIRONMENT_MODE=development
-# Edit .env: set GENERATION_PROVIDER=fake
-docker compose up --build
-```
-
-Development starts the normal local stack. It does not load evaluation cases
-automatically. The fake provider keeps application and document content local.
+Development is default. It uses isolated local Compose state and does not load
+evaluation cases. For setup, see the [local fake-provider
+quickstart](#quickstart-local-fake-provider).
 
 ### Evaluation: isolated synthetic run
 

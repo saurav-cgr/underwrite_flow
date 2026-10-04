@@ -1,6 +1,7 @@
 # Implementation Plan: RAG-Grounded Triage Guidance
 
-**Branch**: `rag-implementation` | **Date**: 2026-09-28 |
+**Branch**: `rag-implementation` | **Date**: 2026-09-28 (amended
+2026-10-03, US10) |
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/008-rag-guidance/spec.md`
@@ -18,6 +19,11 @@ knowledge versions like product rules, and see deterministic conformance
 flags in the rules preview. Routing code and route precedence are not
 touched.
 
+**Amendment 2026-10-03 (US10)**: Gemini embeddings hit HTTP 429 and fail
+bootstrap. Add an opt-in local `OllamaEmbeddingProvider` using
+`embeddinggemma` (768 dimensions, no migration) and re-embed a version
+automatically when the recorded embedding model differs (research R14).
+
 ## Technical Context
 
 **Language/Version**: Python 3.12 (API), TypeScript 5.9 / React 19 (web)
@@ -32,7 +38,8 @@ approved 2026-09-28 for the SC-008 screen timing check (research R13).
 
 **Testing**: pytest + pytest-asyncio; Vitest + Testing Library;
 Playwright in its own Compose container (`e2e` profile). Fake
-generation and fake embedding providers in the default suite.
+generation and fake embedding providers in the default suite. Ollama
+embedding tests use `httpx.MockTransport`; live Ollama is opt-in.
 
 **Target Platform**: Docker Compose on a developer machine.
 
@@ -73,8 +80,9 @@ regulatory text never committed.
 - **VII. Backend owns truth**: Pass. Retrieval, citations, alignment,
   conformance, and age computation are backend only.
 - **Escalation**: Needs approval for the schema migration (R1), the
-  provider change (R2, Gemini embeddings), and the product-config change
-  (R11). `@playwright/test` is approved (R13). No RBAC change.
+  provider changes (R2, Gemini embeddings; R14, Ollama embeddings), and
+  the product-config change (R11). `@playwright/test` is approved (R13).
+  No RBAC change.
 
 Post-design re-check: unchanged. No violation needs Complexity Tracking.
 
@@ -93,6 +101,8 @@ Post-design re-check: unchanged. No violation needs Complexity Tracking.
    `product_lines`, `topic_tags`, `suggested_tags`, `limits`, and
    `source_locator` on `knowledge_passages`, so the planned
    `13_regulation_passages.py` was withdrawn (2026-09-29).
+7. **US10**: Ollama embedding provider and `OLLAMA_EMBEDDING_MODEL`
+   setting (R14). No migration, no new dependency.
 
 ## Story delivery map
 
@@ -131,6 +141,16 @@ One story at a time; each ends with the report-and-`continue` gate.
   Web: preview flags and diff. Tests first: flags never block.
 - **US9**: motor and health corpora and evaluation files. Tests:
   alignment and recall per product.
+- **US10**: `providers/embedding.py` (`OllamaEmbeddingProvider`, builder
+  branch); `config.py` (`ollama_embedding_model`);
+  `knowledge/embedding_writer.py` (record `embedding_model`, shared
+  `needs_embeddings` predicate); `knowledge/service.py` and
+  `knowledge/regulation_service.py` call the predicate; `.env.example`,
+  `compose.yaml` (pass `OLLAMA_EMBEDDING_MODEL` to `bootstrap` and `api`),
+  README provider section. Web: none. Tests first: request shape and
+  `/api/embed` URL, 768-width and count validation, transient 429/503
+  mapping, host allowlist refusal, redaction, builder selection,
+  re-embed on model change and no re-embed when unchanged.
 
 ## Project Structure
 
@@ -146,7 +166,8 @@ specs/008-rag-guidance/
 │   ├── rest-api.md
 │   └── knowledge-corpus.md
 ├── tasks.md            # US1-US5
-└── tasks-us6-us9.md    # US6-US9 and polish
+├── tasks-us6-us9.md    # US6-US9 and polish
+└── tasks-us10.md       # US10 Ollama embeddings
 ```
 
 ### Source Code (repository root)
@@ -163,7 +184,8 @@ api/
       import_corpora.py                      # bootstrap import
     persistence/knowledge_models.py          # new tables, shared Base
     persistence/vector.py                    # vector column type
-    providers/embedding.py                   # protocol, fake, Gemini
+    providers/embedding.py                   # protocol, fake, Gemini,
+                                             # Ollama (US10)
     providers/guidance.py                    # explain/answer, fake, Gemini
     workflow/explain.py                      # explain_route node
     workflow/triage.py                       # one node + edge added
@@ -192,6 +214,13 @@ read-only into `bootstrap` and `api`, like `product-config/`.
   sections (R12); live recall is reported, not gated.
 - Gemini embedding quotas can slow corpus loads; loads batch at most 100
   passages per call and retry transient failures.
+- US10: with `EMBEDDING_PROVIDER=ollama`, bootstrap fails until the
+  `ollama` profile is up and `embeddinggemma` is pulled; quickstart
+  documents the order. Bootstrap re-embeds configured guideline corpora;
+  Administrators re-import API-managed versions and the regulation manifest
+  after a provider switch.
+- US10: no query/document task prefixes for `embeddinggemma`; live recall
+  is reported, not gated (R14 ceiling).
 - The explanation node adds provider latency before the interrupt; a
   timeout falls back to the template so submission never blocks.
 - `products/router.py` is 314 lines; conformance keys are computed in

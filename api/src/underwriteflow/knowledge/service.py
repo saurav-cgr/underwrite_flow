@@ -14,6 +14,7 @@ from underwriteflow.audit.events import (
     build_audit_event,
     supersedes_details,
 )
+from underwriteflow.knowledge import embedding_writer as ew
 from underwriteflow.knowledge.alignment import check_alignment
 from underwriteflow.knowledge.corpus import (
     CorpusValidationError,
@@ -27,7 +28,6 @@ from underwriteflow.knowledge.errors import (
     KnowledgeError,
     KnowledgeValidationError,
 )
-from underwriteflow.knowledge.embedding_writer import write_embeddings
 from underwriteflow.knowledge.repository import KnowledgeRepository
 from underwriteflow.persistence.knowledge_models import (
     KnowledgePassage,
@@ -206,8 +206,8 @@ class KnowledgeService:
             passages = await self.repository.list_passages(
                 session, existing.id
             )
-            if any(passage.embedding is None for passage in passages):
-                await write_embeddings(
+            if ew.needs_embeddings(existing, passages, self.embedding_provider):
+                await ew.write_embeddings(
                     session,
                     existing.id,
                     self.embedding_provider,
@@ -236,7 +236,7 @@ class KnowledgeService:
             for section in corpus.sections:
                 session.add(passage_from_section(version.id, corpus, section))
             await session.flush()
-            await write_embeddings(
+            await ew.write_embeddings(
                 session,
                 version.id,
                 self.embedding_provider,

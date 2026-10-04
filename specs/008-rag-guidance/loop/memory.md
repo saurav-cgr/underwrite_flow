@@ -183,3 +183,17 @@ contract or copy full logs here.
   so stored identity hashes are checked before reuse. (iteration 55, 2026-09-30)
 - [M-053] Motor and health recall questions do not pass product-specific case
   facts until retrieval has an approved product-band design. (iteration 57)
+- [M-054] User approved R14 on 2026-10-03: implement opt-in Ollama
+  embeddings and provider-switch re-embedding under US10. (iteration 58)
+- [M-055] User chose option B for DEBT-058 on 2026-10-03: document that
+  Administrators must re-import API-managed guidelines and the regulation
+  manifest after an embedding-provider switch. (iteration 64)
+- [M-056] Use command-scoped fake-provider and acknowledgement overrides for
+  deterministic gates; preserve the user's `.env`. (iteration 65)
+- [M-057] User chose option A for DEBT-061 on 2026-10-04: the recall test
+  imports a unique version identity so deterministic tests never re-embed
+  the real `g1` corpora in the development database. (checker, after
+  iteration 67)
+- [M-058] Recall integration tests use a stable `recall-<source version>`
+  identity, keeping fake-provider embeddings out of development `g1` rows
+  without creating new versions on each run. (iteration 68)
