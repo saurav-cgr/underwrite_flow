@@ -166,6 +166,46 @@ describe("product import panel", () => {
     expect(screen.getByText("Reconciliations")).toBeTruthy();
   });
 
+  // Verify informational flags do not disable the draft action.
+  it("keeps the import action enabled when flags are present", async () => {
+    previewMock.mockResolvedValue({
+      ...PREVIEW,
+      conformance: {
+        regulation_version: "r1",
+        flags: [
+          {
+            rule_code: "high_cover_standard",
+            field: "requested_cover",
+            rule_value: 10,
+            clause: {
+              passage_key: "4.2",
+              limit: { operator: "greater_than", value: 0 },
+            },
+            label: "PUBLIC REGULATION - INFORMATIONAL",
+          },
+        ],
+        related: [],
+      },
+      change_impact: {
+        against_version: "v1",
+        added_rules: [],
+        removed_rules: [],
+        changed_thresholds: [],
+        changed_documents: [],
+      },
+    });
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.type(yamlField(), "product_code: motor-private-car");
+    await user.click(screen.getByRole("button", { name: "Preview" }));
+
+    const importButton = await screen.findByRole("button", {
+      name: "Import draft",
+    });
+    expect((importButton as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("shows each configured reconciliation definition", async () => {
     previewMock.mockResolvedValue(PREVIEW);
     renderPanel();

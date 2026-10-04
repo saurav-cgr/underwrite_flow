@@ -75,6 +75,36 @@ export interface BuilderConfiguration {
   supported_journeys: JourneyType[];
 }
 
+export interface ConformanceFlag {
+  rule_code: string;
+  field: string;
+  rule_value: unknown;
+  clause: { passage_key: string; limit: Record<string, unknown> };
+  label: string;
+}
+
+export interface ConformancePreview {
+  regulation_version: string | null;
+  flags: ConformanceFlag[];
+  related: { rule_code: string; passage_keys: string[] }[];
+}
+
+export interface ChangeImpact {
+  against_version: string | null;
+  added_rules: string[];
+  removed_rules: string[];
+  changed_thresholds: {
+    rule_code: string;
+    from: unknown;
+    to: unknown;
+  }[];
+  changed_documents: {
+    document_code: string;
+    from: unknown;
+    to: unknown;
+  }[];
+}
+
 // The normalized configuration previewed from uploaded expert YAML, plus
 // summary counts. The full shape matches BuilderConfiguration so a preview
 // can hydrate the guided builder for further editing before import.
@@ -83,6 +113,8 @@ export interface BuilderConfigurationPreview extends BuilderConfiguration {
   document_count: number;
   routing_rule_count: number;
   reconciliation_count: number;
+  conformance?: ConformancePreview;
+  change_impact?: ChangeImpact;
 }
 
 // Build an empty configuration pinned to the chosen family.

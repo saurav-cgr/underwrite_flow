@@ -34,6 +34,7 @@ node_modules/
 web/node_modules/
 web/dist/
 web/*.tsbuildinfo
+web/test-results/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -43,6 +44,7 @@ uploads/
 tmp/
 output/
 .langgraph_api/
+data/regulatory/
 *.log
 *.pid
 
@@ -54,6 +56,15 @@ output/
 evaluation/results/
 
 # Local agent and tooling configuration
-.specify/
 .agents/
 .claude/
+.serena/
+.github/skills/
+.github/agents/
+.github/prompts/
+.agents/
+.codex/
+.serena/
+.specify/
+
+specs/008-rag-guidance/reviews/

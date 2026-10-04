@@ -1,0 +1,94 @@
+# SYNTHETIC - FOR DEMONSTRATION ONLY
+product_code: health-individual-family-floater
+questions:
+  - id: health-q01
+    question: Earlier hospital treatment needs expert assessment
+    expected: [health-hospitalization-specialist]
+  - id: health-q02
+    question: A past admission changes the review path
+    expected: [health-hospitalization-specialist]
+  - id: health-q03
+    question: Earlier hospitalization in the history needs closer scrutiny
+    expected: [health-hospitalization-specialist]
+  - id: health-q04
+    question: Five covered people need ordinary manual handling
+    expected: [health-large-floater-standard]
+  - id: health-q05
+    question: A group of six exceeds the routine floater size
+    expected: [health-large-floater-standard]
+  - id: health-q06
+    question: Larger family enrollment needs normal review
+    expected: [health-large-floater-standard]
+  - id: health-q07
+    question: Family relationship links need supporting proof
+    expected: [health-member-relationship-record]
+  - id: health-q08
+    question: Two people on one plan require relationship evidence
+    expected: [health-member-relationship-record]
+  - id: health-q09
+    question: >-
+      What relationship evidence verifies how enrolled people are connected
+    expected: [health-member-relationship-record]
+  - id: health-q10
+    question: Past admission needs a supporting medical file
+    expected: [health-hospitalization-record]
+  - id: health-q11
+    question: Which evidence documents earlier inpatient care
+    expected: [health-hospitalization-record]
+  - id: health-q12
+    question: The declared medical history needs source documentation
+    expected: [health-hospitalization-record]
+  - id: health-q13
+    question: What is the covered member count for this plan
+    expected: [health-member-count]
+  - id: health-q14
+    question: Count everyone sharing this fictional cover
+    expected: [health-member-count]
+  - id: health-q15
+    question: Household size is needed for processing
+    expected: [health-member-count]
+  - id: health-q16
+    question: Main holder identity needs verification
+    expected: [health-identity-evidence]
+  - id: health-q17
+    question: Which identity document confirms the named policy holder
+    expected: [health-identity-evidence]
+  - id: health-q18
+    question: Reconcile the applicant with submitted identity proof
+    expected: [health-identity-evidence]
+  - id: health-q19
+    question: Renewal history includes an uninterrupted period
+    expected: [health-continuity]
+  - id: health-q20
+    question: Which evidence shows earlier cover remained continuous
+    expected: [health-continuity]
+  - id: health-q21
+    question: Check months carried forward from prior protection
+    expected: [health-continuity]
+  - id: health-q22
+    question: Renewal needs details of the preceding contract
+    expected: [health-previous-policy]
+  - id: health-q23
+    question: Find the previous policy record for last period of protection
+    expected: [health-previous-policy]
+  - id: health-q24
+    question: Earlier plan information supports this renewal
+    expected: [health-previous-policy]
+  - id: health-q25
+    question: A thirty-day break between plans needs checking
+    expected: [health-renewal-lapse]
+  - id: health-q26
+    question: How should a short interruption in protection be handled
+    expected: [health-renewal-lapse]
+  - id: health-q27
+    question: Renewal follows a limited uninsured interval
+    expected: [health-renewal-lapse]
+  - id: health-q28
+    question: Source papers are needed for declared inpatient treatment
+    expected: [health-hospitalization-record]
+  - id: health-q29
+    question: Seven-person enrollment needs a broader review
+    expected: [health-large-floater-standard]
+  - id: health-q30
+    question: Household relationship details need documentary support
+    expected: [health-member-relationship-record]

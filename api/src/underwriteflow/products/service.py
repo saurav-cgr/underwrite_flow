@@ -17,6 +17,7 @@ from underwriteflow.audit.events import (
     supersedes_details,
     version_details,
 )
+from underwriteflow.knowledge.conformance import activation_conformance
 from underwriteflow.persistence.models import (
     Product,
     ProductVersion,
@@ -255,10 +256,12 @@ class ProductService(ReferenceDocumentMixin):
             raise ProductConfigurationError("product version not found")
         # Re-validate stored content so a version whose references stopped
         # resolving can never become the active configuration.
-        if configuration_from_payload(target.configuration) is None:
+        configuration = configuration_from_payload(target.configuration)
+        if configuration is None:
             raise ProductConfigurationError(
                 "stored configuration references are no longer valid"
             )
+        conformance = await activation_conformance(session, configuration)
         siblings = await self.repository.list_product_versions(
             session,
             product.id,
@@ -288,6 +291,36 @@ class ProductService(ReferenceDocumentMixin):
                 actor_user_id=actor_user_id,
             ),
         )
+        if conformance["flags"]:
+            flag_details = [
+                {
+                    "rule_code": flag["rule_code"],
+                    "field": flag["field"],
+                    "passage_key": flag["clause"]["passage_key"],
+                    "operator": flag["clause"]["limit"]["operator"],
+                    "value": flag["clause"]["limit"]["value"],
+                }
+                for flag in conformance["flags"]
+            ]
+            self.audit_repository.append(
+                session,
+                build_audit_event(
+                    "conformance_flags_recorded",
+                    {
+                        "product_code": code,
+                        "version": version,
+                        "flag_count": len(conformance["flags"]),
+                        "rule_codes": sorted(
+                            {
+                                flag["rule_code"]
+                                for flag in conformance["flags"]
+                            }
+                        ),
+                        "flags": flag_details,
+                    },
+                    actor_user_id=actor_user_id,
+                ),
+            )
         # The active-version index rejects a second active sibling, so a lost
         # race is reported as a configuration conflict rather than a failure.
         try:

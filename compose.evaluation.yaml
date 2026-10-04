@@ -32,17 +32,21 @@ services:
       - -c
       - >-
         alembic upgrade head &&
-        python -m underwriteflow.products.import_configs
+        python -m underwriteflow.products.import_configs &&
+        python -m underwriteflow.knowledge.import_corpora
     environment:
       ENVIRONMENT_MODE: evaluation
       DATABASE_URL: "postgresql+asyncpg://underwriteflow:synthetic-evaluation-\
         password@evaluation-db:5433/underwriteflow"
       SESSION_SECRET: synthetic-evaluation-session-secret
+      GENERATION_PROVIDER: fake
+      EMBEDDING_PROVIDER: fake
     depends_on:
       evaluation-db:
         condition: service_healthy
     volumes:
       - ./product-config:/app/product-config:ro
+      - ./knowledge-config:/app/knowledge-config:ro
     networks:
       - evaluation
 
@@ -68,6 +72,7 @@ services:
       REFRESH_TOKEN_TTL_SECONDS: 28800
       REFRESH_TOKEN_PEPPER: synthetic-evaluation-refresh-pepper
       GENERATION_PROVIDER: fake
+      EMBEDDING_PROVIDER: fake
       GEMINI_API_KEY:
       PROVIDER_ALLOWED_HOSTS:
       PROVIDER_TIMEOUT_SECONDS: 30
@@ -94,6 +99,7 @@ services:
       - /data/uploads
     volumes:
       - ./evaluation:/app/evaluation:ro
+      - ./knowledge-config:/app/knowledge-config:ro
       - ./product-config:/app/product-config:ro
       - ./scripts:/app/scripts:ro
     networks:

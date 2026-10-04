@@ -36,6 +36,23 @@ Uploaded documents are untrusted data. Extraction receives a separate trusted
 system instruction and a serialized document payload. Stored audit and trace
 views contain metadata and evidence locators, not credentials or raw files.
 
+## Knowledge retrieval
+
+Each fictional product has an immutable, versioned guideline corpus. Import
+validates its label, topics, sections, and thresholds against a named product
+configuration. Activation requires that product version to be active. A case
+pins the active guideline version when processing starts.
+
+Passages store deterministic fake or configured Gemini embeddings plus
+PostgreSQL full-text search data. Retrieval filters by the pinned version and
+present case facts, then fuses vector and lexical rankings with reciprocal
+rank fusion. Review guidance returns passage keys, titles, and citations from
+that pinned version only.
+
+Regulatory passages use a separate shared informational version. They may be
+shown beside guidance after a meaning-only lookup, but they never enter route
+calculation or product alignment.
+
 ## Routing precedence
 
 Deterministic rules outrank model suggestions. The applied order is

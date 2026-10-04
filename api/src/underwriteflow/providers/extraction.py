@@ -49,6 +49,43 @@ class LocalDocumentExtractor:
             return LocalDocument(pages=pages, method="pdf_text")
         return self._ocr_pdf(path)
 
+    # OCR one selected page number and return its text.
+    def ocr_page(self, path: Path, page_number: int) -> str:
+        with TemporaryDirectory() as directory:
+            prefix = Path(directory) / "page"
+            try:
+                subprocess.run(
+                    [
+                        "pdftoppm",
+                        "-png",
+                        "-r",
+                        "150",
+                        "-f",
+                        str(page_number),
+                        "-l",
+                        str(page_number),
+                        str(path),
+                        str(prefix),
+                    ],
+                    check=True,
+                    capture_output=True,
+                    timeout=self.timeout_seconds,
+                )
+            except (
+                FileNotFoundError,
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+            ) as error:
+                raise ExtractionError("PDF OCR is unavailable") from error
+            image_paths = sorted(Path(directory).glob("page-*.png"))
+            if not image_paths:
+                raise ExtractionError("PDF OCR produced no pages")
+            try:
+                with Image.open(image_paths[0]) as image:
+                    return pytesseract.image_to_string(image)
+            except (OSError, ValueError, pytesseract.TesseractError) as error:
+                raise ExtractionError("PDF OCR failed") from error
+
     # Rasterize scanned PDF pages and OCR each generated image locally.
     def _ocr_pdf(self, path: Path) -> LocalDocument:
         with TemporaryDirectory() as directory:

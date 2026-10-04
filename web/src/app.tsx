@@ -17,6 +17,7 @@ import { DocumentsScreen } from "./documents";
 import { RoleEntry } from "./entry";
 import { JourneySelection } from "./journey-selection";
 import { ProductConfiguration } from "./product-configuration";
+import { KnowledgeAdmin } from "./knowledge-admin";
 import { TrackingScreen } from "./tracking";
 import { AppShell, Button } from "./components";
 import { CaseReview } from "./case-review";
@@ -311,6 +312,7 @@ export function App() {
     activeScreen = "review";
     content = (
       <CaseReview
+        key={queueItem.case_id}
         item={queueItem}
         onNavigate={navigate}
         token={session.token}
@@ -347,6 +349,9 @@ export function App() {
   ) {
     activeScreen = "product_config";
     content = <ProductConfiguration token={session.token} />;
+  } else if (session.role === "Administrator" && screen === "knowledge") {
+    activeScreen = "knowledge";
+    content = <KnowledgeAdmin token={session.token} />;
   } else {
     activeScreen = "admin";
     content = (

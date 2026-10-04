@@ -59,19 +59,37 @@ state with the development database or upload volume.
 
 ### Provider boundary
 
-The default generation provider is Gemini, so extracted document content and
-application facts are sent to the Gemini API unless the fake provider is
-selected. Set `GENERATION_PROVIDER=fake` to keep synthetic data on this
-machine. Ollama is available through the `ollama` Compose profile.
+Gemini is the default generation provider. It sends extracted content and
+application facts to Gemini unless fake is selected. Set both
+`GENERATION_PROVIDER=fake` and `EMBEDDING_PROVIDER=fake` to keep processing
+local. Common blank models select defaults; providers can differ, e.g. Ollama
+generation with Gemini embeddings.
+#### Local Ollama embeddings
 
-Uploads are validated from their bytes, and file metadata is stored in the
-local upload volume. Uploaded content is untrusted and is never treated as
-model instructions.
+Set `EMBEDDING_PROVIDER=ollama` in `.env`. Start Ollama and pull the model:
 
-LangSmith tracing is disabled by default. To opt in for synthetic evaluation,
-set `LANGSMITH_TRACING=true`, provide a local evaluation key, and use the
-APAC endpoint in `.env.example`. Trace payloads are redacted and tracing
-failures never change application behavior.
+```bash
+docker compose --profile ollama up -d ollama
+```
+
+```bash
+docker compose exec ollama ollama pull embeddinggemma
+```
+
+```bash
+docker compose up --build
+```
+
+Bootstrap re-embeds configured guideline corpora. After a switch, Admins must
+re-import other versions (`POST /knowledge/import` and
+`POST /knowledge/regulation/import`). Ollama recall is reported, not gated.
+
+Uploads are byte-validated; metadata stays in the local volume. Treat uploaded
+content as untrusted data, never as model instructions.
+
+LangSmith tracing is disabled by default. For synthetic evaluation, set
+`LANGSMITH_TRACING=true`, provide a local key, and use the APAC endpoint in
+`.env.example`. Traces are redacted; tracing failures do not affect behavior.
 
 ## Quickstart: local fake provider
 
@@ -87,25 +105,39 @@ docker compose up --build
 ### Gemini provider: approved project
 
 Use Gemini only with an approved project configured for no training or
-retention of request and response data. Put values in local `.env` only. Never
-paste an API key into this README, a command, or shell history.
+retention of request and response data. Rename legacy private model keys to
+common overrides. Never paste an API key into this README, command, or shell.
 
 ```bash
 cp .env.example .env
 # Edit .env: set GENERATION_PROVIDER=gemini
+# Edit .env: set EMBEDDING_PROVIDER=gemini
 # Edit .env: set GEMINI_NO_TRAINING_ACKNOWLEDGED=true after approval
 docker compose up --build
 ```
 
-`.env.example` lists required fields: `GEMINI_API_KEY`, `GEMINI_MODEL`,
+`.env.example` lists required fields: `EMBEDDING_PROVIDER`, `GEMINI_API_KEY`,
+`GENERATION_MODEL`, `EMBEDDING_MODEL`,
 `GEMINI_NO_TRAINING_ACKNOWLEDGED`, `PROVIDER_ALLOWED_HOSTS`, and
 `PII_REDACTION_TERMS`. Keep the approved Gemini host in the allowlist. Set
 redaction terms for deployment-specific identifiers before any request.
 Only approved, redacted synthetic task data may leave the local boundary.
 
-Without an approved project or credential, keep `GENERATION_PROVIDER=fake`.
-The fake path needs no cloud credential and remains the default for local
-checks.
+Without an approved project or credential, keep both provider settings at
+`fake`. The fake path needs no cloud credential and remains the default for
+local checks.
+
+### Knowledge guidance administration
+
+Administrators open Knowledge Guidance to validate, import, preview, and
+activate versioned fictional guideline YAML. The active product corpus is
+aligned to the pinned product configuration before activation. Regulation
+imports are separate, carry the `PUBLIC REGULATION - INFORMATIONAL` badge,
+and never affect route calculation. Product and regulation versions are
+stored immutably and pinned when case processing starts.
+
+Guidance retrieval uses pinned guidelines, case facts, lexical search, and
+vector search. Results are fused deterministically and cited in the review.
 
 ## Environment mode startup paths
 
@@ -113,18 +145,9 @@ Choose one path before starting the stack. Every path uses fictional data.
 
 ### Development: normal local demonstration
 
-Use development for interactive local work. It uses isolated local Compose
-state. Set the fake provider to avoid cloud credentials:
-
-```bash
-cp .env.example .env
-# Edit .env: set ENVIRONMENT_MODE=development
-# Edit .env: set GENERATION_PROVIDER=fake
-docker compose up --build
-```
-
-Development starts the normal local stack. It does not load evaluation cases
-automatically. The fake provider keeps application and document content local.
+Development is default. It uses isolated local Compose state and does not load
+evaluation cases. For setup, see the [local fake-provider
+quickstart](#quickstart-local-fake-provider).
 
 ### Evaluation: isolated synthetic run
 
@@ -342,8 +365,8 @@ cases, uploaded documents, reviews, and audit records do not.
   fictional product version before creating an application.
 - **An automated check fails**: run it from repository root, review its output,
   then inspect `docker compose logs api web` for running-service failures.
-- **Local provider needs credentials**: set `GENERATION_PROVIDER=fake` for the
-  deterministic, no-credential path.
+- **Local provider needs credentials**: set both provider settings to `fake`
+  for the deterministic, no-credential path.
 - **Evaluation load is denied**: use development or evaluation with a current
   `evaluation:run` token. Production always refuses evaluation loading.
 

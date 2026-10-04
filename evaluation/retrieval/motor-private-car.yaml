@@ -1,0 +1,93 @@
+# SYNTHETIC - FOR DEMONSTRATION ONLY
+product_code: motor-private-car
+questions:
+  - id: motor-q01
+    question: Thirteen-year-old car needs a closer look before processing
+    expected: [motor-vehicle-age-specialist]
+  - id: motor-q02
+    question: Car built after twelve years needs inspection by assessors
+    expected: [motor-vehicle-age-specialist]
+  - id: motor-q03
+    question: Fourteen-year vehicle needs an extra image before review
+    expected: [motor-vehicle-age-specialist]
+  - id: motor-q04
+    question: Two recorded claims should follow ordinary manual handling
+    expected: [motor-prior-claims-standard]
+  - id: motor-q05
+    question: Renewal with several earlier claims needs normal review
+    expected: [motor-prior-claims-standard]
+  - id: motor-q06
+    question: A second claim moves this renewal beyond routine handling
+    expected: [motor-prior-claims-standard]
+  - id: motor-q07
+    question: Car is used for household trips
+    expected: [motor-vehicle-use]
+  - id: motor-q08
+    question: Applicant drives the car between home and work
+    expected: [motor-vehicle-use]
+  - id: motor-q09
+    question: Which everyday driving purposes does product support
+    expected: [motor-vehicle-use]
+  - id: motor-q10
+    question: Applicant identity needs matching evidence
+    expected: [motor-identity-evidence]
+  - id: motor-q11
+    question: What confirms holder identity for this car file
+    expected: [motor-identity-evidence]
+  - id: motor-q12
+    question: Check the named owner against submitted proof
+    expected: [motor-identity-evidence]
+  - id: motor-q13
+    question: Which source confirms chassis and engine details
+    expected: [motor-vehicle-record]
+  - id: motor-q14
+    question: Compare the automobile engine identifiers before reconciliation
+    expected: [motor-vehicle-record]
+  - id: motor-q15
+    question: Need supporting chassis details for this submission
+    expected: [motor-vehicle-record]
+  - id: motor-q16
+    question: Which paper verifies the registration number
+    expected: [motor-registration-certificate]
+  - id: motor-q17
+    question: Match registration details with the vehicle file
+    expected: [motor-registration-certificate]
+  - id: motor-q18
+    question: Where is official vehicle registration proof checked
+    expected: [motor-registration-certificate]
+  - id: motor-q19
+    question: Thirteen-year car needs a current condition image
+    expected: [motor-inspection-photo]
+  - id: motor-q20
+    question: What inspection image supports an older vehicle file
+    expected: [motor-inspection-photo]
+  - id: motor-q21
+    question: Extra inspection evidence applies when age crosses limit
+    expected: [motor-inspection-photo]
+  - id: motor-q22
+    question: Renewal file needs its earlier cover record
+    expected: [motor-previous-policy]
+  - id: motor-q23
+    question: Which previous policy document shows prior motor protection
+    expected: [motor-previous-policy]
+  - id: motor-q24
+    question: Check last term details before extending cover
+    expected: [motor-previous-policy]
+  - id: motor-q25
+    question: Renewal bonus evidence needs a source record
+    expected: [motor-ncb-record]
+  - id: motor-q26
+    question: Where can claimed claim-free benefit be verified
+    expected: [motor-ncb-record]
+  - id: motor-q27
+    question: Validate the renewal bonus against earlier history
+    expected: [motor-ncb-record]
+  - id: motor-q28
+    question: A thirty-day break between policies needs checking
+    expected: [motor-renewal-lapse]
+  - id: motor-q29
+    question: How should a short coverage interruption be handled
+    expected: [motor-renewal-lapse]
+  - id: motor-q30
+    question: Renewal starts after a limited uninsured interval
+    expected: [motor-renewal-lapse]

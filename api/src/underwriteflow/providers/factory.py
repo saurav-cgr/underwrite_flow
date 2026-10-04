@@ -33,7 +33,7 @@ def build_provider(settings: Settings) -> ExtractionProvider:
         require_approved_host(host, settings)
         return OllamaProvider(
             settings.ollama_base_url,
-            settings.ollama_model,
+            settings.resolved_generation_model,
             timeout_seconds=settings.provider_timeout_seconds,
         )
     if not settings.gemini_no_training_acknowledged:
@@ -43,7 +43,7 @@ def build_provider(settings: Settings) -> ExtractionProvider:
     require_approved_host(GEMINI_HOST, settings)
     return GeminiProvider(
         settings.gemini_api_key,
-        settings.gemini_model,
+        settings.resolved_generation_model,
         timeout_seconds=settings.provider_timeout_seconds,
         pii_redaction_terms=settings.pii_redaction_terms,
     )

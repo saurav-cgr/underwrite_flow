@@ -1,10 +1,13 @@
 """Recommendation and human-review interrupt graph."""
 
+from functools import partial
+
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
 from underwriteflow.reviews.schemas import ReviewCommand
+from underwriteflow.workflow.explain import explain_route
 from underwriteflow.workflow.reconciliation import (
     APPLICATION_SOURCE,
     STATUS_FLAGGED,
@@ -152,15 +155,28 @@ def apply_human_review(state: TriageState) -> dict[str, str | None]:
 
 
 # Compile a resumable triage graph with a human checkpoint before final routing.
-def build_triage_graph(checkpointer: BaseCheckpointSaver | None = None):
+def build_triage_graph(
+    checkpointer: BaseCheckpointSaver | None = None,
+    explainer: object | None = None,
+):
     builder = StateGraph(TriageState)
     builder.add_node("assemble_case_summary", assemble_case_summary)
     builder.add_node("recommend_triage_route", recommend_triage_route)
+    if explainer is not None:
+        builder.add_node(
+            "explain_route",
+            partial(explain_route, explainer=explainer),
+        )
     builder.add_node("human_review", human_review)
     builder.add_node("apply_human_review", apply_human_review)
     builder.add_edge(START, "assemble_case_summary")
     builder.add_edge("assemble_case_summary", "recommend_triage_route")
-    builder.add_edge("recommend_triage_route", "human_review")
+    builder.add_edge(
+        "recommend_triage_route",
+        "explain_route" if explainer is not None else "human_review",
+    )
+    if explainer is not None:
+        builder.add_edge("explain_route", "human_review")
     builder.add_edge("human_review", "apply_human_review")
     builder.add_edge("apply_human_review", END)
     return builder.compile(checkpointer=checkpointer)

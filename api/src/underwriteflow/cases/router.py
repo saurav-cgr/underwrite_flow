@@ -47,6 +47,8 @@ from underwriteflow.products.schemas import (
 from underwriteflow.storage import StorageValidationError, UploadStorage
 from underwriteflow.cases.submission import SubmissionService
 from underwriteflow.providers.factory import build_provider
+from underwriteflow.providers.embedding import build_embedding_provider
+from underwriteflow.providers.guidance import build_guidance_provider
 from underwriteflow.database import get_session
 from underwriteflow.persistence.models import (
     Case,
@@ -286,6 +288,8 @@ async def submit_case(
             settings.upload_root,
             settings.database_url,
             retry_count=settings.provider_retry_count,
+            guidance_provider=build_guidance_provider(settings),
+            embedding_provider=build_embedding_provider(settings),
         ).submit(session, case, UUID(current["sub"]))
     except CaseValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
@@ -314,6 +318,8 @@ async def resubmit_case(
             settings.upload_root,
             settings.database_url,
             retry_count=settings.provider_retry_count,
+            guidance_provider=build_guidance_provider(settings),
+            embedding_provider=build_embedding_provider(settings),
         ).resubmit(session, case, UUID(current["sub"]))
     except CaseValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
