@@ -372,6 +372,9 @@ its checkpoint and the user says `continue`.
 
 ## Dependencies
 
+US11 configuration cleanup continues in [tasks-us11.md](tasks-us11.md).
+Start only after US10 passes its checkpoint and its continue gate.
+
 US1 then US2 then US3 then US4 then US5 then US6 then US7 then US8 then
 US9. Each story uses only earlier stories. No parallel execution.
 

@@ -211,6 +211,7 @@ def test_embedding_provider_builder() -> None:
             _env_file=None,
             generation_provider="fake",
             embedding_provider="fake",
+            embedding_model="unused-model",
         )
     )
     assert provider.name == "fake"
@@ -229,6 +230,7 @@ def test_embedding_provider_builder() -> None:
             _env_file=None,
             generation_provider="gemini",
             embedding_provider="ollama",
+            embedding_model=None,
         )
     )
     assert isinstance(provider, OllamaEmbeddingProvider)
@@ -239,7 +241,7 @@ def test_embedding_provider_builder() -> None:
             _env_file=None,
             generation_provider="gemini",
             embedding_provider="ollama",
-            ollama_embedding_model="custom",
+            embedding_model="custom",
             pii_redaction_terms=("Synthetic Person",),
         )
     )
@@ -275,8 +277,9 @@ def test_gemini_builder_keeps_embedding_settings() -> None:
             embedding_provider="gemini",
             gemini_api_key="synthetic-key",
             gemini_no_training_acknowledged=True,
+            embedding_model="custom-gemini-embedding",
         )
     )
 
     assert isinstance(provider, GeminiEmbeddingProvider)
-    assert provider.model == "gemini-embedding-001"
+    assert provider.model == "custom-gemini-embedding"

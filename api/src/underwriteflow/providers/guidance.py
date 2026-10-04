@@ -312,7 +312,7 @@ def build_guidance_provider(
         raise ProviderError("Provider host is not approved")
     return GeminiGuidanceProvider(
         settings.gemini_api_key,
-        settings.gemini_model,
+        settings.resolved_generation_model,
         timeout_seconds=settings.provider_timeout_seconds,
         pii_redaction_terms=settings.pii_redaction_terms,
     )

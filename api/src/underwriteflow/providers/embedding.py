@@ -229,7 +229,7 @@ def build_embedding_provider(settings: Settings) -> EmbeddingProvider:
             raise ProviderError("Provider host is not approved")
         return OllamaEmbeddingProvider(
             settings.ollama_base_url,
-            settings.ollama_embedding_model,
+            settings.resolved_embedding_model,
             timeout_seconds=settings.provider_timeout_seconds,
             pii_redaction_terms=settings.pii_redaction_terms,
         )
@@ -242,7 +242,7 @@ def build_embedding_provider(settings: Settings) -> EmbeddingProvider:
         raise ProviderError("Provider host is not approved")
     return GeminiEmbeddingProvider(
         settings.gemini_api_key,
-        settings.gemini_embedding_model,
+        settings.resolved_embedding_model,
         timeout_seconds=settings.provider_timeout_seconds,
         pii_redaction_terms=settings.pii_redaction_terms,
     )

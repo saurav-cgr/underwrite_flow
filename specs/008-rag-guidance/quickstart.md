@@ -134,13 +134,15 @@ Design: [research.md](research.md) R14; `source.embedding_model` in
   non-768 vector raises `ProviderError`; 429 and 503 raise
   `TransientProviderError`; a base URL host outside
   `PROVIDER_ALLOWED_HOSTS` is refused; `EMBEDDING_PROVIDER=ollama`
-  builds the Ollama provider with `OLLAMA_EMBEDDING_MODEL`.
+  builds the Ollama provider with `EMBEDDING_MODEL`, or automatic
+  `embeddinggemma` when blank.
 - Integration: importing the same corpus twice with one provider writes
   embeddings once; importing again with a provider whose
   `embedding_model` differs re-embeds every passage and updates
   `source.embedding_model`. Same for the regulation version.
 - End-to-end (opt-in, local only, never gates acceptance). Set in `.env`:
-  `EMBEDDING_PROVIDER=ollama` and `OLLAMA_EMBEDDING_MODEL=embeddinggemma`.
+  `EMBEDDING_PROVIDER=ollama`; leave `EMBEDDING_MODEL` blank for
+  `embeddinggemma`.
 
   ```bash
   docker compose --profile ollama up -d ollama
@@ -165,3 +167,46 @@ Design: [research.md](research.md) R14; `source.embedding_model` in
 - Switch back with `EMBEDDING_PROVIDER=fake` and restart: bootstrap
   re-embeds configured guideline corpora. Re-import API-managed versions
   through the same endpoints, then confirm `make smoke` passes.
+
+### US11: Common model configuration
+
+Contract: [provider configuration](contracts/provider-configuration.md).
+Rename private model overrides to GENERATION_MODEL and EMBEDDING_MODEL;
+leave them blank for automatic defaults. Keep keys and URLs unchanged.
+This guide describes the post-US11 interface; US10 examples above record
+its earlier interface and are superseded by this section after US11.
+
+Run gates in order; stop on failure. Use fake generation and embeddings
+for deterministic runs; unit adapter checks mock all external requests.
+
+```bash
+COMPOSE_PROJECT_NAME=underwriteflow-us11-gate \
+GENERATION_PROVIDER=fake \
+EMBEDDING_PROVIDER=fake \
+GENERATION_MODEL= \
+EMBEDDING_MODEL= \
+GEMINI_NO_TRAINING_ACKNOWLEDGED=false \
+LANGSMITH_TRACING=false \
+docker compose run --rm api pytest tests/unit -q
+```
+
+```bash
+COMPOSE_PROJECT_NAME=underwriteflow-us11-gate \
+GENERATION_PROVIDER=fake \
+EMBEDDING_PROVIDER=fake \
+GENERATION_MODEL= \
+EMBEDDING_MODEL= \
+GEMINI_NO_TRAINING_ACKNOWLEDGED=false \
+LANGSMITH_TRACING=false \
+docker compose run --rm api pytest \
+  tests/contract/test_environment_compose.py tests/integration -q
+```
+
+```bash
+COMPOSE_PROJECT_NAME=underwriteflow-us11-gate make smoke
+```
+
+Expect: default/custom/blank model tests pass, mixed provider selections
+resolve independently, API/bootstrap configuration matches, unchanged
+imports reuse embeddings, changed models re-embed, and smoke preserves
+human-confirmed routing. No live provider acceptance check is required.

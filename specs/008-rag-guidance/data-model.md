@@ -163,3 +163,11 @@ Every underwriter can list all rows for a case (clarification Q5).
   `id`, `question`, `case` (optional `age`, `sum_assured`), and
   `expected` passage keys.
 - `product-config/life-individual-term-v3.yaml`: adds `date_of_birth`.
+
+## US11 runtime settings
+
+No persistence entity or schema changes. Runtime model overrides are
+optional strings, normalized and resolved according to
+[provider configuration](contracts/provider-configuration.md).
+Stored provider/model metadata and source.embedding_model keep their
+existing formats and re-import semantics. No new state transition.

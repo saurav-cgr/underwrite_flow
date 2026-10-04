@@ -237,3 +237,16 @@ constitution's Escalation rule before the story that uses them starts.
   order.
 - **Approval**: provider change (Escalation). Requested by the user on
   2026-10-03; confirm before implementation.
+
+## R15. Common model configuration (2026-10-04)
+
+- **Decision**: two common model override names, with backend-owned
+  provider defaults and shared Compose forwarding. Keep credentials and
+  URLs provider-specific. See the configuration contract for exact rules.
+- **Rationale**: generation and embeddings can use different providers;
+  central resolution removes repeated model defaults without new layers.
+- **Alternatives**: keep legacy aliases (user rejected during development);
+  generic credentials/URLs (user chose model names only); pin one shared
+  model for all providers (models have different capabilities).
+- **Compatibility**: remove old model fields and forwarding outright.
+  Keep default providers, fake behavior, guards, and stored tags unchanged.

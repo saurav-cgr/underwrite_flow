@@ -62,8 +62,8 @@ state with the development database or upload volume.
 Gemini is the default generation provider. It sends extracted content and
 application facts to Gemini unless fake is selected. Set both
 `GENERATION_PROVIDER=fake` and `EMBEDDING_PROVIDER=fake` to keep processing
-local.
-
+local. Common blank models select defaults; providers can differ, e.g. Ollama
+generation with Gemini embeddings.
 #### Local Ollama embeddings
 
 Set `EMBEDDING_PROVIDER=ollama` in `.env`. Start Ollama and pull the model:
@@ -105,8 +105,8 @@ docker compose up --build
 ### Gemini provider: approved project
 
 Use Gemini only with an approved project configured for no training or
-retention of request and response data. Put values in local `.env` only. Never
-paste an API key into this README, a command, or shell history.
+retention of request and response data. Rename legacy private model keys to
+common overrides. Never paste an API key into this README, command, or shell.
 
 ```bash
 cp .env.example .env
@@ -117,7 +117,7 @@ docker compose up --build
 ```
 
 `.env.example` lists required fields: `EMBEDDING_PROVIDER`, `GEMINI_API_KEY`,
-`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`,
+`GENERATION_MODEL`, `EMBEDDING_MODEL`,
 `GEMINI_NO_TRAINING_ACKNOWLEDGED`, `PROVIDER_ALLOWED_HOSTS`, and
 `PII_REDACTION_TERMS`. Keep the approved Gemini host in the allowlist. Set
 redaction terms for deployment-specific identifiers before any request.

@@ -229,3 +229,29 @@ read-only into `bootstrap` and `api`, like `product-config/`.
 ## Complexity Tracking
 
 No constitution violations.
+
+## US11 amendment: Common provider model configuration (2026-10-04)
+
+Specification: [later stories](spec-later-stories.md), US11. Contract:
+[provider configuration](contracts/provider-configuration.md).
+
+Use existing Python 3.12 and Pydantic Settings; no dependencies or schema
+changes. Centralize model defaults and resolution in config.py. Replace
+provider-specific model fields with two optional common model overrides
+and resolved properties. Update extraction, guidance, and embedding
+builders. Share provider environment entries in Compose with an anchor;
+forward model overrides without repeating model defaults. Update the env
+example and README. Keep fake identity, provider safeguards, capabilities,
+metadata, re-embedding, routes, and human confirmation unchanged.
+
+Research R15 selects immediate removal of legacy names, as requested for
+active development. No compatibility layer or private .env edits.
+
+Constitution re-check: I-III and VII unchanged; IV needs no migration;
+V requires ordered unit/integration/end-to-end gates; VI requires all
+changed files below 400 lines and at most 80 columns. The oversized spec
+was split into a linked continuation before adding US11. No new approval
+requirement is introduced; the requested configuration rename is in scope.
+
+Delivery: [tasks-us11.md](tasks-us11.md), T107 onward, one story only.
+Stop after verification and report; commit/push require continue.

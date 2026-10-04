@@ -65,26 +65,37 @@ def test_base_compose_declares_development_mode() -> None:
         assert "development" in environment["ENVIRONMENT_MODE"], name
 
 
-# Verify bootstrap and API share their embedding settings.
-def test_bootstrap_shares_gemini_embedding_settings() -> None:
+# Verify bootstrap and API share provider settings without legacy model names.
+def test_bootstrap_shares_common_provider_settings() -> None:
     compose = _load_compose(BASE_PATH)
     api = _environment(compose["services"]["api"])
     bootstrap = _environment(compose["services"]["bootstrap"])
 
     for key in (
         "EMBEDDING_PROVIDER",
+        "GENERATION_MODEL",
+        "EMBEDDING_MODEL",
         "GEMINI_API_KEY",
-        "GEMINI_EMBEDDING_MODEL",
         "GEMINI_NO_TRAINING_ACKNOWLEDGED",
         "PROVIDER_ALLOWED_HOSTS",
         "PII_REDACTION_TERMS",
         "PROVIDER_TIMEOUT_SECONDS",
         "OLLAMA_BASE_URL",
-        "OLLAMA_MODEL",
-        "OLLAMA_EMBEDDING_MODEL",
     ):
         assert key in bootstrap
         assert bootstrap[key] == api[key]
+
+    for key in (
+        "GEMINI_MODEL",
+        "OLLAMA_MODEL",
+        "GEMINI_EMBEDDING_MODEL",
+        "OLLAMA_EMBEDDING_MODEL",
+    ):
+        assert key not in api
+        assert key not in bootstrap
+
+    assert api["GENERATION_MODEL"] == "${GENERATION_MODEL:-}"
+    assert api["EMBEDDING_MODEL"] == "${EMBEDDING_MODEL:-}"
 
 
 # Verify the isolated evaluation stack declares evaluation mode.

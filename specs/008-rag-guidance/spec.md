@@ -9,7 +9,8 @@
 **Input**: User description: "RAG-grounded guidance for UnderwriteFlow
 triage. Fictional guidelines only, plus public IRDAI text as informational.
 Retrieval explains and supports routes; it never changes a route, and an
-underwriter still confirms every final route." Stories US1-US9 below.
+underwriter still confirms every final route." Stories US1-US11 span this file
+  and its continuation.
 Out of scope: similar-case search, legal interpretation, auto-fixing
 rules, any change to route precedence.
 
@@ -194,100 +195,11 @@ audit events, and role refusal.
 5. **Given** an applicant or administrator, **When** that user asks a
    question, **Then** the system refuses it.
 
-### User Story 6 - Specialist Brief (Priority: P6)
+### Later stories
 
-A case routed to specialist review receives a brief. The brief lists the
-evidence with its sources, the triggered rules, and the relevant guideline
-passages. When the underwriter overrides a route, the override dialog
-suggests citations for the reason.
-
-**Why this priority**: It shortens specialist review but is useful only
-after explanations exist.
-
-**Independent Test**: Process a fictional hazardous-occupation life case.
-Confirm the brief contents and suggested citations in the override dialog.
-
-**Acceptance Scenarios**:
-
-1. **Given** a specialist-routed case, **When** the specialist opens it,
-   **Then** the brief shows evidence with source document references,
-   triggered rule codes, and cited guideline passages.
-2. **Given** the override dialog, **When** it opens, **Then** it suggests
-   up to three citations the underwriter may accept or ignore.
-3. **Given** a case not routed to specialist review, **Then** no brief is
-   produced.
-
-### User Story 7 - Informational Regulatory Corpus (Priority: P7)
-
-The system loads public IRDAI clauses only from documents in the approved
-regulatory manifest, after verifying each file's checksum. Each clause is
-badged `PUBLIC REGULATION - INFORMATIONAL`. Reviewers see clauses side by
-side with guideline sections on the same topic. Clauses never affect route
-calculation.
-
-**Why this priority**: Context is helpful, but it has no effect on routes.
-
-**Independent Test**: Load the manifest documents, alter one file, and
-confirm that file is rejected. Process cases with and without the
-regulatory corpus and confirm identical routes.
-
-**Acceptance Scenarios**:
-
-1. **Given** a manifest document whose checksum matches, **When** loading
-   runs, **Then** its clauses load with document, clause reference, and
-   the informational badge.
-2. **Given** a file whose checksum differs, or a file absent from the
-   manifest, **When** loading runs, **Then** that file is rejected and
-   reported.
-2a. **Given** an administrator who uploads a document equal to an
-   unlisted file, **When** the upload runs, **Then** it is rejected,
-   audited `regulation_file_rejected`, and no bytes are written.
-3. **Given** a guideline section, **When** a reviewer views it, **Then**
-   the most related clauses from the pinned regulatory version, found by
-   meaning, appear beside it.
-4. **Given** the same case set, **When** processed with and without the
-   regulatory corpus, **Then** every route is identical.
-
-### User Story 8 - Rule Conformance Preview (Priority: P8)
-
-When an administrator previews a product-rules version, the preview lists
-rules that may conflict with active regulatory clauses and summarizes the
-change impact against the active version. The information never blocks
-activation.
-
-**Why this priority**: It helps administrators but is informational only.
-
-**Independent Test**: Preview a fictional rules version with a known
-potential conflict. Confirm the flag, the impact summary, and that
-activation still succeeds.
-
-**Acceptance Scenarios**:
-
-1. **Given** a draft rules version, **When** the administrator previews it,
-   **Then** the preview lists possible conflicts with cited clauses, found
-   only by threshold and topic-tag matching, never by model judgment.
-2. **Given** a draft and an active version, **When** previewed, **Then** a
-   summary shows added, removed, and changed rules and thresholds.
-3. **Given** flagged conflicts, **When** the administrator activates the
-   draft, **Then** activation proceeds and the flags are audited.
-
-### User Story 9 - Motor and Health Guidelines (Priority: P9)
-
-The guideline corpus and its alignment check extend to private-car motor
-and individual/family-floater health, aligned with their active product
-rules. The evaluation set extends to cover both products.
-
-**Why this priority**: Life proves the pattern; the other products follow.
-
-**Independent Test**: Run the alignment check and the retrieval evaluation
-for motor and health.
-
-**Acceptance Scenarios**:
-
-1. **Given** motor and health corpora, **When** the alignment check runs,
-   **Then** every stated threshold matches the respective active rules.
-2. **Given** motor and health evaluation questions, **When** retrieval
-   runs, **Then** top-five recall meets the life target per product.
+Stories US6-US9 and US11 are in
+[spec-later-stories.md](spec-later-stories.md).
+US10 design remains in plan.md, research.md R14, and tasks-us10.md.
 
 ### Edge Cases
 
